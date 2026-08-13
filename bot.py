@@ -13,7 +13,49 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.4.0"
+BOT_VERSION = "1.5.0"
+
+def is_user_allowed(message):
+    """Faqat ruxsat berilgan yagona foydalanuvchi ishlata olishini ta'minlash"""
+    user_id = message.from_user.id
+    username = (message.from_user.username or "").strip().lower()
+
+    # Environment variable orqali ALLOWED_USERS belgilangan bo'lsa
+    env_users = os.environ.get("ALLOWED_USERS", "").strip()
+    if env_users:
+        allowed_list = [i.strip().lower() for i in env_users.split(",") if i.strip()]
+        if str(user_id) in allowed_list or (username and f"@{username}" in allowed_list) or (username and username in allowed_list):
+            return True
+        return False
+
+    # Faylda saqlangan adminlar ro'yxati
+    admins_file = os.path.join(tempfile.gettempdir(), "allowed_admins.json")
+    admins = []
+    if os.path.exists(admins_file):
+        try:
+            with open(admins_file, "r") as f:
+                admins = json.load(f)
+        except Exception:
+            admins = []
+
+    if not admins:
+        # Birinchi bo'lib muloqot qilgan foydalanuvchi avtomatik admin bo'ladi
+        admins.append(user_id)
+        try:
+            with open(admins_file, "w") as f:
+                json.dump(admins, f)
+        except Exception:
+            pass
+        return True
+
+    return user_id in admins
+
+def send_access_denied(chat_id, user_id):
+    msg = f"⛔ <b>RUXSAT BERILMAGAN!</b>\n\n" \
+          f"Kechirasiz, ushbu bot faqat ruxsat berilgan yagona foydalanuvchi (buxgalter) uchun mo'ljallangan.\n\n" \
+          f"🔑 Sizning Telegram ID: <code>{user_id}</code>\n" \
+          f"<i>Ushbu ID ni bot egalariga taqdim etib ruxsat berilishi mumkin.</i>"
+    bot.send_message(chat_id, msg, parse_mode="HTML")
 
 def save_user_chat_id(chat_id):
     """Foydalanuvchi chat ID sini saqlash"""
@@ -595,15 +637,22 @@ def webhook_info():
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     chat_id = message.chat.id
+    if not is_user_allowed(message):
+        send_access_denied(chat_id, message.from_user.id)
+        return
     save_user_chat_id(chat_id)
     user_data[chat_id] = {}
     send_safe_message(chat_id, f"🚀 <b>Salom! Aqlli kontrakt va guruhlar platformasi faol.</b>\n"
-                               f"📌 <b>Tizim versiyasi:</b> <code>v{BOT_VERSION}</code>\n\n"
+                               f"📌 <b>Tizim versiyasi:</b> <code>v{BOT_VERSION}</code>\n"
+                               f"🔑 <b>Foydalanuvchi ID:</b> <code>{message.from_user.id}</code> (Ruxsat berilgan)\n\n"
                                f"Kerakli bo'limni tanlang:")
 
 @bot.message_handler(func=lambda message: message.text == "📝 Kontraktni yangilash")
 def start_kontrakt_yangilash(message):
     chat_id = message.chat.id
+    if not is_user_allowed(message):
+        send_access_denied(chat_id, message.from_user.id)
+        return
     save_user_chat_id(chat_id)
     user_data[chat_id] = {"holat": "baza_kutish"}
     send_safe_message(chat_id, "📑 <b>1-BOSQICH: ASOSIY BAZANI YUKLASH</b>\n\n"
@@ -612,6 +661,9 @@ def start_kontrakt_yangilash(message):
 @bot.message_handler(func=lambda message: message.text == "📸 Guruh screenshotlarini olish")
 def start_guruh_screenshot(message):
     chat_id = message.chat.id
+    if not is_user_allowed(message):
+        send_access_denied(chat_id, message.from_user.id)
+        return
     save_user_chat_id(chat_id)
     user_data[chat_id] = {"holat": "guruh_fayl_kutish"}
     send_safe_message(chat_id, "📸 <b>GURUH SCREENSHOTLARINI OLISH</b>\n\n"
@@ -621,6 +673,9 @@ def start_guruh_screenshot(message):
 @bot.message_handler(func=lambda message: message.content_type == 'text' and not message.text.startswith('/'))
 def handle_text_messages(message):
     chat_id = message.chat.id
+    if not is_user_allowed(message):
+        send_access_denied(chat_id, message.from_user.id)
+        return
     save_user_chat_id(chat_id)
     holat = user_data.get(chat_id, {}).get("holat")
 
@@ -652,6 +707,9 @@ def handle_text_messages(message):
 @bot.message_handler(content_types=['document'])
 def handle_docs(message):
     chat_id = message.chat.id
+    if not is_user_allowed(message):
+        send_access_denied(chat_id, message.from_user.id)
+        return
     save_user_chat_id(chat_id)
     holat = user_data.get(chat_id, {}).get("holat")
 
