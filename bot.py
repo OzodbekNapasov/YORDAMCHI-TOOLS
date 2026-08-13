@@ -13,7 +13,7 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.6.0"
+BOT_VERSION = "1.6.1"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
 
 def is_user_allowed(message):
@@ -31,10 +31,11 @@ def is_user_allowed(message):
     return user_id == PRIMARY_ADMIN_ID
 
 def send_access_denied(chat_id, user_id):
-    """Begonalarga maxfiy va neytral rad etish xabari (Tugmalarsiz)"""
-    msg = f"🔒 <b>XUSUSIY TIZIM</b>\n\n" \
-          f"Kechirasiz, ushbu bot yopiq xususiy tizim bo'lib, umumiy foydalanish uchun mo'ljallanmagan.\n\n" \
-          f"🔑 Sizning ID: <code>{user_id}</code>"
+    """Begonalarga samimiy rad etish xabari (Tugmalarsiz)"""
+    msg = f"😅 <b>Voy, shoshmang! Adashib qoldingiz shekilli...</b>\n\n" \
+          f"Kechirasiz! Ushbu bot faqat Bosh Buxgalter uchun maxsus yaratilgan.\n\n" \
+          f"🔑 Sizning ID: <code>{user_id}</code>\n" \
+          f"<i>Agar sizga ham ma'lumot kerak bo'lsa, Bosh Buxgalterimizdan ruxsat so'rab ko'ring! 🤝</i>"
     bot.send_message(chat_id, msg, parse_mode="HTML", reply_markup=telebot.types.ReplyKeyboardRemove())
 
 def save_user_chat_id(chat_id):
