@@ -186,6 +186,13 @@ def fmt_num(val):
         return str(val)
 
 def get_font(size, bold=True):
+    bundled_font = os.path.join(os.path.dirname(__file__), 'fonts', 'AppBoldFont.ttf')
+    if os.path.exists(bundled_font):
+        try:
+            return ImageFont.truetype(bundled_font, size)
+        except Exception:
+            pass
+
     font_paths = [
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
@@ -208,7 +215,7 @@ def get_font(size, bold=True):
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
     """Excel jadvali ko'rinishida pixel-perfect HD screenshot hosil qilish"""
     S = 3 # 3x Ultra HD Resolution
-    col_w = [int(w * S) for w in [100, 55, 360, 240, 180, 200]]
+    col_w = [int(w * S) for w in [110, 60, 400, 260, 200, 220]]
     
     headers = [
         'GURUHI',
@@ -220,24 +227,25 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     ]
     
     table_w = sum(col_w)
-    title_h = int(50 * S)
-    header_h = int(70 * S)
-    row_h = int(40 * S)
-    summary_h = int(50 * S)
+    title_h = int(55 * S)
+    header_h = int(75 * S)
+    row_h = int(45 * S)
+    summary_h = int(55 * S)
     
     num_rows = len(rows_data)
     table_h = title_h + header_h + (num_rows * row_h) + summary_h
     
-    margin = int(24 * S)
+    margin = int(28 * S)
     img_w = table_w + 2 * margin
     img_h = table_h + 2 * margin
     
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    font_bold = get_font(int(17 * S), bold=True)
-    font_title = get_font(int(22 * S), bold=True)
-    font_summary = get_font(int(18 * S), bold=True)
+    font_cell = get_font(int(19 * S), bold=True)
+    font_title = get_font(int(24 * S), bold=True)
+    font_header = get_font(int(19 * S), bold=True)
+    font_summary = get_font(int(20 * S), bold=True)
     
     grid_col = (0, 0, 0)
     border_w = int(3 * S // 2)
@@ -257,14 +265,14 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     for idx, (h_text, w) in enumerate(zip(headers, col_w)):
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + header_h], fill=header_bg_color, outline=grid_col, width=border_w)
         lines = h_text.split('\n')
-        total_lines_h = len(lines) * int(22 * S)
+        total_lines_h = len(lines) * int(24 * S)
         line_y = curr_y + (header_h - total_lines_h) // 2
         for line in lines:
-            bbox = font_bold.getbbox(line)
+            bbox = font_header.getbbox(line)
             tw = bbox[2] - bbox[0]
             tx = curr_x + (w - tw) // 2
-            draw.text((tx, line_y - bbox[1]), line, fill=(255, 255, 255), font=font_bold)
-            line_y += int(22 * S)
+            draw.text((tx, line_y - bbox[1]), line, fill=(255, 255, 255), font=font_header)
+            line_y += int(24 * S)
         curr_x += w
 
     # 3. Data Rows
@@ -302,18 +310,18 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
         
         for (c_text, align, bg_col, fg_col), w in zip(cells_info, col_w):
             draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + row_h], fill=bg_col, outline=grid_col, width=border_w)
-            bbox = font_bold.getbbox(c_text)
+            bbox = font_cell.getbbox(c_text)
             tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
             
             if align == 'center':
                 tx = curr_x + (w - tw) // 2
             elif align == 'right':
-                tx = curr_x + w - tw - int(16 * S)
+                tx = curr_x + w - tw - int(18 * S)
             else:
-                tx = curr_x + int(16 * S)
+                tx = curr_x + int(18 * S)
                 
             ty = curr_y + (row_h - th) // 2 - bbox[1]
-            draw.text((tx, ty), c_text, fill=fg_col, font=font_bold)
+            draw.text((tx, ty), c_text, fill=fg_col, font=font_cell)
             curr_x += w
             
         curr_y += row_h
@@ -336,7 +344,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
         bbox = font_summary.getbbox(c_text)
         tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        tx = curr_x + w - tw - int(16 * S)
+        tx = curr_x + w - tw - int(18 * S)
         ty = curr_y + (summary_h - th) // 2 - bbox[1]
         draw.text((tx, ty), c_text, fill=(255, 255, 255), font=font_summary)
         curr_x += w
