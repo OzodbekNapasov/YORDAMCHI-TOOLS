@@ -481,7 +481,6 @@ def handle_docs(message):
 def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
     """Kontraktlarni yangilash va hisobot tayyorlash (Real Progress bilan)"""
     progress = TelegramProgress(bot, chat_id, "⏳ Jarayon boshlandi...")
-    natija_nomi = os.path.join(tempfile.gettempdir(), f"Tayyor_Yangilangan_{chat_id}.xlsx")
 
     try:
         progress.update("📥 Ma'lumotlar olinmoqda...", 10)
@@ -499,18 +498,19 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
 
         ism_ustun = 3
         tolov_ustun = 5
-        boshlanish_row = 25
+        guruh_ustun = 1
+        boshlanish_row = 23
 
         for r in range(1, 30):
             for c in range(1, 15):
                 val = str(sheet_read.cell(row=r, column=c).value or "").lower()
+                if 'guruh' in val and 'rahbar' not in val and 'soni' not in val:
+                    guruh_ustun = c
                 if any(x in val for x in ['familiya', 'f.i.sh', 'ism', 'sharfi']):
                     ism_ustun = c
                     boshlanish_row = r + 1
                 if any(x in val for x in ['jami', 'to\'lagan summasi', 'to\'lov']):
                     tolov_ustun = c
-
-        guruh_ustun = ism_ustun - 1 if ism_ustun > 1 else 2
 
         baza_talabalari = []
         for row in range(boshlanish_row, sheet_read.max_row + 1):
@@ -609,13 +609,14 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                     safe_deb_fio = escape_md(deb_fio_str or h_str)
                     safe_sana = to_lov_sanasi.strftime('%d.%m.%Y')
                     
+                    # Alohida Iqtibos (Blockquote) formatida yuborish
                     yangilanish_tarixi.append(
-                        f"👤 *{safe_orig_name}*\n"
-                        f"├ 🏦 Debitorkada: `{safe_deb_fio}`\n"
-                        f"├ 🏫 Guruh: `{safe_guruh}`\n"
-                        f"├ 📅 Toʻlov sanasi: `{safe_sana}`\n"
-                        f"├ ➕ Tushgan pul: `{yangi_summa:,.0f} so'm`\n"
-                        f"└ 📊 Jami toʻladi: `{jami_yangi:,.0f} so'm`"
+                        f"> 👤 *{safe_orig_name}*\n"
+                        f"> ├ 🏦 Debitorkada: `{safe_deb_fio}`\n"
+                        f"> ├ 🏫 Guruh: `{safe_guruh}`\n"
+                        f"> ├ 📅 Toʻlov sanasi: `{safe_sana}`\n"
+                        f"> ├ ➕ Tushgan pul: `{yangi_summa:,.0f} so'm`\n"
+                        f"> └ 📊 Jami toʻladi: `{jami_yangi:,.0f} so'm`"
                     )
                 else:
                     if h_str and deb_fio_str and h_str != deb_fio_str and deb_fio_str != "?":
@@ -627,9 +628,22 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
 
                     safe_disp_name = escape_md(disp_name)
                     safe_sana = to_lov_sanasi.strftime('%d.%m.%Y')
-                    topilmaganlar.append(f"❓ `{safe_disp_name}` — `{yangi_summa:,.0f} so'm` (Sana: {safe_sana})")
+                    topilmaganlar.append(f"> ❓ `{safe_disp_name}` — `{yangi_summa:,.0f} so'm` (Sana: {safe_sana})")
 
         progress.update("⚙️ Natija tayyorlanmoqda...", 85)
+
+        # Excel ichidagi "Yangilangan sanasi:" yozuvini eng oxirgi to'lov sanasiga o'zgartirish
+        oxirgi_sana_str = oxirgi_to_lov_sanasi.strftime('%d.%m.%Y') if oxirgi_to_lov_sanasi else cheklov_sanasi.strftime('%d.%m.%Y')
+        for r in range(1, 30):
+            for c in range(1, 10):
+                val = str(sheet_write.cell(row=r, column=c).value or "")
+                if 'yangilangan sanasi' in val.lower():
+                    target_c = c + 1
+                    if not sheet_write.cell(row=r, column=target_c).value:
+                        target_c = c + 2
+                    sheet_write.cell(row=r, column=target_c).value = oxirgi_sana_str
+
+        natija_nomi = os.path.join(tempfile.gettempdir(), f"{oxirgi_sana_str}_GACHA_KONTRAKTLAR.xlsx")
         wb_baza_write.save(natija_nomi)
         wb_baza_write.close()
         wb_baza_read.close()
@@ -637,7 +651,6 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
 
         progress.update("🔍 Yakuniy tekshiruv...", 95)
 
-        oxirgi_sana_str = oxirgi_to_lov_sanasi.strftime('%d.%m.%Y') if oxirgi_to_lov_sanasi else cheklov_sanasi.strftime('%d.%m.%Y')
         keyingi_sana_dt = (oxirgi_to_lov_sanasi or cheklov_sanasi) + timedelta(days=1)
         keyingi_sana_str = keyingi_sana_dt.strftime('%d.%m.%Y')
 
@@ -666,7 +679,7 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
         hisobot_matni += f"Navbatdagi debitorkani yuklaganingizda botga boshlanish sanasi sifatida `{keyingi_sana_str}` sanasini kiriting."
 
         with open(natija_nomi, 'rb') as f_send:
-            bot.send_document(chat_id, f_send, caption="📄 Formulalari buzilmagan tayyor Excel faylingiz.", reply_markup=get_main_keyboard())
+            bot.send_document(chat_id, f_send, caption=f"📄 Formulalari buzilmagan tayyor Excel faylingiz: `{os.path.basename(natija_nomi)}`", parse_mode="Markdown", reply_markup=get_main_keyboard())
         
         send_safe_message(chat_id, hisobot_matni)
         progress.success("✅ Tayyor!")
