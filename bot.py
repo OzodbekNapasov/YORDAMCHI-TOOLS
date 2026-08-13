@@ -12,6 +12,7 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
+BOT_VERSION = "1.1.0"
 
 # PythonAnywhere bepul tarifida Telegram API proksi orqali ishlaydi
 if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHONANYWHERE_SITE' in os.environ or 'pythonanywhere' in os.environ.get('HOME', ''):
@@ -380,7 +381,7 @@ def getMessage():
 
 @app.route("/")
 def webhook():
-    return "✅ Bot PythonAnywhere/Vercel bulutida 24/7 faol!", 200
+    return f"✅ Bot PythonAnywhere/Vercel bulutida 24/7 faol! (v{BOT_VERSION})", 200
 
 @app.route("/set_webhook", methods=['GET'])
 def set_webhook_route():
@@ -390,7 +391,7 @@ def set_webhook_route():
         bot.remove_webhook()
         success = bot.set_webhook(url=webhook_url)
         if success:
-            return f"<h3>✅ Webhook muvaffaqiyatli o'rnatildi!</h3><p>URL: <b>{webhook_url}</b></p><p>Endi Telegram botingizga /start yuborib tekshirishingiz mumkin.</p>", 200
+            return f"<h3>✅ Webhook muvaffaqiyatli o'rnatildi!</h3><p>URL: <b>{webhook_url}</b></p><p>Versiya: <b>v{BOT_VERSION}</b></p><p>Endi Telegram botingizga /start yuborib tekshirishingiz mumkin.</p>", 200
         else:
             return "<h3>❌ Webhook o'rnatilmadi!</h3>", 500
     except Exception as e:
@@ -412,6 +413,7 @@ def webhook_info():
     try:
         info = bot.get_webhook_info()
         return jsonify({
+            "version": BOT_VERSION,
             "url": info.url,
             "has_custom_certificate": info.has_custom_certificate,
             "pending_update_count": info.pending_update_count,
@@ -428,8 +430,9 @@ def webhook_info():
 def send_welcome(message):
     chat_id = message.chat.id
     user_data[chat_id] = {}
-    send_safe_message(chat_id, "Salom! Aqlli kontrakt va guruhlar platformasi faol. 🚀\n\n"
-                               "Kerakli bo'limni tanlang:")
+    send_safe_message(chat_id, f"🚀 <b>Salom! Aqlli kontrakt va guruhlar platformasi faol.</b>\n"
+                               f"📌 <b>Tizim versiyasi:</b> <code>v{BOT_VERSION}</code>\n\n"
+                               f"Kerakli bo'limni tanlang:")
 
 @bot.message_handler(func=lambda message: message.text == "📝 Kontraktni yangilash")
 def start_kontrakt_yangilash(message):
