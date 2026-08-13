@@ -12,7 +12,53 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.2.1"
+BOT_VERSION = "1.3.0"
+
+def save_user_chat_id(chat_id):
+    """Foydalanuvchi chat ID sini saqlash"""
+    try:
+        chats_file = os.path.join(tempfile.gettempdir(), "user_chats.json")
+        chats = set()
+        if os.path.exists(chats_file):
+            with open(chats_file, "r") as f:
+                chats = set(json.load(f))
+        chats.add(chat_id)
+        with open(chats_file, "w") as f:
+            json.dump(list(chats), f)
+    except Exception:
+        pass
+
+def check_and_notify_updates():
+    """Yangi versiya chiqqanda foydalanuvchilarga avtomatik yangilanish xabarini yuborish"""
+    try:
+        ver_file = os.path.join(tempfile.gettempdir(), "last_notified_version.txt")
+        last_ver = ""
+        if os.path.exists(ver_file):
+            with open(ver_file, "r") as f:
+                last_ver = f.read().strip()
+
+        if last_ver != BOT_VERSION:
+            chats_file = os.path.join(tempfile.gettempdir(), "user_chats.json")
+            if os.path.exists(chats_file):
+                with open(chats_file, "r") as f:
+                    chats = json.load(f)
+                
+                update_msg = f"🔔 <b>TIZIMDA YANGI YANGILANISH! (v{BOT_VERSION})</b>\n\n" \
+                             f"✨ <b>Yangi o'zgarishlar va imkoniyatlar:</b>\n" \
+                             f"• 📏 <b>Ismlar ustuni kengaytirildi:</b> Eng uzun familiya va ismlar ham (masalan <i>Abduhakimova Xurshida...</i>) jadvalga 100% to'liq va shinam sig'ib tushadi.\n" \
+                             f"• 📢 <b>Avtomatik xabarnoma tizimi:</b> Endi har safar yangilanish bo'lganda bot sizga start bosmasangiz ham avtomatik xabar beradi!\n\n" \
+                             f"<i>Platformadan bemalol foydalanishingiz mumkin! 🚀</i>"
+
+                for cid in chats:
+                    try:
+                        bot.send_message(cid, update_msg, parse_mode="HTML", reply_markup=get_main_keyboard())
+                    except Exception:
+                        pass
+
+            with open(ver_file, "w") as f:
+                f.write(BOT_VERSION)
+    except Exception as e:
+        print(f"NOTIFY ERR: {e}")
 
 # PythonAnywhere bepul tarifida Telegram API proksi orqali ishlaydi
 if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHONANYWHERE_SITE' in os.environ or 'pythonanywhere' in os.environ.get('HOME', ''):
@@ -220,9 +266,9 @@ def get_font(size, bold=True):
         return ImageFont.load_default()
 
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
-    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish (v1.2.0)"""
+    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish (v1.3.0)"""
     S = 3 # 3x Ultra HD Resolution
-    col_w = [int(w * S) for w in [110, 60, 440, 310, 230, 250]]
+    col_w = [int(w * S) for w in [110, 60, 520, 310, 230, 250]]
     
     headers = [
         'GURUHI',
@@ -369,9 +415,17 @@ def getMessage():
         raw = request.get_data().decode('utf-8')
         data = _json.loads(raw)
         msg = data.get('message') or {}
-        print(f"WEBHOOK: chat={msg.get('chat',{}).get('id')} text={msg.get('text','')}", file=sys.stderr, flush=True)
+        cid = msg.get('chat',{}).get('id')
+        if cid:
+            save_user_chat_id(cid)
+            
+        print(f"WEBHOOK: chat={cid} text={msg.get('text','')}", file=sys.stderr, flush=True)
         update = telebot.types.Update.de_json(raw)
         bot.process_new_updates([update])
+        
+        # Yangilanish xabarnomasini avtomatik yuborishni tekshirish
+        check_and_notify_updates()
+        
         print("WEBHOOK: done", file=sys.stderr, flush=True)
     except Exception as e:
         print(f"WEBHOOK ERR: {e}", file=sys.stderr, flush=True)
@@ -380,6 +434,7 @@ def getMessage():
 
 @app.route("/")
 def webhook():
+    check_and_notify_updates()
     return f"✅ Bot PythonAnywhere/Vercel bulutida 24/7 faol! (v{BOT_VERSION})", 200
 
 @app.route("/set_webhook", methods=['GET'])
@@ -390,6 +445,7 @@ def set_webhook_route():
         bot.remove_webhook()
         success = bot.set_webhook(url=webhook_url)
         if success:
+            check_and_notify_updates()
             return f"<h3>✅ Webhook muvaffaqiyatli o'rnatildi!</h3><p>URL: <b>{webhook_url}</b></p><p>Versiya: <b>v{BOT_VERSION}</b></p><p>Endi Telegram botingizga /start yuborib tekshirishingiz mumkin.</p>", 200
         else:
             return "<h3>❌ Webhook o'rnatilmadi!</h3>", 500
@@ -428,6 +484,7 @@ def webhook_info():
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     chat_id = message.chat.id
+    save_user_chat_id(chat_id)
     user_data[chat_id] = {}
     send_safe_message(chat_id, f"🚀 <b>Salom! Aqlli kontrakt va guruhlar platformasi faol.</b>\n"
                                f"📌 <b>Tizim versiyasi:</b> <code>v{BOT_VERSION}</code>\n\n"
