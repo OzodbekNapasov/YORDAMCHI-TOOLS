@@ -13,7 +13,7 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.5.2"
+BOT_VERSION = "1.6.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
 
 def is_user_allowed(message):
@@ -31,13 +31,11 @@ def is_user_allowed(message):
     return user_id == PRIMARY_ADMIN_ID
 
 def send_access_denied(chat_id, user_id):
-    """Boshqa foydalanuvchilar uchun samimiy va xushfe'l uzr xabari"""
-    msg = f"😅 <b>Voy, shoshmang! Adashib qoldingiz shekilli...</b>\n\n" \
-          f"Kechirasiz! Ushbu bot faqat bizning <b>Bosh Buxgalterimiz</b> uchun maxsus yaratilgan shaxsiy aqlli yordamchi hisoblanadi. 💼📊\n\n" \
-          f"🤖 Bot faqat uning buyruqlariga bo'ysunadi va kontrakt sirlarini faqat unga aytadi.\n\n" \
-          f"🔑 Sizning ID: <code>{user_id}</code>\n" \
-          f"<i>Agar sizga ham ma'lumot kerak bo'lsa, Bosh Buxgalterimizdan ruxsat so'rab ko'ring! 🤝</i>"
-    bot.send_message(chat_id, msg, parse_mode="HTML")
+    """Begonalarga maxfiy va neytral rad etish xabari (Tugmalarsiz)"""
+    msg = f"🔒 <b>XUSUSIY TIZIM</b>\n\n" \
+          f"Kechirasiz, ushbu bot yopiq xususiy tizim bo'lib, umumiy foydalanish uchun mo'ljallanmagan.\n\n" \
+          f"🔑 Sizning ID: <code>{user_id}</code>"
+    bot.send_message(chat_id, msg, parse_mode="HTML", reply_markup=telebot.types.ReplyKeyboardRemove())
 
 def save_user_chat_id(chat_id):
     """Foydalanuvchi chat ID sini saqlash"""
@@ -54,7 +52,7 @@ def save_user_chat_id(chat_id):
         pass
 
 def check_and_notify_updates():
-    """Yangi versiya chiqqanda foydalanuvchilarga avtomatik yangilanish xabarini yuborish"""
+    """Yangi versiya chiqqanda faqat ma'mur (buxgalter)ga avtomatik yangilanish xabarini yuborish"""
     try:
         ver_file = os.path.join(tempfile.gettempdir(), "last_notified_version.txt")
         last_ver = ""
@@ -63,22 +61,16 @@ def check_and_notify_updates():
                 last_ver = f.read().strip()
 
         if last_ver != BOT_VERSION:
-            chats_file = os.path.join(tempfile.gettempdir(), "user_chats.json")
-            if os.path.exists(chats_file):
-                with open(chats_file, "r") as f:
-                    chats = json.load(f)
-                
-                update_msg = f"🔔 <b>TIZIMDA YANGI YANGILANISH! (v{BOT_VERSION})</b>\n\n" \
-                             f"✨ <b>Yangi o'zgarishlar va imkoniyatlar:</b>\n" \
-                             f"• 📊 <b>Avtomatik XULOSA hisobot rasm:</b> Kontrakt yangilanishi yakunida barcha guruh rahbarlari, guruhlar, talabalar soni va umumiy qarzdorlik jamlanmasi rasmi o'zi yuboriladi!\n" \
-                             f"• 📏 <b>Familiyalar kengligi oshirildi:</b> Eng uzun ismlar ham jadvalga 100% to'liq va shinam sig'ib tushadi.\n\n" \
-                             f"<i>Platformadan bemalol foydalanishingiz mumkin! 🚀</i>"
+            update_msg = f"🔔 <b>TIZIMDA YANGI YANGILANISH! (v{BOT_VERSION})</b>\n\n" \
+                         f"✨ <b>Yangi o'zgarishlar va imkoniyatlar:</b>\n" \
+                         f"• 🔒 <b>Maxfiy Xavfsizlik Rejimi (Stealth Mode):</b> Begonalarga bot tugmalari mutlaqo ko'rinmaydi (`ReplyKeyboardRemove`) hamda bot nima maqsadda yaratilgani umuman oshkor etilmaydi.\n" \
+                         f"• 👑 <b>Yagona Admin Cheklovi:</b> Bot 100% faqat sizning ID ingizga (`8135594558`) biriktirildi.\n\n" \
+                         f"<i>Platformadan bemalol foydalanishingiz mumkin! 🚀</i>"
 
-                for cid in chats:
-                    try:
-                        bot.send_message(cid, update_msg, parse_mode="HTML", reply_markup=get_main_keyboard())
-                    except Exception:
-                        pass
+            try:
+                bot.send_message(PRIMARY_ADMIN_ID, update_msg, parse_mode="HTML", reply_markup=get_main_keyboard())
+            except Exception:
+                pass
 
             with open(ver_file, "w") as f:
                 f.write(BOT_VERSION)
