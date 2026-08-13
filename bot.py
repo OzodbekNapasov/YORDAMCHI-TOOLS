@@ -12,7 +12,7 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.1.0"
+BOT_VERSION = "1.2.0"
 
 # PythonAnywhere bepul tarifida Telegram API proksi orqali ishlaydi
 if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHONANYWHERE_SITE' in os.environ or 'pythonanywhere' in os.environ.get('HOME', ''):
@@ -220,9 +220,9 @@ def get_font(size, bold=True):
         return ImageFont.load_default()
 
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
-    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish"""
+    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish (v1.2.0)"""
     S = 3 # 3x Ultra HD Resolution
-    col_w = [int(w * S) for w in [120, 65, 430, 280, 220, 240]]
+    col_w = [int(w * S) for w in [110, 60, 440, 310, 230, 250]]
     
     headers = [
         'GURUHI',
@@ -234,26 +234,26 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     ]
     
     table_w = sum(col_w)
-    title_h = int(60 * S)
-    header_h = int(85 * S)
-    row_h = int(50 * S)
-    summary_h = int(60 * S)
+    title_h = int(55 * S)
+    header_h = int(75 * S)
+    row_h = int(34 * S) # Qator balandligi ixchamlashtirildi (matnnikidan salgina katta)
+    summary_h = int(48 * S)
     
     num_rows = len(rows_data)
     table_h = title_h + header_h + (num_rows * row_h) + summary_h
     
-    margin = int(30 * S)
+    margin = int(24 * S)
     img_w = table_w + 2 * margin
     img_h = table_h + 2 * margin
     
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    # Times New Roman Bold shriftlar - Ayanada kattalashtirilgan
-    font_cell = get_font(int(21 * S), bold=True)
-    font_title = get_font(int(26 * S), bold=True)
-    font_header = get_font(int(21 * S), bold=True)
-    font_summary = get_font(int(22 * S), bold=True)
+    # Times New Roman Bold shriftlar - Ayanada kattalashtirilgan (24pt)
+    font_cell = get_font(int(24 * S), bold=True)
+    font_title = get_font(int(30 * S), bold=True)
+    font_header = get_font(int(24 * S), bold=True)
+    font_summary = get_font(int(25 * S), bold=True)
     
     grid_col = (0, 0, 0)
     border_w = int(3 * S // 2)
@@ -273,17 +273,17 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     for idx, (h_text, w) in enumerate(zip(headers, col_w)):
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + header_h], fill=header_bg_color, outline=grid_col, width=border_w)
         lines = h_text.split('\n')
-        total_lines_h = len(lines) * int(26 * S)
+        total_lines_h = len(lines) * int(28 * S)
         line_y = curr_y + (header_h - total_lines_h) // 2
         for line in lines:
             bbox = font_header.getbbox(line)
             tw = bbox[2] - bbox[0]
             tx = curr_x + (w - tw) // 2
             draw.text((tx, line_y - bbox[1]), line, fill=(255, 255, 255), font=font_header)
-            line_y += int(26 * S)
+            line_y += int(28 * S)
         curr_x += w
 
-    # 3. Data Rows (Times New Roman Qalin)
+    # 3. Data Rows (Times New Roman Qalin - Ixcham balandlik)
     curr_y += header_h
     tot_kerak, tot_jami, tot_qarzi_musbat = 0.0, 0.0, 0.0
     
@@ -308,7 +308,6 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             (fmt_num(jami_num), 'right', (255,255,255), (0,0,0)),
         ]
         
-        # Yaqqol va ko'zga aniq tashlanadigan to'q qizil / to'q yashil ranglar
         if qarzi_num > 0:
             debt_bg = (255, 199, 206) # Yorqin Ochiq Qizil (#FFC7CE)
             debt_fg = (156, 0, 6)     # Yaqqol To'q Qizil (#9C0006)
@@ -326,9 +325,9 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             if align == 'center':
                 tx = curr_x + (w - tw) // 2
             elif align == 'right':
-                tx = curr_x + w - tw - int(20 * S)
+                tx = curr_x + w - tw - int(16 * S)
             else:
-                tx = curr_x + int(20 * S)
+                tx = curr_x + int(16 * S)
                 
             ty = curr_y + (row_h - th) // 2 - bbox[1]
             draw.text((tx, ty), c_text, fill=fg_col, font=font_cell)
@@ -354,7 +353,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
         bbox = font_summary.getbbox(c_text)
         tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        tx = curr_x + w - tw - int(20 * S)
+        tx = curr_x + w - tw - int(16 * S)
         ty = curr_y + (summary_h - th) // 2 - bbox[1]
         draw.text((tx, ty), c_text, fill=(255, 255, 255), font=font_summary)
         curr_x += w
