@@ -108,29 +108,71 @@ def escape_html_text(text):
         return ""
     return html.escape(str(text))
 
+def cyrillic_to_latin(text):
+    """Kirill alifbosidagi ismlarni Lotin alifbosiga o'tkazish"""
+    if not text: return ""
+    text = str(text)
+    trans = {
+        'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'j','з':'z','и':'i',
+        'й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t',
+        'у':'u','ф':'f','х':'h','ц':'c','ч':'ch','ш':'sh','щ':'sh','ъ':'','ы':'y','ь':'',
+        'э':'e','ю':'yu','я':'ya','ў':'o','ғ':'g','қ':'q','ҳ':'h',
+        'А':'a','Б':'b','В':'v','Г':'g','Д':'d','Е':'e','Ё':'yo','Ж':'j','З':'z','И':'i',
+        'Й':'y','К':'k','Л':'l','М':'m','Н':'n','О':'o','П':'p','Р':'r','С':'s','Т':'t',
+        'У':'u','Ф':'f','Х':'h','Ц':'c','Ч':'ch','Ш':'sh','Щ':'sh','Ъ':'','Ы':'y','Ь':'',
+        'Э':'e','Ю':'yu','Я':'ya','Ў':'o','Ғ':'g','Қ':'q','Ҳ':'h'
+    }
+    for k, v in trans.items():
+        text = text.replace(k, v)
+    return text
+
 def ismlarni_standartlash(ism):
+    """Ismlarni taqqoslash uchun tozalash va standartlash"""
     if not ism: return ""
-    ism = str(ism).strip().lower()
+    ism = cyrillic_to_latin(ism).strip().lower()
     ism = ism.replace("`", "").replace("ʻ", "").replace("‘", "").replace("’", "").replace("'", "")
     ism = ism.replace("о‘", "o").replace("o‘", "o").replace("o'", "o").replace("о'", "o")
     ism = ism.replace("g‘", "g").replace("g'", "g").replace("г‘", "g")
-    ism = ism.replace("ch", "c").replace("sh", "s")
-    ism = ism.replace("x", "h").replace("ya", "a").replace("yu", "u")
-    return "".join(ism.split())
+    ism = ism.replace("ch", "c").replace("sh", "s").replace("x", "h").replace("ya", "a").replace("yu", "u")
+    # Raqamlar va belgilarni olib tashlab faqat harflarni qoldirish
+    return "".join(c for c in ism if c.isalpha() or c.isspace())
 
 def send_safe_message(chat_id, text, reply_markup=None):
-    """HTML rejimida xavfsiz xabar yuborish"""
+    """HTML rejimida xabarni HTML taglarini buzmasdan aqlli bo'lib yuborish"""
     if reply_markup is None:
         reply_markup = get_main_keyboard()
-    try:
-        if len(text) <= 4000:
+
+    if len(text) <= 3800:
+        try:
             bot.send_message(chat_id, text, parse_mode="HTML", reply_markup=reply_markup)
+            return
+        except Exception:
+            try:
+                bot.send_message(chat_id, text, reply_markup=reply_markup)
+                return
+            except Exception:
+                pass
+
+    # Uzun xabarni <blockquote> bloklari bo'yicha HTML sinmasdan bo'lib yuborish
+    blocks = text.split("<blockquote>")
+    current_chunk = blocks[0]
+
+    for block in blocks[1:]:
+        formatted_block = "<blockquote>" + block
+        if len(current_chunk) + len(formatted_block) > 3700:
+            try:
+                bot.send_message(chat_id, current_chunk.strip(), parse_mode="HTML", reply_markup=reply_markup)
+            except Exception:
+                bot.send_message(chat_id, current_chunk.strip(), reply_markup=reply_markup)
+            current_chunk = formatted_block
         else:
-            for i in range(0, len(text), 3900):
-                bot.send_message(chat_id, text[i:i+3900], parse_mode="HTML", reply_markup=reply_markup)
-    except Exception:
-        for i in range(0, len(text), 3900):
-            bot.send_message(chat_id, text[i:i+3900], reply_markup=reply_markup)
+            current_chunk += formatted_block
+
+    if current_chunk.strip():
+        try:
+            bot.send_message(chat_id, current_chunk.strip(), parse_mode="HTML", reply_markup=reply_markup)
+        except Exception:
+            bot.send_message(chat_id, current_chunk.strip(), reply_markup=reply_markup)
 
 def fmt_num(val):
     if val is None or val == "" or val == "-":
@@ -394,7 +436,6 @@ def handle_text_messages(message):
 
     if holat == "sana_kutish":
         sana_matni = message.text.strip()
-        # Foydalanuvchi "📅 01.08.2026" shaklida yuborgan bo'lsa tozalash
         sana_matni = sana_matni.replace("📅", "").strip()
 
         try:
@@ -465,7 +506,6 @@ def handle_docs(message):
             except Exception:
                 pass
 
-            # Fayl nomidan sana izlash fallback
             if not taklif_sana_dt and message.document.file_name:
                 match = re.search(r'(\d{2}\.\d{2}\.\d{4})', message.document.file_name)
                 if match:
@@ -631,13 +671,18 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                 eng_yaxshi_moslik = None
                 eng_yuqori_ball = 0
 
+                # Aqlli taqqoslash algoritmi (Transliteratsiya + token_set_ratio + partial_ratio)
                 for talaba in baza_talabalari:
-                    ball = fuzz.token_sort_ratio(deb_fio_clean, talaba["clean_name"])
+                    s_set = fuzz.token_set_ratio(deb_fio_clean, talaba["clean_name"])
+                    s_partial = fuzz.partial_ratio(talaba["clean_name"], deb_fio_clean)
+                    s_sort = fuzz.token_sort_ratio(deb_fio_clean, talaba["clean_name"])
+                    ball = max(s_set, s_partial, s_sort)
+
                     if ball > eng_yuqori_ball:
                         eng_yuqori_ball = ball
                         eng_yaxshi_moslik = talaba
 
-                if eng_yaxshi_moslik and eng_yuqori_ball >= 75:
+                if eng_yaxshi_moslik and eng_yuqori_ball >= 70:
                     target_row = eng_yaxshi_moslik["row"]
                     
                     eski_summa = eng_yaxshi_moslik["joriy_summa"]
