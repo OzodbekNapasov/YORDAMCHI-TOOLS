@@ -139,32 +139,29 @@ def fmt_num(val):
     except Exception:
         return str(val)
 
-def get_font_path(bold=True):
+def get_font(size, bold=True):
     font_paths = [
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
         '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf' if bold else '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
-        r'C:\Windows\Fonts\tahomabd.ttf' if bold else r'C:\Windows\Fonts\tahoma.ttf',
         r'C:\Windows\Fonts\arialbd.ttf' if bold else r'C:\Windows\Fonts\arial.ttf',
+        r'C:\Windows\Fonts\tahomabd.ttf' if bold else r'C:\Windows\Fonts\tahoma.ttf',
         r'C:\Windows\Fonts\calibrib.ttf' if bold else r'C:\Windows\Fonts\calibri.ttf',
     ]
     for path in font_paths:
         if os.path.exists(path):
-            return path
-    return None
-
-def get_font(size, bold=False, italic=False):
-    font_file = get_font_path(bold=bold)
-    if font_file:
-        try:
-            return ImageFont.truetype(font_file, size)
-        except Exception:
-            pass
-    return ImageFont.load_default()
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                pass
+    try:
+        return ImageFont.load_default(size=size)
+    except Exception:
+        return ImageFont.load_default()
 
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
     """Excel jadvali ko'rinishida pixel-perfect HD screenshot hosil qilish"""
-    S = 3 # 3x Ultra HD Resolution
+    S = 2 # 2x High Definition Crisp Resolution
     col_w = [int(w * S) for w in [85, 48, 310, 210, 150, 175]]
     
     headers = [
@@ -177,10 +174,10 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     ]
     
     table_w = sum(col_w)
-    title_h = int(36 * S)
-    header_h = int(54 * S)
-    row_h = int(28 * S)
-    summary_h = int(36 * S)
+    title_h = int(40 * S)
+    header_h = int(60 * S)
+    row_h = int(32 * S)
+    summary_h = int(40 * S)
     
     num_rows = len(rows_data)
     table_h = title_h + header_h + (num_rows * row_h) + summary_h
@@ -192,17 +189,8 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    font_file = get_font_path(bold=True)
-    if font_file:
-        try:
-            font_bold = ImageFont.truetype(font_file, int(14 * S))
-            font_title = ImageFont.truetype(font_file, int(16 * S))
-        except Exception:
-            font_bold = ImageFont.load_default()
-            font_title = ImageFont.load_default()
-    else:
-        font_bold = ImageFont.load_default()
-        font_title = ImageFont.load_default()
+    font_bold = get_font(int(14 * S), bold=True)
+    font_title = get_font(int(17 * S), bold=True)
     
     grid_col = (0, 0, 0)
     border_w = 3
