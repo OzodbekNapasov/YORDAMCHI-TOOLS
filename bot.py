@@ -186,6 +186,13 @@ def fmt_num(val):
         return str(val)
 
 def get_font(size, bold=True):
+    bundled_tnr = os.path.join(os.path.dirname(__file__), 'fonts', 'TimesNewRomanBold.ttf')
+    if os.path.exists(bundled_tnr):
+        try:
+            return ImageFont.truetype(bundled_tnr, size)
+        except Exception:
+            pass
+
     bundled_font = os.path.join(os.path.dirname(__file__), 'fonts', 'AppBoldFont.ttf')
     if os.path.exists(bundled_font):
         try:
@@ -194,12 +201,11 @@ def get_font(size, bold=True):
             pass
 
     font_paths = [
+        '/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf' if bold else '/usr/share/fonts/truetype/freefont/FreeSerif.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf',
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-        '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-        '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf' if bold else '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+        r'C:\Windows\Fonts\timesbd.ttf' if bold else r'C:\Windows\Fonts\times.ttf',
         r'C:\Windows\Fonts\arialbd.ttf' if bold else r'C:\Windows\Fonts\arial.ttf',
-        r'C:\Windows\Fonts\tahomabd.ttf' if bold else r'C:\Windows\Fonts\tahoma.ttf',
-        r'C:\Windows\Fonts\calibrib.ttf' if bold else r'C:\Windows\Fonts\calibri.ttf',
     ]
     for path in font_paths:
         if os.path.exists(path):
@@ -213,9 +219,9 @@ def get_font(size, bold=True):
         return ImageFont.load_default()
 
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
-    """Excel jadvali ko'rinishida pixel-perfect HD screenshot hosil qilish"""
+    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish"""
     S = 3 # 3x Ultra HD Resolution
-    col_w = [int(w * S) for w in [110, 60, 400, 260, 200, 220]]
+    col_w = [int(w * S) for w in [120, 65, 430, 280, 220, 240]]
     
     headers = [
         'GURUHI',
@@ -227,25 +233,26 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     ]
     
     table_w = sum(col_w)
-    title_h = int(55 * S)
-    header_h = int(75 * S)
-    row_h = int(45 * S)
-    summary_h = int(55 * S)
+    title_h = int(60 * S)
+    header_h = int(85 * S)
+    row_h = int(50 * S)
+    summary_h = int(60 * S)
     
     num_rows = len(rows_data)
     table_h = title_h + header_h + (num_rows * row_h) + summary_h
     
-    margin = int(28 * S)
+    margin = int(30 * S)
     img_w = table_w + 2 * margin
     img_h = table_h + 2 * margin
     
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    font_cell = get_font(int(19 * S), bold=True)
-    font_title = get_font(int(24 * S), bold=True)
-    font_header = get_font(int(19 * S), bold=True)
-    font_summary = get_font(int(20 * S), bold=True)
+    # Times New Roman Bold shriftlar - Ayanada kattalashtirilgan
+    font_cell = get_font(int(21 * S), bold=True)
+    font_title = get_font(int(26 * S), bold=True)
+    font_header = get_font(int(21 * S), bold=True)
+    font_summary = get_font(int(22 * S), bold=True)
     
     grid_col = (0, 0, 0)
     border_w = int(3 * S // 2)
@@ -259,25 +266,25 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     draw.text((ox + (table_w - tw) // 2, oy + (title_h - th) // 2 - bbox[1]), title_str, fill=(0, 0, 0), font=font_title)
     
-    # 2. Header Row
+    # 2. Header Row (Buyruq qator matnlari - barchasi to'liq markazga tekislangan)
     curr_y = oy + title_h
     curr_x = ox
     for idx, (h_text, w) in enumerate(zip(headers, col_w)):
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + header_h], fill=header_bg_color, outline=grid_col, width=border_w)
         lines = h_text.split('\n')
-        total_lines_h = len(lines) * int(24 * S)
+        total_lines_h = len(lines) * int(26 * S)
         line_y = curr_y + (header_h - total_lines_h) // 2
         for line in lines:
             bbox = font_header.getbbox(line)
             tw = bbox[2] - bbox[0]
             tx = curr_x + (w - tw) // 2
             draw.text((tx, line_y - bbox[1]), line, fill=(255, 255, 255), font=font_header)
-            line_y += int(24 * S)
+            line_y += int(26 * S)
         curr_x += w
 
-    # 3. Data Rows
+    # 3. Data Rows (Times New Roman Qalin)
     curr_y += header_h
-    tot_kerak, tot_jami, tot_qarzi = 0.0, 0.0, 0.0
+    tot_kerak, tot_jami, tot_qarzi_musbat = 0.0, 0.0, 0.0
     
     for row_idx, rdata in enumerate(rows_data):
         curr_x = ox
@@ -289,7 +296,8 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
         
         tot_kerak += kerak_num
         tot_jami += jami_num
-        tot_qarzi += qarzi_num
+        if qarzi_num > 0:
+            tot_qarzi_musbat += qarzi_num
         
         cells_info = [
             (group_name, 'center', (255,255,255), (0,0,0)),
@@ -299,12 +307,13 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             (fmt_num(jami_num), 'right', (255,255,255), (0,0,0)),
         ]
         
+        # Yaqqol va ko'zga aniq tashlanadigan to'q qizil / to'q yashil ranglar
         if qarzi_num > 0:
-            debt_bg = (252, 228, 214) # #FCE4D6
-            debt_fg = (192, 0, 0)     # Red
+            debt_bg = (255, 199, 206) # Yorqin Ochiq Qizil (#FFC7CE)
+            debt_fg = (156, 0, 6)     # Yaqqol To'q Qizil (#9C0006)
         else:
-            debt_bg = (226, 239, 218) # #E2EFDA
-            debt_fg = (55, 86, 35)    # Green
+            debt_bg = (198, 239, 206) # Yorqin Ochiq Yashil (#C6EFCE)
+            debt_fg = (0, 97, 0)      # Yaqqol To'q Yashil (#006100)
             
         cells_info.append((fmt_num(qarzi_num), 'right', debt_bg, debt_fg))
         
@@ -316,9 +325,9 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             if align == 'center':
                 tx = curr_x + (w - tw) // 2
             elif align == 'right':
-                tx = curr_x + w - tw - int(18 * S)
+                tx = curr_x + w - tw - int(20 * S)
             else:
-                tx = curr_x + int(18 * S)
+                tx = curr_x + int(20 * S)
                 
             ty = curr_y + (row_h - th) // 2 - bbox[1]
             draw.text((tx, ty), c_text, fill=fg_col, font=font_cell)
@@ -326,7 +335,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             
         curr_y += row_h
 
-    # 4. Summary Row (JAMI)
+    # 4. Summary Row (JAMI - Faqat musbat qarzlar yig'indisi)
     curr_x = ox
     jami_w = col_w[0] + col_w[1] + col_w[2]
     draw.rectangle([curr_x, curr_y, curr_x + jami_w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
@@ -338,13 +347,13 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     summary_cols = [
         (fmt_num(tot_kerak), col_w[3]),
         (fmt_num(tot_jami), col_w[4]),
-        (fmt_num(tot_qarzi), col_w[5]),
+        (fmt_num(tot_qarzi_musbat), col_w[5]),
     ]
     for c_text, w in summary_cols:
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
         bbox = font_summary.getbbox(c_text)
         tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        tx = curr_x + w - tw - int(18 * S)
+        tx = curr_x + w - tw - int(20 * S)
         ty = curr_y + (summary_h - th) // 2 - bbox[1]
         draw.text((tx, ty), c_text, fill=(255, 255, 255), font=font_summary)
         curr_x += w
