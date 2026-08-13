@@ -12,7 +12,7 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.2.0"
+BOT_VERSION = "1.2.1"
 
 # PythonAnywhere bepul tarifida Telegram API proksi orqali ishlaydi
 if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHONANYWHERE_SITE' in os.environ or 'pythonanywhere' in os.environ.get('HOME', ''):
@@ -236,8 +236,8 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     table_w = sum(col_w)
     title_h = int(55 * S)
     header_h = int(75 * S)
-    row_h = int(34 * S) # Qator balandligi ixchamlashtirildi (matnnikidan salgina katta)
-    summary_h = int(48 * S)
+    row_h = int(42 * S) # Kengaytirilgan mukammal qator balandligi (v1.2.1)
+    summary_h = int(50 * S)
     
     num_rows = len(rows_data)
     table_h = title_h + header_h + (num_rows * row_h) + summary_h
