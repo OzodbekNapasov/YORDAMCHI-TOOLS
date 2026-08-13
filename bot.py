@@ -7,12 +7,13 @@ import time
 import tempfile
 import html
 import re
+import json
 from fuzzywuzzy import fuzz
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.3.0"
+BOT_VERSION = "1.4.0"
 
 def save_user_chat_id(chat_id):
     """Foydalanuvchi chat ID sini saqlash"""
@@ -45,8 +46,8 @@ def check_and_notify_updates():
                 
                 update_msg = f"🔔 <b>TIZIMDA YANGI YANGILANISH! (v{BOT_VERSION})</b>\n\n" \
                              f"✨ <b>Yangi o'zgarishlar va imkoniyatlar:</b>\n" \
-                             f"• 📏 <b>Ismlar ustuni kengaytirildi:</b> Eng uzun familiya va ismlar ham (masalan <i>Abduhakimova Xurshida...</i>) jadvalga 100% to'liq va shinam sig'ib tushadi.\n" \
-                             f"• 📢 <b>Avtomatik xabarnoma tizimi:</b> Endi har safar yangilanish bo'lganda bot sizga start bosmasangiz ham avtomatik xabar beradi!\n\n" \
+                             f"• 📊 <b>Avtomatik XULOSA hisobot rasm:</b> Kontrakt yangilanishi yakunida barcha guruh rahbarlari, guruhlar, talabalar soni va umumiy qarzdorlik jamlanmasi rasmi o'zi yuboriladi!\n" \
+                             f"• 📏 <b>Familiyalar kengligi oshirildi:</b> Eng uzun ismlar ham jadvalga 100% to'liq va shinam sig'ib tushadi.\n\n" \
                              f"<i>Platformadan bemalol foydalanishingiz mumkin! 🚀</i>"
 
                 for cid in chats:
@@ -181,7 +182,6 @@ def ismlarni_standartlash(ism):
     ism = ism.replace("о‘", "o").replace("o‘", "o").replace("o'", "o").replace("о'", "o")
     ism = ism.replace("g‘", "g").replace("g'", "g").replace("г‘", "g")
     ism = ism.replace("ch", "c").replace("sh", "s").replace("x", "h").replace("ya", "a").replace("yu", "u")
-    # Raqamlar va belgilarni olib tashlab faqat harflarni qoldirish
     return "".join(c for c in ism if c.isalpha() or c.isspace())
 
 def send_safe_message(chat_id, text, reply_markup=None):
@@ -200,7 +200,6 @@ def send_safe_message(chat_id, text, reply_markup=None):
             except Exception:
                 pass
 
-    # Uzun xabarni <blockquote> bloklari bo'yicha HTML sinmasdan bo'lib yuborish
     blocks = text.split("<blockquote>")
     current_chunk = blocks[0]
 
@@ -227,7 +226,7 @@ def fmt_num(val):
     try:
         fval = float(val)
         if fval == 0:
-            return "-"
+            return "0"
         return f"{int(round(fval)):,}".replace(",", " ")
     except Exception:
         return str(val)
@@ -266,7 +265,7 @@ def get_font(size, bold=True):
         return ImageFont.load_default()
 
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
-    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish (v1.3.0)"""
+    """Times New Roman shriftida pixel-perfect HD screenshot hosil qilish (v1.4.0)"""
     S = 3 # 3x Ultra HD Resolution
     col_w = [int(w * S) for w in [110, 60, 520, 310, 230, 250]]
     
@@ -282,7 +281,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     table_w = sum(col_w)
     title_h = int(55 * S)
     header_h = int(75 * S)
-    row_h = int(42 * S) # Kengaytirilgan mukammal qator balandligi (v1.2.1)
+    row_h = int(42 * S)
     summary_h = int(50 * S)
     
     num_rows = len(rows_data)
@@ -295,7 +294,6 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    # Times New Roman Bold shriftlar - Ayanada kattalashtirilgan (24pt)
     font_cell = get_font(int(24 * S), bold=True)
     font_title = get_font(int(30 * S), bold=True)
     font_header = get_font(int(24 * S), bold=True)
@@ -313,7 +311,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     draw.text((ox + (table_w - tw) // 2, oy + (title_h - th) // 2 - bbox[1]), title_str, fill=(0, 0, 0), font=font_title)
     
-    # 2. Header Row (Buyruq qator matnlari - barchasi to'liq markazga tekislangan)
+    # 2. Header Row
     curr_y = oy + title_h
     curr_x = ox
     for idx, (h_text, w) in enumerate(zip(headers, col_w)):
@@ -329,7 +327,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             line_y += int(28 * S)
         curr_x += w
 
-    # 3. Data Rows (Times New Roman Qalin - Ixcham balandlik)
+    # 3. Data Rows
     curr_y += header_h
     tot_kerak, tot_jami, tot_qarzi_musbat = 0.0, 0.0, 0.0
     
@@ -355,11 +353,11 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
         ]
         
         if qarzi_num > 0:
-            debt_bg = (255, 199, 206) # Yorqin Ochiq Qizil (#FFC7CE)
-            debt_fg = (156, 0, 6)     # Yaqqol To'q Qizil (#9C0006)
+            debt_bg = (255, 199, 206)
+            debt_fg = (156, 0, 6)
         else:
-            debt_bg = (198, 239, 206) # Yorqin Ochiq Yashil (#C6EFCE)
-            debt_fg = (0, 97, 0)      # Yaqqol To'q Yashil (#006100)
+            debt_bg = (198, 239, 206)
+            debt_fg = (0, 97, 0)
             
         cells_info.append((fmt_num(qarzi_num), 'right', debt_bg, debt_fg))
         
@@ -381,7 +379,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             
         curr_y += row_h
 
-    # 4. Summary Row (JAMI - Faqat musbat qarzlar yig'indisi)
+    # 4. Summary Row (JAMI)
     curr_x = ox
     jami_w = col_w[0] + col_w[1] + col_w[2]
     draw.rectangle([curr_x, curr_y, curr_x + jami_w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
@@ -407,6 +405,120 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     img.save(output_path, 'PNG', quality=100)
     return output_path
 
+def generate_xulosa_table_image(xulosa_rows, output_path):
+    """Guruh rahbarlari va umumiy jamlanma XULOSA rasm jadvalini yaratish"""
+    S = 3 # 3x Ultra HD Resolution
+    col_w = [int(w * S) for w in [280, 160, 180, 240]]
+    headers = ['Guruh rahbari', 'Guruh', 'Talabalar soni', 'Qarzdorligi']
+    
+    table_w = sum(col_w)
+    header_h = int(65 * S)
+    row_h = int(42 * S)
+    summary_h = int(50 * S)
+    
+    num_rows = len(xulosa_rows)
+    table_h = header_h + (num_rows * row_h) + summary_h
+    
+    margin = int(24 * S)
+    img_w = table_w + 2 * margin
+    img_h = table_h + 2 * margin
+    
+    img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    
+    font_cell = get_font(int(21 * S), bold=True)
+    font_header = get_font(int(22 * S), bold=True)
+    font_summary = get_font(int(23 * S), bold=True)
+    
+    grid_col = (0, 0, 0)
+    border_w = int(3 * S // 2)
+    ox, oy = margin, margin
+    
+    # 1. Header Row (To'q olovrang fon: #ED7D31)
+    header_bg_color = (237, 125, 49)
+    curr_x = ox
+    curr_y = oy
+    for idx, (h_text, w) in enumerate(zip(headers, col_w)):
+        draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + header_h], fill=header_bg_color, outline=grid_col, width=border_w)
+        bbox = font_header.getbbox(h_text)
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        tx = curr_x + (w - tw) // 2
+        ty = curr_y + (header_h - th) // 2 - bbox[1]
+        draw.text((tx, ty), h_text, fill=(255, 255, 255), font=font_header)
+        curr_x += w
+
+    # 2. Data Rows
+    curr_y += header_h
+    tot_talabalar = 0
+    tot_qarzdorlik = 0.0
+    
+    for rdata in xulosa_rows:
+        curr_x = ox
+        rahbar = str(rdata.get('rahbar', ''))
+        guruh = str(rdata.get('guruh', ''))
+        soni = int(rdata.get('soni', 0))
+        qarz = float(rdata.get('qarz', 0.0))
+        
+        tot_talabalar += soni
+        tot_qarzdorlik += qarz
+        
+        qarz_bg = (198, 239, 206) if qarz <= 0 else (255, 255, 255)
+        
+        cells_info = [
+            (rahbar, 'center', (255,255,255), (0,0,0)),
+            (guruh, 'center', (255,255,255), (0,0,0)),
+            (str(soni), 'center', (255,255,255), (0,0,0)),
+            (fmt_num(qarz), 'right', qarz_bg, (0,0,0)),
+        ]
+        
+        for (c_text, align, bg_col, fg_col), w in zip(cells_info, col_w):
+            draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + row_h], fill=bg_col, outline=grid_col, width=border_w)
+            bbox = font_cell.getbbox(c_text)
+            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            
+            if align == 'center':
+                tx = curr_x + (w - tw) // 2
+            elif align == 'right':
+                tx = curr_x + w - tw - int(16 * S)
+            else:
+                tx = curr_x + int(16 * S)
+                
+            ty = curr_y + (row_h - th) // 2 - bbox[1]
+            draw.text((tx, ty), c_text, fill=fg_col, font=font_cell)
+            curr_x += w
+            
+        curr_y += row_h
+
+    # 3. Bottom Summary Row (JAMI - Qizil fon)
+    curr_x = ox
+    jami_w = col_w[0] + col_w[1]
+    summary_bg_color = (255, 0, 0)
+    
+    draw.rectangle([curr_x, curr_y, curr_x + jami_w, curr_y + summary_h], fill=summary_bg_color, outline=grid_col, width=border_w)
+    bbox = font_summary.getbbox('Jami')
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    draw.text((curr_x + (jami_w - tw) // 2, curr_y + (summary_h - th) // 2 - bbox[1]), 'Jami', fill=(0, 0, 0), font=font_summary)
+    curr_x += jami_w
+    
+    w_soni = col_w[2]
+    draw.rectangle([curr_x, curr_y, curr_x + w_soni, curr_y + summary_h], fill=summary_bg_color, outline=grid_col, width=border_w)
+    bbox = font_summary.getbbox(str(tot_talabalar))
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    draw.text((curr_x + (w_soni - tw) // 2, curr_y + (summary_h - th) // 2 - bbox[1]), str(tot_talabalar), fill=(0, 0, 0), font=font_summary)
+    curr_x += w_soni
+    
+    w_qarz = col_w[3]
+    qarz_str = fmt_num(tot_qarzdorlik)
+    draw.rectangle([curr_x, curr_y, curr_x + w_qarz, curr_y + summary_h], fill=summary_bg_color, outline=grid_col, width=border_w)
+    bbox = font_summary.getbbox(qarz_str)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    tx = curr_x + w_qarz - tw - int(16 * S)
+    ty = curr_y + (summary_h - th) // 2 - bbox[1]
+    draw.text((tx, ty), qarz_str, fill=(0, 0, 0), font=font_summary)
+    
+    img.save(output_path, 'PNG', quality=100)
+    return output_path
+
 # Webhook Marshrutlari
 @app.route('/' + TOKEN, methods=['POST'])
 def getMessage():
@@ -423,7 +535,6 @@ def getMessage():
         update = telebot.types.Update.de_json(raw)
         bot.process_new_updates([update])
         
-        # Yangilanish xabarnomasini avtomatik yuborishni tekshirish
         check_and_notify_updates()
         
         print("WEBHOOK: done", file=sys.stderr, flush=True)
@@ -493,6 +604,7 @@ def send_welcome(message):
 @bot.message_handler(func=lambda message: message.text == "📝 Kontraktni yangilash")
 def start_kontrakt_yangilash(message):
     chat_id = message.chat.id
+    save_user_chat_id(chat_id)
     user_data[chat_id] = {"holat": "baza_kutish"}
     send_safe_message(chat_id, "📑 <b>1-BOSQICH: ASOSIY BAZANI YUKLASH</b>\n\n"
                                "Iltimos, kontraktlar kiritilgan asosiy <b>.xlsx</b> faylingizni yuboring:")
@@ -500,14 +612,16 @@ def start_kontrakt_yangilash(message):
 @bot.message_handler(func=lambda message: message.text == "📸 Guruh screenshotlarini olish")
 def start_guruh_screenshot(message):
     chat_id = message.chat.id
+    save_user_chat_id(chat_id)
     user_data[chat_id] = {"holat": "guruh_fayl_kutish"}
     send_safe_message(chat_id, "📸 <b>GURUH SCREENSHOTLARINI OLISH</b>\n\n"
                                "Guruhlar screenshotlarini olish uchun tayyorlangan Excel (<b>.xlsx</b>) faylingizni yuboring:")
 
-# Matnli xabarlar handler (Boshlanish sanasi va boshqalar)
+# Matnli xabarlar handler
 @bot.message_handler(func=lambda message: message.content_type == 'text' and not message.text.startswith('/'))
 def handle_text_messages(message):
     chat_id = message.chat.id
+    save_user_chat_id(chat_id)
     holat = user_data.get(chat_id, {}).get("holat")
 
     if holat == "sana_kutish":
@@ -538,6 +652,7 @@ def handle_text_messages(message):
 @bot.message_handler(content_types=['document'])
 def handle_docs(message):
     chat_id = message.chat.id
+    save_user_chat_id(chat_id)
     holat = user_data.get(chat_id, {}).get("holat")
 
     if not holat:
@@ -549,7 +664,7 @@ def handle_docs(message):
         process_group_screenshots(chat_id, message)
         return
 
-    # KONTRAKTNI YANGILASH: 1-BOSQICH (ASOSIY BAZA YUKLANDI)
+    # KONTRAKTNI YANGILASH: 1-BOSQICH
     if holat == "baza_kutish":
         try:
             file_info = bot.get_file(message.document.file_id)
@@ -559,7 +674,6 @@ def handle_docs(message):
             with open(baza_nomi, 'wb') as f:
                 f.write(downloaded_file)
 
-            # Bazadagi oxirgi yangilangan sanani o'qib, 1 kun keyingi sanani taklif qilish
             taklif_sana_dt = None
             try:
                 wb_check = openpyxl.load_workbook(baza_nomi, data_only=True)
@@ -605,7 +719,7 @@ def handle_docs(message):
             user_data[chat_id] = {}
         return
 
-    # KONTRAKTNI YANGILASH: 2-BOSQICH (DEBITORKA YUKLANDI)
+    # KONTRAKTNI YANGILASH: 2-BOSQICH
     if holat == "deb_kutish":
         try:
             file_info = bot.get_file(message.document.file_id)
@@ -641,7 +755,7 @@ def handle_docs(message):
         return
 
 def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
-    """Kontraktlarni yangilash va hisobot tayyorlash (Real Progress bilan)"""
+    """Kontraktlarni yangilash, hisobot va XULOSA rasm tayyorlash"""
     progress = TelegramProgress(bot, chat_id, "⏳ Jarayon boshlandi...")
 
     try:
@@ -659,6 +773,7 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
         progress.update("🧠 Ma'lumotlar tahlil qilinmoqda...", 25)
 
         ism_ustun = 3
+        kerak_ustun = 4
         tolov_ustun = 5
         guruh_ustun = 1
         boshlanish_row = 23
@@ -671,6 +786,8 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                 if any(x in val for x in ['familiya', 'f.i.sh', 'ism', 'sharfi']):
                     ism_ustun = c
                     boshlanish_row = r + 1
+                if 'bo\'lishi' in val or 'kerak' in val:
+                    kerak_ustun = c
                 if any(x in val for x in ['jami', 'to\'lagan summasi', 'to\'lov']):
                     tolov_ustun = c
 
@@ -683,16 +800,19 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                 if guruh_str.endswith('.0'): guruh_str = guruh_str[:-2]
 
                 eski_val = sheet_read.cell(row=row, column=tolov_ustun).value
-                try:
-                    eski_sum = float(eski_val) if eski_val else 0.0
-                except (ValueError, TypeError):
-                    eski_sum = 0.0
+                kerak_val = sheet_read.cell(row=row, column=kerak_ustun).value
+                try: eski_sum = float(eski_val) if eski_val else 0.0
+                except (ValueError, TypeError): eski_sum = 0.0
+
+                try: kerak_sum = float(kerak_val) if kerak_val else 0.0
+                except (ValueError, TypeError): kerak_sum = 0.0
 
                 baza_talabalari.append({
                     "row": row,
                     "original_name": str(fio).strip(),
                     "clean_name": ismlarni_standartlash(fio),
                     "guruh": guruh_str,
+                    "kerak_summa": kerak_sum,
                     "boshlangich_summa": eski_sum,
                     "joriy_summa": eski_sum
                 })
@@ -747,7 +867,6 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                 eng_yaxshi_moslik = None
                 eng_yuqori_ball = 0
 
-                # Aqlli taqqoslash algoritmi (Transliteratsiya + token_set_ratio + partial_ratio)
                 for talaba in baza_talabalari:
                     s_set = fuzz.token_set_ratio(deb_fio_clean, talaba["clean_name"])
                     s_partial = fuzz.partial_ratio(talaba["clean_name"], deb_fio_clean)
@@ -775,7 +894,6 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                     safe_deb_fio = escape_html_text(deb_fio_str or h_str)
                     safe_sana = to_lov_sanasi.strftime('%d.%m.%Y')
                     
-                    # Telegram Native HTML Blockquote formatida yuborish
                     yangilanish_tarixi.append(
                         f"<blockquote>👤 <b>{safe_orig_name}</b>\n"
                         f"├ 🏦 Debitorkada: <code>{safe_deb_fio}</code>\n"
@@ -798,7 +916,6 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
 
         progress.update("⚙️ Natija tayyorlanmoqda...", 85)
 
-        # Excel ichidagi "Yangilangan sanasi:" yozuvini eng oxirgi to'lov sanasiga o'zgartirish
         oxirgi_sana_str = oxirgi_to_lov_sanasi.strftime('%d.%m.%Y') if oxirgi_to_lov_sanasi else cheklov_sanasi.strftime('%d.%m.%Y')
         for r in range(1, 30):
             for c in range(1, 10):
@@ -808,6 +925,27 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                     if not sheet_write.cell(row=r, column=target_c).value:
                         target_c = c + 2
                     sheet_write.cell(row=r, column=target_c).value = oxirgi_sana_str
+
+        # Guruhlar bo'yicha umumiy XULOSA ma'lumotlarini bazadan avtomatik shakllantirish
+        xulosa_rows = []
+        for r in range(1, 20):
+            rahbar = sheet_read.cell(row=r, column=3).value
+            guruh = sheet_read.cell(row=r, column=4).value
+            if rahbar and guruh and str(rahbar).strip() and str(guruh).strip():
+                if str(rahbar).lower().startswith(('jami', 'итого', 'guruh rahbari')): continue
+                g_str = str(guruh).strip()
+                if g_str.endswith('.0'): g_str = g_str[:-2]
+
+                g_students = [t for t in baza_talabalari if t['guruh'] == g_str]
+                soni = len(g_students)
+                qarz_sum = sum(max(0.0, t['kerak_summa'] - t['joriy_summa']) for t in g_students)
+
+                xulosa_rows.append({
+                    'rahbar': str(rahbar).strip(),
+                    'guruh': g_str,
+                    'soni': soni if soni > 0 else int(sheet_read.cell(row=r, column=5).value or 0),
+                    'qarz': qarz_sum
+                })
 
         natija_nomi = os.path.join(tempfile.gettempdir(), f"{oxirgi_sana_str}_GACHA_KONTRAKTLAR.xlsx")
         wb_baza_write.save(natija_nomi)
@@ -848,6 +986,15 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
             bot.send_document(chat_id, f_send, caption=f"📄 Formulalari buzilmagan tayyor Excel faylingiz: <code>{os.path.basename(natija_nomi)}</code>", parse_mode="HTML", reply_markup=get_main_keyboard())
         
         send_safe_message(chat_id, hisobot_matni)
+
+        # ENG OXIRIDA GURUHLAR BO'YICHA XULOSA RASM JADVALINI YUBORISH
+        if xulosa_rows:
+            xulosa_img = os.path.join(tempfile.gettempdir(), f"xulosa_{chat_id}.png")
+            generate_xulosa_table_image(xulosa_rows, xulosa_img)
+            with open(xulosa_img, 'rb') as xf:
+                bot.send_photo(chat_id, photo=xf, caption=f"📊 <b>Guruh rahbarlari bo'yicha umumiy XULOSA hisoboti (v{BOT_VERSION})</b>", parse_mode="HTML")
+            if os.path.exists(xulosa_img): os.remove(xulosa_img)
+
         progress.success("✅ Tayyor!")
 
         if os.path.exists(baza_path): os.remove(baza_path)
