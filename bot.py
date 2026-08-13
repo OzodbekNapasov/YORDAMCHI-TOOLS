@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import os
 import time
 import tempfile
+import html
+import re
 from fuzzywuzzy import fuzz
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
@@ -42,7 +44,7 @@ class TelegramProgress:
     def _send_initial(self):
         text = f"{self.current_status}\n{self._render_bar(0)}"
         try:
-            msg = self.bot.send_message(self.chat_id, text, parse_mode="Markdown")
+            msg = self.bot.send_message(self.chat_id, text, parse_mode="HTML")
             self.message_id = msg.message_id
             self.last_update_time = time.time()
         except Exception:
@@ -64,7 +66,7 @@ class TelegramProgress:
         text = f"{self.current_status}\n{self._render_bar(self.current_percent)}"
         if self.message_id:
             try:
-                self.bot.edit_message_text(text, self.chat_id, self.message_id, parse_mode="Markdown")
+                self.bot.edit_message_text(text, self.chat_id, self.message_id, parse_mode="HTML")
                 self.last_update_time = now
             except Exception:
                 try:
@@ -90,21 +92,21 @@ class TelegramProgress:
             except Exception:
                 pass
 
-def get_main_keyboard():
+def get_main_keyboard(suggested_date=None):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    if suggested_date:
+        btn_date = telebot.types.KeyboardButton(suggested_date)
+        markup.add(btn_date)
     btn1 = telebot.types.KeyboardButton("📝 Kontraktni yangilash")
     btn2 = telebot.types.KeyboardButton("📸 Guruh screenshotlarini olish")
     markup.add(btn1, btn2)
     return markup
 
-def escape_md(text):
-    """Telegram Markdown v1 uchun maxsus belgilarni zararsizlantirish"""
+def escape_html_text(text):
+    """HTML rejimida maxsus belgilarni xavfsiz qilish"""
     if not text:
         return ""
-    text = str(text)
-    for char in ['_', '*', '`', '[']:
-        text = text.replace(char, f"\\{char}")
-    return text
+    return html.escape(str(text))
 
 def ismlarni_standartlash(ism):
     if not ism: return ""
@@ -116,17 +118,19 @@ def ismlarni_standartlash(ism):
     ism = ism.replace("x", "h").replace("ya", "a").replace("yu", "u")
     return "".join(ism.split())
 
-def send_safe_message(chat_id, text):
-    """Markdown xatosi bo'lsa tekis matnda yuborish (Crash oldini oladi)"""
+def send_safe_message(chat_id, text, reply_markup=None):
+    """HTML rejimida xavfsiz xabar yuborish"""
+    if reply_markup is None:
+        reply_markup = get_main_keyboard()
     try:
         if len(text) <= 4000:
-            bot.send_message(chat_id, text, parse_mode="Markdown", reply_markup=get_main_keyboard())
+            bot.send_message(chat_id, text, parse_mode="HTML", reply_markup=reply_markup)
         else:
             for i in range(0, len(text), 3900):
-                bot.send_message(chat_id, text[i:i+3900], parse_mode="Markdown", reply_markup=get_main_keyboard())
+                bot.send_message(chat_id, text[i:i+3900], parse_mode="HTML", reply_markup=reply_markup)
     except Exception:
         for i in range(0, len(text), 3900):
-            bot.send_message(chat_id, text[i:i+3900], reply_markup=get_main_keyboard())
+            bot.send_message(chat_id, text[i:i+3900], reply_markup=reply_markup)
 
 def fmt_num(val):
     if val is None or val == "" or val == "-":
@@ -189,7 +193,6 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    # Barcha matnlar 100% BOLD (qalin) va katta hajmda
     font_bold = get_font(int(17 * S), bold=True)
     font_title = get_font(int(22 * S), bold=True)
     font_summary = get_font(int(18 * S), bold=True)
@@ -197,17 +200,16 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     grid_col = (0, 0, 0)
     border_w = int(3 * S // 2)
     
-    ox = margin
-    oy = margin
+    ox, oy = margin, margin
     
-    # 1. Title Row (Yangilangan sanasi)
+    # 1. Title Row
     draw.rectangle([ox, oy, ox + table_w, oy + title_h], fill=(255, 255, 255), outline=grid_col, width=border_w)
     title_str = f'Yangilangan sanasi:   {date_str}'
     bbox = font_title.getbbox(title_str)
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     draw.text((ox + (table_w - tw) // 2, oy + (title_h - th) // 2 - bbox[1]), title_str, fill=(0, 0, 0), font=font_title)
     
-    # 2. Header Row (Qalin oq matn)
+    # 2. Header Row
     curr_y = oy + title_h
     curr_x = ox
     for idx, (h_text, w) in enumerate(zip(headers, col_w)):
@@ -223,11 +225,9 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             line_y += int(22 * S)
         curr_x += w
 
-    # 3. Data Rows (ALL BOLD TEXT)
+    # 3. Data Rows
     curr_y += header_h
-    tot_kerak = 0.0
-    tot_jami = 0.0
-    tot_qarzi = 0.0
+    tot_kerak, tot_jami, tot_qarzi = 0.0, 0.0, 0.0
     
     for row_idx, rdata in enumerate(rows_data):
         curr_x = ox
@@ -276,7 +276,7 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
             
         curr_y += row_h
 
-    # 4. Summary Row (JAMI - QALIN)
+    # 4. Summary Row (JAMI)
     curr_x = ox
     jami_w = col_w[0] + col_w[1] + col_w[2]
     draw.rectangle([curr_x, curr_y, curr_x + jami_w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
@@ -369,25 +369,22 @@ def webhook_info():
 def send_welcome(message):
     chat_id = message.chat.id
     user_data[chat_id] = {}
-    bot.send_message(chat_id, "Salom! Aqlli kontrakt va guruhlar platformasi faol. 🚀\n\n"
-                              "Kerakli bo'limni tanlang:", reply_markup=get_main_keyboard())
+    send_safe_message(chat_id, "Salom! Aqlli kontrakt va guruhlar platformasi faol. 🚀\n\n"
+                               "Kerakli bo'limni tanlang:")
 
-# 1-KETMA-KETLIK: Kontraktni yangilash jarayoni (Baza -> Debitorka -> Sana)
 @bot.message_handler(func=lambda message: message.text == "📝 Kontraktni yangilash")
 def start_kontrakt_yangilash(message):
     chat_id = message.chat.id
     user_data[chat_id] = {"holat": "baza_kutish"}
-    bot.send_message(chat_id, "📑 *1-BOSQICH: ASOSIY BAZANI YUKLASH*\n\n"
-                              "Iltimos, kontraktlar kiritilgan asosiy *.xlsx* faylingizni yuboring:", 
-                     parse_mode="Markdown", reply_markup=get_main_keyboard())
+    send_safe_message(chat_id, "📑 <b>1-BOSQICH: ASOSIY BAZANI YUKLASH</b>\n\n"
+                               "Iltimos, kontraktlar kiritilgan asosiy <b>.xlsx</b> faylingizni yuboring:")
 
 @bot.message_handler(func=lambda message: message.text == "📸 Guruh screenshotlarini olish")
 def start_guruh_screenshot(message):
     chat_id = message.chat.id
     user_data[chat_id] = {"holat": "guruh_fayl_kutish"}
-    bot.send_message(chat_id, "📸 *GURUH SCREENSHOTLARINI OLISH*\n\n"
-                              "Guruhlar screenshotlarini olish uchun tayyorlangan Excel (*.xlsx*) faylingizni yuboring:", 
-                     parse_mode="Markdown", reply_markup=get_main_keyboard())
+    send_safe_message(chat_id, "📸 <b>GURUH SCREENSHOTLARINI OLISH</b>\n\n"
+                               "Guruhlar screenshotlarini olish uchun tayyorlangan Excel (<b>.xlsx</b>) faylingizni yuboring:")
 
 # Matnli xabarlar handler (Boshlanish sanasi va boshqalar)
 @bot.message_handler(func=lambda message: message.content_type == 'text' and not message.text.startswith('/'))
@@ -397,16 +394,18 @@ def handle_text_messages(message):
 
     if holat == "sana_kutish":
         sana_matni = message.text.strip()
+        # Foydalanuvchi "📅 01.08.2026" shaklida yuborgan bo'lsa tozalash
+        sana_matni = sana_matni.replace("📅", "").strip()
+
         try:
             cheklov_sanasi = datetime.strptime(sana_matni, "%d.%m.%Y")
             user_data[chat_id]["sana"] = cheklov_sanasi
             
-            # Sanadan so'ng hisob-kitob jarayonini boshlash
             baza_path = user_data[chat_id].get("baza_path")
             deb_path = user_data[chat_id].get("deb_path")
 
             if not baza_path or not os.path.exists(baza_path) or not deb_path or not os.path.exists(deb_path):
-                bot.reply_to(message, "❌ Yuklangan fayllar topilmadi. Qayta urinib ko'ring.", reply_markup=get_main_keyboard())
+                send_safe_message(chat_id, "❌ Yuklangan fayllar topilmadi. Qayta urinib ko'ring.")
                 user_data[chat_id] = {}
                 return
 
@@ -414,7 +413,9 @@ def handle_text_messages(message):
             user_data[chat_id] = {}
 
         except ValueError:
-            bot.reply_to(message, "❌ Noto'g'ri sana formati. Nuqtalar bilan kiriting (Masalan: `27.06.2026`):", parse_mode="Markdown", reply_markup=get_main_keyboard())
+            suggested = user_data.get(chat_id, {}).get("taklif_sana_str")
+            markup = get_main_keyboard(suggested)
+            send_safe_message(chat_id, "❌ Noto'g'ri sana formati. Nuqtalar bilan kiriting (Masalan: <code>27.06.2026</code>):", reply_markup=markup)
 
 # Fayl yuklanganda ishlovchi handler
 @bot.message_handler(content_types=['document'])
@@ -423,7 +424,7 @@ def handle_docs(message):
     holat = user_data.get(chat_id, {}).get("holat")
 
     if not holat:
-        bot.reply_to(message, "Iltimos, avval menyudan kerakli tugmani tanlang:", reply_markup=get_main_keyboard())
+        send_safe_message(chat_id, "Iltimos, avval menyudan kerakli tugmani tanlang:")
         return
 
     # GURUH SCREENSHOTLARINI OLISH
@@ -441,15 +442,50 @@ def handle_docs(message):
             with open(baza_nomi, 'wb') as f:
                 f.write(downloaded_file)
 
+            # Bazadagi oxirgi yangilangan sanani o'qib, 1 kun keyingi sanani taklif qilish
+            taklif_sana_dt = None
+            try:
+                wb_check = openpyxl.load_workbook(baza_nomi, data_only=True)
+                sheet_check = wb_check.active
+                for r in range(1, 30):
+                    for c in range(1, 10):
+                        val = str(sheet_check.cell(row=r, column=c).value or "")
+                        if 'yangilangan sanasi' in val.lower():
+                            cell_val = sheet_check.cell(row=r, column=c+1).value or sheet_check.cell(row=r, column=c+2).value
+                            if cell_val:
+                                if isinstance(cell_val, datetime):
+                                    taklif_sana_dt = cell_val + timedelta(days=1)
+                                elif isinstance(cell_val, str):
+                                    try:
+                                        dt = datetime.strptime(cell_val.strip(), "%d.%m.%Y")
+                                        taklif_sana_dt = dt + timedelta(days=1)
+                                    except ValueError:
+                                        pass
+                wb_check.close()
+            except Exception:
+                pass
+
+            # Fayl nomidan sana izlash fallback
+            if not taklif_sana_dt and message.document.file_name:
+                match = re.search(r'(\d{2}\.\d{2}\.\d{4})', message.document.file_name)
+                if match:
+                    try:
+                        dt = datetime.strptime(match.group(1), "%d.%m.%Y")
+                        taklif_sana_dt = dt + timedelta(days=1)
+                    except ValueError:
+                        pass
+
+            taklif_sana_str = taklif_sana_dt.strftime("%d.%m.%Y") if taklif_sana_dt else None
+
             user_data[chat_id]["baza_path"] = baza_nomi
+            user_data[chat_id]["taklif_sana_str"] = taklif_sana_str
             user_data[chat_id]["holat"] = "deb_kutish"
 
-            bot.send_message(chat_id, "✅ *Asosiy baza qabul qilindi!*\n\n"
-                                      "📥 *2-BOSQICH: BANK DEBITORKASINI YUKLASH*\n\n"
-                                      "Endi bankdan kelgan yangi *Debitorka (.xlsx)* faylini yuboring:", 
-                             parse_mode="Markdown", reply_markup=get_main_keyboard())
+            send_safe_message(chat_id, "✅ <b>Asosiy baza qabul qilindi!</b>\n\n"
+                                       "📥 <b>2-BOSQICH: BANK DEBITORKASINI YUKLASH</b>\n\n"
+                                       "Endi bankdan kelgan yangi <b>Debitorka (.xlsx)</b> faylini yuboring:")
         except Exception as e:
-            bot.send_message(chat_id, f"❌ Faylni yuklashda xatolik: `{str(e)}`", parse_mode="Markdown", reply_markup=get_main_keyboard())
+            send_safe_message(chat_id, f"❌ Faylni yuklashda xatolik: <code>{escape_html_text(str(e))}</code>")
             user_data[chat_id] = {}
         return
 
@@ -466,13 +502,25 @@ def handle_docs(message):
             user_data[chat_id]["deb_path"] = deb_nomi
             user_data[chat_id]["holat"] = "sana_kutish"
 
-            bot.send_message(chat_id, "✅ *Bank debitorkasi qabul qilindi!*\n\n"
-                                      "📅 *3-BOSQICH: BOSHLANISH SANASI*\n\n"
-                                      "To'lovlarni *qaysi sanadan boshlab* hisoblayin?\n"
-                                      "Format: `27.06.2026` shaklida yozing:", 
-                             parse_mode="Markdown", reply_markup=get_main_keyboard())
+            taklif_sana_str = user_data[chat_id].get("taklif_sana_str")
+            
+            msg_text = "✅ <b>Bank debitorkasi qabul qilindi!</b>\n\n" \
+                       "📅 <b>3-BOSQICH: BOSHLANISH SANASI</b>\n\n"
+            
+            if taklif_sana_str:
+                msg_text += f"💡 Bazangizdagi oxirgi sana bo'yicha tavsiya etilgan boshlanish sanasi: <code>{taklif_sana_str}</code>\n\n"
+            
+            msg_text += "To'lovlarni <b>qaysi sanadan boshlab</b> hisoblayin?\n"
+            if taklif_sana_str:
+                msg_text += f"<i>(Pastdagi <code>{taklif_sana_str}</code> tugmasini bosing yoki o'zingiz sana kiriting):</i>"
+            else:
+                msg_text += "Format: <code>27.06.2026</code> shaklida yozing:"
+
+            markup = get_main_keyboard(suggested_date=taklif_sana_str)
+            send_safe_message(chat_id, msg_text, reply_markup=markup)
+
         except Exception as e:
-            bot.send_message(chat_id, f"❌ Faylni yuklashda xatolik: `{str(e)}`", parse_mode="Markdown", reply_markup=get_main_keyboard())
+            send_safe_message(chat_id, f"❌ Faylni yuklashda xatolik: <code>{escape_html_text(str(e))}</code>")
             user_data[chat_id] = {}
         return
 
@@ -541,7 +589,6 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
         
         max_deb_rows = sheet_deb.max_row
         for row_idx, row in enumerate(range(2, max_deb_rows + 1), start=1):
-            # Real progress dinamik yangilanishi (25% dan 75% gacha)
             current_pct = 25 + int((row_idx / max(max_deb_rows - 1, 1)) * 50)
             progress.update("🧠 Ma'lumotlar tahlil qilinmoqda...", current_pct)
 
@@ -602,19 +649,19 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                     jami_tushgan_pul += yangi_summa
                     yangilangan_talabalar_set.add(eng_yaxshi_moslik['original_name'])
 
-                    safe_orig_name = escape_md(eng_yaxshi_moslik['original_name'])
-                    safe_guruh = escape_md(eng_yaxshi_moslik['guruh'])
-                    safe_deb_fio = escape_md(deb_fio_str or h_str)
+                    safe_orig_name = escape_html_text(eng_yaxshi_moslik['original_name'])
+                    safe_guruh = escape_html_text(eng_yaxshi_moslik['guruh'])
+                    safe_deb_fio = escape_html_text(deb_fio_str or h_str)
                     safe_sana = to_lov_sanasi.strftime('%d.%m.%Y')
                     
-                    # Alohida Iqtibos (Blockquote) formatida yuborish
+                    # Telegram Native HTML Blockquote formatida yuborish
                     yangilanish_tarixi.append(
-                        f"> 👤 *{safe_orig_name}*\n"
-                        f"> ├ 🏦 Debitorkada: `{safe_deb_fio}`\n"
-                        f"> ├ 🏫 Guruh: `{safe_guruh}`\n"
-                        f"> ├ 📅 Toʻlov sanasi: `{safe_sana}`\n"
-                        f"> ├ ➕ Tushgan pul: `{yangi_summa:,.0f} so'm`\n"
-                        f"> └ 📊 Jami toʻladi: `{jami_yangi:,.0f} so'm`"
+                        f"<blockquote>👤 <b>{safe_orig_name}</b>\n"
+                        f"├ 🏦 Debitorkada: <code>{safe_deb_fio}</code>\n"
+                        f"├ 🏫 Guruh: <code>{safe_guruh}</code>\n"
+                        f"├ 📅 Toʻlov sanasi: <code>{safe_sana}</code>\n"
+                        f"├ ➕ Tushgan pul: <code>{yangi_summa:,.0f} so'm</code>\n"
+                        f"└ 📊 Jami toʻladi: <code>{jami_yangi:,.0f} so'm</code></blockquote>"
                     )
                 else:
                     if h_str and deb_fio_str and h_str != deb_fio_str and deb_fio_str != "?":
@@ -624,9 +671,9 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
                     else:
                         disp_name = deb_fio_str or "Noma'lum"
 
-                    safe_disp_name = escape_md(disp_name)
+                    safe_disp_name = escape_html_text(disp_name)
                     safe_sana = to_lov_sanasi.strftime('%d.%m.%Y')
-                    topilmaganlar.append(f"> ❓ `{safe_disp_name}` — `{yangi_summa:,.0f} so'm` (Sana: {safe_sana})")
+                    topilmaganlar.append(f"<blockquote>❓ <code>{safe_disp_name}</code> — <code>{yangi_summa:,.0f} so'm</code> (Sana: {safe_sana})</blockquote>")
 
         progress.update("⚙️ Natija tayyorlanmoqda...", 85)
 
@@ -652,32 +699,32 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
         keyingi_sana_dt = (oxirgi_to_lov_sanasi or cheklov_sanasi) + timedelta(days=1)
         keyingi_sana_str = keyingi_sana_dt.strftime('%d.%m.%Y')
 
-        hisobot_matni = f"📊 *KONTRAKT YANGILANISH HISOBOTI*\n"
+        hisobot_matni = f"📊 <b>KONTRAKT YANGILANISH HISOBOTI</b>\n"
         hisobot_matni += f"📅 Filtr sanasi: {cheklov_sanasi.strftime('%d.%m.%Y')} dan {oxirgi_sana_str} gacha\n"
         hisobot_matni += f"━━━━━━━━━━━━━━━━━━━━\n"
-        hisobot_matni += f"💰 *Jami tushgan pul:* `{jami_tushgan_pul:,.0f} so'm`\n"
-        hisobot_matni += f"👥 *Muvaffaqiyatli yangilandi:* {len(yangilangan_talabalar_set)} kishi\n"
+        hisobot_matni += f"💰 <b>Jami tushgan pul:</b> <code>{jami_tushgan_pul:,.0f} so'm</code>\n"
+        hisobot_matni += f"👥 <b>Muvaffaqiyatli yangilandi:</b> {len(yangilangan_talabalar_set)} kishi\n"
         hisobot_matni += f"━━━━━━━━━━━━━━━━━━━━\n\n"
         
         if yangilanish_tarixi:
-            hisobot_matni += f"✅ *Yangilangan talabalar ({len(yangilanish_tarixi)} ta):*\n\n"
+            hisobot_matni += f"✅ <b>Yangilangan talabalar ({len(yangilanish_tarixi)} ta):</b>\n\n"
             for t in yangilanish_tarixi:
                 hisobot_matni += t + "\n\n"
         else:
             hisobot_matni += "❌ Yangi to'lovlar topilmadi.\n\n"
 
         if topilmaganlar:
-            hisobot_matni += f"❓ *Umuman topilmagan ismlar ({len(topilmaganlar)} ta):*\n"
+            hisobot_matni += f"❓ <b>Umuman topilmagan ismlar ({len(topilmaganlar)} ta):</b>\n"
             for top in topilmaganlar:
                 hisobot_matni += top + "\n"
             hisobot_matni += "\n"
 
         hisobot_matni += f"━━━━━━━━━━━━━━━━━━━━\n"
-        hisobot_matni += f"💡 *Keyingi safar adashmasligingiz uchun eslatma:*\n"
-        hisobot_matni += f"Navbatdagi debitorkani yuklaganingizda botga boshlanish sanasi sifatida `{keyingi_sana_str}` sanasini kiriting."
+        hisobot_matni += f"💡 <b>Keyingi safar adashmasligingiz uchun eslatma:</b>\n"
+        hisobot_matni += f"Navbatdagi debitorkani yuklaganingizda botga boshlanish sanasi sifatida <code>{keyingi_sana_str}</code> sanasini kiriting."
 
         with open(natija_nomi, 'rb') as f_send:
-            bot.send_document(chat_id, f_send, caption=f"📄 Formulalari buzilmagan tayyor Excel faylingiz: `{os.path.basename(natija_nomi)}`", parse_mode="Markdown", reply_markup=get_main_keyboard())
+            bot.send_document(chat_id, f_send, caption=f"📄 Formulalari buzilmagan tayyor Excel faylingiz: <code>{os.path.basename(natija_nomi)}</code>", parse_mode="HTML", reply_markup=get_main_keyboard())
         
         send_safe_message(chat_id, hisobot_matni)
         progress.success("✅ Tayyor!")
@@ -687,7 +734,7 @@ def process_kontrakt_update(chat_id, baza_path, deb_nomi, cheklov_sanasi):
         if os.path.exists(natija_nomi): os.remove(natija_nomi)
 
     except Exception as e:
-        progress.error(f"❌ Jarayonni bajarishda xatolik yuz berdi:\n`{str(e)}`")
+        progress.error(f"❌ Jarayonni bajarishda xatolik yuz berdi:\n<code>{escape_html_text(str(e))}</code>")
         if os.path.exists(baza_path): os.remove(baza_path)
         if os.path.exists(deb_nomi): os.remove(deb_nomi)
         if os.path.exists(natija_nomi): os.remove(natija_nomi)
@@ -789,17 +836,17 @@ def process_group_screenshots(chat_id, message):
             generate_group_table_image(g_name, date_str, rows_data, img_path)
             
             with open(img_path, 'rb') as photo_f:
-                bot.send_photo(chat_id, photo=photo_f, caption=f"📊 *Guruh: {g_name}*", parse_mode="Markdown")
+                bot.send_photo(chat_id, photo=photo_f, caption=f"📊 <b>Guruh: {escape_html_text(g_name)}</b>", parse_mode="HTML")
             
             if os.path.exists(img_path): os.remove(img_path)
 
         progress.update("🔍 Yakuniy tekshiruv...", 95)
-        bot.send_message(chat_id, f"✅ *Barcha {len(guruh_nomlari)} ta guruh screenshotlari muvaffaqiyatli yuborildi!*", parse_mode="Markdown", reply_markup=get_main_keyboard())
+        send_safe_message(chat_id, f"✅ <b>Barcha {len(guruh_nomlari)} ta guruh screenshotlari muvaffaqiyatli yuborildi!</b>")
         progress.success("✅ Tayyor!")
         user_data[chat_id] = {}
 
     except Exception as e:
-        progress.error(f"❌ Xatolik yuz berdi:\n`{str(e)}`")
+        progress.error(f"❌ Xatolik yuz berdi:\n<code>{escape_html_text(str(e))}</code>")
         if os.path.exists(temp_excel): os.remove(temp_excel)
         user_data[chat_id] = {}
 
