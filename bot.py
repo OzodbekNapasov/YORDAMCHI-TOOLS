@@ -161,8 +161,8 @@ def get_font(size, bold=True):
 
 def generate_group_table_image(group_name, date_str, rows_data, output_path, header_bg_color=(0, 112, 192)):
     """Excel jadvali ko'rinishida pixel-perfect HD screenshot hosil qilish"""
-    S = 2 # 2x High Definition Crisp Resolution
-    col_w = [int(w * S) for w in [85, 48, 310, 210, 150, 175]]
+    S = 3 # 3x Ultra HD Resolution
+    col_w = [int(w * S) for w in [100, 55, 360, 240, 180, 200]]
     
     headers = [
         'GURUHI',
@@ -174,59 +174,56 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     ]
     
     table_w = sum(col_w)
-    title_h = int(40 * S)
-    header_h = int(60 * S)
-    row_h = int(32 * S)
-    summary_h = int(40 * S)
+    title_h = int(50 * S)
+    header_h = int(70 * S)
+    row_h = int(40 * S)
+    summary_h = int(50 * S)
     
     num_rows = len(rows_data)
     table_h = title_h + header_h + (num_rows * row_h) + summary_h
     
-    margin = int(20 * S)
+    margin = int(24 * S)
     img_w = table_w + 2 * margin
     img_h = table_h + 2 * margin
     
     img = Image.new('RGB', (img_w, img_h), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
     
-    font_bold = get_font(int(14 * S), bold=True)
-    font_title = get_font(int(17 * S), bold=True)
+    # Barcha matnlar 100% BOLD (qalin) va katta hajmda
+    font_bold = get_font(int(17 * S), bold=True)
+    font_title = get_font(int(22 * S), bold=True)
+    font_summary = get_font(int(18 * S), bold=True)
     
     grid_col = (0, 0, 0)
-    border_w = 3
+    border_w = int(3 * S // 2)
     
     ox = margin
     oy = margin
     
-    # 1. Title Row
+    # 1. Title Row (Yangilangan sanasi)
     draw.rectangle([ox, oy, ox + table_w, oy + title_h], fill=(255, 255, 255), outline=grid_col, width=border_w)
     title_str = f'Yangilangan sanasi:   {date_str}'
+    bbox = font_title.getbbox(title_str)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    draw.text((ox + (table_w - tw) // 2, oy + (title_h - th) // 2 - bbox[1]), title_str, fill=(0, 0, 0), font=font_title)
     
-    bbox = font_title.getbbox(title_str) if hasattr(font_title, 'getbbox') else (0,0,220*S,16*S)
-    tw = bbox[2] - bbox[0]
-    th = bbox[3] - bbox[1]
-    
-    tx = ox + (table_w - tw) // 2
-    ty = oy + (title_h - th) // 2 - int(2 * S)
-    draw.text((tx, ty), title_str, fill=(0, 0, 0), font=font_title)
-    
-    # 2. Header Row
+    # 2. Header Row (Qalin oq matn)
     curr_y = oy + title_h
     curr_x = ox
     for idx, (h_text, w) in enumerate(zip(headers, col_w)):
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + header_h], fill=header_bg_color, outline=grid_col, width=border_w)
         lines = h_text.split('\n')
-        line_y = curr_y + (header_h - (len(lines) * int(18 * S))) // 2
+        total_lines_h = len(lines) * int(22 * S)
+        line_y = curr_y + (header_h - total_lines_h) // 2
         for line in lines:
-            bbox = font_bold.getbbox(line) if hasattr(font_bold, 'getbbox') else (0,0,len(line)*8*S,14*S)
+            bbox = font_bold.getbbox(line)
             tw = bbox[2] - bbox[0]
             tx = curr_x + (w - tw) // 2
-            draw.text((tx, line_y), line, fill=(255, 255, 255), font=font_bold)
-            line_y += int(18 * S)
-            
+            draw.text((tx, line_y - bbox[1]), line, fill=(255, 255, 255), font=font_bold)
+            line_y += int(22 * S)
         curr_x += w
 
-    # 3. Data Rows
+    # 3. Data Rows (ALL BOLD TEXT)
     curr_y += header_h
     tot_kerak = 0.0
     tot_jami = 0.0
@@ -263,29 +260,29 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
         
         for (c_text, align, bg_col, fg_col), w in zip(cells_info, col_w):
             draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + row_h], fill=bg_col, outline=grid_col, width=border_w)
-            bbox = font_bold.getbbox(c_text) if hasattr(font_bold, 'getbbox') else (0,0,len(c_text)*8*S,14*S)
-            tw = bbox[2] - bbox[0]
+            bbox = font_bold.getbbox(c_text)
+            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
             
             if align == 'center':
                 tx = curr_x + (w - tw) // 2
             elif align == 'right':
-                tx = curr_x + w - tw - int(14 * S)
+                tx = curr_x + w - tw - int(16 * S)
             else:
-                tx = curr_x + int(12 * S)
+                tx = curr_x + int(16 * S)
                 
-            ty = curr_y + (row_h - int(16 * S)) // 2
+            ty = curr_y + (row_h - th) // 2 - bbox[1]
             draw.text((tx, ty), c_text, fill=fg_col, font=font_bold)
             curr_x += w
             
         curr_y += row_h
 
-    # 4. Summary Row (JAMI)
+    # 4. Summary Row (JAMI - QALIN)
     curr_x = ox
     jami_w = col_w[0] + col_w[1] + col_w[2]
     draw.rectangle([curr_x, curr_y, curr_x + jami_w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
-    bbox = font_bold.getbbox('JAMI') if hasattr(font_bold, 'getbbox') else (0,0,32*S,14*S)
-    tw = bbox[2] - bbox[0]
-    draw.text((curr_x + (jami_w - tw) // 2, curr_y + int(9 * S)), 'JAMI', fill=(255, 255, 255), font=font_bold)
+    bbox = font_summary.getbbox('JAMI')
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    draw.text((curr_x + (jami_w - tw) // 2, curr_y + (summary_h - th) // 2 - bbox[1]), 'JAMI', fill=(255, 255, 255), font=font_summary)
     curr_x += jami_w
     
     summary_cols = [
@@ -295,10 +292,11 @@ def generate_group_table_image(group_name, date_str, rows_data, output_path, hea
     ]
     for c_text, w in summary_cols:
         draw.rectangle([curr_x, curr_y, curr_x + w, curr_y + summary_h], fill=header_bg_color, outline=grid_col, width=border_w)
-        bbox = font_bold.getbbox(c_text) if hasattr(font_bold, 'getbbox') else (0,0,len(c_text)*8*S,14*S)
-        tw = bbox[2] - bbox[0]
-        tx = curr_x + w - tw - int(14 * S)
-        draw.text((tx, curr_y + int(9 * S)), c_text, fill=(255, 255, 255), font=font_bold)
+        bbox = font_summary.getbbox(c_text)
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        tx = curr_x + w - tw - int(16 * S)
+        ty = curr_y + (summary_h - th) // 2 - bbox[1]
+        draw.text((tx, ty), c_text, fill=(255, 255, 255), font=font_summary)
         curr_x += w
         
     img.save(output_path, 'PNG', quality=100)
