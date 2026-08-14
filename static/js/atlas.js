@@ -316,7 +316,7 @@ const ATLAS = {
             </div>
 
             <div class="header-right">
-              <button class="header-action-btn" id="refresh-view-btn" title="Yangilash">
+              <button class="header-btn" id="refresh-view-btn" title="Yangilash">
                 ${this.icons.refresh}
               </button>
             </div>
