@@ -38,6 +38,7 @@ const ATLAS = {
     eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
     eyeOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
     edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
     brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`
   },
@@ -307,6 +308,9 @@ const ATLAS = {
         <main class="main-wrapper">
           <header class="header">
             <div class="header-left">
+              <button class="header-btn mobile-menu-toggle" id="mobile-menu-btn" title="Menyu">
+                ${this.icons.menu}
+              </button>
               <h1 class="page-title" id="page-title">Ma'lumotnomalar & Hujjatlar Arxivi</h1>
               <div class="global-search-bar">
                 <span class="search-icon-fixed">${this.icons.search}</span>
@@ -326,6 +330,9 @@ const ATLAS = {
         </main>
       </div>
 
+      <!-- SIDEBAR BACKDROP FOR MOBILE -->
+      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
       <!-- MODALS & TOAST -->
       <div class="modal-overlay" id="modal-container"></div>
       <div id="toast-container" class="toast-container"></div>
@@ -339,13 +346,38 @@ const ATLAS = {
       });
     }
 
+    // Mobile Menu Toggle & Backdrop
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const sidebarEl = document.querySelector('.sidebar');
+    const backdropEl = document.getElementById('sidebar-backdrop');
+    if (mobileBtn && sidebarEl && backdropEl) {
+      mobileBtn.addEventListener('click', () => {
+        sidebarEl.classList.toggle('mobile-open');
+        backdropEl.classList.toggle('active');
+      });
+      backdropEl.addEventListener('click', () => {
+        sidebarEl.classList.remove('mobile-open');
+        backdropEl.classList.remove('active');
+      });
+    }
+
     document.querySelectorAll('.nav-item').forEach(btn => {
-      btn.addEventListener('click', () => this.navigate(btn.dataset.route));
+      btn.addEventListener('click', () => {
+        if (window.innerWidth <= 992 && sidebarEl && backdropEl) {
+          sidebarEl.classList.remove('mobile-open');
+          backdropEl.classList.remove('active');
+        }
+        this.navigate(btn.dataset.route);
+      });
     });
 
     document.querySelectorAll('.nav-sub-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (window.innerWidth <= 992 && sidebarEl && backdropEl) {
+          sidebarEl.classList.remove('mobile-open');
+          backdropEl.classList.remove('active');
+        }
         this.navigate(btn.dataset.route);
       });
     });
@@ -1290,17 +1322,19 @@ const ATLAS = {
         </div>
 
         <!-- OPTIONS ROW -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:16px;align-items:end;margin-bottom:20px;">
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">📅 To'lovlarni hisoblash boshlanish sanasi</label>
+        <div class="contract-action-form-grid">
+          <div class="form-group">
+            <label class="form-label">To'lovlarni hisoblash boshlanish sanasi</label>
             <input type="text" id="contract-start-date" class="input-control" placeholder="Format: 01.08.2026" value="${this.contractState.startDate || this.contractState.suggestedDate || ''}">
-            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Format: <code>01.08.2026</code> (Bank to'lovlari shu sanadan boshlab hisoblanadi)</div>
+            <div class="form-hint">Format: <code>01.08.2026</code> (Bank to'lovlari shu sanadan boshlab hisoblanadi)</div>
           </div>
 
-          <div>
-            <button class="btn-primary btn-block" id="btn-run-contract-update" style="height:42px;">
-              <span>⚡ Yangilash va Hisobotni Shakllantirish</span>
+          <div class="form-group action-col">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn-primary btn-block" id="btn-run-contract-update">
+              ${this.icons.refresh} <span>Yangilash va Hisobotni Shakllantirish</span>
             </button>
+            <div class="form-hint" style="visibility:hidden;">&nbsp;</div>
           </div>
         </div>
 
