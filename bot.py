@@ -229,7 +229,7 @@ def process_docbot_generation(chat_id, tpl, answers):
     output_png = os.path.join(tempfile.gettempdir(), f"doc_{uid}.png")
     output_docx = os.path.join(tempfile.gettempdir(), f"doc_{uid}.docx")
 
-    progress = TelegramProgress(bot, chat_id, "⏳ Sizning shabloningiz bo'yicha tiniq RASM va HUJJAT tayyorlanmoqda...")
+    progress = TelegramProgress(bot, chat_id, "⏳ Sizning shabloningiz bo'yicha tiniq RASM tayyorlanmoqda...")
 
     try:
         progress.update("⚙️ Hujjat to'ldirilmoqda va shakllantirilmoqda...", 50)
@@ -238,17 +238,14 @@ def process_docbot_generation(chat_id, tpl, answers):
         fio = answers.get("FIO", "Talaba").strip()
         
         if success and os.path.exists(output_png):
-            custom_img_name = f"{fio} ma'lumotnoma.png"
             with open(output_png, "rb") as pf:
-                bot.send_document(
+                bot.send_photo(
                     chat_id,
-                    pf,
-                    visible_file_name=custom_img_name,
-                    caption=f"✅ <b>{escape_html_text(custom_img_name)}</b> muvaffaqiyatli tayyorlandi!\n\n"
-                            f"🖼 Siz yaratgan rasmiy shablon bo'yicha tiniq rasm shaklida yuborildi.\n"
-                            f"Yangi harakat uchun menyudan tanlang.",
+                    photo=pf,
+                    caption=f"✅ <b>{escape_html_text(fio)}</b> uchun rasmiy ma'lumotnoma muvaffaqiyatli tayyorlandi!\n\n"
+                            f"🎓 <i>Asl shablon formati va muhr/imzolar 100% saqlangan holda rasm ko'rinishida yuborildi.</i>",
                     parse_mode="HTML",
-                    reply_markup=get_main_keyboard()
+                    reply_markup=get_docs_folder_keyboard()
                 )
         else:
             template_path = find_template_file(filename)
@@ -261,7 +258,7 @@ def process_docbot_generation(chat_id, tpl, answers):
                     visible_file_name=custom_doc_name,
                     caption=f"✅ <b>{escape_html_text(custom_doc_name)}</b> tayyorlandi!\nYangi harakat uchun menyudan tanlang.",
                     parse_mode="HTML",
-                    reply_markup=get_main_keyboard()
+                    reply_markup=get_docs_folder_keyboard()
                 )
 
         progress.success("✅ Tayyor!")
