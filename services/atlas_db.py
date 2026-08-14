@@ -538,6 +538,30 @@ def delete_student_group(group_id: int):
         return False
 
 
+def update_student_group(group_id: int, group_name: str, course_level: int):
+    """O'quv guruhini tahrirlash (nomi va kursi)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE student_groups SET group_name = ?, course_level = ? WHERE id = ?",
+            (group_name, course_level, group_id)
+        )
+        conn.commit()
+        conn.close()
+
+        # Supabase-ga sinxronlash
+        _sync_supabase_async("atlas_student_groups", {
+            "group_name": group_name,
+            "course_level": course_level
+        }, method="PATCH", params=f"?id=eq.{group_id}")
+        return True
+    except Exception as e:
+        print(f"Update group error: {e}")
+        return False
+
+
+
 # Kontrakt Yangilanish Sessiyalari Boshqaruvi
 def log_contract_session(session_id: str, filename: str, start_date: str, end_date: str, total_income: float, updated_count: int, unmatched_count: int, excel_url: str = "", xulosa_url: str = "", metrics: dict = None):
     """Kontrakt yangilanish sessiyasini bazaga va Supabase Cloud-ga qayd qilish"""

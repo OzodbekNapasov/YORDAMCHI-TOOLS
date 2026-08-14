@@ -1052,6 +1052,29 @@ def api_delete_academic_group(group_id):
     return jsonify({"success": False, "error": "Guruhni o'chirishda xatolik."}), 500
 
 
+@atlas_api.route("/groups/academic/<int:group_id>", methods=["PUT"])
+@admin_required
+def api_update_academic_group(group_id):
+    """O'quv guruhini tahrirlash (nom va kurs)"""
+    from services.atlas_db import update_student_group
+    data = request.get_json(silent=True) or {}
+    group_name = str(data.get("group_name", "")).strip()
+    course_level = int(data.get("course_level", 1))
+
+    if not group_name:
+        return jsonify({"success": False, "error": "Guruh nomi bo'sh bo'lishi mumkin emas."}), 400
+
+    success = update_student_group(group_id, group_name, course_level)
+    if success:
+        admin = get_current_admin()
+        log_audit(admin["username"], "groups", "update_group", "success",
+                  {"group_id": group_id, "group_name": group_name, "course_level": course_level},
+                  request.remote_addr)
+        return jsonify({"success": True, "message": f"Guruh '{group_name}' yangilandi."})
+    return jsonify({"success": False, "error": "Guruhni yangilashda xatolik yuz berdi."}), 500
+
+
+
 # ============================================================
 # 9. ANALYTICS & CHARTS ENDPOINTS
 # ============================================================

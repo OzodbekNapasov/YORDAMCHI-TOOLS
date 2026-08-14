@@ -126,12 +126,12 @@ const ATLAS = {
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       const titles = {
-        contracts: '📊 Kontraktlar & Bank Debitorkasi Yangilash',
-        orders: '📝 Rasmiy Buyruqlar Bo\'limi',
-        certificates: '📄 Rasmiy Ma\'lumotnomalar Bo\'limi',
-        academic_groups: '🎓 O\'quv Guruhlari Boshqaruvi',
-        groups: '🤖 Ulangan Telegram Guruhlar',
-        dashboard: '📊 Boshqaruv Paneli',
+        contracts: 'Kontraktlar & Bank Debitorkasi Yangilash',
+        orders: 'Rasmiy Buyruqlar Bolimi',
+        certificates: "Rasmiy Ma'lumotnomalar Bolimi",
+        academic_groups: "O'quv Guruhlari Boshqaruvi",
+        groups: 'Ulangan Telegram Guruhlar',
+        dashboard: 'Boshqaruv Paneli',
         users: 'Foydalanuvchilar Boshqaruvi',
         messages: 'Xabarlar va Tarqatish',
         automation: 'Avtomatlashtirish',
@@ -270,21 +270,15 @@ const ATLAS = {
                 <span class="nav-arrow">${this.icons.chevronDown}</span>
               </div>
               <div class="nav-sub-menu">
-                <div class="nav-sub-item" data-route="contracts">📊 KONTRAKT</div>
-                <div class="nav-sub-item" data-route="orders">📝 BUYRUQLAR</div>
-                <div class="nav-sub-item" data-route="certificates">📄 MA'LUMOTNOMALAR</div>
+                <div class="nav-sub-item" data-route="contracts">KONTRAKT</div>
+                <div class="nav-sub-item" data-route="orders">BUYRUQLAR</div>
+                <div class="nav-sub-item" data-route="certificates">MA'LUMOTNOMALAR</div>
               </div>
             </div>
 
             <div class="sidebar-group-title">O'quv Bo'limi & Bot</div>
-            <div class="nav-item" data-route="academic_groups">
-              ${this.icons.groups} <span>🎓 O'quv Guruhlari</span>
-            </div>
-            <div class="nav-item" data-route="groups">
-              ${this.icons.messages} <span>🤖 Telegram Guruhlar</span>
-            </div>
             <div class="nav-item" data-route="dashboard">
-              ${this.icons.dashboard} <span>📊 Boshqaruv Paneli</span>
+              ${this.icons.dashboard} <span>Boshqaruv Paneli</span>
             </div>
 
             <div class="sidebar-group-title">Monitoring & Tizim</div>
@@ -398,7 +392,7 @@ const ATLAS = {
           <!-- 4 Ta Minimalistik Buyruq Tanlash Kartalari -->
           <div class="template-select-grid">
             <div class="template-select-card ${currentTpl === 'buyruq_akademik_tatil' ? 'active' : ''}" data-tpl="buyruq_akademik_tatil">
-              <div class="template-card-icon">📝</div>
+              <div class="template-card-icon">${this.icons.documents}</div>
               <div class="template-card-body">
                 <div class="template-card-title">Akademik ta'til berish</div>
                 <div class="template-card-desc">Salomatligi yoki boshqa sababli ta'til berish buyrug'i</div>
@@ -406,7 +400,7 @@ const ATLAS = {
             </div>
 
             <div class="template-select-card ${currentTpl === 'buyruq_qayta_tiklash' ? 'active' : ''}" data-tpl="buyruq_qayta_tiklash">
-              <div class="template-card-icon">📝</div>
+              <div class="template-card-icon">${this.icons.documents}</div>
               <div class="template-card-body">
                 <div class="template-card-title">Qayta tiklash</div>
                 <div class="template-card-desc">Akademik ta'tildan so'ng o'qishini davom ettirishga tiklash</div>
@@ -414,7 +408,7 @@ const ATLAS = {
             </div>
 
             <div class="template-select-card ${currentTpl === 'buyruq_guruhdan_guruhga' ? 'active' : ''}" data-tpl="buyruq_guruhdan_guruhga">
-              <div class="template-card-icon">📝</div>
+              <div class="template-card-icon">${this.icons.documents}</div>
               <div class="template-card-body">
                 <div class="template-card-title">Guruh almashtirish</div>
                 <div class="template-card-desc">Talabani bir o'quv guruhidan boshqasiga o'tkazish</div>
@@ -422,7 +416,7 @@ const ATLAS = {
             </div>
 
             <div class="template-select-card ${currentTpl === 'buyruq_safidan_chiqarish' ? 'active' : ''}" data-tpl="buyruq_safidan_chiqarish">
-              <div class="template-card-icon">📝</div>
+              <div class="template-card-icon">${this.icons.documents}</div>
               <div class="template-card-body">
                 <div class="template-card-title">Safidan chiqarish</div>
                 <div class="template-card-desc">Talaba arizasi yoki guruh rahbari bildirgisi asosida</div>
@@ -432,9 +426,6 @@ const ATLAS = {
 
           <!-- Form Box -->
           <div id="order-form-box"></div>
-
-          <!-- Archive Table Box -->
-          <div id="order-archive-box" style="margin-top:24px;"></div>
         `;
 
         // Card click listeners
@@ -445,10 +436,8 @@ const ATLAS = {
           });
         });
 
-        // Render document generator form for this specific template
+        // Render document generator form for this specific template (archive shown inside renderDocumentGenerator)
         this.renderDocumentGenerator(document.getElementById('order-form-box'), currentTpl);
-        // Render archive filtered by this template
-        this.renderDocumentArchive(document.getElementById('order-archive-box'), currentTpl, true);
       } else {
         // Render all orders in archive
         this.renderDocumentArchive(contentBox, 'buyruq_akademik_tatil', false);
@@ -495,7 +484,7 @@ const ATLAS = {
           <!-- 2 Ta Minimalistik Ma'lumotnoma Tanlash Kartalari -->
           <div class="template-select-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
             <div class="template-select-card ${currentTpl === 'qabul_1_kurs' ? 'active' : ''}" data-tpl="qabul_1_kurs">
-              <div class="template-card-icon">🎓</div>
+              <div class="template-card-icon">${this.icons.documents}</div>
               <div class="template-card-body">
                 <div class="template-card-title">1-kursga qabul ma'lumotnomasi</div>
                 <div class="template-card-desc">Talaba texnikumga 1-kursga qabul qilinganligini tasdiqlovchi rasmiy hujjat</div>
@@ -503,7 +492,7 @@ const ATLAS = {
             </div>
 
             <div class="template-select-card ${currentTpl === 'oqiyapti' ? 'active' : ''}" data-tpl="oqiyapti">
-              <div class="template-card-icon">📖</div>
+              <div class="template-card-icon">${this.icons.documents}</div>
               <div class="template-card-body">
                 <div class="template-card-title">O'qiyotganligi haqida ma'lumotnoma</div>
                 <div class="template-card-desc">Hozirgi vaqtda tahsil olayotganligini tasdiqlovchi rasmiy hujjat</div>
@@ -513,9 +502,6 @@ const ATLAS = {
 
           <!-- Form Box -->
           <div id="cert-form-box"></div>
-
-          <!-- Archive Table Box -->
-          <div id="cert-archive-box" style="margin-top:24px;"></div>
         `;
 
         // Card click listeners
@@ -526,10 +512,8 @@ const ATLAS = {
           });
         });
 
-        // Render document generator form for this specific template
+        // Render document generator form (archive shown inside renderDocumentGenerator)
         this.renderDocumentGenerator(document.getElementById('cert-form-box'), currentTpl);
-        // Render archive filtered by this template
-        this.renderDocumentArchive(document.getElementById('cert-archive-box'), currentTpl, true);
       } else {
         // Render certificates archive
         this.renderDocumentArchive(contentBox, 'qabul_1_kurs', false);
@@ -1232,13 +1216,13 @@ const ATLAS = {
     container.innerHTML = `
       <div class="tab-pills-row">
         <button class="tab-pill-btn ${activeTab === 'update' ? 'active' : ''}" id="tab-c-update">
-          ${this.icons.analytics} <span>⚡ 1. Kontraktlarni Yangilash (Baza + Debitorka)</span>
+          ${this.icons.analytics} <span>1. Kontraktlarni Yangilash (Baza + Debitorka)</span>
         </button>
         <button class="tab-pill-btn ${activeTab === 'screenshots' ? 'active' : ''}" id="tab-c-screenshots">
-          ${this.icons.dashboard} <span>📸 2. Guruh Screenshotlari (HD Galereya)</span>
+          ${this.icons.dashboard} <span>2. Guruh Screenshotlari (HD Galereya)</span>
         </button>
         <button class="tab-pill-btn ${activeTab === 'history' ? 'active' : ''}" id="tab-c-history">
-          ${this.icons.archive} <span>📜 3. Tarix & Arxiv</span>
+          ${this.icons.archive} <span>3. Tarix & Arxiv</span>
         </button>
       </div>
 
@@ -1570,7 +1554,7 @@ const ATLAS = {
             ${this.icons.download} <span>Xulosa rasmini yuklab olish</span>
           </a>
           <button class="btn-primary" id="btn-telegram-forward" style="margin-left:auto;background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
-            ${this.icons.send} <span>Telegram Guruhlarga Yuborish</span>
+            ${this.icons.send} <span>Telegram Botga Yuborish</span>
           </button>
         </div>
 
@@ -1718,7 +1702,7 @@ const ATLAS = {
     const tgBtn = document.getElementById('btn-telegram-forward');
     if (tgBtn) {
       tgBtn.addEventListener('click', () => {
-        this.openContractTelegramModal(data.session_id, 'update');
+        this.sendContractToMyBot(data.session_id, 'update');
       });
     }
   },
@@ -1748,7 +1732,7 @@ const ATLAS = {
         </div>
 
         <button class="btn-primary" id="btn-run-screenshots" style="height:42px;">
-          <span>📸 Screenshotlarni Generatsiya Qilish</span>
+          <span>Screenshotlarni Generatsiya Qilish</span>
         </button>
 
         <!-- PROGRESS BAR -->
@@ -1793,22 +1777,52 @@ const ATLAS = {
     const pInner = document.getElementById('ss-progress-inner');
     const pStatus = document.getElementById('ss-progress-status');
     const btn = document.getElementById('btn-run-screenshots');
+    const resBox = document.getElementById('ss-results-view');
 
     pBar.style.display = 'block';
     pStatus.style.display = 'block';
     btn.disabled = true;
-
-    pInner.style.width = '30%';
-    pStatus.innerText = '📥 Guruhlar ajratib olinmoqda...';
+    pInner.style.width = '5%';
+    pStatus.innerText = 'Guruhlar ajratib olinmoqda...';
 
     const formData = new FormData();
     formData.append('baza', file);
 
     try {
-      setTimeout(() => {
-        pInner.style.width = '70%';
-        pStatus.innerText = '📸 3x Ultra HD Times New Roman jadvallari chizilmoqda...';
-      }, 500);
+      // First call analyze endpoint to get group list
+      const analyzeFormData = new FormData();
+      analyzeFormData.append('baza', file);
+      const analyzeRes = await fetch('/api/contracts/analyze', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${this.token}` },
+        body: analyzeFormData
+      });
+      const analyzeData = await analyzeRes.json();
+      const groupsCount = analyzeData?.groups_count || 1;
+
+      pInner.style.width = '10%';
+      pStatus.innerText = `${groupsCount} ta guruh aniqlandi. Screenshotlar chizilmoqda...`;
+
+      // Initialize gallery grid early for streaming effect
+      if (resBox) {
+        resBox.innerHTML = `
+          <div class="card" style="margin-top:20px;">
+            <div class="card-header">
+              <div class="card-title">${this.icons.dashboard} Screenshotlar Galereyasi</div>
+              <span class="badge badge-cyan" id="ss-gallery-count">0 / ${groupsCount} ta tayyor</span>
+            </div>
+            <div class="contract-action-bar" id="ss-action-bar" style="display:none;">
+              <a id="ss-zip-download-link" class="btn-primary" style="background:#7c3aed;border-color:#8b5cf6;">
+                ${this.icons.download} <span>Barcha Screenshotlarni (ZIP) yuklab olish</span>
+              </a>
+              <button class="btn-primary" id="btn-telegram-ss-forward" style="margin-left:auto;background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
+                ${this.icons.send} <span>Telegram Botga Yuborish</span>
+              </button>
+            </div>
+            <div class="screenshot-gallery-grid" id="ss-gallery-grid"></div>
+          </div>
+        `;
+      }
 
       const res = await fetch('/api/contracts/group-screenshots', {
         method: 'POST',
@@ -1820,21 +1834,79 @@ const ATLAS = {
       btn.disabled = false;
 
       if (data && data.success) {
+        // Animate groups appearing one by one
+        const groups = data.groups || [];
+        const grid = document.getElementById('ss-gallery-grid');
+        const countBadge = document.getElementById('ss-gallery-count');
+
+        for (let i = 0; i < groups.length; i++) {
+          const g = groups[i];
+          const pct = Math.round(10 + ((i + 1) / groups.length) * 88);
+          pInner.style.width = pct + '%';
+          pStatus.innerText = `${i + 1} / ${groups.length}: ${g.group_name} tayyor`;
+          if (countBadge) countBadge.textContent = `${i + 1} / ${groups.length} ta tayyor`;
+
+          if (grid) {
+            const card = document.createElement('div');
+            card.className = 'screenshot-card';
+            card.innerHTML = `
+              <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
+              <div class="screenshot-card-body">
+                <div class="screenshot-card-title">
+                  <span>Guruh: ${g.group_name}</span>
+                  <span class="badge badge-neutral">${g.student_count} talaba</span>
+                </div>
+                <div class="screenshot-card-meta">
+                  <span>Qarz summasi:</span>
+                  <b style="color:${g.debt_total > 0 ? 'var(--color-danger)' : 'var(--color-success)'}">${(g.debt_total || 0).toLocaleString()} so'm</b>
+                </div>
+                <div class="screenshot-card-actions">
+                  <button class="btn-sm btn-secondary btn-ss-preview" data-group="${g.group_name}" data-session="${data.session_id}" style="flex:1;">
+                    ${this.icons.eye} Ko'rish
+                  </button>
+                  <a href="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" download="${g.group_name}.png" class="btn-sm btn-primary" style="flex:1;text-align:center;">
+                    ${this.icons.download} Yuklab olish
+                  </a>
+                </div>
+              </div>
+            `;
+            // Attach preview click
+            card.querySelector('.btn-ss-preview').addEventListener('click', () => {
+              const imgUrl = `/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}`;
+              this.openModalLarge(`Guruh: ${g.group_name} — 3x Ultra HD Screenshot`, `
+                <div style="text-align:center;">
+                  <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);" alt="${g.group_name}">
+                  <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;">
+                    <a href="${imgUrl}" download="${g.group_name}.png" class="btn-primary">${this.icons.download} PNG Rasm yuklab olish</a>
+                  </div>
+                </div>
+              `);
+            });
+            card.querySelector('.screenshot-card-thumb').addEventListener('click', () => {
+              card.querySelector('.btn-ss-preview').click();
+            });
+            grid.appendChild(card);
+          }
+          // Small delay for visual effect
+          await new Promise(r => setTimeout(r, 80));
+        }
+
         pInner.style.width = '100%';
-        pStatus.innerText = `✅ Barcha ${data.total_groups} ta guruh screenshotlari tayyorlandi!`;
-        setTimeout(() => {
-          pBar.style.display = 'none';
-          pStatus.style.display = 'none';
-        }, 1200);
+        pStatus.innerText = `Barcha ${data.total_groups} ta guruh screenshotlari tayyorlandi!`;
+        setTimeout(() => { pBar.style.display = 'none'; pStatus.style.display = 'none'; }, 1200);
+
+        // Show action bar
+        const actionBar = document.getElementById('ss-action-bar');
+        if (actionBar) {
+          actionBar.style.display = 'flex';
+          const zipLink = document.getElementById('ss-zip-download-link');
+          if (zipLink) zipLink.href = `/api/contracts/download-all-screenshots-zip/${data.session_id}`;
+          const tgBtn = document.getElementById('btn-telegram-ss-forward');
+          if (tgBtn) tgBtn.addEventListener('click', () => this.sendContractToMyBot(data.session_id, 'screenshots'));
+        }
 
         this.contractState.lastSsResult = data;
         this.toast(`${data.total_groups} ta guruh screenshotlari tayyor!`, 'success');
-
-        const resBox = document.getElementById('ss-results-view');
-        if (resBox) {
-          resBox.innerHTML = this.renderScreenshotsGalleryHTML(data);
-          this.bindScreenshotsGalleryEvents(data);
-        }
       } else {
         pBar.style.display = 'none';
         pStatus.style.display = 'none';
@@ -1859,10 +1931,10 @@ const ATLAS = {
 
         <div class="contract-action-bar">
           <a href="/api/contracts/download-all-screenshots-zip/${data.session_id}" class="btn-primary" style="background:#7c3aed;border-color:#8b5cf6;">
-            ${this.icons.download} <span>📦 Barcha Screenshotlarni (ZIP) yuklab olish</span>
+            ${this.icons.download} <span>Barcha Screenshotlarni (ZIP) yuklab olish</span>
           </a>
           <button class="btn-primary" id="btn-telegram-ss-forward" style="margin-left:auto;background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
-            ${this.icons.send} <span>Telegram Guruhlarga Yuborish</span>
+            ${this.icons.send} <span>Telegram Botga Yuborish</span>
           </button>
         </div>
 
@@ -1872,7 +1944,7 @@ const ATLAS = {
               <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
               <div class="screenshot-card-body">
                 <div class="screenshot-card-title">
-                  <span>🎓 Guruh: ${g.group_name}</span>
+                  <span>Guruh: ${g.group_name}</span>
                   <span class="badge badge-neutral">${g.student_count} talaba</span>
                 </div>
                 <div class="screenshot-card-meta">
@@ -1915,7 +1987,7 @@ const ATLAS = {
     const tgBtn = document.getElementById('btn-telegram-ss-forward');
     if (tgBtn) {
       tgBtn.addEventListener('click', () => {
-        this.openContractTelegramModal(data.session_id, 'screenshots');
+        this.sendContractToMyBot(data.session_id, 'screenshots');
       });
     }
   },
@@ -2019,108 +2091,27 @@ const ATLAS = {
   },
 
   // ============================================================
-  // TELEGRAM FORWARD MODAL (GURUHLARGA TO'G'RIDAN-TO'G'RI YUBORISH)
+  // TELEGRAM — SHAXSIY BOTGA YUBORISH (FAQAT ADMIN TELEGRAM ID)
   // ============================================================
-  async openContractTelegramModal(sessionId, mode = 'update') {
-    const res = await this.api('/api/groups');
-    const groups = (res && res.success && res.groups) ? res.groups : [];
+  async sendContractToMyBot(sessionId, mode = 'update') {
+    const ADMIN_CHAT_ID = '8135594558';
+    this.toast('Telegramga yuborilmoqda...', 'info');
 
-    this.openModal('✈️ Telegram Guruh yoki Kanallariga Yuborish', `
-      <div style="display:flex;flex-direction:column;gap:16px;">
-        <p style="font-size:0.88rem;color:var(--color-text-muted);margin:0;">
-          Ushbu hisobot va fayllarni bot ulangan Telegram guruhlariga yoki maxsus Chat ID ga to'g'ridan-to'g'ri jo'nating.
-        </p>
+    const payload = {
+      chat_ids: [ADMIN_CHAT_ID],
+      session_id: sessionId,
+      caption: '<b>ATLAS Platformasi: Kontrakt Hisoboti</b>',
+      send_excel: (mode === 'update'),
+      send_xulosa: (mode === 'update'),
+      send_screenshots: (mode === 'screenshots')
+    };
 
-        <div class="form-group">
-          <label class="form-label">Ulangan Telegram Guruhlar</label>
-          <div style="max-height:160px;overflow-y:auto;background:rgba(0,0,0,0.2);padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border-glass);">
-            ${groups.length > 0 ? groups.map(g => `
-              <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;font-size:0.88rem;">
-                <input type="checkbox" class="tg-group-checkbox" value="${g.telegram_id}">
-                <span><b>${g.title || 'Guruh'}</b> (ID: ${g.telegram_id})</span>
-              </label>
-            `).join('') : '<div style="color:var(--color-text-muted);font-size:0.85rem;">Hozircha bot a\'zo bo\'lgan guruhlar yo\'q. Quyida to\'g\'ridan-to\'g\'ri Chat ID kiriting:</div>'}
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Yoki qo'shimcha Chat ID / Kanal username</label>
-          <input type="text" id="tg-custom-chat-id" class="input-control" placeholder="Masalan: -100123456789 yoki @kanal_username">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Yuboriladigan kontentlar</label>
-          <div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem;">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="tg-send-caption" checked>
-              <span>📊 Tahliliy matnli hisobot</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="tg-send-xulosa" checked>
-              <span>🖼️ Guruh rahbarlari bo'yicha XULOSA rasmi</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="tg-send-excel" ${mode === 'update' ? 'checked' : ''}>
-              <span>📄 Formulalari buzilmagan Yangilangan Excel (.xlsx)</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="tg-send-ss" ${mode === 'screenshots' ? 'checked' : ''}>
-              <span>📸 Barcha guruhlar screenshot rasmlari</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="modal-footer" style="padding-top:12px;">
-          <button class="btn-secondary" id="btn-cancel-tg-modal">Bekor qilish</button>
-          <button class="btn-primary" id="btn-submit-tg-send" style="background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
-            ${this.icons.send} Yuborish
-          </button>
-        </div>
-      </div>
-    `);
-
-    document.getElementById('btn-cancel-tg-modal').addEventListener('click', () => this.closeModal());
-
-    document.getElementById('btn-submit-tg-send').addEventListener('click', async () => {
-      const selectedIds = [];
-      document.querySelectorAll('.tg-group-checkbox:checked').forEach(cb => selectedIds.push(cb.value));
-
-      const customId = (document.getElementById('tg-custom-chat-id').value || '').trim();
-      if (customId) selectedIds.push(customId);
-
-      if (selectedIds.length === 0) {
-        this.toast('Iltimos, kamida bitta guruh yoki Chat ID tanlang!', 'error');
-        return;
-      }
-
-      const sendCap = document.getElementById('tg-send-caption').checked;
-      const sendXul = document.getElementById('tg-send-xulosa').checked;
-      const sendExc = document.getElementById('tg-send-excel').checked;
-      const sendSs = document.getElementById('tg-send-ss').checked;
-
-      const submitBtn = document.getElementById('btn-submit-tg-send');
-      submitBtn.disabled = true;
-      submitBtn.innerText = 'Yuborilmoqda...';
-
-      const payload = {
-        chat_ids: selectedIds,
-        session_id: sessionId,
-        caption: sendCap ? "📊 <b>ATLAS Platformasi: Yangi Kontrakt Hisoboti</b>" : "",
-        send_excel: sendExc,
-        send_xulosa: sendXul,
-        send_screenshots: sendSs
-      };
-
-      const sendRes = await this.api('/api/contracts/send-to-telegram', 'POST', payload);
-      if (sendRes && sendRes.success) {
-        this.toast('Telegram guruhlariga muvaffaqiyatli yuborildi!', 'success');
-        this.closeModal();
-      } else {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Yuborish';
-        this.toast(sendRes ? sendRes.error : 'Yuborishda xatolik yuz berdi', 'error');
-      }
-    });
+    const sendRes = await this.api('/api/contracts/send-to-telegram', 'POST', payload);
+    if (sendRes && sendRes.success) {
+      this.toast('Telegramga muvaffaqiyatli yuborildi!', 'success');
+    } else {
+      this.toast(sendRes ? sendRes.error : 'Yuborishda xatolik yuz berdi', 'error');
+    }
   },
 
   // ============================================================
@@ -2132,10 +2123,10 @@ const ATLAS = {
     container.innerHTML = `
       <div class="tab-pills-row">
         <button class="tab-pill-btn ${activeTab === 'academic' ? 'active' : ''}" id="tab-grp-academic">
-          ${this.icons.groups} <span>🎓 O'quv Guruhlari (Texnikum)</span>
+          ${this.icons.groups} <span>O'quv Guruhlari (Texnikum)</span>
         </button>
         <button class="tab-pill-btn ${activeTab === 'telegram' ? 'active' : ''}" id="tab-grp-telegram">
-          ${this.icons.messages} <span>🤖 Ulangan Telegram Guruhlar</span>
+          ${this.icons.messages} <span>Ulangan Telegram Guruhlar</span>
         </button>
       </div>
 
@@ -2196,6 +2187,7 @@ const ATLAS = {
                   <td><span class="badge badge-info">${g.course_level || 1}-kurs</span></td>
                   <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${g.created_at || '-'}</td>
                   <td style="text-align:right;">
+                    <button class="btn-icon" onclick="ATLAS.openEditGroupModal(${g.id}, '${g.group_name}', ${g.course_level || 1})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                     <button class="btn-icon" onclick="ATLAS.deleteAcademicGroup(${g.id})" title="O'chirish">${this.icons.trash}</button>
                   </td>
                 </tr>
@@ -2225,6 +2217,7 @@ const ATLAS = {
           <td><span class="badge badge-info">${g.course_level || 1}-kurs</span></td>
           <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${g.created_at || '-'}</td>
           <td style="text-align:right;">
+            <button class="btn-icon" onclick="ATLAS.openEditGroupModal(${g.id}, '${g.group_name}', ${g.course_level || 1})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
             <button class="btn-icon" onclick="ATLAS.deleteAcademicGroup(${g.id})" title="O'chirish">${this.icons.trash}</button>
           </td>
         </tr>
@@ -2265,6 +2258,48 @@ const ATLAS = {
         this.loadGroups(document.getElementById('content-viewport'), 'academic');
       } else {
         this.toast(res ? res.error : 'Guruhlar qo\'shishda xatolik', 'error');
+      }
+    });
+  },
+
+  openEditGroupModal(groupId, groupName, courseLevel) {
+    this.openModal('Guruhni Tahrirlash', `
+      <form id="edit-group-form">
+        <div class="form-group">
+          <label class="form-label">Guruh Nomi</label>
+          <input type="text" id="edit-group-name" class="input-control" value="${groupName}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bosqich / Kursi</label>
+          <select id="edit-group-course" class="select-control">
+            <option value="1" ${courseLevel == 1 ? 'selected' : ''}>1-kurs</option>
+            <option value="2" ${courseLevel == 2 ? 'selected' : ''}>2-kurs</option>
+            <option value="3" ${courseLevel == 3 ? 'selected' : ''}>3-kurs</option>
+            <option value="4" ${courseLevel == 4 ? 'selected' : ''}>4-kurs</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+          <button type="submit" class="btn-sm btn-primary" id="edit-group-save-btn">Saqlash</button>
+        </div>
+      </form>
+    `);
+
+    document.getElementById('edit-group-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('edit-group-save-btn');
+      btn.innerText = 'Saqlanmoqda...';
+      const newName = document.getElementById('edit-group-name').value.trim();
+      const newCourse = parseInt(document.getElementById('edit-group-course').value);
+
+      const res = await this.api(`/api/groups/academic/${groupId}`, 'PUT', { group_name: newName, course_level: newCourse });
+      btn.innerText = 'Saqlash';
+      if (res && res.success) {
+        this.toast(res.message || 'Guruh yangilandi', 'success');
+        this.closeModal();
+        this.loadGroups(document.getElementById('content-viewport'), 'academic');
+      } else {
+        this.toast(res ? res.error : 'Tahrirlashda xatolik', 'error');
       }
     });
   },
