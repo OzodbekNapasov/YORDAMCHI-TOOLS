@@ -1124,6 +1124,9 @@ const ATLAS = {
     }
 
     const tplSelect = document.getElementById('doc-tpl-select');
+    if (specificTplId && tplSelect) {
+      tplSelect.value = specificTplId;
+    }
     const groupAsos = document.getElementById('group-asos-turi');
     const groupBuyruqNum = document.getElementById('group-buyruq-raqami');
     const groupAvvBuyruq = document.getElementById('group-avvalgi-buyruq');
@@ -1136,7 +1139,10 @@ const ATLAS = {
     const groupYangiGuruh = document.getElementById('group-yangi-guruh');
 
     const updateFormVisibility = () => {
-      const val = tplSelect.value;
+      const val = specificTplId || tplSelect.value;
+      if (tplSelect && specificTplId) {
+        tplSelect.value = specificTplId;
+      }
       
       groupAsos.style.display = 'none';
       groupBuyruqNum.style.display = 'none';
@@ -1202,7 +1208,7 @@ const ATLAS = {
       const btn = document.getElementById('doc-generate-btn');
       btn.innerHTML = `<span>Shakllantirilmoqda...</span>`;
 
-      const tpl_id = tplSelect.value;
+      const tpl_id = specificTplId || tplSelect.value;
       const fio = document.getElementById('doc-fio').value.trim();
       const sana = document.getElementById('doc-sana').value.trim();
 
