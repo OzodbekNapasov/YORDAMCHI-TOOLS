@@ -1,10 +1,12 @@
 # ============================================================
 #  services/image_builder.py
-#  Asl Word shablon formatini 100% saqlagan holda
-#  yuqori aniqlikdagi (HD) RASM (PNG) yaratuvchi renderer
+#  Asl Word (.docx) shablonidagi logotip, pechat, imzo va
+#  barcha formatlarni 100% saqlab, o'ta tiniq A4 RASM (PNG) yaratuvchi
 # ============================================================
 
 import os
+import io
+import zipfile
 from PIL import Image, ImageDraw, ImageFont
 
 try:
@@ -13,7 +15,7 @@ except ImportError:
     from config import find_template_file
 
 
-def get_font(size: int, bold: bool = False, italic: bool = False):
+def _get_font(size: int, bold: bool = False, italic: bool = False):
     """Times New Roman shriftini tizimdan yoki loyiha papkasidan yuklash"""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     bundled_tnr = os.path.join(base_dir, "fonts", "TimesNewRomanBold.ttf")
@@ -43,6 +45,21 @@ def get_font(size: int, bold: bool = False, italic: bool = False):
     return ImageFont.load_default(size=size)
 
 
+def _extract_media_from_docx(docx_path: str, media_name: str) -> Image.Image | None:
+    """Word (.docx) fayli ichidagi o'z logotip yoki pechat rasmini to'g'ridan-to'g'ri o'qib olish"""
+    try:
+        if not os.path.exists(docx_path):
+            return None
+        with zipfile.ZipFile(docx_path, 'r') as z:
+            target = f"word/media/{media_name}"
+            if target in z.namelist():
+                img_data = z.read(target)
+                return Image.open(io.BytesIO(img_data)).convert("RGBA")
+    except Exception as e:
+        print(f"Extract media error ({media_name}): {e}")
+    return None
+
+
 def render_docx_template_to_image(
     template_filename: str,
     output_png_path: str,
@@ -50,12 +67,35 @@ def render_docx_template_to_image(
     temp_dir: str = ""
 ) -> bool:
     """
-    Asl Word (.docx) shablonidagi barcha formatlarni (jadval, chegara, shrift, bold, pechat, imzo)
-    100% saqlagan holda matnlarni Word kabi tabiiy yangi qatorga o'tkazib (word-wrapping)
-    o'ta tiniq A4 PNG rasm yaratadi.
+    Sizning asl Word (.docx) faylingizdagi logotip, muhr (pechat) va imzolarni
+    100% o'zidan olib, matnlarni tabiiy yangi qatorga o'tkazgan holda (word-wrapping)
+    o'ta tiniq A4 PNG rasm shaklida hosil qiladi.
     """
     try:
-        # A4 Canvas at 200 DPI (1654 x 2338)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        template_path = find_template_file(template_filename)
+
+        # 1. Shablon ichidagi yoki stamps papkasidagi logotip va pechat/imzoni yuklash
+        logo_img = None
+        imzo_img = None
+
+        # Logotip (image1.png)
+        local_logo = os.path.join(base_dir, "templates", "stamps", "image1.png")
+        if os.path.exists(local_logo):
+            try: logo_img = Image.open(local_logo).convert("RGBA")
+            except Exception: pass
+        if logo_img is None and os.path.exists(template_path):
+            logo_img = _extract_media_from_docx(template_path, "image1.png")
+
+        # Pechat va Imzo (image2.png)
+        local_imzo = os.path.join(base_dir, "templates", "stamps", "image2.png")
+        if os.path.exists(local_imzo):
+            try: imzo_img = Image.open(local_imzo).convert("RGBA")
+            except Exception: pass
+        if imzo_img is None and os.path.exists(template_path):
+            imzo_img = _extract_media_from_docx(template_path, "image2.png")
+
+        # 2. A4 Canvas (1654 x 2338 px)
         W, H = 1654, 2338
         img = Image.new("RGB", (W, H), color=(255, 255, 255))
         draw = ImageDraw.Draw(img)
@@ -64,14 +104,14 @@ def render_docx_template_to_image(
         content_w = W - 2 * margin_x
         curr_y = 110
 
-        # 1. Header Table (3 ustunli jadval)
+        # 3. Header Table (3 ustunli jadval)
         hdr_h = 240
         tbl_x = margin_x
         col1_w = int(content_w * 0.40)
         col2_w = int(content_w * 0.20)
         col3_w = content_w - col1_w - col2_w
 
-        # Jadval atrofidagi nuqtali kulrang chegara
+        # Nuqtali hoshiyalar
         dot_color = (150, 150, 150)
         for x in range(tbl_x, tbl_x + content_w, 6):
             draw.point((x, curr_y), fill=dot_color)
@@ -82,8 +122,8 @@ def render_docx_template_to_image(
             draw.point((tbl_x + col1_w + col2_w, y), fill=dot_color)
             draw.point((tbl_x + content_w, y), fill=dot_color)
 
-        # Chap ustun (O'zbekcha)
-        f_hdr = get_font(21, bold=True)
+        # Chap matn (O'zbekcha)
+        f_hdr = _get_font(21, bold=True)
         uz_text = [
             "O’ZBEKISTON RESPUBLIKASI",
             "QASHQADARYO VILOYATI",
@@ -97,18 +137,15 @@ def render_docx_template_to_image(
             draw.text((tbl_x + (col1_w - tw) // 2, uz_y), line, fill=(0, 0, 0), font=f_hdr)
             uz_y += 38
 
-        # O'rta ustun: Logotip (image1.png)
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        logo_path = os.path.join(base_dir, "templates", "stamps", "image1.png")
-        if os.path.exists(logo_path):
-            logo_img = Image.open(logo_path).convert("RGBA")
+        # O'rta ustun: Logotip rasmi
+        if logo_img:
             logo_w, logo_h = 190, 190
-            logo_img = logo_img.resize((logo_w, logo_h), Image.Resampling.LANCZOS)
+            logo_resized = logo_img.resize((logo_w, logo_h), Image.Resampling.LANCZOS)
             lx = tbl_x + col1_w + (col2_w - logo_w) // 2
             ly = curr_y + (hdr_h - logo_h) // 2
-            img.paste(logo_img, (lx, ly), logo_img if "A" in logo_img.getbands() else None)
+            img.paste(logo_resized, (lx, ly), logo_resized if "A" in logo_resized.getbands() else None)
         else:
-            f_mid = get_font(24, bold=True)
+            f_mid = _get_font(24, bold=True)
             mid_lines = ["Qarshi", "tibbiyot", "texnikumi"]
             mid_y = curr_y + 50
             for line in mid_lines:
@@ -117,7 +154,7 @@ def render_docx_template_to_image(
                 draw.text((tbl_x + col1_w + (col2_w - tw) // 2, mid_y), line, fill=(0, 51, 153), font=f_mid)
                 mid_y += 42
 
-        # O'ng ustun (Ruscha)
+        # O'ng matn (Ruscha)
         ru_text = [
             "РЕСПУБЛИКА УЗБЕКИСТАН",
             "КАШКАДАРЬИНСКАЯ ОБЛАСТЬ",
@@ -133,12 +170,12 @@ def render_docx_template_to_image(
 
         curr_y += hdr_h + 30
 
-        # 2. Ajratuvchi chiziq
+        # 4. Ajratuvchi chiziq
         draw.line([(margin_x, curr_y), (margin_x + content_w, curr_y)], fill=(0, 0, 0), width=3)
         curr_y += 35
 
-        # 3. Shahar va Sana (Meta)
-        f_meta = get_font(26, bold=False)
+        # 5. Shahar va Sana
+        f_meta = _get_font(26, bold=False)
         sana_val = str(data.get("SANA", "14.08.2026")).strip()
         if not (sana_val.endswith("y.") or sana_val.endswith("y")):
             sana_val += " y."
@@ -149,17 +186,17 @@ def render_docx_template_to_image(
         draw.text((margin_x + content_w - tw, curr_y), sana_val, fill=(0, 0, 0), font=f_meta)
         curr_y += 150
 
-        # 4. Sarlavha: MA'LUMOTNOMA (Bold, 34pt)
-        f_title = get_font(34, bold=True)
+        # 6. Sarlavha: MA'LUMOTNOMA (Bold, 34pt)
+        f_title = _get_font(34, bold=True)
         title_str = "MA’LUMOTNOMA"
         bbox = f_title.getbbox(title_str)
         tw = bbox[2] - bbox[0]
         draw.text((margin_x + (content_w - tw) // 2, curr_y), title_str, fill=(0, 0, 0), font=f_title)
         curr_y += 110
 
-        # 5. Kirish jumlasi
-        f_body_reg = get_font(27, bold=False)
-        f_body_bold = get_font(27, bold=True)
+        # 7. Kirish jumlasi
+        f_body_reg = _get_font(27, bold=False)
+        f_body_bold = _get_font(27, bold=True)
 
         intro_str = "Ushbu  ma’lumotnoma  shuni  tasdiqlaydiki,  haqiqatdan  ham"
         bbox = f_body_reg.getbbox(intro_str)
@@ -167,7 +204,7 @@ def render_docx_template_to_image(
         draw.text((margin_x + (content_w - tw) // 2, curr_y), intro_str, fill=(0, 0, 0), font=f_body_reg)
         curr_y += 75
 
-        # 6. Tabiiy qatorga o'tuvchi (Word-wrapping) asosiy matn
+        # 8. Asosiy matn (Word kabi tabiiy yangi qatorga o'tish bilan)
         fio = str(data.get("FIO", "")).strip()
         oquv_yili = str(data.get("OQUV_YILI", "2026/2027")).strip()
         yonalish = str(data.get("YONALISH", "")).strip()
@@ -185,7 +222,6 @@ def render_docx_template_to_image(
         for w in rest_phrase.split():
             tokens.append((w, False))
 
-        # So'zma-so'z qatorga ajratish
         lines = []
         current_line = []
         current_w = 0
@@ -208,7 +244,6 @@ def render_docx_template_to_image(
         if current_line:
             lines.append(current_line)
 
-        # Qatorlarni markazlashtirib chizish
         for line in lines:
             tot_line_w = sum(w for _, _, w in line) + (len(line) - 1) * space_w
             start_x = margin_x + (content_w - tot_line_w) // 2
@@ -221,24 +256,22 @@ def render_docx_template_to_image(
 
         curr_y += 50
 
-        # 7. Izoh (Italic / Qiya matn)
-        f_note = get_font(24, italic=True)
+        # 9. Izoh (Italic / Qiya matn)
+        f_note = _get_font(24, italic=True)
         note_str = "Ma’lumotnoma so‘ralgan joyga taqdim etish uchun berildi"
         bbox = f_note.getbbox(note_str)
         tw = bbox[2] - bbox[0]
         draw.text((margin_x + (content_w - tw) // 2, curr_y), note_str, fill=(0, 0, 0), font=f_note)
         curr_y += 240
 
-        # 8. Footer (Pechat, imzo va direktor imzosi)
-        imzo_path = os.path.join(base_dir, "templates", "stamps", "image2.png")
-        if os.path.exists(imzo_path):
-            i_img = Image.open(imzo_path).convert("RGBA")
+        # 10. Footer (Asl pechat, muhr, imzo va matnlar)
+        if imzo_img:
             foot_target_w = content_w
-            foot_target_h = int(foot_target_w * i_img.height / i_img.width)
-            i_img = i_img.resize((foot_target_w, foot_target_h), Image.Resampling.LANCZOS)
-            img.paste(i_img, (margin_x, curr_y), i_img)
+            foot_target_h = int(foot_target_w * imzo_img.height / imzo_img.width)
+            imzo_resized = imzo_img.resize((foot_target_w, foot_target_h), Image.Resampling.LANCZOS)
+            img.paste(imzo_resized, (margin_x, curr_y), imzo_resized if "A" in imzo_resized.getbands() else None)
         else:
-            f_foot = get_font(26, bold=True)
+            f_foot = _get_font(26, bold=True)
             foot_l1 = "“Qarshi tibbiyot texnikumi”"
             foot_l2 = "ijrochi direktori:"
             draw.text((margin_x, curr_y), foot_l1, fill=(0, 0, 0), font=f_foot)
