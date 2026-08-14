@@ -998,12 +998,7 @@ const ATLAS = {
                   </select>
                 </div>
                 <div class="form-group" id="subgroup-guruh">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                    <label class="form-label" id="label-guruh" style="margin-bottom:0;">Guruhi</label>
-                    <button type="button" id="btn-toggle-custom-guruh" style="background:none;border:none;color:var(--accent-glow);font-size:11.5px;cursor:pointer;text-decoration:underline;">
-                      + Maxsus guruh
-                    </button>
-                  </div>
+                  <label class="form-label" id="label-guruh">Guruhi</label>
                   <select id="doc-guruhi-select" class="select-control" style="margin-bottom:6px;">
                     <option value="">-- Guruhni tanlang --</option>
                   </select>
@@ -1014,12 +1009,7 @@ const ATLAS = {
 
             <!-- Yangi guruh -->
             <div class="form-group" id="group-yangi-guruh" style="display:none;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <label class="form-label" style="margin-bottom:0;">Yangi Guruh (O'tkazilayotgan / Tiklanayotgan)</label>
-                <button type="button" id="btn-toggle-custom-yangi-guruh" style="background:none;border:none;color:var(--accent-glow);font-size:11.5px;cursor:pointer;text-decoration:underline;">
-                  + Maxsus guruh
-                </button>
-              </div>
+              <label class="form-label">Yangi Guruh (O'tkazilayotgan / Tiklanayotgan)</label>
               <select id="doc-yangi-guruhi-select" class="select-control" style="margin-bottom:6px;">
                 <option value="">-- Yangi guruhni tanlang --</option>
               </select>
@@ -1065,7 +1055,7 @@ const ATLAS = {
             const extra = g.rahbar_name ? ` (${g.course_level || 1}-kurs | ${g.rahbar_name})` : ` (${g.course_level || 1}-kurs)`;
             return `<option value="${g.group_name}" data-course="${g.course_level || 1}" data-rahbar="${g.rahbar_name || ''}">${g.group_name}${extra}</option>`;
           }).join('') +
-          '<option value="__custom__">✨ Maxsus guruh (Qo\'lda yozish)...</option>';
+          '<option value="__custom__">✨ + Maxsus guruh (Qo\'lda kiritish)...</option>';
       };
 
       fillSel(sel1);
@@ -1084,13 +1074,13 @@ const ATLAS = {
     // Toggle custom group inputs
     const inp1 = document.getElementById('doc-guruhi');
     const sel1 = document.getElementById('doc-guruhi-select');
-    const btnCustom1 = document.getElementById('btn-toggle-custom-guruh');
     const courseSel = document.getElementById('doc-kursi');
 
     if (sel1 && inp1) {
       sel1.addEventListener('change', () => {
         if (sel1.value === '__custom__') {
           inp1.style.display = 'block';
+          inp1.value = '';
           inp1.focus();
         } else {
           inp1.style.display = 'none';
@@ -1103,28 +1093,14 @@ const ATLAS = {
       });
     }
 
-    if (btnCustom1 && inp1 && sel1) {
-      btnCustom1.addEventListener('click', () => {
-        if (inp1.style.display === 'none') {
-          inp1.style.display = 'block';
-          sel1.value = '__custom__';
-          inp1.focus();
-        } else {
-          inp1.style.display = 'none';
-          sel1.value = '';
-          inp1.value = '';
-        }
-      });
-    }
-
     const inp2 = document.getElementById('doc-yangi-guruhi');
     const sel2 = document.getElementById('doc-yangi-guruhi-select');
-    const btnCustom2 = document.getElementById('btn-toggle-custom-yangi-guruh');
 
     if (sel2 && inp2) {
       sel2.addEventListener('change', () => {
         if (sel2.value === '__custom__') {
           inp2.style.display = 'block';
+          inp2.value = '';
           inp2.focus();
         } else {
           inp2.style.display = 'none';
