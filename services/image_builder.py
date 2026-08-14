@@ -85,10 +85,25 @@ def render_docx_template_to_image(
         tw = bb[2] - bb[0]
         draw.text((2339 - tw, 801), sana_text, fill=(0, 0, 0), font=f_reg)
 
-        # 3. Dinamik Asosiy Matn (X: 355 dan 2300 gacha, Y=1541)
         left_x = 355
         right_x = 2300
         content_w = right_x - left_x
+
+        # 3. Kirish gapi (Qatoriga to'lib turishi - Full Justified)
+        draw.rectangle([(0, 1350), (img.width, 1490)], fill=(255, 255, 255))
+        intro_words = ["Ushbu", "ma’lumotnoma", "shuni", "tasdiqlaydiki,", "haqiqatdan", "ham"]
+        words_w = sum(f_reg.getbbox(w)[2] - f_reg.getbbox(w)[0] for w in intro_words)
+        gaps = len(intro_words) - 1
+        gap_px = (content_w - words_w) / gaps
+
+        cur_x = float(left_x)
+        intro_y = 1406
+        for w in intro_words:
+            draw.text((int(round(cur_x)), intro_y), w, fill=(0, 0, 0), font=f_reg)
+            w_px = f_reg.getbbox(w)[2] - f_reg.getbbox(w)[0]
+            cur_x += w_px + gap_px
+
+        # 4. Dinamik Asosiy Matn (X: 355 dan 2300 gacha, Y=1541)
         start_y = 1541
         line_h = 134
 
