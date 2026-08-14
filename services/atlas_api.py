@@ -1432,13 +1432,24 @@ def api_contracts_download_xulosa(session_id):
 
 @atlas_api.route("/contracts/download-screenshot/<session_id>/<group_name>", methods=["GET"])
 def api_contracts_download_screenshot(session_id, group_name):
-    """Bitta guruh screenshot rasmini yuklab olish"""
+    """Bitta guruh yoki Xulosa screenshot rasmini yuklab olish"""
     sdir = os.path.join(CONTRACT_STORAGE_DIR, f"screenshots_{session_id}")
     clean_gname = group_name.replace('/', '_').replace(' ', '_')
+
+    # 1. Agar Xulosa so'ralgan bo'lsa
+    if "xulosa" in clean_gname.lower():
+        xul_path = os.path.join(sdir, "00_XULOSA_Guruh_Rahbarlari.png")
+        if os.path.exists(xul_path):
+            return send_file(xul_path, as_attachment=False, mimetype="image/png")
+        for fname in os.listdir(CONTRACT_STORAGE_DIR) if os.path.exists(CONTRACT_STORAGE_DIR) else []:
+            if session_id in fname and "xulosa" in fname and fname.endswith(".png"):
+                return send_file(os.path.join(CONTRACT_STORAGE_DIR, fname), as_attachment=False, mimetype="image/png")
+
+    # 2. Oddiy guruh screenshot
     fpath = os.path.join(sdir, f"screenshot_{clean_gname}.png")
     if os.path.exists(fpath):
         return send_file(fpath, as_attachment=False, mimetype="image/png")
-    return jsonify({"success": False, "error": "Guruh rasmi topilmadi."}), 404
+    return jsonify({"success": False, "error": "Screenshot rasmi topilmadi."}), 404
 
 
 @atlas_api.route("/contracts/download-all-screenshots-zip/<session_id>", methods=["GET"])

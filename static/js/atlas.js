@@ -1853,8 +1853,8 @@ const ATLAS = {
               <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
               <div class="screenshot-card-body">
                 <div class="screenshot-card-title">
-                  <span>Guruh: ${g.group_name}</span>
-                  <span class="badge badge-neutral">${g.student_count} talaba</span>
+                  <span style="${g.is_xulosa ? 'color:var(--accent-glow);font-weight:700;' : ''}">${g.is_xulosa ? 'XULOSA (Guruh Rahbarlari)' : `Guruh: ${g.group_name}`}</span>
+                  <span class="badge ${g.is_xulosa ? 'badge-warning' : 'badge-neutral'}">${g.is_xulosa ? 'Umumiy Jadval' : `${g.student_count} talaba`}</span>
                 </div>
                 <div class="screenshot-card-meta">
                   <span>Qarz summasi:</span>
@@ -1944,8 +1944,8 @@ const ATLAS = {
               <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
               <div class="screenshot-card-body">
                 <div class="screenshot-card-title">
-                  <span>Guruh: ${g.group_name}</span>
-                  <span class="badge badge-neutral">${g.student_count} talaba</span>
+                  <span style="${g.is_xulosa ? 'color:var(--accent-glow);font-weight:700;' : ''}">${g.is_xulosa ? 'XULOSA (Guruh Rahbarlari)' : `Guruh: ${g.group_name}`}</span>
+                  <span class="badge ${g.is_xulosa ? 'badge-warning' : 'badge-neutral'}">${g.is_xulosa ? 'Umumiy Jadval' : `${g.student_count} talaba`}</span>
                 </div>
                 <div class="screenshot-card-meta">
                   <span>Qarz summasi:</span>
@@ -2112,6 +2112,13 @@ const ATLAS = {
     } else {
       this.toast(sendRes ? sendRes.error : 'Yuborishda xatolik yuz berdi', 'error');
     }
+  },
+
+  // ============================================================
+  // BOSHQARUV PANELI (O'QUV GURUHLARI VA BOT BOSHQARUVI)
+  // ============================================================
+  async loadDashboard(container) {
+    this.loadGroups(container, 'academic');
   },
 
   // ============================================================

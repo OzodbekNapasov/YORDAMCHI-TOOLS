@@ -773,6 +773,31 @@ def execute_group_screenshots(baza_path, session_id=None):
             "qarzi": qarzi_num
         })
 
+    # 2. Xulosa ma'lumotlarini ajratib olish (114, 115, 116 chiqariladi)
+    xulosa_rows = []
+    excluded_groups = {'114', '115', '116', '114.0', '115.0', '116.0'}
+    for r in range(1, 20):
+        rahbar = sheet.cell(row=r, column=3).value
+        guruh = sheet.cell(row=r, column=4).value
+        if rahbar and guruh and str(rahbar).strip() and str(guruh).strip():
+            if str(rahbar).lower().startswith(('jami', 'итого', 'guruh rahbari')): continue
+            g_str = str(guruh).strip()
+            if g_str.endswith('.0'): g_str = g_str[:-2]
+            if g_str in excluded_groups: continue
+
+            g_students = guruhlar.get(g_str, [])
+            soni = len(g_students)
+            if soni == 0 and int(sheet.cell(row=r, column=5).value or 0) == 0:
+                continue
+
+            qarz_sum = sum(r['qarzi'] for r in g_students if r['qarzi'] > 0)
+            xulosa_rows.append({
+                'rahbar': str(rahbar).strip(),
+                'guruh': g_str,
+                'soni': soni if soni > 0 else int(sheet.cell(row=r, column=5).value or 0),
+                'qarz': qarz_sum
+            })
+
     wb.close()
 
     if not guruhlar:
@@ -785,6 +810,35 @@ def execute_group_screenshots(baza_path, session_id=None):
     zip_path = os.path.join(CONTRACT_STORAGE_DIR, f"Guruhlar_Screenshotlari_{session_id}.zip")
 
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_f:
+        # 1. First, generate XULOSA screenshot and add to zip
+        if xulosa_rows:
+            xul_filename = "00_XULOSA_Guruh_Rahbarlari.png"
+            xul_img_path = os.path.join(session_screenshots_dir, xul_filename)
+            generate_xulosa_table_image(xulosa_rows, xul_img_path)
+            zip_f.write(xul_img_path, xul_filename)
+
+            # Also save as main xulosa image
+            main_xulosa_path = os.path.join(CONTRACT_STORAGE_DIR, f"xulosa_{session_id}_{date_str}.png")
+            try:
+                generate_xulosa_table_image(xulosa_rows, main_xulosa_path)
+            except Exception:
+                pass
+
+            sb_xul_url = upload_document_to_supabase(xul_img_path, f"contracts/screenshots/{session_id}_{xul_filename}")
+            tot_xul_debt = sum(x['qarz'] for x in xulosa_rows if x['qarz'] > 0)
+            tot_xul_students = sum(x['soni'] for x in xulosa_rows)
+
+            generated_groups.append({
+                "group_name": "XULOSA (Guruh Rahbarlari)",
+                "is_xulosa": True,
+                "student_count": tot_xul_students,
+                "debt_total": tot_xul_debt,
+                "image_url": sb_xul_url or f"/api/contracts/download-screenshot/{session_id}/XULOSA",
+                "download_url": f"/api/contracts/download-screenshot/{session_id}/XULOSA",
+                "local_path": xul_img_path
+            })
+
+        # 2. Next, generate each student group screenshot
         for g_name in sorted(guruhlar.keys()):
             rows_data = guruhlar[g_name]
             clean_filename = f"screenshot_{g_name.replace('/', '_').replace(' ', '_')}.png"
@@ -800,6 +854,7 @@ def execute_group_screenshots(baza_path, session_id=None):
             tot_debt = sum(r['qarzi'] for r in rows_data if r['qarzi'] > 0)
             generated_groups.append({
                 "group_name": g_name,
+                "is_xulosa": False,
                 "student_count": len(rows_data),
                 "debt_total": tot_debt,
                 "image_url": sb_url or f"/api/contracts/download-screenshot/{session_id}/{g_name}",
