@@ -8,13 +8,17 @@ import io
 import time
 import json
 import uuid
+import tempfile
 import threading
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, send_file, current_app
 
 from services.atlas_db import (
     get_db_connection, log_audit, track_user_activity,
-    log_generated_document, DB_PATH
+    log_generated_document, update_generated_document,
+    log_contract_session, get_contract_sessions,
+    get_contract_session_by_id, delete_contract_session,
+    DB_PATH
 )
 from services.atlas_auth import (
     authenticate_admin, admin_required, get_current_admin,
@@ -22,6 +26,11 @@ from services.atlas_auth import (
 )
 from services.image_builder import render_docx_template_to_image
 from services.docx_filler import fill_template
+from services.kontrakt_service import (
+    analyze_baza_excel, execute_contract_update,
+    execute_group_screenshots, forward_to_telegram,
+    CONTRACT_STORAGE_DIR
+)
 from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
 
 atlas_api = Blueprint("atlas_api", __name__, url_prefix="/api")
@@ -1252,3 +1261,253 @@ def api_global_search():
 
     conn.close()
     return jsonify({"success": True, "results": results})
+
+
+# ============================================================
+# 13. KONTRAKTLAR VA DEBITORKA MODULI ENDPOINTS
+# ============================================================
+
+@atlas_api.route("/contracts/analyze", methods=["POST"])
+@admin_required
+def api_contracts_analyze():
+    """Asosiy Baza Excel faylini tahlil qilish va tavsiya sanasini aniqlash"""
+    if "baza" not in request.files:
+        return jsonify({"success": False, "error": "Asosiy baza fayli yuklanmadi."}), 400
+
+    baza_file = request.files["baza"]
+    temp_path = os.path.join(tempfile.gettempdir(), f"analyze_{uuid.uuid4().hex[:8]}.xlsx")
+    baza_file.save(temp_path)
+
+    res = analyze_baza_excel(temp_path)
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
+
+    return jsonify(res)
+
+
+@atlas_api.route("/contracts/update", methods=["POST"])
+@admin_required
+def api_contracts_update():
+    """
+    Baza + Debitorka fayllarini qabul qilib, to'lovlarni yangilaydi,
+    formulalarni saqlaydi, xulosa rasmini chizadi va hisobotni qaytaradi.
+    """
+    admin = get_current_admin()
+    if "baza" not in request.files or "debitorka" not in request.files:
+        return jsonify({"success": False, "error": "Baza va Debitorka fayllari kiritilishi shart."}), 400
+
+    baza_file = request.files["baza"]
+    deb_file = request.files["debitorka"]
+    start_date_str = request.form.get("start_date", "").strip()
+
+    if not start_date_str:
+        return jsonify({"success": False, "error": "Boshlanish sanasi kiritilishi shart."}), 400
+
+    try:
+        start_date_dt = datetime.strptime(start_date_str, "%d.%m.%Y")
+    except ValueError:
+        try:
+            start_date_dt = datetime.strptime(start_date_str, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"success": False, "error": "Sana formati noto'g'ri (Format: DD.MM.YYYY)."}), 400
+
+    session_id = uuid.uuid4().hex[:12]
+    temp_baza = os.path.join(tempfile.gettempdir(), f"baza_{session_id}.xlsx")
+    temp_deb = os.path.join(tempfile.gettempdir(), f"deb_{session_id}.xlsx")
+
+    baza_file.save(temp_baza)
+    deb_file.save(temp_deb)
+
+    try:
+        res = execute_contract_update(temp_baza, temp_deb, start_date_dt, session_id=session_id)
+
+        # Log session to SQLite and Supabase Cloud
+        log_contract_session(
+            session_id=session_id,
+            filename=res["excel_filename"],
+            start_date=res["metrics"]["start_date"],
+            end_date=res["metrics"]["end_date"],
+            total_income=res["metrics"]["total_income"],
+            updated_count=res["metrics"]["updated_count"],
+            unmatched_count=res["metrics"]["unmatched_count"],
+            excel_url=res["excel_url"],
+            xulosa_url=res["xulosa_img_url"],
+            metrics=res["metrics"]
+        )
+
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "contracts",
+            "update_contracts",
+            "success",
+            {"session_id": session_id, "income": res["metrics"]["total_income"], "updated": res["metrics"]["updated_count"]},
+            request.remote_addr
+        )
+
+        if os.path.exists(temp_baza): os.remove(temp_baza)
+        if os.path.exists(temp_deb): os.remove(temp_deb)
+
+        return jsonify(res)
+    except Exception as e:
+        if os.path.exists(temp_baza): os.remove(temp_baza)
+        if os.path.exists(temp_deb): os.remove(temp_deb)
+        return jsonify({"success": False, "error": f"Xatolik yuz berdi: {str(e)}"}), 500
+
+
+@atlas_api.route("/contracts/group-screenshots", methods=["POST"])
+@admin_required
+def api_contracts_group_screenshots():
+    """Asosiy baza faylidan barcha guruhlar bo'yicha HD screenshotlar va ZIP paketini generatsiya qilish"""
+    admin = get_current_admin()
+    if "baza" not in request.files:
+        return jsonify({"success": False, "error": "Asosiy baza fayli yuklanmadi."}), 400
+
+    baza_file = request.files["baza"]
+    session_id = uuid.uuid4().hex[:12]
+    temp_baza = os.path.join(tempfile.gettempdir(), f"baza_ss_{session_id}.xlsx")
+    baza_file.save(temp_baza)
+
+    try:
+        res = execute_group_screenshots(temp_baza, session_id=session_id)
+        if os.path.exists(temp_baza): os.remove(temp_baza)
+
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "contracts",
+            "generate_group_screenshots",
+            "success",
+            {"session_id": session_id, "groups_count": res.get("total_groups", 0)},
+            request.remote_addr
+        )
+
+        return jsonify(res)
+    except Exception as e:
+        if os.path.exists(temp_baza): os.remove(temp_baza)
+        return jsonify({"success": False, "error": f"Screenshotlarni yaratishda xatolik: {str(e)}"}), 500
+
+
+@atlas_api.route("/contracts/download-excel/<session_id>", methods=["GET"])
+def api_contracts_download_excel(session_id):
+    """Yangilangan Excel faylini yuklab olish"""
+    for fname in os.listdir(CONTRACT_STORAGE_DIR):
+        if fname.startswith(session_id) and fname.endswith(".xlsx"):
+            fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
+            download_name = fname.replace(f"{session_id}_", "")
+            return send_file(fpath, as_attachment=True, download_name=download_name)
+    return jsonify({"success": False, "error": "Excel fayli topilmadi."}), 404
+
+
+@atlas_api.route("/contracts/download-xulosa/<session_id>", methods=["GET"])
+def api_contracts_download_xulosa(session_id):
+    """Xulosa rasmini yuklab olish"""
+    for fname in os.listdir(CONTRACT_STORAGE_DIR):
+        if session_id in fname and fname.endswith(".png") and "xulosa" in fname:
+            fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
+            return send_file(fpath, as_attachment=False, mimetype="image/png")
+    return jsonify({"success": False, "error": "Xulosa rasmi topilmadi."}), 404
+
+
+@atlas_api.route("/contracts/download-screenshot/<session_id>/<group_name>", methods=["GET"])
+def api_contracts_download_screenshot(session_id, group_name):
+    """Bitta guruh screenshot rasmini yuklab olish"""
+    sdir = os.path.join(CONTRACT_STORAGE_DIR, f"screenshots_{session_id}")
+    clean_gname = group_name.replace('/', '_').replace(' ', '_')
+    fpath = os.path.join(sdir, f"screenshot_{clean_gname}.png")
+    if os.path.exists(fpath):
+        return send_file(fpath, as_attachment=False, mimetype="image/png")
+    return jsonify({"success": False, "error": "Guruh rasmi topilmadi."}), 404
+
+
+@atlas_api.route("/contracts/download-all-screenshots-zip/<session_id>", methods=["GET"])
+def api_contracts_download_all_zip(session_id):
+    """Barcha guruhlar screenshotlari jamlangan ZIP faylni yuklab olish"""
+    zpath = os.path.join(CONTRACT_STORAGE_DIR, f"Guruhlar_Screenshotlari_{session_id}.zip")
+    if os.path.exists(zpath):
+        return send_file(zpath, as_attachment=True, download_name=f"Guruhlar_Screenshotlari_{session_id}.zip")
+    return jsonify({"success": False, "error": "ZIP fayl topilmadi."}), 404
+
+
+@atlas_api.route("/contracts/send-to-telegram", methods=["POST"])
+@admin_required
+def api_contracts_send_to_telegram():
+    """Telegram guruh yoki kanallariga hisobot va fayllarni forward qilish"""
+    admin = get_current_admin()
+    data = request.get_json(silent=True) or {}
+    chat_ids = data.get("chat_ids", [])
+    session_id = data.get("session_id", "")
+    caption_text = data.get("caption", "")
+    send_excel = data.get("send_excel", False)
+    send_xulosa = data.get("send_xulosa", True)
+    send_screenshots = data.get("send_screenshots", False)
+
+    if not chat_ids:
+        return jsonify({"success": False, "error": "Kamida bitta Telegram guruh yoki chat tanlanishi kerak."}), 400
+
+    excel_path = None
+    xulosa_path = None
+    group_images = []
+
+    if session_id:
+        if send_excel:
+            for fname in os.listdir(CONTRACT_STORAGE_DIR):
+                if fname.startswith(session_id) and fname.endswith(".xlsx"):
+                    excel_path = os.path.join(CONTRACT_STORAGE_DIR, fname)
+                    break
+        if send_xulosa:
+            for fname in os.listdir(CONTRACT_STORAGE_DIR):
+                if session_id in fname and fname.endswith(".png") and "xulosa" in fname:
+                    xulosa_path = os.path.join(CONTRACT_STORAGE_DIR, fname)
+                    break
+        if send_screenshots:
+            sdir = os.path.join(CONTRACT_STORAGE_DIR, f"screenshots_{session_id}")
+            if os.path.exists(sdir):
+                for fname in os.listdir(sdir):
+                    if fname.endswith(".png"):
+                        group_images.append(os.path.join(sdir, fname))
+
+    res = forward_to_telegram(
+        chat_ids=chat_ids,
+        caption_text=caption_text,
+        excel_path=excel_path,
+        xulosa_img_path=xulosa_path,
+        group_img_paths=group_images
+    )
+
+    log_audit(
+        admin["username"] if admin else "web_admin",
+        "contracts",
+        "send_to_telegram",
+        "success" if res.get("success") else "error",
+        {"chat_ids": chat_ids, "session_id": session_id},
+        request.remote_addr
+    )
+
+    return jsonify(res)
+
+
+@atlas_api.route("/contracts/history", methods=["GET"])
+@admin_required
+def api_contracts_history():
+    """Kontrakt yangilanishlari tarixini olish"""
+    sessions = get_contract_sessions()
+    return jsonify({"success": True, "sessions": sessions})
+
+
+@atlas_api.route("/contracts/session/<session_id>", methods=["DELETE"])
+@admin_required
+def api_contracts_delete_session(session_id):
+    """Kontrakt sessiyasini o'chirish"""
+    admin = get_current_admin()
+    success = delete_contract_session(session_id)
+    if success:
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "contracts",
+            "delete_session",
+            "success",
+            {"session_id": session_id},
+            request.remote_addr
+        )
+        return jsonify({"success": True, "message": "Sessiya muvaffaqiyatli o'chirildi."})
+    return jsonify({"success": False, "error": "Sessiyani o'chirishda xatolik yuz berdi."}), 400
+

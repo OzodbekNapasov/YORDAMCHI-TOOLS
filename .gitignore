@@ -12,3 +12,6 @@ test_filled.docx
 temp/
 *.db
 atlas.db
+saved_documents/*
+!saved_documents/.gitkeep
+

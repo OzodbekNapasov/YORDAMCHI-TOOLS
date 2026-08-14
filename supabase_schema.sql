@@ -52,17 +52,37 @@ CREATE TABLE IF NOT EXISTS public.atlas_student_groups (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 5. Enable Row Level Security & Allow Service Role Full Access
+-- 5. Contract Sessions Table (Kontrakt Yangilanish Tarixi)
+CREATE TABLE IF NOT EXISTS public.atlas_contract_sessions (
+    id BIGSERIAL PRIMARY KEY,
+    session_id TEXT UNIQUE NOT NULL,
+    filename TEXT NOT NULL,
+    start_date TEXT,
+    end_date TEXT,
+    total_income NUMERIC DEFAULT 0,
+    updated_count INT DEFAULT 0,
+    unmatched_count INT DEFAULT 0,
+    excel_url TEXT,
+    xulosa_url TEXT,
+    metrics_json JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 6. Enable Row Level Security & Allow Service Role Full Access
 ALTER TABLE public.atlas_generated_docs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.atlas_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.atlas_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.atlas_student_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.atlas_contract_sessions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow service_role full access to atlas_generated_docs" ON public.atlas_generated_docs FOR ALL TO service_role USING (true);
 CREATE POLICY "Allow service_role full access to atlas_users" ON public.atlas_users FOR ALL TO service_role USING (true);
 CREATE POLICY "Allow service_role full access to atlas_audit_logs" ON public.atlas_audit_logs FOR ALL TO service_role USING (true);
 CREATE POLICY "Allow service_role full access to atlas_student_groups" ON public.atlas_student_groups FOR ALL TO service_role USING (true);
+CREATE POLICY "Allow service_role full access to atlas_contract_sessions" ON public.atlas_contract_sessions FOR ALL TO service_role USING (true);
 
--- Allow public read access to generated documents and groups
+-- Allow public read access to generated documents, groups, and contract sessions
 CREATE POLICY "Allow public read access to atlas_generated_docs" ON public.atlas_generated_docs FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to atlas_student_groups" ON public.atlas_student_groups FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to atlas_contract_sessions" ON public.atlas_contract_sessions FOR SELECT USING (true);
+

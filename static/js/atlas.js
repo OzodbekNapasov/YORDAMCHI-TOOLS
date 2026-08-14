@@ -127,6 +127,8 @@ const ATLAS = {
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       const titles = {
+        contracts: 'Kontraktlar & Bank Debitorkasi Yangilash',
+        group_screenshots: 'Guruhlar Bo\'yicha HD Screenshotlar',
         documents: 'Ma\'lumotnomalar & Buyruqlar Arxivi',
         doc_qabul_1_kurs: '1-kursga Qabul Ma\'lumotnomasi',
         doc_oqiyapti: 'O\'qiyotganligi Haqida Ma\'lumotnoma',
@@ -158,6 +160,8 @@ const ATLAS = {
       this.loadDocuments(viewport, tpl_id);
     } else {
       switch (route) {
+        case 'contracts': this.loadContracts(viewport, 'update'); break;
+        case 'group_screenshots': this.loadContracts(viewport, 'screenshots'); break;
         case 'documents': this.loadDocuments(viewport); break;
         case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
         case 'dashboard': this.loadDashboard(viewport); break;
@@ -170,7 +174,7 @@ const ATLAS = {
         case 'logs': this.loadLogs(viewport); break;
         case 'settings': this.loadSettings(viewport); break;
         case 'modules': this.loadModules(viewport); break;
-        default: this.loadDocuments(viewport);
+        default: this.loadContracts(viewport, 'update');
       }
     }
   },
@@ -270,6 +274,14 @@ const ATLAS = {
           </div>
 
           <nav class="sidebar-menu">
+            <div class="sidebar-group-title">Moliya & Kontraktlar</div>
+            <div class="nav-item" data-route="contracts">
+              ${this.icons.analytics} <span>📊 Kontraktlar & Debitorka</span>
+            </div>
+            <div class="nav-item" data-route="group_screenshots">
+              ${this.icons.dashboard} <span>📸 Guruh Screenshotlari</span>
+            </div>
+
             <div class="sidebar-group-title">Hujjatlar & Buyruqlar</div>
             
             <!-- Expandable Accordion Menu -->
@@ -1065,6 +1077,915 @@ const ATLAS = {
         </div>
       </div>
     `);
+  },
+
+  // ============================================================
+  // 1.5. KONTRAKTLAR & BANK DEBITORKASI MODULI
+  // ============================================================
+  contractState: {
+    bazaFile: null,
+    debFile: null,
+    ssBazaFile: null,
+    startDate: '',
+    detectedDate: '',
+    suggestedDate: '',
+    lastUpdateResult: null,
+    lastSsResult: null
+  },
+
+  async loadContracts(container, activeTab = 'update') {
+    container.innerHTML = `
+      <div class="tab-pills-row">
+        <button class="tab-pill-btn ${activeTab === 'update' ? 'active' : ''}" id="tab-c-update">
+          ${this.icons.analytics} <span>⚡ 1. Kontraktlarni Yangilash (Baza + Debitorka)</span>
+        </button>
+        <button class="tab-pill-btn ${activeTab === 'screenshots' ? 'active' : ''}" id="tab-c-screenshots">
+          ${this.icons.dashboard} <span>📸 2. Guruh Screenshotlari (HD Galereya)</span>
+        </button>
+        <button class="tab-pill-btn ${activeTab === 'history' ? 'active' : ''}" id="tab-c-history">
+          ${this.icons.archive} <span>📜 3. Tarix & Arxiv</span>
+        </button>
+      </div>
+
+      <div id="contracts-tab-content"></div>
+    `;
+
+    document.getElementById('tab-c-update').addEventListener('click', () => {
+      this.loadContracts(container, 'update');
+    });
+    document.getElementById('tab-c-screenshots').addEventListener('click', () => {
+      this.loadContracts(container, 'screenshots');
+    });
+    document.getElementById('tab-c-history').addEventListener('click', () => {
+      this.loadContracts(container, 'history');
+    });
+
+    const contentBox = document.getElementById('contracts-tab-content');
+    if (activeTab === 'update') {
+      this.renderContractUpdater(contentBox);
+    } else if (activeTab === 'screenshots') {
+      this.renderGroupScreenshotsView(contentBox);
+    } else {
+      this.renderContractHistory(contentBox);
+    }
+  },
+
+  renderContractUpdater(container) {
+    container.innerHTML = `
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <div class="card-title">${this.icons.analytics} Kontrakt To'lovlarini Yangilash & Debitorka Taqqoslash</div>
+          <span class="badge badge-success">Formulalar 100% Saqlanadi</span>
+        </div>
+        <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 20px;">
+          Asosiy Baza (.xlsx) va Bank Debitorkasi (.xlsx) fayllarini sudrab olib kelib (Drag & Drop / Swipe) tashlang.
+          Tizim ismlarni sun'iy intellekt va Levenshtein fuzzy algoritmi orqali solishtirib, to'lovlarni yangilaydi hamda XULOSA hisobotini tayyorlaydi.
+        </p>
+
+        <!-- DROPZONES -->
+        <div class="dropzone-container">
+          <!-- 1. ASOSIY BAZA DROPZONE -->
+          <div class="file-dropzone ${this.contractState.bazaFile ? 'has-file' : ''}" id="dropzone-baza">
+            <input type="file" id="file-input-baza" accept=".xlsx" style="display:none;">
+            <div class="dropzone-icon">📊</div>
+            <div class="dropzone-title">1. Asosiy Baza Fayli (.xlsx)</div>
+            <div class="dropzone-hint">Faylni bu yerga sudrab tashlang yoki tanlash uchun bosing</div>
+            <div id="badge-baza">
+              ${this.contractState.bazaFile ? `<div class="dropzone-file-badge">${this.icons.check} ${this.contractState.bazaFile.name} (${(this.contractState.bazaFile.size/1024).toFixed(1)} KB)</div>` : ''}
+            </div>
+            <div id="detected-date-container">
+              ${this.contractState.detectedDate ? `<div class="detected-date-pill">💡 Aniqlangan sana: <b>${this.contractState.detectedDate}</b> → Tavsiya: <b>${this.contractState.suggestedDate}</b></div>` : ''}
+            </div>
+          </div>
+
+          <!-- 2. BANK DEBITORKASI DROPZONE -->
+          <div class="file-dropzone ${this.contractState.debFile ? 'has-file' : ''}" id="dropzone-deb">
+            <input type="file" id="file-input-deb" accept=".xlsx" style="display:none;">
+            <div class="dropzone-icon">🏦</div>
+            <div class="dropzone-title">2. Bank Debitorkasi (.xlsx)</div>
+            <div class="dropzone-hint">Bankdan olingan debitorka faylini bu yerga sudrab tashlang</div>
+            <div id="badge-deb">
+              ${this.contractState.debFile ? `<div class="dropzone-file-badge">${this.icons.check} ${this.contractState.debFile.name} (${(this.contractState.debFile.size/1024).toFixed(1)} KB)</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- OPTIONS ROW -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:16px;align-items:end;margin-bottom:20px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">📅 To'lovlarni hisoblash boshlanish sanasi</label>
+            <input type="text" id="contract-start-date" class="input-control" placeholder="Format: 01.08.2026" value="${this.contractState.startDate || this.contractState.suggestedDate || ''}">
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Format: <code>01.08.2026</code> (Bank to'lovlari shu sanadan boshlab hisoblanadi)</div>
+          </div>
+
+          <div>
+            <button class="btn-primary btn-block" id="btn-run-contract-update" style="height:42px;">
+              <span>⚡ Yangilash va Hisobotni Shakllantirish</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="contract-progress-bar" id="contract-progress-bar">
+          <div class="contract-progress-inner" id="contract-progress-inner"></div>
+        </div>
+        <div id="contract-progress-status" style="font-size:0.85rem;color:var(--color-primary);text-align:center;display:none;margin-bottom:14px;"></div>
+      </div>
+
+      <!-- RESULTS BOX -->
+      <div id="contract-results-view">
+        ${this.contractState.lastUpdateResult ? this.renderContractResultsHTML(this.contractState.lastUpdateResult) : ''}
+      </div>
+    `;
+
+    // Dropzone Baza Events
+    const dzBaza = document.getElementById('dropzone-baza');
+    const inputBaza = document.getElementById('file-input-baza');
+    dzBaza.addEventListener('click', () => inputBaza.click());
+    inputBaza.addEventListener('change', (e) => {
+      if (e.target.files[0]) this.handleBazaFileSelected(e.target.files[0]);
+    });
+    this.setupDragAndDrop(dzBaza, (file) => this.handleBazaFileSelected(file));
+
+    // Dropzone Debitorka Events
+    const dzDeb = document.getElementById('dropzone-deb');
+    const inputDeb = document.getElementById('file-input-deb');
+    dzDeb.addEventListener('click', () => inputDeb.click());
+    inputDeb.addEventListener('change', (e) => {
+      if (e.target.files[0]) this.handleDebFileSelected(e.target.files[0]);
+    });
+    this.setupDragAndDrop(dzDeb, (file) => this.handleDebFileSelected(file));
+
+    // Process Button Event
+    document.getElementById('btn-run-contract-update').addEventListener('click', () => this.runContractUpdateProcess());
+  },
+
+  setupDragAndDrop(element, onFileDropped) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      element.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        element.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      element.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        element.classList.remove('dragover');
+      }, false);
+    });
+
+    element.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        onFileDropped(files[0]);
+      }
+    });
+  },
+
+  async handleBazaFileSelected(file) {
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.toast('Iltimos, faqat .xlsx formatidagi Excel faylini yuklang!', 'error');
+      return;
+    }
+    this.contractState.bazaFile = file;
+
+    const badge = document.getElementById('badge-baza');
+    if (badge) {
+      badge.innerHTML = `<div class="dropzone-file-badge">${this.icons.check} ${file.name} (${(file.size/1024).toFixed(1)} KB)</div>`;
+    }
+    const dz = document.getElementById('dropzone-baza');
+    if (dz) dz.classList.add('has-file');
+
+    // Analyze Baza to detect date
+    const formData = new FormData();
+    formData.append('baza', file);
+
+    try {
+      const res = await fetch('/api/contracts/analyze', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${this.token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        this.contractState.detectedDate = data.detected_date || '';
+        this.contractState.suggestedDate = data.suggested_start_date || '';
+        this.contractState.startDate = data.suggested_start_date || '';
+
+        const datePill = document.getElementById('detected-date-container');
+        if (datePill && data.detected_date) {
+          datePill.innerHTML = `<div class="detected-date-pill">💡 Aniqlangan sana: <b>${data.detected_date}</b> → Tavsiya: <b>${data.suggested_start_date}</b> (${data.total_students} ta talaba, ${data.groups_count} ta guruh)</div>`;
+        }
+        const sInput = document.getElementById('contract-start-date');
+        if (sInput && data.suggested_start_date) {
+          sInput.value = data.suggested_start_date;
+        }
+        this.toast(`Asosiy baza qabul qilindi: ${data.total_students} ta talaba aniqlandi`, 'success');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  handleDebFileSelected(file) {
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.toast('Iltimos, faqat .xlsx formatidagi Debitorka faylini yuklang!', 'error');
+      return;
+    }
+    this.contractState.debFile = file;
+
+    const badge = document.getElementById('badge-deb');
+    if (badge) {
+      badge.innerHTML = `<div class="dropzone-file-badge">${this.icons.check} ${file.name} (${(file.size/1024).toFixed(1)} KB)</div>`;
+    }
+    const dz = document.getElementById('dropzone-deb');
+    if (dz) dz.classList.add('has-file');
+    this.toast('Bank debitorkasi qabul qilindi!', 'success');
+  },
+
+  async runContractUpdateProcess() {
+    if (!this.contractState.bazaFile) {
+      this.toast('Iltimos, 1-maydonga Asosiy Baza faylini yuklang!', 'error');
+      return;
+    }
+    if (!this.contractState.debFile) {
+      this.toast('Iltimos, 2-maydonga Bank Debitorkasi faylini yuklang!', 'error');
+      return;
+    }
+
+    const sDateInput = document.getElementById('contract-start-date');
+    const sDate = (sDateInput ? sDateInput.value : '').trim();
+    if (!sDate) {
+      this.toast('Iltimos, boshlanish sanasini kiriting (Format: 01.08.2026)!', 'error');
+      return;
+    }
+
+    const pBar = document.getElementById('contract-progress-bar');
+    const pInner = document.getElementById('contract-progress-inner');
+    const pStatus = document.getElementById('contract-progress-status');
+    const btn = document.getElementById('btn-run-contract-update');
+
+    pBar.style.display = 'block';
+    pStatus.style.display = 'block';
+    btn.disabled = true;
+
+    pInner.style.width = '20%';
+    pStatus.innerText = '📥 Fayllar yuklanmoqda va tahlil qilinmoqda...';
+
+    const formData = new FormData();
+    formData.append('baza', this.contractState.bazaFile);
+    formData.append('debitorka', this.contractState.debFile);
+    formData.append('start_date', sDate);
+
+    try {
+      setTimeout(() => {
+        pInner.style.width = '55%';
+        pStatus.innerText = '🧠 Fuzzy matching algoritmi orqali ismlar va to\'lovlar solishtirilmoqda...';
+      }, 500);
+
+      setTimeout(() => {
+        pInner.style.width = '85%';
+        pStatus.innerText = '⚙️ Formulalarni buzmasdan Excel yangilanmoqda va 300 DPI Xulosa rasmi chizilmoqda...';
+      }, 1500);
+
+      const res = await fetch('/api/contracts/update', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${this.token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+      btn.disabled = false;
+
+      if (data && data.success) {
+        pInner.style.width = '100%';
+        pStatus.innerText = '✅ Muvaffaqiyatli yakunlandi!';
+        setTimeout(() => {
+          pBar.style.display = 'none';
+          pStatus.style.display = 'none';
+        }, 1200);
+
+        this.contractState.lastUpdateResult = data;
+        this.toast(`Muvaffaqiyatli yangilandi: ${data.metrics.total_income.toLocaleString()} so'm tushum!`, 'success');
+
+        const resView = document.getElementById('contract-results-view');
+        if (resView) {
+          resView.innerHTML = this.renderContractResultsHTML(data);
+          this.bindContractResultsEvents(data);
+        }
+      } else {
+        pBar.style.display = 'none';
+        pStatus.style.display = 'none';
+        this.toast(data ? data.error : 'Yangilashda xatolik yuz berdi', 'error');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      pBar.style.display = 'none';
+      pStatus.style.display = 'none';
+      this.toast('Server bilan aloqada xatolik yuz berdi', 'error');
+    }
+  },
+
+  renderContractResultsHTML(data) {
+    const m = data.metrics || {};
+    const updatedCount = (data.updated_students || []).length;
+    const unmatchedCount = (data.unmatched_records || []).length;
+    const xulosaCount = (data.xulosa_rows || []).length;
+
+    return `
+      <div class="card" style="margin-top:24px;border:1px solid rgba(0,240,255,0.25);">
+        <div class="card-header">
+          <div class="card-title">${this.icons.check} Yangilanish Natijalari & Tahliliy Hisobot</div>
+          <span class="badge badge-success">Sessiya: ${data.session_id}</span>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="contract-kpi-grid">
+          <div class="contract-kpi-card">
+            <span class="contract-kpi-label">Jami Tushgan Pul</span>
+            <span class="contract-kpi-val highlight-green">${(m.total_income || 0).toLocaleString()} so'm</span>
+          </div>
+          <div class="contract-kpi-card">
+            <span class="contract-kpi-label">Yangilangan Talabalar</span>
+            <span class="contract-kpi-val highlight-cyan">${m.updated_count || 0} kishi (${updatedCount} to'lov)</span>
+          </div>
+          <div class="contract-kpi-card">
+            <span class="contract-kpi-label">Topilmagan / Noaniq</span>
+            <span class="contract-kpi-val ${unmatchedCount > 0 ? 'highlight-warn' : ''}">${unmatchedCount} ta to'lov</span>
+          </div>
+          <div class="contract-kpi-card">
+            <span class="contract-kpi-label">Filtr Oralig'i</span>
+            <span class="contract-kpi-val" style="font-size:1.1rem;">${m.start_date} → ${m.end_date}</span>
+          </div>
+        </div>
+
+        <!-- ACTION BAR -->
+        <div class="contract-action-bar">
+          <a href="/api/contracts/download-excel/${data.session_id}" class="btn-primary" style="background:#107c41;border-color:#16a34a;">
+            ${this.icons.download} <span>Tayyor Excel faylini yuklab olish (.xlsx)</span>
+          </a>
+          <button class="btn-secondary" id="btn-view-xulosa-img">
+            ${this.icons.eye} <span>Xulosa rasmini ko'rish (.png)</span>
+          </button>
+          <a href="/api/contracts/download-xulosa/${data.session_id}" download class="btn-secondary">
+            ${this.icons.download} <span>Xulosa rasmini yuklab olish</span>
+          </a>
+          <button class="btn-primary" id="btn-telegram-forward" style="margin-left:auto;background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
+            ${this.icons.send} <span>Telegram Guruhlarga Yuborish</span>
+          </button>
+        </div>
+
+        <!-- SUB TABS -->
+        <div class="tab-pills-row" style="margin-bottom:16px;">
+          <button class="tab-pill-btn active" id="subtab-btn-updated">
+            ${this.icons.check} <span>Yangilangan Talabalar (${updatedCount})</span>
+          </button>
+          <button class="tab-pill-btn" id="subtab-btn-unmatched">
+            ${this.icons.alert} <span>Topilmagan To'lovlar (${unmatchedCount})</span>
+          </button>
+          <button class="tab-pill-btn" id="subtab-btn-xulosa">
+            ${this.icons.dashboard} <span>Guruh Rahbarlari XULOSA (${xulosaCount})</span>
+          </button>
+          <button class="tab-pill-btn" id="subtab-btn-preview">
+            ${this.icons.eye} <span>Xulosa HD Rasm</span>
+          </button>
+        </div>
+
+        <!-- SUB TAB CONTENTS -->
+        <div id="subtab-content-updated">
+          <div class="table-container">
+            <table class="table-custom">
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Talaba F.I.O (Bazadagi)</th>
+                  <th>Debitorkadagi Ism</th>
+                  <th>Guruh</th>
+                  <th>To'lov Sanasi</th>
+                  <th>Tushgan Pul</th>
+                  <th>Jami To'langan</th>
+                  <th>Qoldiq Qarz</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(data.updated_students || []).map((s, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td><b style="color:var(--color-primary);">${s.orig_name}</b></td>
+                    <td><span style="font-size:0.85rem;color:var(--color-text-muted);">${s.deb_name}</span></td>
+                    <td><span class="badge badge-neutral">${s.guruh}</span></td>
+                    <td>${s.date}</td>
+                    <td><b style="color:var(--color-success);">+${(s.amount || 0).toLocaleString()} so'm</b></td>
+                    <td><b>${(s.total_paid || 0).toLocaleString()} so'm</b></td>
+                    <td><span style="color:${s.debt_left > 0 ? 'var(--color-warning)' : 'var(--color-success)'};">${(s.debt_left || 0).toLocaleString()} so'm</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="subtab-content-unmatched" style="display:none;">
+          <div class="table-container">
+            <table class="table-custom">
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Debitorkadagi Noaniq Ism</th>
+                  <th>To'lov Sanasi</th>
+                  <th>Tushgan Pul</th>
+                  <th>Holat</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(data.unmatched_records || []).map((u, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td><b style="color:var(--color-warning);">${u.name}</b></td>
+                    <td>${u.date}</td>
+                    <td><b>${(u.amount || 0).toLocaleString()} so'm</b></td>
+                    <td><span class="badge badge-danger">Bazadan topilmadi</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="subtab-content-xulosa" style="display:none;">
+          <div class="table-container">
+            <table class="table-custom">
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Guruh Rahbari</th>
+                  <th>Guruh</th>
+                  <th>Talabalar Soni</th>
+                  <th>Qarzdorlik Summasi</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(data.xulosa_rows || []).map((x, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td><b>${x.rahbar}</b></td>
+                    <td><span class="badge badge-neutral">${x.guruh}</span></td>
+                    <td>${x.soni} kishi</td>
+                    <td><b style="color:${x.qarz > 0 ? 'var(--color-danger)' : 'var(--color-success)'};">${(x.qarz || 0).toLocaleString()} so'm</b></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="subtab-content-preview" style="display:none;text-align:center;padding:16px;">
+          <img src="/api/contracts/download-xulosa/${data.session_id}" style="max-width:100%;border-radius:var(--radius-md);box-shadow:var(--shadow-card);" alt="Xulosa Jadvali">
+        </div>
+      </div>
+    `;
+  },
+
+  bindContractResultsEvents(data) {
+    const subtabs = ['updated', 'unmatched', 'xulosa', 'preview'];
+    subtabs.forEach(st => {
+      const btn = document.getElementById(`subtab-btn-${st}`);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          subtabs.forEach(x => {
+            const b = document.getElementById(`subtab-btn-${x}`);
+            const c = document.getElementById(`subtab-content-${x}`);
+            if (b) b.classList.toggle('active', x === st);
+            if (c) c.style.display = (x === st) ? 'block' : 'none';
+          });
+        });
+      }
+    });
+
+    const vBtn = document.getElementById('btn-view-xulosa-img');
+    if (vBtn) {
+      vBtn.addEventListener('click', () => {
+        this.openModalLarge('Guruh Rahbarlari bo\'yicha XULOSA Hisoboti (300 DPI)', `
+          <div style="text-align:center;">
+            <img src="/api/contracts/download-xulosa/${data.session_id}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);" alt="Xulosa">
+            <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;">
+              <a href="/api/contracts/download-xulosa/${data.session_id}" download class="btn-primary">${this.icons.download} Xulosa rasmini yuklab olish</a>
+            </div>
+          </div>
+        `);
+      });
+    }
+
+    const tgBtn = document.getElementById('btn-telegram-forward');
+    if (tgBtn) {
+      tgBtn.addEventListener('click', () => {
+        this.openContractTelegramModal(data.session_id, 'update');
+      });
+    }
+  },
+
+  // ============================================================
+  // GURUHLAR SCREENSHOTLARI GALEREYASI
+  // ============================================================
+  renderGroupScreenshotsView(container) {
+    container.innerHTML = `
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <div class="card-title">${this.icons.dashboard} Guruhlar Bo'yicha HD Screenshotlar Generatori</div>
+          <span class="badge badge-cyan">3x Ultra HD Times New Roman</span>
+        </div>
+        <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 20px;">
+          Asosiy Baza Excel (.xlsx) faylini sudrab tashlang yoki tanlang. Tizim barcha guruhlarni avtomatik aniqlab, har bir guruh uchun to'lov va qarzlar jadvali screenshotlarini chizadi.
+        </p>
+
+        <div class="file-dropzone ${this.contractState.ssBazaFile ? 'has-file' : ''}" id="dropzone-ss-baza" style="margin-bottom:20px;">
+          <input type="file" id="file-input-ss-baza" accept=".xlsx" style="display:none;">
+          <div class="dropzone-icon">📸</div>
+          <div class="dropzone-title">Asosiy Baza Excel Faylini Kiriting (.xlsx)</div>
+          <div class="dropzone-hint">Faylni bu yerga sudrab tashlang yoki tanlash uchun bosing</div>
+          <div id="badge-ss-baza">
+            ${this.contractState.ssBazaFile ? `<div class="dropzone-file-badge">${this.icons.check} ${this.contractState.ssBazaFile.name} (${(this.contractState.ssBazaFile.size/1024).toFixed(1)} KB)</div>` : ''}
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btn-run-screenshots" style="height:42px;">
+          <span>📸 Screenshotlarni Generatsiya Qilish</span>
+        </button>
+
+        <!-- PROGRESS BAR -->
+        <div class="contract-progress-bar" id="ss-progress-bar">
+          <div class="contract-progress-inner" id="ss-progress-inner"></div>
+        </div>
+        <div id="ss-progress-status" style="font-size:0.85rem;color:var(--color-primary);text-align:center;display:none;margin-bottom:14px;"></div>
+      </div>
+
+      <div id="ss-results-view">
+        ${this.contractState.lastSsResult ? this.renderScreenshotsGalleryHTML(this.contractState.lastSsResult) : ''}
+      </div>
+    `;
+
+    const dz = document.getElementById('dropzone-ss-baza');
+    const inp = document.getElementById('file-input-ss-baza');
+    dz.addEventListener('click', () => inp.click());
+    inp.addEventListener('change', (e) => {
+      if (e.target.files[0]) {
+        this.contractState.ssBazaFile = e.target.files[0];
+        document.getElementById('badge-ss-baza').innerHTML = `<div class="dropzone-file-badge">${this.icons.check} ${e.target.files[0].name} (${(e.target.files[0].size/1024).toFixed(1)} KB)</div>`;
+        dz.classList.add('has-file');
+      }
+    });
+    this.setupDragAndDrop(dz, (file) => {
+      this.contractState.ssBazaFile = file;
+      document.getElementById('badge-ss-baza').innerHTML = `<div class="dropzone-file-badge">${this.icons.check} ${file.name} (${(file.size/1024).toFixed(1)} KB)</div>`;
+      dz.classList.add('has-file');
+    });
+
+    document.getElementById('btn-run-screenshots').addEventListener('click', () => this.runGenerateScreenshotsProcess());
+  },
+
+  async runGenerateScreenshotsProcess() {
+    const file = this.contractState.ssBazaFile || this.contractState.bazaFile;
+    if (!file) {
+      this.toast('Iltimos, Asosiy Baza Excel faylini yuklang!', 'error');
+      return;
+    }
+
+    const pBar = document.getElementById('ss-progress-bar');
+    const pInner = document.getElementById('ss-progress-inner');
+    const pStatus = document.getElementById('ss-progress-status');
+    const btn = document.getElementById('btn-run-screenshots');
+
+    pBar.style.display = 'block';
+    pStatus.style.display = 'block';
+    btn.disabled = true;
+
+    pInner.style.width = '30%';
+    pStatus.innerText = '📥 Guruhlar ajratib olinmoqda...';
+
+    const formData = new FormData();
+    formData.append('baza', file);
+
+    try {
+      setTimeout(() => {
+        pInner.style.width = '70%';
+        pStatus.innerText = '📸 3x Ultra HD Times New Roman jadvallari chizilmoqda...';
+      }, 500);
+
+      const res = await fetch('/api/contracts/group-screenshots', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${this.token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+      btn.disabled = false;
+
+      if (data && data.success) {
+        pInner.style.width = '100%';
+        pStatus.innerText = `✅ Barcha ${data.total_groups} ta guruh screenshotlari tayyorlandi!`;
+        setTimeout(() => {
+          pBar.style.display = 'none';
+          pStatus.style.display = 'none';
+        }, 1200);
+
+        this.contractState.lastSsResult = data;
+        this.toast(`${data.total_groups} ta guruh screenshotlari tayyor!`, 'success');
+
+        const resBox = document.getElementById('ss-results-view');
+        if (resBox) {
+          resBox.innerHTML = this.renderScreenshotsGalleryHTML(data);
+          this.bindScreenshotsGalleryEvents(data);
+        }
+      } else {
+        pBar.style.display = 'none';
+        pStatus.style.display = 'none';
+        this.toast(data ? data.error : 'Xatolik yuz berdi', 'error');
+      }
+    } catch (e) {
+      btn.disabled = false;
+      pBar.style.display = 'none';
+      pStatus.style.display = 'none';
+      this.toast('Server bilan aloqada xatolik', 'error');
+    }
+  },
+
+  renderScreenshotsGalleryHTML(data) {
+    const groups = data.groups || [];
+    return `
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <div class="card-title">${this.icons.dashboard} Tayyor Screenshotlar Galereyasi (${data.total_groups} ta guruh)</div>
+          <span class="badge badge-success">Sana: ${data.date_str}</span>
+        </div>
+
+        <div class="contract-action-bar">
+          <a href="/api/contracts/download-all-screenshots-zip/${data.session_id}" class="btn-primary" style="background:#7c3aed;border-color:#8b5cf6;">
+            ${this.icons.download} <span>📦 Barcha Screenshotlarni (ZIP) yuklab olish</span>
+          </a>
+          <button class="btn-primary" id="btn-telegram-ss-forward" style="margin-left:auto;background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
+            ${this.icons.send} <span>Telegram Guruhlarga Yuborish</span>
+          </button>
+        </div>
+
+        <div class="screenshot-gallery-grid">
+          ${groups.map(g => `
+            <div class="screenshot-card">
+              <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
+              <div class="screenshot-card-body">
+                <div class="screenshot-card-title">
+                  <span>🎓 Guruh: ${g.group_name}</span>
+                  <span class="badge badge-neutral">${g.student_count} talaba</span>
+                </div>
+                <div class="screenshot-card-meta">
+                  <span>Qarz summasi:</span>
+                  <b style="color:${g.debt_total > 0 ? 'var(--color-danger)' : 'var(--color-success)'};">${(g.debt_total || 0).toLocaleString()} so'm</b>
+                </div>
+                <div class="screenshot-card-actions">
+                  <button class="btn-sm btn-secondary btn-ss-preview" data-group="${g.group_name}" data-session="${data.session_id}" style="flex:1;">
+                    ${this.icons.eye} Ko'rish
+                  </button>
+                  <a href="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" download="${g.group_name}.png" class="btn-sm btn-primary" style="flex:1;text-align:center;">
+                    ${this.icons.download} Yuklab olish
+                  </a>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  },
+
+  bindScreenshotsGalleryEvents(data) {
+    document.querySelectorAll('.screenshot-card-thumb, .btn-ss-preview').forEach(el => {
+      el.addEventListener('click', () => {
+        const gName = el.dataset.group;
+        const sId = el.dataset.session;
+        const imgUrl = `/api/contracts/download-screenshot/${sId}/${encodeURIComponent(gName)}`;
+        this.openModalLarge(`Guruh: ${gName} — 3x Ultra HD Screenshot`, `
+          <div style="text-align:center;">
+            <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);" alt="${gName}">
+            <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;">
+              <a href="${imgUrl}" download="${gName}.png" class="btn-primary">${this.icons.download} PNG Rasm yuklab olish</a>
+            </div>
+          </div>
+        `);
+      });
+    });
+
+    const tgBtn = document.getElementById('btn-telegram-ss-forward');
+    if (tgBtn) {
+      tgBtn.addEventListener('click', () => {
+        this.openContractTelegramModal(data.session_id, 'screenshots');
+      });
+    }
+  },
+
+  // ============================================================
+  // KONTRAKT TARIXI VA ARXIV
+  // ============================================================
+  async renderContractHistory(container) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Tarix yuklanmoqda...</div>`;
+
+    const res = await this.api('/api/contracts/history');
+    if (!res || !res.success) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--color-danger);">Tarixni yuklashda xatolik yuz berdi</div>`;
+      return;
+    }
+
+    const sessions = res.sessions || [];
+    if (sessions.length === 0) {
+      container.innerHTML = `
+        <div class="card" style="text-align:center;padding:50px;">
+          <div style="font-size:3rem;margin-bottom:12px;">🗂️</div>
+          <h3>Hozircha kontrakt yangilanishlari tarixi mavjud emas</h3>
+          <p style="color:var(--color-text-muted);font-size:0.9rem;margin-top:6px;">Birinchi yangilanishni amalga oshirganingizdan so'ng bu yerda barcha sessiyalar arxivi saqlanadi.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${this.icons.archive} Kontrakt Yangilanish Sessiyalari Tarixi (${sessions.length} ta)</div>
+        </div>
+
+        <div class="table-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>№</th>
+                <th>Sana & Vaqt</th>
+                <th>Sessiya Fayli</th>
+                <th>Oraliq</th>
+                <th>Tushgan Pul</th>
+                <th>Yangilandi</th>
+                <th>Harakatlar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sessions.map((s, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${s.created_at || '-'}</td>
+                  <td><b>${s.filename || 'Kontraktlar'}</b></td>
+                  <td><span class="badge badge-neutral">${s.start_date || '-'} → ${s.end_date || '-'}</span></td>
+                  <td><b style="color:var(--color-success);">${(s.total_income || 0).toLocaleString()} so'm</b></td>
+                  <td><span class="badge badge-cyan">${s.updated_count || 0} kishi</span></td>
+                  <td>
+                    <div style="display:flex;gap:6px;">
+                      <a href="/api/contracts/download-excel/${s.session_id}" class="btn-sm btn-primary" title="Excel yuklab olish">
+                        ${this.icons.download} Excel
+                      </a>
+                      <button class="btn-sm btn-secondary btn-hist-view-xulosa" data-session="${s.session_id}" title="Xulosa ko'rish">
+                        ${this.icons.eye} Xulosa
+                      </button>
+                      <button class="btn-sm btn-danger btn-hist-del" data-session="${s.session_id}" title="O'chirish">
+                        ${this.icons.trash}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('.btn-hist-view-xulosa').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sId = btn.dataset.session;
+        this.openModalLarge('Xulosa Hisoboti', `
+          <div style="text-align:center;">
+            <img src="/api/contracts/download-xulosa/${sId}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);" alt="Xulosa">
+          </div>
+        `);
+      });
+    });
+
+    document.querySelectorAll('.btn-hist-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (confirm('Ushbu kontrakt sessiyasini arxivdan o\'chirishni xohlaysizmi?')) {
+          const sId = btn.dataset.session;
+          const delRes = await this.api(`/api/contracts/session/${sId}`, 'DELETE');
+          if (delRes && delRes.success) {
+            this.toast('Sessiya o\'chirildi', 'success');
+            this.renderContractHistory(container);
+          }
+        }
+      });
+    });
+  },
+
+  // ============================================================
+  // TELEGRAM FORWARD MODAL (GURUHLARGA TO'G'RIDAN-TO'G'RI YUBORISH)
+  // ============================================================
+  async openContractTelegramModal(sessionId, mode = 'update') {
+    const res = await this.api('/api/groups');
+    const groups = (res && res.success && res.groups) ? res.groups : [];
+
+    this.openModal('✈️ Telegram Guruh yoki Kanallariga Yuborish', `
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:0.88rem;color:var(--color-text-muted);margin:0;">
+          Ushbu hisobot va fayllarni bot ulangan Telegram guruhlariga yoki maxsus Chat ID ga to'g'ridan-to'g'ri jo'nating.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Ulangan Telegram Guruhlar</label>
+          <div style="max-height:160px;overflow-y:auto;background:rgba(0,0,0,0.2);padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border-glass);">
+            ${groups.length > 0 ? groups.map(g => `
+              <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;font-size:0.88rem;">
+                <input type="checkbox" class="tg-group-checkbox" value="${g.telegram_id}">
+                <span><b>${g.title || 'Guruh'}</b> (ID: ${g.telegram_id})</span>
+              </label>
+            `).join('') : '<div style="color:var(--color-text-muted);font-size:0.85rem;">Hozircha bot a\'zo bo\'lgan guruhlar yo\'q. Quyida to\'g\'ridan-to\'g\'ri Chat ID kiriting:</div>'}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Yoki qo'shimcha Chat ID / Kanal username</label>
+          <input type="text" id="tg-custom-chat-id" class="input-control" placeholder="Masalan: -100123456789 yoki @kanal_username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Yuboriladigan kontentlar</label>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="tg-send-caption" checked>
+              <span>📊 Tahliliy matnli hisobot</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="tg-send-xulosa" checked>
+              <span>🖼️ Guruh rahbarlari bo'yicha XULOSA rasmi</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="tg-send-excel" ${mode === 'update' ? 'checked' : ''}>
+              <span>📄 Formulalari buzilmagan Yangilangan Excel (.xlsx)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="tg-send-ss" ${mode === 'screenshots' ? 'checked' : ''}>
+              <span>📸 Barcha guruhlar screenshot rasmlari</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding-top:12px;">
+          <button class="btn-secondary" id="btn-cancel-tg-modal">Bekor qilish</button>
+          <button class="btn-primary" id="btn-submit-tg-send" style="background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
+            ${this.icons.send} Yuborish
+          </button>
+        </div>
+      </div>
+    `);
+
+    document.getElementById('btn-cancel-tg-modal').addEventListener('click', () => this.closeModal());
+
+    document.getElementById('btn-submit-tg-send').addEventListener('click', async () => {
+      const selectedIds = [];
+      document.querySelectorAll('.tg-group-checkbox:checked').forEach(cb => selectedIds.push(cb.value));
+
+      const customId = (document.getElementById('tg-custom-chat-id').value || '').trim();
+      if (customId) selectedIds.push(customId);
+
+      if (selectedIds.length === 0) {
+        this.toast('Iltimos, kamida bitta guruh yoki Chat ID tanlang!', 'error');
+        return;
+      }
+
+      const sendCap = document.getElementById('tg-send-caption').checked;
+      const sendXul = document.getElementById('tg-send-xulosa').checked;
+      const sendExc = document.getElementById('tg-send-excel').checked;
+      const sendSs = document.getElementById('tg-send-ss').checked;
+
+      const submitBtn = document.getElementById('btn-submit-tg-send');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Yuborilmoqda...';
+
+      const payload = {
+        chat_ids: selectedIds,
+        session_id: sessionId,
+        caption: sendCap ? "📊 <b>ATLAS Platformasi: Yangi Kontrakt Hisoboti</b>" : "",
+        send_excel: sendExc,
+        send_xulosa: sendXul,
+        send_screenshots: sendSs
+      };
+
+      const sendRes = await this.api('/api/contracts/send-to-telegram', 'POST', payload);
+      if (sendRes && sendRes.success) {
+        this.toast('Telegram guruhlariga muvaffaqiyatli yuborildi!', 'success');
+        this.closeModal();
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Yuborish';
+        this.toast(sendRes ? sendRes.error : 'Yuborishda xatolik yuz berdi', 'error');
+      }
+    });
   },
 
   // ============================================================

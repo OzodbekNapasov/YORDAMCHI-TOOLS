@@ -214,6 +214,25 @@ def init_db():
     )
     """)
 
+    # 13. Kontrakt yangilanish sessiyalari jadvali
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS contract_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT UNIQUE NOT NULL,
+        filename TEXT NOT NULL,
+        start_date TEXT,
+        end_date TEXT,
+        total_income REAL DEFAULT 0,
+        updated_count INTEGER DEFAULT 0,
+        unmatched_count INTEGER DEFAULT 0,
+        excel_url TEXT,
+        xulosa_url TEXT,
+        metrics_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_contract_sessions_created ON contract_sessions(created_at DESC)")
+
     # Boshlang'ich tizim sozlamalari
     default_settings = [
         ("bot_name", "Qarshi Tibbiyot Texnikumi Bot", "general", "Botning rasmiy nomi"),
@@ -516,6 +535,97 @@ def delete_student_group(group_id: int):
         return True
     except Exception as e:
         print(f"Delete group error: {e}")
+        return False
+
+
+# Kontrakt Yangilanish Sessiyalari Boshqaruvi
+def log_contract_session(session_id: str, filename: str, start_date: str, end_date: str, total_income: float, updated_count: int, unmatched_count: int, excel_url: str = "", xulosa_url: str = "", metrics: dict = None):
+    """Kontrakt yangilanish sessiyasini bazaga va Supabase Cloud-ga qayd qilish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO contract_sessions (session_id, filename, start_date, end_date, total_income, updated_count, unmatched_count, excel_url, xulosa_url, metrics_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_id, filename, start_date, end_date, total_income, updated_count, unmatched_count, excel_url, xulosa_url, json.dumps(metrics or {})))
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud ga sinxronlash
+        _sync_supabase_async("atlas_contract_sessions", {
+            "session_id": session_id,
+            "filename": filename,
+            "start_date": start_date,
+            "end_date": end_date,
+            "total_income": total_income,
+            "updated_count": updated_count,
+            "unmatched_count": unmatched_count,
+            "excel_url": excel_url,
+            "xulosa_url": xulosa_url,
+            "metrics_json": metrics or {}
+        })
+        return True
+    except Exception as e:
+        print(f"Log contract session error: {e}")
+        return False
+
+
+def get_contract_sessions():
+    """Barcha kontrakt yangilanish sessiyalari tarixini olish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM contract_sessions ORDER BY created_at DESC LIMIT 100")
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        for r in rows:
+            if r.get("metrics_json"):
+                try:
+                    r["metrics"] = json.loads(r["metrics_json"])
+                except:
+                    r["metrics"] = {}
+        return rows
+    except Exception as e:
+        print(f"Get contract sessions error: {e}")
+        return []
+
+
+def get_contract_session_by_id(session_id: str):
+    """Sessiya ID bo'yicha ma'lumot olish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM contract_sessions WHERE session_id = ?", (session_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            res = dict(row)
+            if res.get("metrics_json"):
+                try:
+                    res["metrics"] = json.loads(res["metrics_json"])
+                except:
+                    res["metrics"] = {}
+            return res
+        return None
+    except Exception as e:
+        print(f"Get contract session by id error: {e}")
+        return None
+
+
+def delete_contract_session(session_id: str):
+    """Kontrakt sessiyasini o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM contract_sessions WHERE session_id = ?", (session_id,))
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud-dan o'chirish
+        _sync_supabase_async("atlas_contract_sessions", {}, method="DELETE", params=f"?session_id=eq.{session_id}")
+        return True
+    except Exception as e:
+        print(f"Delete contract session error: {e}")
         return False
 
 
