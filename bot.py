@@ -18,6 +18,10 @@ from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
 from services.image_builder import render_docx_template_to_image
 from services.docx_filler import fill_template
 
+# ATLAS Platformasi modullari
+from services.atlas_db import init_db, track_user_activity, track_group_activity, log_audit, log_generated_document
+from services.atlas_api import atlas_api
+
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
 BOT_VERSION = "2.1.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
@@ -122,7 +126,9 @@ if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHO
     apihelper.proxy = {'http': 'http://proxy.server:3128', 'https': 'http://proxy.server:3128'}
 
 bot = telebot.TeleBot(TOKEN, threaded=False)
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
+init_db()
+app.register_blueprint(atlas_api)
 user_data = {}
 
 class TelegramProgress:
@@ -263,6 +269,22 @@ def process_docbot_generation(chat_id, tpl, answers):
                     parse_mode="HTML",
                     reply_markup=get_docs_folder_keyboard()
                 )
+            log_generated_document(
+                template_id=tpl.get("id", "malumotnoma"),
+                template_name=tpl.get("name", "Ma'lumotnoma"),
+                recipient_fio=fio,
+                data=answers,
+                file_type="png",
+                file_path="",
+                created_by=f"bot_user_{chat_id}"
+            )
+            log_audit(
+                actor=str(chat_id),
+                module="documents",
+                action="generate_document_bot",
+                status="success",
+                details={"template": tpl.get("name"), "fio": fio}
+            )
         else:
             template_path = find_template_file(filename)
             fill_template(template_path, output_docx, answers)
@@ -680,9 +702,16 @@ def getMessage():
     return "!", 200
 
 @app.route("/")
-def webhook():
+@app.route("/atlas")
+@app.route("/login")
+def index_atlas():
+    from flask import render_template
+    return render_template("atlas.html")
+
+@app.route("/bot_status")
+def webhook_status_check():
     check_and_notify_updates()
-    return f"✅ Bot PythonAnywhere/Vercel bulutida 24/7 faol! (v{BOT_VERSION})", 200
+    return f"Bot PythonAnywhere/Vercel bulutida 24/7 faol! (v{BOT_VERSION})", 200
 
 @app.route("/set_webhook", methods=['GET'])
 def set_webhook_route():
@@ -731,6 +760,20 @@ def webhook_info():
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     chat_id = message.chat.id
+    if message.from_user:
+        track_user_activity(
+            telegram_id=message.from_user.id,
+            username=message.from_user.username or "",
+            first_name=message.from_user.first_name or "",
+            last_name=message.from_user.last_name or ""
+        )
+        log_audit(
+            actor=str(message.from_user.id),
+            module="bot",
+            action="command_start",
+            status="success",
+            details={"chat_id": chat_id, "text": message.text}
+        )
     if not is_user_allowed(message):
         send_access_denied(chat_id, message.from_user.id)
         return

@@ -10,3 +10,5 @@ venv/
 scratch/
 test_filled.docx
 temp/
+*.db
+atlas.db
