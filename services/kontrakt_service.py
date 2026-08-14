@@ -19,9 +19,23 @@ from fuzzywuzzy import fuzz
 from services.supabase_storage import upload_document_to_supabase
 from services.atlas_db import log_audit
 
-# Directory for storing generated contract assets
-CONTRACT_STORAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'saved_documents', 'contracts')
-os.makedirs(CONTRACT_STORAGE_DIR, exist_ok=True)
+# Directory for storing generated contract assets (Serverless safe)
+is_serverless = os.environ.get("VERCEL") == "1" or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None or os.path.exists("/tmp")
+
+if is_serverless:
+    CONTRACT_STORAGE_DIR = os.path.join(tempfile.gettempdir(), 'saved_documents', 'contracts')
+else:
+    CONTRACT_STORAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'saved_documents', 'contracts')
+
+try:
+    os.makedirs(CONTRACT_STORAGE_DIR, exist_ok=True)
+except Exception:
+    CONTRACT_STORAGE_DIR = os.path.join(tempfile.gettempdir(), 'saved_documents', 'contracts')
+    try:
+        os.makedirs(CONTRACT_STORAGE_DIR, exist_ok=True)
+    except Exception:
+        pass
+
 
 
 # ============================================================
