@@ -2201,11 +2201,11 @@ const ATLAS = {
       <div class="glass-card">
         <div class="card-header-flex">
           <div>
-            <div class="card-title">Texnikum O'quv Guruhlari Ro'yxati</div>
-            <div class="card-subtitle">Barcha kurslar bo'yicha guruhlar ro'yxati (Jami: ${groups.length} ta)</div>
+            <div class="card-title">Texnikum O'quv Guruhlari & Rahbarlari</div>
+            <div class="card-subtitle">Barcha kurslar bo'yicha guruhlar, rahbarlar va ketma-ketlik tartibi (Jami: ${groups.length} ta • Supabase Cloud bilan sinxron)</div>
           </div>
-          <div style="display:flex;gap:10px;">
-            <input type="text" id="acad-group-search" class="input-control" style="width:220px;height:38px;" placeholder="Guruh nomini qidirish...">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <input type="text" id="acad-group-search" class="input-control" style="width:240px;height:38px;" placeholder="Guruh yoki rahbar qidirish...">
             <button class="btn-sm btn-primary" id="btn-add-academic-groups">
               ${this.icons.plus} <span>Guruh qo'shish</span>
             </button>
@@ -2216,23 +2216,33 @@ const ATLAS = {
           <table class="glass-table">
             <thead>
               <tr>
-                <th>№</th>
+                <th style="width:60px;text-align:center;">№</th>
                 <th>Guruh Nomi</th>
+                <th>Guruh Rahbari</th>
                 <th>Bosqich / Kursi</th>
-                <th>Qo'shilgan Sana</th>
+                <th style="text-align:center;">Ketma-ketlik</th>
                 <th style="text-align:right">Amallar</th>
               </tr>
             </thead>
             <tbody id="acad-groups-tbody">
-              ${groups.length === 0 ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hozircha o'quv guruhlari kiritilmagan. Yuqoridagi "Guruh qo'shish" tugmasini bosing.</td></tr>` : ''}
+              ${groups.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:32px;color:rgba(255,255,255,0.4);">Hozircha o'quv guruhlari kiritilmagan. Yuqoridagi "Guruh qo'shish" tugmasini bosing.</td></tr>` : ''}
               ${groups.map((g, idx) => `
                 <tr>
-                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${idx + 1}</td>
-                  <td><b>${g.group_name}</b></td>
-                  <td><span class="badge badge-info">${g.course_level || 1}-kurs</span></td>
-                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${g.created_at || '-'}</td>
+                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;">${idx + 1}</td>
+                  <td><b style="color:#ffffff;font-size:14px;">${g.group_name}</b></td>
+                  <td>
+                    ${g.rahbar_name ? `<span style="color:#38bdf8;font-weight:600;">${g.rahbar_name}</span>` : `<span style="color:rgba(255,255,255,0.3);font-style:italic;">Kiritilmagan</span>`}
+                  </td>
+                  <td>
+                    <span class="badge ${g.course_level == 1 ? 'badge-cyan' : g.course_level == 2 ? 'badge-success' : 'badge-info'}">
+                      ${g.course_level || 1}-kurs
+                    </span>
+                  </td>
+                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.7);text-align:center;">
+                    ${g.order_num || (idx + 1)}
+                  </td>
                   <td style="text-align:right;">
-                    <button class="btn-icon" onclick="ATLAS.openEditGroupModal(${g.id}, '${g.group_name}', ${g.course_level || 1})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
+                    <button class="btn-icon" onclick="ATLAS.openEditGroupModal(${g.id}, '${g.group_name}', '${(g.rahbar_name || '').replace(/'/g, "\\'")}', ${g.course_level || 1}, ${g.order_num || (idx + 1)})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                     <button class="btn-icon" onclick="ATLAS.deleteAcademicGroup(${g.id})" title="O'chirish">${this.icons.trash}</button>
                   </td>
                 </tr>
@@ -2250,19 +2260,31 @@ const ATLAS = {
     document.getElementById('acad-group-search').addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase().trim();
       const tbody = document.getElementById('acad-groups-tbody');
-      const filtered = groups.filter(g => g.group_name.toLowerCase().includes(q));
+      const filtered = groups.filter(g => 
+        (g.group_name && g.group_name.toLowerCase().includes(q)) || 
+        (g.rahbar_name && g.rahbar_name.toLowerCase().includes(q))
+      );
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hech qanday guruh topilmadi</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hech qanday guruh yoki rahbar topilmadi</td></tr>`;
         return;
       }
       tbody.innerHTML = filtered.map((g, idx) => `
         <tr>
-          <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${idx + 1}</td>
-          <td><b>${g.group_name}</b></td>
-          <td><span class="badge badge-info">${g.course_level || 1}-kurs</span></td>
-          <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${g.created_at || '-'}</td>
+          <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;">${idx + 1}</td>
+          <td><b style="color:#ffffff;font-size:14px;">${g.group_name}</b></td>
+          <td>
+            ${g.rahbar_name ? `<span style="color:#38bdf8;font-weight:600;">${g.rahbar_name}</span>` : `<span style="color:rgba(255,255,255,0.3);font-style:italic;">Kiritilmagan</span>`}
+          </td>
+          <td>
+            <span class="badge ${g.course_level == 1 ? 'badge-cyan' : g.course_level == 2 ? 'badge-success' : 'badge-info'}">
+              ${g.course_level || 1}-kurs
+            </span>
+          </td>
+          <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.7);text-align:center;">
+            ${g.order_num || (idx + 1)}
+          </td>
           <td style="text-align:right;">
-            <button class="btn-icon" onclick="ATLAS.openEditGroupModal(${g.id}, '${g.group_name}', ${g.course_level || 1})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
+            <button class="btn-icon" onclick="ATLAS.openEditGroupModal(${g.id}, '${g.group_name}', '${(g.rahbar_name || '').replace(/'/g, "\\'")}', ${g.course_level || 1}, ${g.order_num || (idx + 1)})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
             <button class="btn-icon" onclick="ATLAS.deleteAcademicGroup(${g.id})" title="O'chirish">${this.icons.trash}</button>
           </td>
         </tr>
@@ -2271,19 +2293,19 @@ const ATLAS = {
   },
 
   openBulkAddGroupsModal() {
-    this.openModal("Yangi O'quv Guruhlarini Kiritish", `
+    this.openModal("O'quv Guruhlari & Rahbarlarini Qo'shish", `
       <form id="bulk-groups-form">
         <div class="form-group">
-          <label class="form-label">Guruhlar ro'yxati (Har bir abzasda / qatorda bittadan yozing)</label>
-          <div style="font-size:12px;color:rgba(94,234,212,0.8);margin-bottom:8px;">
-            Masalan:<br>
-            <code>101-Hamshiralik<br>102-Hamshiralik<br>201-Davolash<br>204-Stomatologiya</code>
+          <label class="form-label">Guruhlar, Rahbarlari va Kursi ro'yxati</label>
+          <div style="font-size:12.5px;color:rgba(94,234,212,0.85);margin-bottom:8px;line-height:1.4;">
+            Har bir qatorga ketma-ketlik bo'yicha: <code>Guruh - Rahbar - Kurs</code> tarzida yozing:<br>
+            <span style="font-size:11.5px;color:rgba(255,255,255,0.6);">Masalan: <code>24-11 - Rahmatova.Sh - 2-kurs</code> yoki <code>24-11 Rahmatova.Sh</code></span>
           </div>
-          <textarea id="bulk-groups-text" class="textarea-control" style="min-height:160px;font-family:'JetBrains Mono', monospace;" placeholder="101-Hamshiralik&#10;102-Hamshiralik&#10;201-Davolash&#10;204-Stomatologiya" required></textarea>
+          <textarea id="bulk-groups-text" class="textarea-control" style="min-height:190px;font-family:'JetBrains Mono', monospace;font-size:13px;" placeholder="24-11 - Rahmatova.Sh - 2-kurs&#10;24-12 - Botirova.G - 2-kurs&#10;24-13 - Elmurodova.N - 2-kurs&#10;24-14 - Ochilov.D - 2-kurs&#10;24-15 - Asraliyev.A - 2-kurs&#10;24-16 - Yuldashev.O - 2-kurs&#10;25-16 - Xidirova.N - 1-kurs&#10;25-17 - Meyliyev.B - 1-kurs&#10;25-18 - Eshnayev.B - 1-kurs&#10;25-19 - Shukurova.G - 1-kurs&#10;25-20 - Maxamadiyev.L - 1-kurs&#10;25-21 - Eshnayev.B - 1-kurs&#10;25-22 - Rahmatova.Sh - 1-kurs&#10;25-23 - Quldosheva.K - 1-kurs" required></textarea>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-          <button type="submit" class="btn-sm btn-primary" id="save-groups-btn">Guruhlarni Saqlash</button>
+          <button type="submit" class="btn-sm btn-primary" id="save-groups-btn">Barchasini Supabase-ga Saqlash</button>
         </div>
       </form>
     `);
@@ -2295,37 +2317,47 @@ const ATLAS = {
       btn.innerText = 'Saqlanmoqda...';
 
       const res = await this.api('/api/groups/academic/bulk', 'POST', { text: txt });
-      btn.innerText = 'Guruhlarni Saqlash';
+      btn.innerText = 'Barchasini Supabase-ga Saqlash';
 
       if (res && res.success) {
         this.toast(res.message, 'success');
         this.closeModal();
         this.loadGroups(document.getElementById('content-viewport'), 'academic');
       } else {
-        this.toast(res ? res.error : 'Guruhlar qo\'shishda xatolik', 'error');
+        this.toast(res ? res.error : 'Guruhlar saqlashda xatolik', 'error');
       }
     });
   },
 
-  openEditGroupModal(groupId, groupName, courseLevel) {
-    this.openModal('Guruhni Tahrirlash', `
+  openEditGroupModal(groupId, groupName, rahbarName, courseLevel, orderNum) {
+    this.openModal('Guruh Ma\'lumotlarini Tahrirlash', `
       <form id="edit-group-form">
         <div class="form-group">
           <label class="form-label">Guruh Nomi</label>
-          <input type="text" id="edit-group-name" class="input-control" value="${groupName}" required>
+          <input type="text" id="edit-group-name" class="input-control" value="${groupName || ''}" placeholder="Masalan: 24-11" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Bosqich / Kursi</label>
-          <select id="edit-group-course" class="select-control">
-            <option value="1" ${courseLevel == 1 ? 'selected' : ''}>1-kurs</option>
-            <option value="2" ${courseLevel == 2 ? 'selected' : ''}>2-kurs</option>
-            <option value="3" ${courseLevel == 3 ? 'selected' : ''}>3-kurs</option>
-            <option value="4" ${courseLevel == 4 ? 'selected' : ''}>4-kurs</option>
-          </select>
+          <label class="form-label">Guruh Rahbari</label>
+          <input type="text" id="edit-group-rahbar" class="input-control" value="${rahbarName || ''}" placeholder="Masalan: Rahmatova.Sh">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group">
+            <label class="form-label">Bosqich / Kursi</label>
+            <select id="edit-group-course" class="select-control">
+              <option value="1" ${courseLevel == 1 ? 'selected' : ''}>1-kurs</option>
+              <option value="2" ${courseLevel == 2 ? 'selected' : ''}>2-kurs</option>
+              <option value="3" ${courseLevel == 3 ? 'selected' : ''}>3-kurs</option>
+              <option value="4" ${courseLevel == 4 ? 'selected' : ''}>4-kurs</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ketma-ketlik (Tartib №)</label>
+            <input type="number" id="edit-group-order" class="input-control" value="${orderNum || 1}" min="1">
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-          <button type="submit" class="btn-sm btn-primary" id="edit-group-save-btn">Saqlash</button>
+          <button type="submit" class="btn-sm btn-primary" id="edit-group-save-btn">Supabase-ga Saqlash</button>
         </div>
       </form>
     `);
@@ -2335,10 +2367,17 @@ const ATLAS = {
       const btn = document.getElementById('edit-group-save-btn');
       btn.innerText = 'Saqlanmoqda...';
       const newName = document.getElementById('edit-group-name').value.trim();
+      const newRahbar = document.getElementById('edit-group-rahbar').value.trim();
       const newCourse = parseInt(document.getElementById('edit-group-course').value);
+      const newOrder = parseInt(document.getElementById('edit-group-order').value) || 0;
 
-      const res = await this.api(`/api/groups/academic/${groupId}`, 'PUT', { group_name: newName, course_level: newCourse });
-      btn.innerText = 'Saqlash';
+      const res = await this.api(`/api/groups/academic/${groupId}`, 'PUT', {
+        group_name: newName,
+        rahbar_name: newRahbar,
+        course_level: newCourse,
+        order_num: newOrder
+      });
+      btn.innerText = 'Supabase-ga Saqlash';
       if (res && res.success) {
         this.toast(res.message || 'Guruh yangilandi', 'success');
         this.closeModal();

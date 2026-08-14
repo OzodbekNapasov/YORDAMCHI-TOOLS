@@ -46,11 +46,15 @@ CREATE TABLE IF NOT EXISTS public.atlas_audit_logs (
 CREATE TABLE IF NOT EXISTS public.atlas_student_groups (
     id BIGSERIAL PRIMARY KEY,
     group_name TEXT UNIQUE NOT NULL,
+    rahbar_name TEXT,
     course_level INT DEFAULT 1,
     direction TEXT,
+    order_num INT DEFAULT 0,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+ALTER TABLE public.atlas_student_groups ADD COLUMN IF NOT EXISTS rahbar_name TEXT;
+ALTER TABLE public.atlas_student_groups ADD COLUMN IF NOT EXISTS order_num INT DEFAULT 0;
 
 -- 5. Contract Sessions Table (Kontrakt Yangilanish Tarixi)
 CREATE TABLE IF NOT EXISTS public.atlas_contract_sessions (

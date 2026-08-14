@@ -193,12 +193,19 @@ def init_db():
     CREATE TABLE IF NOT EXISTS student_groups (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         group_name TEXT UNIQUE NOT NULL,
+        rahbar_name TEXT,
         course_level INTEGER DEFAULT 1,
         direction TEXT,
+        order_num INTEGER DEFAULT 0,
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    # Mavjud jadval ustunlarini yangilash
+    try: cursor.execute("ALTER TABLE student_groups ADD COLUMN rahbar_name TEXT")
+    except: pass
+    try: cursor.execute("ALTER TABLE student_groups ADD COLUMN order_num INTEGER DEFAULT 0")
+    except: pass
 
     # 12. Administrator hisob jadvali
     cursor.execute("""
@@ -462,63 +469,174 @@ def update_generated_document(doc_id: int, recipient_fio: str, data: dict, file_
 
 # O'quv Guruhlari (Academic Student Groups) Boshqaruvi
 def get_student_groups():
-    """Barcha o'quv guruhlarini olish"""
+    """Barcha o'quv guruhlarini tartib bo'yicha olish (SQLite + Supabase Cloud fallback)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM student_groups ORDER BY group_name ASC")
+        cursor.execute("SELECT * FROM student_groups ORDER BY order_num ASC, group_name ASC")
         rows = [dict(r) for r in cursor.fetchall()]
         conn.close()
-        return rows
+        if rows:
+            return rows
     except Exception as e:
-        print(f"Get student groups error: {e}")
-        return []
+        print(f"Get student groups sqlite error: {e}")
+
+    # Agar SQLite bo'sh bo'lsa (Serverless / Yangi konteynerda), Supabase Cloud'dan o'qib kelish:
+    try:
+        import requests
+        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+        supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+        if supa_url and supa_key:
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}"
+            }
+            resp = requests.get(f"{supa_url}/rest/v1/atlas_student_groups?select=*&order=order_num.asc,group_name.asc", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                cloud_groups = resp.json()
+                # Local SQLite ga keshlab qo'yish
+                if cloud_groups:
+                    try:
+                        conn = get_db_connection()
+                        c = conn.cursor()
+                        for g in cloud_groups:
+                            c.execute("""
+                            INSERT OR REPLACE INTO student_groups (id, group_name, rahbar_name, course_level, direction, order_num)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            """, (
+                                g.get('id'),
+                                g.get('group_name'),
+                                g.get('rahbar_name', ''),
+                                g.get('course_level', 1),
+                                g.get('direction', ''),
+                                g.get('order_num', 0)
+                            ))
+                        conn.commit()
+                        conn.close()
+                    except Exception:
+                        pass
+                return cloud_groups
+    except Exception as se:
+        print(f"Supabase fetch groups error: {se}")
+
+    return []
 
 
-def bulk_add_student_groups(lines_text: str):
+def bulk_add_student_groups(items_data):
     """
-    Foydalanuvchi tomonidan har bir qatorda (abzasda) bittadan kiritilgan
-    guruhlarni tahlil qilib, bazaga va Supabase-ga ommaviy saqlaydi.
+    Foydalanuvchi tomonidan kiritilgan guruhlarni (Guruh nomi, Rahbari, Kursi va Ketma-ketligi)
+    tahlil qilib, SQLite va Supabase Cloud bazasiga to'liq saqlaydi.
     """
-    if not lines_text:
+    if not items_data:
         return {"added": 0, "skipped": 0, "total": 0}
 
-    lines = [line.strip() for line in lines_text.splitlines() if line.strip()]
+    import re
+    parsed_items = []
+
+    if isinstance(items_data, list):
+        for idx, itm in enumerate(items_data):
+            if isinstance(itm, dict) and itm.get('group_name'):
+                parsed_items.append({
+                    "group_name": str(itm.get('group_name')).strip(),
+                    "rahbar_name": str(itm.get('rahbar_name', '')).strip(),
+                    "course_level": int(itm.get('course_level') or 1),
+                    "direction": str(itm.get('direction', '')).strip(),
+                    "order_num": int(itm.get('order_num') or (idx + 1))
+                })
+    elif isinstance(items_data, str):
+        lines = [line.strip() for line in items_data.splitlines() if line.strip()]
+        for idx, line in enumerate(lines):
+            # Parse line formats:
+            # "24-11 - Rahmatova.Sh - 2-kurs"
+            # "24-11, Rahmatova.Sh, 2"
+            # "24-11 \t Rahmatova.Sh \t 2"
+            # "24-11 Rahmatova.Sh"
+            parts = []
+            if "\t" in line:
+                parts = [p.strip() for p in line.split("\t") if p.strip()]
+            elif "," in line:
+                parts = [p.strip() for p in line.split(",") if p.strip()]
+            elif " - " in line or " – " in line:
+                parts = [p.strip() for p in re.split(r'\s+[-–—]\s+', line) if p.strip()]
+            else:
+                parts = line.split()
+
+            if not parts: continue
+            g_name = parts[0].strip()
+            if g_name.endswith('.0'): g_name = g_name[:-2]
+
+            rahbar = ""
+            course = 1
+
+            # Default course inference from name
+            m = re.search(r'([1-4])\d{2}', g_name)
+            if m:
+                course = int(m.group(1))
+            elif g_name.startswith('24-'):
+                course = 2
+            elif g_name.startswith('25-'):
+                course = 1
+
+            if len(parts) >= 2:
+                p2 = parts[1].replace("-kurs", "").replace("kurs", "").strip()
+                if p2.isdigit():
+                    course = int(p2)
+                    if len(parts) >= 3:
+                        rahbar = " ".join(parts[2:])
+                else:
+                    rahbar = parts[1]
+                    if len(parts) >= 3:
+                        p3 = parts[2].replace("-kurs", "").replace("kurs", "").strip()
+                        if p3.isdigit():
+                            course = int(p3)
+
+            parsed_items.append({
+                "group_name": g_name,
+                "rahbar_name": rahbar,
+                "course_level": course,
+                "direction": "",
+                "order_num": idx + 1
+            })
+
     added = 0
     skipped = 0
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    for g_name in lines:
-        try:
-            # Kursni taxmin qilish (masalan, 101 -> 1, 204 -> 2, 301 -> 3)
-            course = 1
-            import re
-            m = re.search(r'([1-4])\d{2}', g_name)
-            if m:
-                course = int(m.group(1))
+    for item in parsed_items:
+        g_name = item["group_name"]
+        rahbar = item["rahbar_name"]
+        course = item["course_level"]
+        order_num = item["order_num"]
+        direction = item["direction"]
 
+        try:
             cursor.execute("""
-            INSERT INTO student_groups (group_name, course_level)
-            VALUES (?, ?)
-            """, (g_name, course))
+            INSERT INTO student_groups (group_name, rahbar_name, course_level, direction, order_num)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(group_name) DO UPDATE SET
+                rahbar_name = excluded.rahbar_name,
+                course_level = excluded.course_level,
+                order_num = excluded.order_num
+            """, (g_name, rahbar, course, direction, order_num))
             added += 1
 
-            # Supabase-ga sinxronlash
+            # Supabase Cloud ga saqlash
             _sync_supabase_async("atlas_student_groups", {
                 "group_name": g_name,
-                "course_level": course
+                "rahbar_name": rahbar,
+                "course_level": course,
+                "direction": direction,
+                "order_num": order_num
             })
-        except sqlite3.IntegrityError:
-            skipped += 1
         except Exception as e:
             print(f"Error inserting group {g_name}: {e}")
             skipped += 1
 
     conn.commit()
     conn.close()
-    return {"added": added, "skipped": skipped, "total": len(lines)}
+    return {"added": added, "skipped": skipped, "total": len(parsed_items)}
 
 
 def delete_student_group(group_id: int):
@@ -538,14 +656,16 @@ def delete_student_group(group_id: int):
         return False
 
 
-def update_student_group(group_id: int, group_name: str, course_level: int):
-    """O'quv guruhini tahrirlash (nomi va kursi)"""
+def update_student_group(group_id: int, group_name: str, course_level: int, rahbar_name: str = "", order_num: int = 0):
+    """O'quv guruhini tahrirlash (nomi, rahbari, kursi va ketma-ketligi)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE student_groups SET group_name = ?, course_level = ? WHERE id = ?",
-            (group_name, course_level, group_id)
+            """UPDATE student_groups
+               SET group_name = ?, course_level = ?, rahbar_name = ?, order_num = ?
+               WHERE id = ?""",
+            (group_name, course_level, rahbar_name, order_num, group_id)
         )
         conn.commit()
         conn.close()
@@ -553,7 +673,9 @@ def update_student_group(group_id: int, group_name: str, course_level: int):
         # Supabase-ga sinxronlash
         _sync_supabase_async("atlas_student_groups", {
             "group_name": group_name,
-            "course_level": course_level
+            "course_level": course_level,
+            "rahbar_name": rahbar_name,
+            "order_num": order_num
         }, method="PATCH", params=f"?id=eq.{group_id}")
         return True
     except Exception as e:

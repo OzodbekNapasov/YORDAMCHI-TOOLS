@@ -1023,19 +1023,22 @@ def api_get_academic_groups():
 @admin_required
 def api_bulk_add_academic_groups():
     data = request.get_json() or {}
-    text = data.get("text", "").strip()
-    if not text:
-        return jsonify({"success": False, "error": "Guruhlar matni bo'sh bo'lishi mumkin emas."}), 400
+    text = data.get("text", "")
+    items = data.get("items", None)
+
+    input_payload = items if items is not None else text
+    if not input_payload:
+        return jsonify({"success": False, "error": "Guruhlar ma'lumoti kiritilmadi."}), 400
 
     from services.atlas_db import bulk_add_student_groups
-    res = bulk_add_student_groups(text)
+    res = bulk_add_student_groups(input_payload)
 
     admin = get_current_admin()
     log_audit(admin["username"], "groups", "bulk_add_groups", "success", res, request.remote_addr)
 
     return jsonify({
         "success": True,
-        "message": f"Muvaffaqiyatli qo'shildi: {res['added']} ta guruh. (O'tkazib yuborilgan/mavjud: {res['skipped']} ta)",
+        "message": f"Muvaffaqiyatli saqlandi: {res['added']} ta guruh. (Supabase Cloud bilan sinxronlandi)",
         "result": res
     })
 
@@ -1055,22 +1058,24 @@ def api_delete_academic_group(group_id):
 @atlas_api.route("/groups/academic/<int:group_id>", methods=["PUT"])
 @admin_required
 def api_update_academic_group(group_id):
-    """O'quv guruhini tahrirlash (nom va kurs)"""
+    """O'quv guruhini tahrirlash (nomi, rahbari, kursi va ketma-ketligi)"""
     from services.atlas_db import update_student_group
     data = request.get_json(silent=True) or {}
     group_name = str(data.get("group_name", "")).strip()
+    rahbar_name = str(data.get("rahbar_name", "")).strip()
     course_level = int(data.get("course_level", 1))
+    order_num = int(data.get("order_num", 0))
 
     if not group_name:
         return jsonify({"success": False, "error": "Guruh nomi bo'sh bo'lishi mumkin emas."}), 400
 
-    success = update_student_group(group_id, group_name, course_level)
+    success = update_student_group(group_id, group_name, course_level, rahbar_name, order_num)
     if success:
         admin = get_current_admin()
         log_audit(admin["username"], "groups", "update_group", "success",
-                  {"group_id": group_id, "group_name": group_name, "course_level": course_level},
+                  {"group_id": group_id, "group_name": group_name, "rahbar_name": rahbar_name, "course_level": course_level, "order_num": order_num},
                   request.remote_addr)
-        return jsonify({"success": True, "message": f"Guruh '{group_name}' yangilandi."})
+        return jsonify({"success": True, "message": f"Guruh '{group_name}' muvaffaqiyatli yangilandi va Supabase-ga saqlandi."})
     return jsonify({"success": False, "error": "Guruhni yangilashda xatolik yuz berdi."}), 500
 
 
