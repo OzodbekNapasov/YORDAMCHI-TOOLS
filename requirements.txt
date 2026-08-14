@@ -7,4 +7,6 @@ gunicorn
 Pillow
 python-docx
 requests
-python-dotenv
+python-dotenv
+supabase
+pg8000

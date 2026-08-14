@@ -280,6 +280,12 @@ def process_docbot_generation(chat_id, tpl, answers):
             except Exception:
                 permanent_png = output_png
 
+            try:
+                from services.supabase_storage import upload_document_to_supabase
+                upload_document_to_supabase(permanent_png, f"{uid}_{safe_fio}.png")
+            except Exception:
+                pass
+
             log_generated_document(
                 template_id=tpl.get("id", "malumotnoma"),
                 template_name=tpl.get("name", "Ma'lumotnoma"),

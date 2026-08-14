@@ -649,6 +649,14 @@ def api_generate_document():
     if not ok or not os.path.exists(permanent_png_path):
         return jsonify({"success": False, "error": "Hujjat rasmini shakllantirishda xatolik yuz berdi."}), 500
 
+    # Supabase Storage bulutiga avtomatik yuklash
+    try:
+        from services.supabase_storage import upload_document_to_supabase
+        cdn_filename = f"{uid}_{safe_fio}.png"
+        supabase_cdn_url = upload_document_to_supabase(permanent_png_path, cdn_filename)
+    except Exception:
+        supabase_cdn_url = ""
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -660,14 +668,15 @@ def api_generate_document():
     conn.close()
 
     admin = get_current_admin()
-    log_audit(admin["username"], "documents", "generate_document", "success", {"doc_id": doc_id, "template": target_tpl["name"], "fio": fio}, request.remote_addr)
+    log_audit(admin["username"], "documents", "generate_document", "success", {"doc_id": doc_id, "template": target_tpl["name"], "fio": fio, "cdn_url": supabase_cdn_url}, request.remote_addr)
 
     return jsonify({
         "success": True,
         "message": "Ma'lumotnoma 300 DPI A4 formatida tayyorlandi va arxivga saqlandi!",
         "doc_id": doc_id,
         "view_url": f"/api/documents/view/{doc_id}",
-        "download_url": f"/api/documents/download/{doc_id}"
+        "download_url": f"/api/documents/download/{doc_id}",
+        "cdn_url": supabase_cdn_url
     })
 
 
