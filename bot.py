@@ -30,8 +30,10 @@ def get_main_keyboard():
     """1-DARAJALI BOSH MENYU (Kategoriyalar / Papkalar)"""
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     btn_kontrakt = telebot.types.KeyboardButton("📁 Kontraktlar va Hisobotlar")
-    btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar va Hujjatlar")
-    markup.add(btn_kontrakt, btn_docs)
+    btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar")
+    btn_buyruq = telebot.types.KeyboardButton("📁 Buyruqlar")
+    markup.add(btn_kontrakt)
+    markup.add(btn_docs, btn_buyruq)
     return markup
 
 def get_kontrakt_folder_keyboard(suggested_date=None):
@@ -48,10 +50,21 @@ def get_kontrakt_folder_keyboard(suggested_date=None):
     return markup
 
 def get_docs_folder_keyboard():
-    """2-DARAJALI PAPKA: Ma'lumotnomalar va Hujjatlar bo'limi"""
+    """2-DARAJALI PAPKA: Ma'lumotnomalar bo'limi"""
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     for tpl in DOCBOT_TEMPLATES:
-        markup.add(telebot.types.KeyboardButton(tpl["name"]))
+        if tpl.get("category") == "malumotnoma":
+            markup.add(telebot.types.KeyboardButton(tpl["name"]))
+    btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
+    markup.add(btn_back)
+    return markup
+
+def get_buyruqlar_folder_keyboard():
+    """2-DARAJALI PAPKA: Buyruqlar bo'limi"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    for tpl in DOCBOT_TEMPLATES:
+        if tpl.get("category") == "buyruq":
+            markup.add(telebot.types.KeyboardButton(tpl["name"]))
     btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
     markup.add(btn_back)
     return markup
@@ -232,98 +245,130 @@ def start_docbot_wizard(chat_id, tpl_index):
 def process_docbot_generation(chat_id, tpl, answers):
     uid = uuid.uuid4().hex[:8]
     filename = tpl.get("filename", "malumotnoma.docx")
-    output_png = os.path.join(tempfile.gettempdir(), f"doc_{uid}.png")
-    output_docx = os.path.join(tempfile.gettempdir(), f"doc_{uid}.docx")
+    tpl_id = tpl.get("id", "")
+    is_buyruq = tpl.get("category") == "buyruq" or "buyruq" in tpl_id
 
-    progress = TelegramProgress(bot, chat_id, "⏳ Sizning shabloningiz bo'yicha tiniq RASM tayyorlanmoqda...")
+    # Safidan chiqarish asosiga qarab shablonni aniqlash
+    if tpl_id == "buyruq_safidan_chiqarish":
+        asos = str(answers.get("asos_turi", "Talaba arizasi")).strip()
+        if "bildirgi" in asos.lower() or "rahbar" in asos.lower():
+            filename = "Talabalar safidan chiqarish — 2-asos.docx"
+        else:
+            filename = "Talabalar safidan chiqarish - 1-asos.docx"
+
+    fio = str(answers.get("FIO") or answers.get("IFO") or "Talaba").strip()
+    safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
+
+    output_png = os.path.join(tempfile.gettempdir(), f"doc_{uid}_{safe_fio}.png")
+    output_docx = os.path.join(tempfile.gettempdir(), f"doc_{uid}_{safe_fio}.docx")
+
+    status_name = "Buyruq" if is_buyruq else "Ma'lumotnoma"
+    progress = TelegramProgress(bot, chat_id, f"⏳ {status_name} bo'yicha 300 DPI Ultra HD rasm va Word fayl tayyorlanmoqda...")
 
     try:
-        progress.update("⚙️ Hujjat to'ldirilmoqda va shakllantirilmoqda...", 50)
-        success = render_docx_template_to_image(filename, output_png, answers, tempfile.gettempdir())
+        progress.update(f"⚙️ {status_name} to'ldirilmoqda...", 40)
         
-        fio = answers.get("FIO", "Talaba").strip()
-        
-        if success and os.path.exists(output_png):
-            doc_title = tpl.get("name", "Ma'lumotnoma").replace("🎓", "").replace("📖", "").strip()
+        # 1. Word (.docx) faylini to'ldirish
+        tpl_path = find_template_file(filename)
+        fill_template(tpl_path, output_docx, answers)
+
+        # 2. 300 DPI Ultra HD rasm (.png) yaratish
+        progress.update("📸 Yuqori sifatli 300 DPI rasm chizilmoqda...", 70)
+        render_success = render_docx_template_to_image(filename, output_png, answers, tempfile.gettempdir())
+
+        tpl_clean = tpl.get("name", "").replace("🎓", "").replace("📖", "").replace("📝", "").strip()
+        suffix = "buyrug'i" if is_buyruq else "ma'lumotnomasi"
+        custom_file_base = f"{fio} — {tpl_clean} {suffix}"
+
+        # 3. Rasmni yuborish
+        if render_success and os.path.exists(output_png):
             caption_lines = [
-                f"✅ <b>{escape_html_text(fio)}</b> uchun <b>{escape_html_text(doc_title)} ma'lumotnomasi</b> tayyor!\n"
+                f"✅ <b>{escape_html_text(fio)}</b> uchun <b>{escape_html_text(tpl_clean)} {suffix}</b> tayyor!\n"
             ]
-            if answers.get("YONALISH"):
-                caption_lines.append(f"📚 <b>Yo'nalish:</b> {escape_html_text(answers['YONALISH'])}")
-            if answers.get("OQUV_YILI"):
-                caption_lines.append(f"📅 <b>O'quv yili:</b> {escape_html_text(answers['OQUV_YILI'])}")
-            if answers.get("KURSI"):
-                caption_lines.append(f"🎯 <b>Kursi:</b> {escape_html_text(answers['KURSI'])}-kurs")
-            if answers.get("GURUHI"):
-                caption_lines.append(f"👥 <b>Guruhi:</b> {escape_html_text(answers['GURUHI'])}-guruh")
-            if answers.get("SANA"):
-                caption_lines.append(f"📆 <b>Sana:</b> {escape_html_text(answers['SANA'])}")
-            
+            if answers.get("buyruq_raqami"):
+                caption_lines.append(f"🔢 <b>Buyruq №:</b> {escape_html_text(answers['buyruq_raqami'])}")
+            if answers.get("sanasi") or answers.get("SANA"):
+                caption_lines.append(f"📆 <b>Sana:</b> {escape_html_text(answers.get('sanasi') or answers.get('SANA'))}")
+            if answers.get("YONALISH") or answers.get("yonalishi"):
+                caption_lines.append(f"📚 <b>Yo'nalish:</b> {escape_html_text(answers.get('YONALISH') or answers.get('yonalishi'))}")
+            if answers.get("KURSI") or answers.get("kursi"):
+                caption_lines.append(f"🎯 <b>Kursi:</b> {escape_html_text(answers.get('KURSI') or answers.get('kursi'))}-bosqich")
+            if answers.get("GURUHI") or answers.get("guruhi") or answers.get("avvalgi_guruhi"):
+                caption_lines.append(f"👥 <b>Guruhi:</b> {escape_html_text(answers.get('GURUHI') or answers.get('guruhi') or answers.get('avvalgi_guruhi'))}")
+            if answers.get("yangi_guruhi"):
+                caption_lines.append(f"➡️ <b>Yangi guruhi:</b> {escape_html_text(answers['yangi_guruhi'])}")
+            if answers.get("asos_turi"):
+                caption_lines.append(f"⚖️ <b>Asos:</b> {escape_html_text(answers['asos_turi'])}")
+
             caption_lines.append("\n<i>Asl shablon formati va rasmiy muhr/imzolar bilan tasdiqlangan.</i>")
-            
+
+            folder_markup = get_buyruqlar_folder_keyboard() if is_buyruq else get_docs_folder_keyboard()
+
             with open(output_png, "rb") as pf:
                 bot.send_photo(
                     chat_id,
                     photo=pf,
                     caption="\n".join(caption_lines),
-                    parse_mode="HTML",
-                    reply_markup=get_docs_folder_keyboard()
+                    parse_mode="HTML"
                 )
-            # Doimiy arxivga saqlash
-            is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
-            if is_serverless:
-                saved_dir = "/tmp/saved_documents"
-            else:
-                saved_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
-            try:
-                os.makedirs(saved_dir, exist_ok=True)
-            except Exception:
-                pass
-            safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
-            permanent_png = os.path.join(saved_dir, f"{uid}_{safe_fio}.png")
-            try:
-                import shutil
-                shutil.copy2(output_png, permanent_png)
-            except Exception:
-                permanent_png = output_png
 
-            try:
-                from services.supabase_storage import upload_document_to_supabase
-                upload_document_to_supabase(permanent_png, f"{uid}_{safe_fio}.png")
-            except Exception:
-                pass
-
-            log_generated_document(
-                template_id=tpl.get("id", "malumotnoma"),
-                template_name=tpl.get("name", "Ma'lumotnoma"),
-                recipient_fio=fio,
-                data=answers,
-                file_type="png",
-                file_path=permanent_png,
-                created_by=f"bot_user_{chat_id}"
-            )
-            log_audit(
-                actor=str(chat_id),
-                module="documents",
-                action="generate_document_bot",
-                status="success",
-                details={"template": tpl.get("name"), "fio": fio}
-            )
-        else:
-            template_path = find_template_file(filename)
-            fill_template(template_path, output_docx, answers)
-            custom_doc_name = f"{fio} ma'lumotnoma.docx"
+        # 4. Word (.docx) faylini ham yuborish
+        if os.path.exists(output_docx):
             with open(output_docx, "rb") as df:
                 bot.send_document(
                     chat_id,
                     df,
-                    visible_file_name=custom_doc_name,
-                    caption=f"✅ <b>{escape_html_text(custom_doc_name)}</b> tayyorlandi!\nYangi harakat uchun menyudan tanlang.",
+                    visible_file_name=f"{custom_file_base}.docx",
+                    caption=f"📄 <b>Word formati (.docx):</b>\n<code>{escape_html_text(custom_file_base)}.docx</code>",
                     parse_mode="HTML",
-                    reply_markup=get_docs_folder_keyboard()
+                    reply_markup=folder_markup
                 )
 
-        progress.success("✅ Tayyor!")
+        # 5. Doimiy arxivga saqlash va Supabase Storage bulutiga yuklash
+        is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+        saved_dir = "/tmp/saved_documents" if is_serverless else os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
+        try:
+            os.makedirs(saved_dir, exist_ok=True)
+        except Exception:
+            pass
+
+        permanent_png = os.path.join(saved_dir, f"{uid}_{safe_fio}.png")
+        permanent_docx = os.path.join(saved_dir, f"{uid}_{safe_fio}.docx")
+
+        try:
+            import shutil
+            if os.path.exists(output_png): shutil.copy2(output_png, permanent_png)
+            if os.path.exists(output_docx): shutil.copy2(output_docx, permanent_docx)
+        except Exception:
+            pass
+
+        try:
+            from services.supabase_storage import upload_document_to_supabase
+            if os.path.exists(permanent_png):
+                upload_document_to_supabase(permanent_png, f"{uid}_{safe_fio}.png")
+            if os.path.exists(permanent_docx):
+                upload_document_to_supabase(permanent_docx, f"{uid}_{safe_fio}.docx")
+        except Exception:
+            pass
+
+        log_generated_document(
+            template_id=tpl.get("id", "hujjat"),
+            template_name=tpl.get("name", "Hujjat"),
+            recipient_fio=fio,
+            data=answers,
+            file_type="png",
+            file_path=permanent_png,
+            created_by=f"bot_user_{chat_id}"
+        )
+        log_audit(
+            actor=str(chat_id),
+            module="documents",
+            action="generate_document_bot",
+            status="success",
+            details={"template": tpl.get("name"), "fio": fio}
+        )
+
+        progress.success(f"✅ {status_name} muvaffaqiyatli tayyorlandi!")
     except Exception as e:
         progress.error(f"❌ Xatolik yuz berdi:\n<code>{escape_html_text(str(e))}</code>")
     finally:
@@ -849,9 +894,14 @@ def handle_text_messages(message):
         send_safe_message(chat_id, "📁 <b>KONTRAKTLAR VA HISOBOTLAR BO'LIMI</b>\n\nKerakli xizmatni tanlang:", reply_markup=get_kontrakt_folder_keyboard())
         return
 
-    if user_text == "📁 Ma'lumotnomalar va Hujjatlar":
+    if user_text in ["📁 Ma'lumotnomalar", "📁 Ma'lumotnomalar va Hujjatlar"]:
         user_data[chat_id] = {}
-        send_safe_message(chat_id, "📁 <b>MA'LUMOTNOMALAR VA HUJJATLAR BO'LIMI</b>\n\nQaysi rasmiy hujjatni tayyorlamoqchisiz?", reply_markup=get_docs_folder_keyboard())
+        send_safe_message(chat_id, "📁 <b>MA'LUMOTNOMALAR BO'LIMI</b>\n\nQaysi rasmiy ma'lumotnomani tayyorlamoqchisiz?", reply_markup=get_docs_folder_keyboard())
+        return
+
+    if user_text == "📁 Buyruqlar":
+        user_data[chat_id] = {}
+        send_safe_message(chat_id, "📁 <b>RASMIY BUYRUQLAR BO'LIMI</b>\n\nQaysi buyruq turini shakllantirmoqchisiz?", reply_markup=get_buyruqlar_folder_keyboard())
         return
 
     if user_text == "🔙 Asosiy menyuga qaytish":

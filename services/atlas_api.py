@@ -21,6 +21,7 @@ from services.atlas_auth import (
     hash_password, verify_password
 )
 from services.image_builder import render_docx_template_to_image
+from services.docx_filler import fill_template
 from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
 
 atlas_api = Blueprint("atlas_api", __name__, url_prefix="/api")
@@ -647,23 +648,42 @@ def api_generate_document():
 
     uid = uuid.uuid4().hex[:8]
     filename = target_tpl.get("filename", "malumotnoma.docx")
-    fio = str(answers.get("FIO", "Talaba")).strip()
+    
+    # Talabalar safidan chiqarish asosiga qarab to'g'ri Word shablonini tanlash
+    if tpl_id == "buyruq_safidan_chiqarish":
+        asos = str(answers.get("asos_turi", "Talaba arizasi")).strip()
+        if "bildirgi" in asos.lower() or "rahbar" in asos.lower():
+            filename = "Talabalar safidan chiqarish — 2-asos.docx"
+        else:
+            filename = "Talabalar safidan chiqarish - 1-asos.docx"
+
+    fio = str(answers.get("FIO") or answers.get("IFO") or "Talaba").strip()
     safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
     
-    # Doimiy saqlash papkasi (bo'shliqlar va ' belgilari to'liq saqlanadi)
-    permanent_png_path = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.png")
+    # 1. Word (.docx) faylini to'liq formatlar (Bold, Italic) bilan to'ldirib saqlash
+    permanent_docx_path = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.docx")
+    tpl_file_path = find_template_file(filename)
+    try:
+        fill_template(tpl_file_path, permanent_docx_path, answers)
+    except Exception as e:
+        print(f"Error filling docx template: {e}")
 
+    # 2. 300 DPI Ultra HD rasm (.png) yaratish
+    permanent_png_path = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.png")
     ok = render_docx_template_to_image(filename, permanent_png_path, answers)
     if not ok or not os.path.exists(permanent_png_path):
         return jsonify({"success": False, "error": "Hujjat rasmini shakllantirishda xatolik yuz berdi."}), 500
 
-    # Supabase Storage bulutiga avtomatik yuklash
+    # 3. Supabase Storage bulutiga avtomatik yuklash
+    supabase_cdn_url = ""
     try:
         from services.supabase_storage import upload_document_to_supabase
         cdn_filename = f"{uid}_{safe_fio}.png"
         supabase_cdn_url = upload_document_to_supabase(permanent_png_path, cdn_filename)
+        if os.path.exists(permanent_docx_path):
+            upload_document_to_supabase(permanent_docx_path, f"{uid}_{safe_fio}.docx")
     except Exception:
-        supabase_cdn_url = ""
+        pass
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -678,12 +698,16 @@ def api_generate_document():
     admin = get_current_admin()
     log_audit(admin["username"], "documents", "generate_document", "success", {"doc_id": doc_id, "template": target_tpl["name"], "fio": fio, "cdn_url": supabase_cdn_url}, request.remote_addr)
 
+    is_buyruq = target_tpl.get("category") == "buyruq" or "buyruq" in tpl_id
+    success_msg = f"{'Buyruq' if is_buyruq else 'Ma’lumotnoma'} 300 DPI formatida va Word (.docx) holida tayyorlandi!"
+
     return jsonify({
         "success": True,
-        "message": "Ma'lumotnoma 300 DPI A4 formatida tayyorlandi va arxivga saqlandi!",
+        "message": success_msg,
         "doc_id": doc_id,
         "view_url": f"/api/documents/view/{doc_id}",
         "download_url": f"/api/documents/download/{doc_id}",
+        "download_docx_url": f"/api/documents/download_docx/{doc_id}",
         "cdn_url": supabase_cdn_url
     })
 
@@ -727,6 +751,9 @@ def api_get_documents_list():
         except Exception:
             d["parsed_data"] = {}
         d["file_exists"] = os.path.exists(d.get("file_path", ""))
+        png_path = d.get("file_path", "")
+        docx_path = png_path.rsplit(".", 1)[0] + ".docx" if "." in png_path else ""
+        d["docx_exists"] = os.path.exists(docx_path)
         docs.append(d)
 
     conn.close()
@@ -779,9 +806,58 @@ def api_download_document_by_id(doc_id):
         return jsonify({"error": "Hujjat fayli diskda topilmadi."}), 404
 
     fio = str(doc["recipient_fio"]).strip()
-    tpl_clean = str(doc["template_name"]).replace("🎓", "").replace("📖", "").strip()
-    download_filename = f"{fio} — {tpl_clean} ma'lumotnomasi.png"
+    tpl_name = str(doc["template_name"]).strip()
+    tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
+    suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
+    download_filename = f"{fio} — {tpl_clean} {suffix}.png"
     return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=download_filename)
+
+
+@atlas_api.route("/documents/download_docx/<int:doc_id>", methods=["GET"])
+@admin_required
+def api_download_docx_by_id(doc_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+    doc = cursor.fetchone()
+    conn.close()
+
+    if not doc:
+        return jsonify({"error": "Hujjat topilmadi."}), 404
+
+    png_path = doc["file_path"]
+    docx_path = png_path.rsplit(".", 1)[0] + ".docx" if "." in png_path else ""
+
+    # Agar docx fayli yo'q bo'lsa, uni tezkor to'ldirib qayta tiklaymiz
+    if not os.path.exists(docx_path):
+        data_dict = json.loads(doc.get("data_json") or "{}")
+        tpl_id = doc["template_id"]
+        filename = "malumotnoma.docx"
+        for t in DOCBOT_TEMPLATES:
+            if t["id"] == tpl_id:
+                filename = t.get("filename", "malumotnoma.docx")
+                break
+        if tpl_id == "buyruq_safidan_chiqarish":
+            asos = str(data_dict.get("asos_turi", "Talaba arizasi")).strip()
+            if "bildirgi" in asos.lower() or "rahbar" in asos.lower():
+                filename = "Talabalar safidan chiqarish — 2-asos.docx"
+            else:
+                filename = "Talabalar safidan chiqarish - 1-asos.docx"
+
+        tpl_file_path = find_template_file(filename)
+        fill_template(tpl_file_path, docx_path, data_dict)
+
+    fio = str(doc["recipient_fio"]).strip()
+    tpl_name = str(doc["template_name"]).strip()
+    tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
+    suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
+    download_filename = f"{fio} — {tpl_clean} {suffix}.docx"
+    return send_file(
+        docx_path,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name=download_filename
+    )
 
 
 @atlas_api.route("/documents/<int:doc_id>", methods=["DELETE"])

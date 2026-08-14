@@ -374,32 +374,71 @@ const ATLAS = {
   },
 
   renderDocumentGenerator(container) {
+    const todayStr = new Date().toLocaleDateString('ru-RU');
     container.innerHTML = `
       <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:24px;">
         <!-- Left: Input Form -->
         <div class="glass-card">
           <div class="card-header-flex">
             <div>
-              <div class="card-title">Rasmiy Ma'lumotnoma Generatori</div>
-              <div class="card-subtitle">Ultra HD (300 DPI A4) formatda bir zumda shakllantirish va avtomatik arxivlash</div>
+              <div class="card-title">Rasmiy Hujjatlar & Buyruqlar Generatori</div>
+              <div class="card-subtitle">Ultra HD (300 DPI A4) rasm va tahrirlanadigan Word (.docx) holida bir zumda shakllantirish</div>
             </div>
           </div>
 
           <form id="doc-gen-form">
             <div class="form-group">
-              <label class="form-label">Shablon turi</label>
+              <label class="form-label">Hujjat / Buyruq Shablonini Tanlang</label>
               <select id="doc-tpl-select" class="select-control">
-                <option value="qabul_1_kurs">1-kursga qabul ma'lumotnomasi</option>
-                <option value="oqiyapti">O'qiyotganligi haqida ma'lumotnoma</option>
+                <optgroup label="🎓 Ma'lumotnomalar">
+                  <option value="qabul_1_kurs">🎓 1-kursga qabul ma'lumotnomasi</option>
+                  <option value="oqiyapti">📖 O'qiyotganligi haqida ma'lumotnoma</option>
+                </optgroup>
+                <optgroup label="📝 Rasmiy Buyruqlar">
+                  <option value="buyruq_akademik_tatil">📝 Akademik ta'til berish buyrug'i</option>
+                  <option value="buyruq_qayta_tiklash">📝 Akademik ta'tildan qayta tiklash buyrug'i</option>
+                  <option value="buyruq_guruhdan_guruhga">📝 Guruhdan guruhga o'tkazish buyrug'i</option>
+                  <option value="buyruq_safidan_chiqarish">📝 Talabalar safidan chiqarish buyrug'i</option>
+                </optgroup>
               </select>
+            </div>
+
+            <!-- Safidan chiqarish asosi (faqat chiqarishda chiqadi) -->
+            <div class="form-group" id="group-asos-turi" style="display:none;">
+              <label class="form-label">Chiqarish Asosi</label>
+              <select id="doc-asos-turi" class="select-control">
+                <option value="Talaba arizasi">Talaba arizasi asosida (1-asos)</option>
+                <option value="Rahbarini bildirgisi">Guruh rahbarining bildirgisi asosida (2-asos)</option>
+              </select>
+            </div>
+
+            <!-- Buyruq raqami (faqat buyruqlarda) -->
+            <div class="form-group" id="group-buyruq-raqami" style="display:none;">
+              <label class="form-label">Buyruq Raqami</label>
+              <input type="text" id="doc-buyruq-raqami" class="input-control" placeholder="14-B" value="14-B">
+            </div>
+
+            <!-- Avvalgi buyruq rekvizitlari (faqat qayta tiklashda) -->
+            <div id="group-avvalgi-buyruq" style="display:none;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label class="form-label">Avvalgi Buyruq Raqami</label>
+                  <input type="text" id="doc-avv-raqam" class="input-control" placeholder="14-B" value="14-B">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Avvalgi Buyruq Sanasi</label>
+                  <input type="text" id="doc-avv-sana" class="input-control" placeholder="10.02.2025" value="10.02.2025">
+                </div>
+              </div>
             </div>
 
             <div class="form-group">
               <label class="form-label">Talabaning To'liq F.I.O</label>
-              <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="Napasov Ozodbek Zafar o’g’li" required>
+              <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="" required>
             </div>
 
-            <div class="form-group">
+            <!-- Ta'lim Yo'nalishi -->
+            <div class="form-group" id="group-yonalish">
               <label class="form-label">Ta'lim Yo'nalishi</label>
               <select id="doc-yonalish" class="select-control">
                 <option value="Hamshiralik ishi">Hamshiralik ishi</option>
@@ -409,15 +448,17 @@ const ATLAS = {
               </select>
             </div>
 
-            <div class="form-group">
+            <!-- O'quv yili (faqat ma'lumotnomalarda) -->
+            <div class="form-group" id="group-oquv-yili">
               <label class="form-label">O'quv Yili</label>
-              <input type="text" id="doc-oquv-yili" class="input-control" placeholder="2026/2027" value="2026/2027" required>
+              <input type="text" id="doc-oquv-yili" class="input-control" placeholder="2026/2027" value="2026/2027">
             </div>
 
-            <div id="extra-oqiyapti-fields" style="display:none;">
+            <!-- Kursi va Guruhi -->
+            <div id="group-kurs-guruh" style="display:none;">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                <div class="form-group">
-                  <label class="form-label">Kursi</label>
+                <div class="form-group" id="subgroup-kurs">
+                  <label class="form-label">Bosqich / Kursi</label>
                   <select id="doc-kursi" class="select-control">
                     <option value="1">1-kurs</option>
                     <option value="2" selected>2-kurs</option>
@@ -425,16 +466,22 @@ const ATLAS = {
                     <option value="4">4-kurs</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Guruhi</label>
-                  <input type="text" id="doc-guruhi" class="input-control" placeholder="201" value="201">
+                <div class="form-group" id="subgroup-guruh">
+                  <label class="form-label" id="label-guruh">Guruhi</label>
+                  <input type="text" id="doc-guruhi" class="input-control" placeholder="204" value="204">
                 </div>
               </div>
             </div>
 
+            <!-- Yangi guruh (qayta tiklash va guruh almashtirishda) -->
+            <div class="form-group" id="group-yangi-guruh" style="display:none;">
+              <label class="form-label">Yangi Guruh (O'tkazilayotgan / Tiklanayotgan)</label>
+              <input type="text" id="doc-yangi-guruhi" class="input-control" placeholder="205" value="205">
+            </div>
+
             <div class="form-group">
               <label class="form-label">Berilgan Sana</label>
-              <input type="text" id="doc-sana" class="input-control" placeholder="14.08.2026" value="14.08.2026" required>
+              <input type="text" id="doc-sana" class="input-control" placeholder="${todayStr}" value="${todayStr}" required>
             </div>
 
             <div style="margin-top:22px;">
@@ -450,35 +497,129 @@ const ATLAS = {
           <div id="doc-preview-box" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="margin-bottom:12px;color:rgba(0,203,169,0.4);">${this.icons.documents}</div>
             <div style="font-size:14.5px;font-weight:700;color:#ffffff;margin-bottom:6px;">Hujjat oldindan ko'rish oynasi</div>
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.65);max-width:320px;">Maydonlarni to'ldirib, tugmani bosing. Tayyorlangan hujjat to'g'ridan-to'g'ri shu yerda aks etadi va arxivga tushadi.</div>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.65);max-width:320px;">Maydonlarni to'ldirib, tugmani bosing. Tayyorlangan hujjat to'g'ridan-to'g'ri shu yerda aks etadi va Word (.docx) hamda PNG formatida yuklab olishga taqdim etiladi.</div>
           </div>
         </div>
       </div>
     `;
 
     const tplSelect = document.getElementById('doc-tpl-select');
-    const extraFields = document.getElementById('extra-oqiyapti-fields');
-    tplSelect.addEventListener('change', () => {
-      const isOqiyapti = tplSelect.value === 'oqiyapti';
-      extraFields.style.display = isOqiyapti ? 'block' : 'none';
-      document.getElementById('doc-oquv-yili').value = isOqiyapti ? '2024/2025' : '2026/2027';
-    });
+    const groupAsos = document.getElementById('group-asos-turi');
+    const groupBuyruqNum = document.getElementById('group-buyruq-raqami');
+    const groupAvvBuyruq = document.getElementById('group-avvalgi-buyruq');
+    const groupYonalish = document.getElementById('group-yonalish');
+    const groupOquvYili = document.getElementById('group-oquv-yili');
+    const groupKursGuruh = document.getElementById('group-kurs-guruh');
+    const subgroupKurs = document.getElementById('subgroup-kurs');
+    const subgroupGuruh = document.getElementById('subgroup-guruh');
+    const labelGuruh = document.getElementById('label-guruh');
+    const groupYangiGuruh = document.getElementById('group-yangi-guruh');
+
+    const updateFormVisibility = () => {
+      const val = tplSelect.value;
+      
+      // Default yashirish
+      groupAsos.style.display = 'none';
+      groupBuyruqNum.style.display = 'none';
+      groupAvvBuyruq.style.display = 'none';
+      groupYonalish.style.display = 'none';
+      groupOquvYili.style.display = 'none';
+      groupKursGuruh.style.display = 'none';
+      subgroupKurs.style.display = 'none';
+      subgroupGuruh.style.display = 'none';
+      groupYangiGuruh.style.display = 'none';
+
+      if (val === 'qabul_1_kurs') {
+        groupYonalish.style.display = 'block';
+        groupOquvYili.style.display = 'block';
+        document.getElementById('doc-oquv-yili').value = '2026/2027';
+      } else if (val === 'oqiyapti') {
+        groupYonalish.style.display = 'block';
+        groupOquvYili.style.display = 'block';
+        groupKursGuruh.style.display = 'block';
+        subgroupKurs.style.display = 'block';
+        subgroupGuruh.style.display = 'block';
+        labelGuruh.innerText = 'Guruhi';
+        document.getElementById('doc-oquv-yili').value = '2024/2025';
+      } else if (val === 'buyruq_akademik_tatil') {
+        groupBuyruqNum.style.display = 'block';
+        groupKursGuruh.style.display = 'block';
+        subgroupKurs.style.display = 'block';
+        subgroupGuruh.style.display = 'block';
+        labelGuruh.innerText = 'Guruhi';
+      } else if (val === 'buyruq_qayta_tiklash') {
+        groupBuyruqNum.style.display = 'block';
+        groupAvvBuyruq.style.display = 'block';
+        groupKursGuruh.style.display = 'block';
+        subgroupKurs.style.display = 'block';
+        subgroupGuruh.style.display = 'block';
+        labelGuruh.innerText = 'Avvalgi Guruhi';
+        groupYangiGuruh.style.display = 'block';
+      } else if (val === 'buyruq_guruhdan_guruhga') {
+        groupBuyruqNum.style.display = 'block';
+        groupYonalish.style.display = 'block';
+        groupKursGuruh.style.display = 'block';
+        subgroupGuruh.style.display = 'block';
+        labelGuruh.innerText = 'Qaysi guruhdan';
+        groupYangiGuruh.style.display = 'block';
+      } else if (val === 'buyruq_safidan_chiqarish') {
+        groupAsos.style.display = 'block';
+        groupBuyruqNum.style.display = 'block';
+        groupKursGuruh.style.display = 'block';
+        subgroupKurs.style.display = 'block';
+        subgroupGuruh.style.display = 'block';
+        labelGuruh.innerText = 'Guruhi';
+      }
+    };
+
+    tplSelect.addEventListener('change', updateFormVisibility);
+    updateFormVisibility();
 
     document.getElementById('doc-gen-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('doc-generate-btn');
       btn.innerHTML = `<span>Shakllantirilmoqda...</span>`;
 
-      const tpl_id = document.getElementById('doc-tpl-select').value;
+      const tpl_id = tplSelect.value;
+      const fio = document.getElementById('doc-fio').value.trim();
+      const sana = document.getElementById('doc-sana').value.trim();
+
       const answers = {
-        FIO: document.getElementById('doc-fio').value,
-        YONALISH: document.getElementById('doc-yonalish').value,
-        OQUV_YILI: document.getElementById('doc-oquv-yili').value,
-        SANA: document.getElementById('doc-sana').value
+        FIO: fio,
+        IFO: fio,
+        SANA: sana,
+        sanasi: sana
       };
-      if (tpl_id === 'oqiyapti') {
+
+      if (tpl_id === 'qabul_1_kurs') {
+        answers['YONALISH'] = document.getElementById('doc-yonalish').value;
+        answers['OQUV_YILI'] = document.getElementById('doc-oquv-yili').value;
+      } else if (tpl_id === 'oqiyapti') {
+        answers['YONALISH'] = document.getElementById('doc-yonalish').value;
+        answers['OQUV_YILI'] = document.getElementById('doc-oquv-yili').value;
         answers['KURSI'] = document.getElementById('doc-kursi').value;
         answers['GURUHI'] = document.getElementById('doc-guruhi').value;
+      } else if (tpl_id === 'buyruq_akademik_tatil') {
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['kursi'] = document.getElementById('doc-kursi').value;
+        answers['guruhi'] = document.getElementById('doc-guruhi').value;
+      } else if (tpl_id === 'buyruq_qayta_tiklash') {
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['avvalgi_buyruq_raqami'] = document.getElementById('doc-avv-raqam').value;
+        answers['avvalgi_buyruq_sanasi'] = document.getElementById('doc-avv-sana').value;
+        answers['kursi'] = document.getElementById('doc-kursi').value;
+        answers['avvalgi_guruhi'] = document.getElementById('doc-guruhi').value;
+        answers['yangi_guruhi'] = document.getElementById('doc-yangi-guruhi').value;
+      } else if (tpl_id === 'buyruq_guruhdan_guruhga') {
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['yonalishi'] = document.getElementById('doc-yonalish').value;
+        answers['avvalgi_guruhi'] = document.getElementById('doc-guruhi').value;
+        answers['yangi_guruhi'] = document.getElementById('doc-yangi-guruhi').value;
+      } else if (tpl_id === 'buyruq_safidan_chiqarish') {
+        answers['asos_turi'] = document.getElementById('doc-asos-turi').value;
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['kursi'] = document.getElementById('doc-kursi').value;
+        answers['avvalgi_guruhi'] = document.getElementById('doc-guruhi').value;
       }
 
       const res = await this.api('/api/documents/generate', 'POST', { template_id: tpl_id, answers });
@@ -489,12 +630,15 @@ const ATLAS = {
         const prevBox = document.getElementById('doc-preview-box');
         prevBox.innerHTML = `
           <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
-            <img src="${res.view_url}" style="max-width:100%;max-height:430px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
+            <img src="${res.view_url}" style="max-width:100%;max-height:410px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
             <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
-              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${answers.FIO}')">
-                ${this.icons.eye} <span>Katta o'lchamda ko'rish</span>
+              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${fio}', ${res.doc_id})">
+                ${this.icons.eye} <span>Katta ko'rish</span>
               </button>
-              <a href="${res.download_url}" class="btn-sm btn-primary">
+              <a href="${res.download_docx_url || `/api/documents/download_docx/${res.doc_id}`}" class="btn-sm btn-primary" style="background:#2563eb;border-color:#3b82f6;">
+                ${this.icons.download} <span>Yuklab olish (DOCX)</span>
+              </a>
+              <a href="${res.download_url}" class="btn-sm btn-secondary">
                 ${this.icons.download} <span>Yuklab olish (PNG)</span>
               </a>
               <button class="btn-sm btn-secondary" onclick="ATLAS.resendDocumentToTelegram(${res.doc_id})">
@@ -518,8 +662,8 @@ const ATLAS = {
       <div class="glass-card">
         <div class="card-header-flex">
           <div>
-            <div class="card-title">Yaratilgan Hujjatlar Arxivi & Ro'yxati</div>
-            <div class="card-subtitle">Bot va platforma orqali shakllantirilgan barcha ma'lumotnomalar (Jami: ${res?.pagination?.total || docs.length} ta)</div>
+            <div class="card-title">Yaratilgan Hujjatlar & Buyruqlar Arxivi</div>
+            <div class="card-subtitle">Bot va platforma orqali shakllantirilgan barcha ma'lumotnomalar va buyruqlar (Jami: ${res?.pagination?.total || docs.length} ta)</div>
           </div>
           <div style="display:flex;gap:10px;">
             <input type="text" id="arch-search-input" class="input-control" style="width:240px;height:38px;" placeholder="Talaba F.I.O bo'yicha qidirish...">
@@ -532,27 +676,36 @@ const ATLAS = {
               <tr>
                 <th>Vaqt / Sana</th>
                 <th>Talaba F.I.O</th>
-                <th>Hujjat Shablon</th>
-                <th>Yo'nalish / Detal</th>
+                <th>Turi & Shablon</th>
+                <th>Qo'shimcha Detal</th>
                 <th>Manba</th>
-                <th style="text-align:right">Amallar</th>
+                <th style="text-align:right">Yuklab olish & Amallar</th>
               </tr>
             </thead>
             <tbody id="archive-table-body">
               ${docs.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hozircha arxivda saqlangan hujjatlar yo'q</td></tr>` : ''}
               ${docs.map(d => {
                 const p = d.parsed_data || {};
+                const isBuyruq = d.template_id?.includes('buyruq');
+                const badgeCls = isBuyruq ? 'badge-warning' : 'badge-info';
                 return `
                   <tr>
                     <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
                     <td><b>${d.recipient_fio}</b></td>
-                    <td><span class="badge badge-info">${d.template_name}</span></td>
-                    <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">${p.YONALISH || '-'} ${p.KURSI ? `(${p.KURSI}-kurs)` : ''}</td>
+                    <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
+                    <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
+                      ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
+                      ${p.YONALISH || p.yonalishi || ''}
+                      ${p.KURSI || p.kursi ? ` (${p.KURSI || p.kursi}-kurs)` : ''}
+                      ${p.GURUHI || p.guruhi || p.avvalgi_guruhi ? ` | ${p.GURUHI || p.guruhi || p.avvalgi_guruhi}-guruh` : ''}
+                      ${p.yangi_guruhi ? ` ➔ ${p.yangi_guruhi}` : ''}
+                    </td>
                     <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
                     <td style="text-align:right;">
                       <div style="display:flex;gap:6px;justify-content:flex-end;">
-                        <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}')" title="Katta ko'rish">${this.icons.eye}</button>
-                        <a href="/api/documents/download/${d.id}" class="btn-icon" title="Yuklab olish">${this.icons.download}</a>
+                        <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                        <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                        <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
                         <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
                         <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
                       </div>
@@ -577,17 +730,26 @@ const ATLAS = {
       }
       tbody.innerHTML = sDocs.map(d => {
         const p = d.parsed_data || {};
+        const isBuyruq = d.template_id?.includes('buyruq');
+        const badgeCls = isBuyruq ? 'badge-warning' : 'badge-info';
         return `
           <tr>
             <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
             <td><b>${d.recipient_fio}</b></td>
-            <td><span class="badge badge-info">${d.template_name}</span></td>
-            <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">${p.YONALISH || '-'} ${p.KURSI ? `(${p.KURSI}-kurs)` : ''}</td>
+            <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
+            <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
+              ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
+              ${p.YONALISH || p.yonalishi || ''}
+              ${p.KURSI || p.kursi ? ` (${p.KURSI || p.kursi}-kurs)` : ''}
+              ${p.GURUHI || p.guruhi || p.avvalgi_guruhi ? ` | ${p.GURUHI || p.guruhi || p.avvalgi_guruhi}-guruh` : ''}
+              ${p.yangi_guruhi ? ` ➔ ${p.yangi_guruhi}` : ''}
+            </td>
             <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
             <td style="text-align:right;">
               <div style="display:flex;gap:6px;justify-content:flex-end;">
-                <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}')" title="Katta ko'rish">${this.icons.eye}</button>
-                <a href="/api/documents/download/${d.id}" class="btn-icon" title="Yuklab olish">${this.icons.download}</a>
+                <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
                 <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
                 <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
               </div>
@@ -611,7 +773,7 @@ const ATLAS = {
   async deleteDocumentFromArchive(docId) {
     const confirmed = await this.confirm({
       title: "Arxivdan O'chirish",
-      message: "Haqiqatdan ham ushbu ma'lumotnomani arxivdan butunlay o'chirmoqchimisiz?",
+      message: "Haqiqatdan ham ushbu hujjatni arxivdan butunlay o'chirmoqchimisiz?",
       confirmText: "O'chirish",
       cancelText: "Bekor qilish",
       isDanger: true
@@ -625,14 +787,16 @@ const ATLAS = {
     }
   },
 
-  openImageModal(imgUrl, title) {
-    const downloadName = `${title} — ma'lumotnoma.png`;
-    this.openModalLarge(`${title} — Ma'lumotnoma (300 DPI A4)`, `
+  openImageModal(imgUrl, title, docId) {
+    const downloadPngUrl = docId ? `/api/documents/download/${docId}` : imgUrl;
+    const downloadDocxUrl = docId ? `/api/documents/download_docx/${docId}` : '';
+    this.openModalLarge(`${title} — 300 DPI A4 Ko'rinish`, `
       <div style="text-align:center;">
         <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="${title}">
-        <div class="modal-footer" style="justify-content:center;">
+        <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;">
           <a href="${imgUrl}" target="_blank" class="btn-sm btn-secondary">${this.icons.eye} Yangi oynada ochish</a>
-          <a href="${imgUrl}" download="${downloadName}" class="btn-sm btn-primary">${this.icons.download} Yuklab olish (PNG)</a>
+          ${downloadDocxUrl ? `<a href="${downloadDocxUrl}" class="btn-sm btn-primary" style="background:#2563eb;border-color:#3b82f6;">${this.icons.download} Word (.docx) yuklab olish</a>` : ''}
+          <a href="${downloadPngUrl}" class="btn-sm btn-secondary">${this.icons.download} Rasm (.png) yuklab olish</a>
         </div>
       </div>
     `);
