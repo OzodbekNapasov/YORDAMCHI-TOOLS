@@ -19,8 +19,38 @@ from services.image_builder import render_docx_template_to_image
 from services.docx_filler import fill_template
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "2.0.0"
+BOT_VERSION = "2.1.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
+
+def get_main_keyboard():
+    """1-DARAJALI BOSH MENYU (Kategoriyalar / Papkalar)"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn_kontrakt = telebot.types.KeyboardButton("📁 Kontraktlar va Hisobotlar")
+    btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar va Hujjatlar")
+    markup.add(btn_kontrakt, btn_docs)
+    return markup
+
+def get_kontrakt_folder_keyboard(suggested_date=None):
+    """2-DARAJALI PAPKA: Kontraktlar va Hisobotlar bo'limi"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    if suggested_date:
+        btn_date = telebot.types.KeyboardButton(suggested_date)
+        markup.add(btn_date)
+    btn1 = telebot.types.KeyboardButton("📝 Kontraktni yangilash")
+    btn2 = telebot.types.KeyboardButton("📸 Guruh screenshotlarini olish")
+    btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
+    markup.add(btn1, btn2)
+    markup.add(btn_back)
+    return markup
+
+def get_docs_folder_keyboard():
+    """2-DARAJALI PAPKA: Ma'lumotnomalar va Hujjatlar bo'limi"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    for tpl in DOCBOT_TEMPLATES:
+        markup.add(telebot.types.KeyboardButton(tpl["name"]))
+    btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
+    markup.add(btn_back)
+    return markup
 
 def is_user_allowed(message):
     """Faqat siz (ID: 8135594558) botdan foydalana olishingizni ta'minlash"""
@@ -68,12 +98,12 @@ def check_and_notify_updates():
                 last_ver = f.read().strip()
 
         if last_ver != BOT_VERSION:
-            update_msg = f"🚀 <b>YANGI BIRLASHTIRILGAN PLATFORMA! (v{BOT_VERSION})</b>\n\n" \
-                         f"✨ <b>Barcha hujjat loyihalaringiz bitta joyga yig'ildi:</b>\n" \
-                         f"• 📑 <b>Hujjat Generator (Docbot):</b> 1-kursga qabul ma'lumotnomalari va boshqa rasmiy hujjatlar endi to'g'ridan-to'g'ri ushbu bot ichida tayyorlanadi va 300 DPI tiniq rasm / Word formatida yuboriladi!\n" \
-                         f"• 📝 <b>Kontrakt Yangilovchi:</b> Bank debitorkasi va Asosiy Baza integratsiyasi, HD screenshotlar va avtomatik Xulasa rasmlari saqlangan.\n" \
-                         f"• 🔒 <b>Single Admin Whitelist:</b> Barcha imkoniyatlar faqat sizning ID ingizga (`8135594558`) biriktirilgan.\n\n" \
-                         f"<i>Birlashgan platformadan bemalol foydalanishingiz mumkin! 🎉</i>"
+            update_msg = f"📂 <b>KATEGORIYALAR BO'YICHA TARTIBLANGAN MENYU! (v{BOT_VERSION})</b>\n\n" \
+                         f"✨ <b>Barcha xizmatlar mavzular bo'yicha papkalarga ajratildi:</b>\n" \
+                         f"• 📁 <b>Kontraktlar va Hisobotlar:</b> Kontrakt yangilash va Guruh screenshotlarini olish xizmatlari.\n" \
+                         f"• 📁 <b>Ma'lumotnomalar va Hujjatlar:</b> 1-kursga qabul ma'lumotnomalari va rasmiy shablonlar.\n" \
+                         f"• 🔙 <b>Asosiy menyuga qaytish:</b> Istalgan vaqtda papkalar menyusiga bir tugma bilan qaytish.\n\n" \
+                         f"<i>Kelajakda yangi mavzu va bo'limlarni ham avtomatik qo'shib ketaveramiz! 🚀</i>"
 
             try:
                 bot.send_message(PRIMARY_ADMIN_ID, update_msg, parse_mode="HTML", reply_markup=get_main_keyboard())
@@ -164,20 +194,7 @@ class TelegramProgress:
             except Exception:
                 pass
 
-def get_main_keyboard(suggested_date=None):
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    if suggested_date:
-        btn_date = telebot.types.KeyboardButton(suggested_date)
-        markup.add(btn_date)
-    btn1 = telebot.types.KeyboardButton("📝 Kontraktni yangilash")
-    btn2 = telebot.types.KeyboardButton("📸 Guruh screenshotlarini olish")
-    markup.add(btn1, btn2)
-    
-    # Docbot shablon tugmalarini qo'shish
-    for tpl in DOCBOT_TEMPLATES:
-        markup.add(telebot.types.KeyboardButton(tpl["name"]))
-        
-    return markup
+
 
 def make_step_keyboard(button_rows):
     if not button_rows:
@@ -706,10 +723,12 @@ def send_welcome(message):
         return
     save_user_chat_id(chat_id)
     user_data[chat_id] = {}
-    send_safe_message(chat_id, f"🚀 <b>Salom! Aqlli kontrakt va guruhlar platformasi faol.</b>\n"
+    send_safe_message(chat_id, f"🚀 <b>Salom! Aqlli kontrakt va hujjatlar platformasi faol.</b>\n"
                                f"📌 <b>Tizim versiyasi:</b> <code>v{BOT_VERSION}</code>\n"
                                f"🔑 <b>Foydalanuvchi ID:</b> <code>{message.from_user.id}</code> (Ruxsat berilgan)\n\n"
-                               f"Kerakli bo'limni tanlang:")
+                               f"📂 <b>ASOSIY KATEGORIYALAR MENYUSI</b>\n"
+                               f"Kerakli bo'lim papkasini tanlang:",
+                               reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda message: message.text == "📝 Kontraktni yangilash")
 def start_kontrakt_yangilash(message):
@@ -743,6 +762,22 @@ def handle_text_messages(message):
     save_user_chat_id(chat_id)
     holat = user_data.get(chat_id, {}).get("holat")
     user_text = message.text.strip()
+
+    # 1-Darajali Papkalar (Kategoriyalar) va Ortga qaytish
+    if user_text == "📁 Kontraktlar va Hisobotlar":
+        user_data[chat_id] = {}
+        send_safe_message(chat_id, "📁 <b>KONTRAKTLAR VA HISOBOTLAR BO'LIMI</b>\n\nKerakli xizmatni tanlang:", reply_markup=get_kontrakt_folder_keyboard())
+        return
+
+    if user_text == "📁 Ma'lumotnomalar va Hujjatlar":
+        user_data[chat_id] = {}
+        send_safe_message(chat_id, "📁 <b>MA'LUMOTNOMALAR VA HUJJATLAR BO'LIMI</b>\n\nQaysi rasmiy hujjatni tayyorlamoqchisiz?", reply_markup=get_docs_folder_keyboard())
+        return
+
+    if user_text == "🔙 Asosiy menyuga qaytish":
+        user_data[chat_id] = {}
+        send_safe_message(chat_id, "📂 <b>ASOSIY KATEGORIYALAR MENYUSI</b>\n\nKerakli bo'lim papkasini tanlang:", reply_markup=get_main_keyboard())
+        return
 
     # Docbot shablonlarini tanlashni tekshirish
     for idx, tpl in enumerate(DOCBOT_TEMPLATES):
