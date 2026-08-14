@@ -1113,17 +1113,18 @@ const ATLAS = {
                 </div>
               </div>
 
-              <!-- Guruhlar Tanlovi -->
+              <!-- Guruhlar Tanlovi (Soddalashtirilgan va Qulay) -->
               <div class="form-group">
                 <label class="form-label">Amaliyotga Chiqayotgan Guruhlar ({{guruh_1}}, {{guruh_2}}, ...)</label>
-                <div style="display:flex;gap:8px;margin-bottom:8px;">
-                  <select id="amaliyot-group-select" class="select-control" style="flex:1;">
-                    <option value="">-- Guruh qo'shish uchun tanlang --</option>
+                <div style="display:flex;gap:8px;">
+                  <input type="text" id="amaliyot-groups-input" class="input-control" placeholder="Masalan: 25-16, 25-17, 25-18, 25-23" value="${selectedGroups.join(', ')}">
+                  <select id="amaliyot-group-quick-select" class="select-control" style="width:210px;">
+                    <option value="">+ Guruh qo'shish...</option>
                   </select>
-                  <input type="text" id="amaliyot-group-custom" class="input-control" placeholder="Yoki qo'lda: 24-11" style="width:160px;">
-                  <button type="button" class="btn-secondary" id="btn-add-group-badge" style="height:42px;padding:0 14px;">+ Qo'shish</button>
                 </div>
-                <div id="amaliyot-selected-groups-box" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;"></div>
+                <div style="font-size:11.5px;color:rgba(94,234,212,0.75);margin-top:4px;">
+                  💡 Guruhlarni vergul bilan yozing yoki ro'yxatni yuklasangiz, barcha guruhlar avtomatik aniqlanadi.
+                </div>
               </div>
 
               <!-- Amaliyot Muddati & Sanalar -->
@@ -1195,11 +1196,13 @@ const ATLAS = {
         </div>
       `;
 
-      // Populate academic groups into group select
-      const grpSelect = document.getElementById('amaliyot-group-select');
+      // Populate academic groups into quick select
+      const grpQuickSelect = document.getElementById('amaliyot-group-quick-select');
+      const grpInput = document.getElementById('amaliyot-groups-input');
+      
       const populateGrpSelect = (gList) => {
-        if (!grpSelect) return;
-        grpSelect.innerHTML = '<option value="">-- Guruh qo\'shish uchun tanlang --</option>' +
+        if (!grpQuickSelect) return;
+        grpQuickSelect.innerHTML = '<option value="">+ Guruh tanlash...</option>' +
           gList.map(g => `<option value="${g.group_name}">${g.group_name} (${g.course_level || 1}-kurs)</option>`).join('');
       };
 
@@ -1212,55 +1215,27 @@ const ATLAS = {
         });
       }
 
-      // Group badge rendering
-      const renderGroupBadges = () => {
-        const box = document.getElementById('amaliyot-selected-groups-box');
-        if (!box) return;
-        if (!selectedGroups.length) {
-          box.innerHTML = `<span style="font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;">Hozircha guruhlar tanlanmagan</span>`;
-          return;
-        }
-        box.innerHTML = selectedGroups.map((g, i) => `
-          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,203,169,0.18);border:1px solid rgba(0,203,169,0.45);color:#5eead4;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;">
-            ${g}
-            <button type="button" class="btn-remove-grp" data-idx="${i}" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:12px;padding:0;">✕</button>
-          </span>
-        `).join('');
-
-        box.querySelectorAll('.btn-remove-grp').forEach(b => {
-          b.addEventListener('click', (e) => {
-            const idx = parseInt(e.target.dataset.idx);
-            selectedGroups.splice(idx, 1);
-            renderGroupBadges();
-            updateStudentsTable();
-          });
+      // Sync Groups input
+      if (grpInput) {
+        grpInput.addEventListener('input', (e) => {
+          selectedGroups = e.target.value.split(/[,;]+/).map(s => s.trim()).filter(s => s);
         });
-      };
-      renderGroupBadges();
+      }
 
-      // Add group badge button
-      const addGrpBtn = document.getElementById('btn-add-group-badge');
-      const addGrpCustom = document.getElementById('amaliyot-group-custom');
-      addGrpBtn.addEventListener('click', () => {
-        const val1 = grpSelect.value;
-        const val2 = addGrpCustom.value.trim();
-        const finalGrp = val2 || val1;
-        if (finalGrp && !selectedGroups.includes(finalGrp)) {
-          selectedGroups.push(finalGrp);
-          addGrpCustom.value = '';
-          grpSelect.value = '';
-          renderGroupBadges();
-          updateStudentsTable();
-        }
-      });
-      grpSelect.addEventListener('change', () => {
-        if (grpSelect.value && !selectedGroups.includes(grpSelect.value)) {
-          selectedGroups.push(grpSelect.value);
-          grpSelect.value = '';
-          renderGroupBadges();
-          updateStudentsTable();
-        }
-      });
+      if (grpQuickSelect) {
+        grpQuickSelect.addEventListener('change', () => {
+          const val = grpQuickSelect.value;
+          if (val) {
+            let currentVals = grpInput.value.split(/[,;]+/).map(s => s.trim()).filter(s => s);
+            if (!currentVals.includes(val)) {
+              currentVals.push(val);
+              grpInput.value = currentVals.join(', ');
+              selectedGroups = currentVals;
+            }
+            grpQuickSelect.value = '';
+          }
+        });
+      }
 
       // Tuman change -> auto update Doctor
       const tumaniSel = document.getElementById('amaliyot-tumani');
@@ -1309,7 +1284,7 @@ const ATLAS = {
           <tr>
             <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${i + 1}.</td>
             <td>
-              <input type="text" class="table-input-cell st-guruh" data-idx="${i}" value="${st.guruhi || (selectedGroups[0] || '')}" placeholder="24-11">
+              <input type="text" class="table-input-cell st-guruh" data-idx="${i}" value="${st.guruhi || ''}" placeholder="25-16">
             </td>
             <td>
               <input type="text" class="table-input-cell st-fio" data-idx="${i}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
@@ -1330,7 +1305,7 @@ const ATLAS = {
         tbody.querySelectorAll('.st-guruh').forEach(inp => {
           inp.addEventListener('input', (e) => {
             const idx = parseInt(e.target.dataset.idx);
-            studentRows[idx].guruhi = e.target.value;
+            studentRows[idx].guruhi = e.target.value.trim();
           });
         });
         tbody.querySelectorAll('.st-fio').forEach(inp => {
@@ -1374,7 +1349,7 @@ const ATLAS = {
         updateStudentsTable();
       });
 
-      // Bulk Import Modal
+      // Bulk Import Modal with Hash (#) separator and smart splitter
       document.getElementById('btn-bulk-import-students').addEventListener('click', () => {
         this.openModal(`
           <div class="modal-header">
@@ -1382,14 +1357,20 @@ const ATLAS = {
             <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
           </div>
           <div class="modal-body">
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.8);margin-bottom:10px;">
-              Excel yoki matndan talabalar ro'yxatini nusxalab qo'ying (Har bir qatorda: <b>Guruh [Tab/Probbel] F.I.SH</b> yoki faqat <b>F.I.SH</b>):
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:8px;line-height:1.5;">
+              Har bir qatorga <b>Guruh # F.I.SH</b> ko'rinishida (yoki Excel/Word ro'yxatidan) nusxalab qo'ying:<br>
+              <span style="display:inline-block;background:rgba(0,0,0,0.4);padding:4px 8px;border-radius:4px;color:#34d399;font-family:monospace;margin-top:4px;">
+                25-16 # Rahmatova.Sh<br>
+                25-16 # Botirova.G<br>
+                25-23 # Asraliyev.A<br>
+                25-17 # Meyliyev.R
+              </span>
             </div>
-            <textarea id="modal-bulk-students-text" class="textarea-control" style="height:200px;font-family:monospace;font-size:12.5px;" placeholder="24-11\tNapasov Ozodbek Zafar o'g'li\n24-11\tKarimov Jasur Anvar o'g'li\n24-12\tAlimova Shahnoza Otabek qizi"></textarea>
+            <textarea id="modal-bulk-students-text" class="textarea-control" style="height:220px;font-family:monospace;font-size:13px;" placeholder="25-16 # Rahmatova.Sh\n25-16 # Botirova.G\n25-23 # Asraliyev.A\n25-17 # Meyliyev.R"></textarea>
           </div>
           <div class="modal-footer">
             <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-            <button class="btn-primary" id="btn-apply-bulk-students">Jadvalga Qo'shish</button>
+            <button class="btn-primary" id="btn-apply-bulk-students">Jadvalga Yuklash</button>
           </div>
         `);
 
@@ -1401,34 +1382,53 @@ const ATLAS = {
           const parsed = [];
           const curStart = startInp.value || '08.06.2026';
           const curEnd = endInp.value || '06.07.2026';
+          const detectedGroups = new Set(selectedGroups);
 
           lines.forEach(line => {
-            let g = selectedGroups[0] || '';
-            let f = line;
-            if (line.includes('\t')) {
-              const parts = line.split('\t').map(p => p.trim()).filter(p => p);
-              if (parts.length >= 2) {
-                // If first part is number (1, 2, 3)
-                if (/^\d+\.?$/.test(parts[0]) && parts.length >= 3) {
-                  g = parts[1];
-                  f = parts.slice(2).join(' ');
-                } else {
-                  g = parts[0];
-                  f = parts.slice(1).join(' ');
-                }
-              }
-            } else if (line.includes(' - ') || line.includes(' – ')) {
-              const parts = line.split(/[-–—]/).map(p => p.trim()).filter(p => p);
+            // Remove leading row numbering like 1., 1), 1
+            line = line.replace(/^\d+[\.\)\t\s]+/, '').trim();
+            if (!line) return;
+
+            let g = '';
+            let f = '';
+
+            if (line.includes('#')) {
+              const parts = line.split('#').map(p => p.trim()).filter(p => p);
               if (parts.length >= 2) {
                 g = parts[0];
                 f = parts.slice(1).join(' ');
+              } else if (parts.length === 1) {
+                f = parts[0];
+              }
+            } else if (line.includes('\t')) {
+              const parts = line.split('\t').map(p => p.trim()).filter(p => p);
+              if (parts.length >= 2) {
+                g = parts[0];
+                f = parts.slice(1).join(' ');
+              } else if (parts.length === 1) {
+                f = parts[0];
+              }
+            } else {
+              // Match group pattern like 25-16, 24-11, 102, 204
+              const m = line.match(/^(\d{1,2}-\d{1,3}|\d{3})\s*[-–—:\s]\s*(.+)$/);
+              if (m) {
+                g = m[1].trim();
+                f = m[2].trim();
+              } else {
+                f = line;
               }
             }
 
+            // Remove any duplicated group prefix in FIO
+            if (g && f.startsWith(g)) {
+              f = f.slice(g.length).replace(/^[\s\-–—#:\t]+/, '').trim();
+            }
+
+            if (g) {
+              detectedGroups.add(g);
+            }
+
             if (f) {
-              if (g && !selectedGroups.includes(g)) {
-                selectedGroups.push(g);
-              }
               parsed.push({
                 id: parsed.length + 1,
                 guruhi: g,
@@ -1441,10 +1441,12 @@ const ATLAS = {
 
           if (parsed.length > 0) {
             studentRows = parsed;
-            renderGroupBadges();
+            selectedGroups = Array.from(detectedGroups);
+            const grpInpEl = document.getElementById('amaliyot-groups-input');
+            if (grpInpEl) grpInpEl.value = selectedGroups.join(', ');
             updateStudentsTable();
             this.closeModal();
-            this.showToast(`${parsed.length} ta talaba jadvalga yuklandi!`, 'success');
+            this.showToast(`${parsed.length} ta talaba va ${selectedGroups.length} ta guruh yuklandi!`, 'success');
           }
         });
       });
@@ -1465,6 +1467,13 @@ const ATLAS = {
         const startDate = startInp.value.trim();
         const endDate = endInp.value.trim();
 
+        // Get groups from groups input field or detected from table
+        const grpInpVal = document.getElementById('amaliyot-groups-input').value;
+        let finalGroups = grpInpVal.split(/[,;]+/).map(s => s.trim()).filter(s => s);
+        if (!finalGroups.length) {
+          finalGroups = Array.from(new Set(studentRows.map(s => s.guruhi).filter(g => g)));
+        }
+
         const validStudents = studentRows.filter(s => s.fio && s.fio.trim());
 
         const payload = {
@@ -1476,44 +1485,53 @@ const ATLAS = {
           buyruq_sanasi: buyruqSana,
           oquv_yili: oquvYili,
           kursi: kursi,
-          guruhlar: selectedGroups,
+          guruhlar: finalGroups,
           amaliyot_muddati: muddatiText,
           start_date: startDate,
           end_date: endDate,
           students: validStudents
         };
 
-        const res = await this.api('/api/amaliyot/generate', 'POST', payload);
-        btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
+        try {
+          const res = await this.api('/api/amaliyot/generate', 'POST', payload);
+          btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
 
-        if (res?.success) {
-          this.showToast("Amaliyot buyrug'i muvaffaqiyatli shakllantirildi!", "success");
-          const resultBox = document.getElementById('amaliyot-result-box');
-          resultBox.innerHTML = `
-            <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:20px;text-align:left;">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                <div style="font-size:24px;">✅</div>
-                <div>
-                  <div style="font-size:15px;font-weight:700;color:#ffffff;">Amaliyot Buyrug'i Tayyor!</div>
-                  <div style="font-size:12px;color:rgba(94,234,212,0.8);">Supabase Cloud bazasida va arxivda saqlandi</div>
+          if (res?.success) {
+            this.showToast("Amaliyot buyrug'i muvaffaqiyatli shakllantirildi!", "success");
+            const resultBox = document.getElementById('amaliyot-result-box');
+            const groupsStr = finalGroups.join(', ') || 'Guruh';
+            const downloadFilename = `${finalTumani} - ${groupsStr} - ${validStudents.length} ta talaba.docx`;
+
+            resultBox.innerHTML = `
+              <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:20px;text-align:left;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <div style="font-size:24px;">✅</div>
+                  <div>
+                    <div style="font-size:15px;font-weight:700;color:#ffffff;">Amaliyot Buyrug'i Tayyor!</div>
+                    <div style="font-size:12px;color:rgba(94,234,212,0.8);">Supabase Cloud bazasida va arxivda saqlandi</div>
+                  </div>
+                </div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.9);line-height:1.6;margin-bottom:16px;">
+                  • <b>Tuman:</b> ${finalTumani}<br>
+                  • <b>Bosh shifokor:</b> ${finalShifokor}<br>
+                  • <b>Guruhlar:</b> ${groupsStr}<br>
+                  • <b>Talabalar soni:</b> ${validStudents.length} ta<br>
+                  • <b>Muddati:</b> ${muddatiText}<br>
+                  • <b>Fayl nomi:</b> <span style="color:#5eead4;font-family:monospace;font-size:12px;">${downloadFilename}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <a href="${res.download_docx_url}" class="btn-primary btn-block" style="text-decoration:none;" download="${downloadFilename}">
+                    📥 Word (.docx) Hujjatini Yuklab Olish
+                  </a>
                 </div>
               </div>
-              <div style="font-size:13px;color:rgba(255,255,255,0.9);line-height:1.6;margin-bottom:16px;">
-                • <b>Tuman:</b> ${finalTumani}<br>
-                • <b>Bosh shifokor:</b> ${finalShifokor}<br>
-                • <b>Guruhlar:</b> ${selectedGroups.join(', ') || 'Ko\'rsatilmagan'}<br>
-                • <b>Talabalar soni:</b> ${validStudents.length} ta<br>
-                • <b>Muddati:</b> ${muddatiText}
-              </div>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                <a href="${res.download_docx_url}" class="btn-primary btn-block" style="text-decoration:none;" download>
-                  📥 Asl Word (.docx) Hujjatini Yuklab Olish
-                </a>
-              </div>
-            </div>
-          `;
-        } else {
-          alert(res?.error || "Buyruq shakllantirishda xatolik yuz berdi");
+            `;
+          } else {
+            alert(res?.error || "Buyruq shakllantirishda xatolik yuz berdi");
+          }
+        } catch (err) {
+          btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
+          alert("Server bilan aloqada xatolik: " + err.message);
         }
       });
     };

@@ -842,11 +842,30 @@ def api_download_docx_by_id(doc_id):
     if not os.path.exists(docx_path):
         return jsonify({"error": "Word fayli shakllantirilmadi."}), 404
 
-    fio = str(doc["recipient_fio"]).strip()
-    tpl_name = str(doc["template_name"]).strip()
-    tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
-    suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
-    download_filename = f"{fio} — {tpl_clean} {suffix}.docx"
+    data_dict = doc.get("parsed_data") or {}
+    tpl_id = doc.get("template_id", "")
+    
+    if tpl_id.startswith("amaliyot") or tpl_id == "amaliyot_buyruq":
+        tumani = str(data_dict.get("tumani", "")).strip() or "Tuman"
+        guruhlar = data_dict.get("guruhlar", [])
+        if isinstance(guruhlar, list):
+            guruh_str = ", ".join(guruhlar)
+        else:
+            guruh_str = str(guruhlar)
+        if not guruh_str:
+            students = data_dict.get("students", [])
+            s_groups = sorted(list(set(s.get("guruhi") for s in students if s.get("guruhi"))))
+            guruh_str = ", ".join(s_groups) if s_groups else "Guruh"
+        
+        students_count = len(data_dict.get("students", []))
+        download_filename = f"{tumani} - {guruh_str} - {students_count} ta talaba.docx"
+    else:
+        fio = str(doc["recipient_fio"]).strip()
+        tpl_name = str(doc["template_name"]).strip()
+        tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
+        suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
+        download_filename = f"{fio} — {tpl_clean} {suffix}.docx"
+
     return send_file(
         docx_path,
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -1148,63 +1167,75 @@ def api_reorder_amaliyot_tabs():
 @atlas_api.route("/amaliyot/generate", methods=["POST"])
 @admin_required
 def api_generate_amaliyot_doc():
-    data = request.get_json() or {}
-    tab_id = data.get("tab_id", 1)
-    tab_name = data.get("tab_name", "Hamshiralik ishi - 3 yillik - 2-semestr")
-    
-    tumani = data.get("tumani", "").strip() or "Shahrisabz shahar"
-    from services.amaliyot_service import DISTRICT_DOCTORS, fill_amaliyot_template
-    shu_tuman_shifokori = data.get("shu_tuman_shifokori", "").strip() or DISTRICT_DOCTORS.get(tumani, "Bosh shifokor")
-    
-    buyruq_raqami = data.get("buyruq_raqami", "").strip() or "____"
-    buyruq_sanasi = data.get("buyruq_sanasi", "").strip() or datetime.now().strftime("%d.%m.%Y")
-    
-    students = data.get("students", [])
-    guruhlar = data.get("guruhlar", [])
-    
-    # Recipient FIO
-    fio = students[0].get("fio") if students else f"Amaliyot buyrug'i ({tumani})"
-    
-    # Template path
-    tpl_path = os.path.join(TEMPLATES_DIR, "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
-    if not os.path.exists(tpl_path):
-        tpl_path = find_template_file("3 yillik 2-semestr.docx")
+    try:
+        data = request.get_json() or {}
+        tab_id = data.get("tab_id", 1)
+        tab_name = data.get("tab_name", "Hamshiralik ishi - 3 yillik - 2-semestr")
+        
+        tumani = data.get("tumani", "").strip() or "Shahrisabz shahar"
+        from services.amaliyot_service import DISTRICT_DOCTORS, fill_amaliyot_template
+        shu_tuman_shifokori = data.get("shu_tuman_shifokori", "").strip() or DISTRICT_DOCTORS.get(tumani, "Bosh shifokor")
+        
+        buyruq_raqami = data.get("buyruq_raqami", "").strip() or "____"
+        buyruq_sanasi = data.get("buyruq_sanasi", "").strip() or datetime.now().strftime("%d.%m.%Y")
+        
+        students = data.get("students", [])
+        guruhlar = data.get("guruhlar", [])
+        
+        # If guruhlar is empty, collect from students
+        if not guruhlar and students:
+            guruhlar = sorted(list(set(str(s.get("guruhi", "")).strip() for s in students if str(s.get("guruhi", "")).strip())))
+            data["guruhlar"] = guruhlar
 
-    # Temp paths
-    session_uid = uuid.uuid4().hex[:8]
-    temp_docx = os.path.join(tempfile.gettempdir(), f"amaliyot_{session_uid}.docx")
-    
-    fill_amaliyot_template(tpl_path, data, temp_docx)
-    
-    # Save permanent docx
-    permanent_docx_path = os.path.join(SAVED_DOCS_DIR, f"amaliyot_{session_uid}.docx")
-    import shutil
-    shutil.copy2(temp_docx, permanent_docx_path)
+        # Recipient FIO
+        fio = students[0].get("fio") if students else f"Amaliyot buyrug'i ({tumani})"
+        
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        saved_dir = os.path.join(tempfile.gettempdir(), "saved_documents")
+        os.makedirs(saved_dir, exist_ok=True)
 
-    # Save to cloud DB
-    from services.atlas_db import save_generated_document_to_cloud
-    tpl_display_name = f"Amaliyot: {tab_name} ({tumani})"
-    doc_id = save_generated_document_to_cloud(
-        template_id=f"amaliyot_{tab_id}",
-        template_name=tpl_display_name,
-        recipient_fio=fio,
-        answers=data,
-        file_path=permanent_docx_path
-    )
+        tpl_path = os.path.join(base_dir, "templates", "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
+        if not os.path.exists(tpl_path):
+            tpl_path = find_template_file("3 yillik 2-semestr.docx")
 
-    admin = get_current_admin()
-    log_audit(admin["username"], "amaliyot", "generate_amaliyot_doc", "success",
-              {"doc_id": doc_id, "tab_name": tab_name, "tumani": tumani, "students_count": len(students)},
-              request.remote_addr)
+        if not tpl_path or not os.path.exists(tpl_path):
+            return jsonify({"success": False, "error": "Amaliyot Word shabloni (3 yillik 2-semestr.docx) serverdan topilmadi."}), 404
 
-    return jsonify({
-        "success": True,
-        "message": f"Amaliyot buyrug'i ({len(students)} ta talaba bilan) muvaffaqiyatli shakllantirildi!",
-        "doc_id": doc_id,
-        "download_docx_url": f"/api/documents/download_docx/{doc_id}",
-        "view_url": f"/api/documents/download_docx/{doc_id}"
-    })
+        session_uid = uuid.uuid4().hex[:8]
+        temp_docx = os.path.join(tempfile.gettempdir(), f"amaliyot_{session_uid}.docx")
+        
+        fill_amaliyot_template(tpl_path, data, temp_docx)
+        
+        permanent_docx_path = os.path.join(saved_dir, f"amaliyot_{session_uid}.docx")
+        import shutil
+        shutil.copy2(temp_docx, permanent_docx_path)
 
+        from services.atlas_db import save_generated_document_to_cloud
+        tpl_display_name = f"Amaliyot: {tab_name} ({tumani})"
+        doc_id = save_generated_document_to_cloud(
+            template_id=f"amaliyot_{tab_id}",
+            template_name=tpl_display_name,
+            recipient_fio=fio,
+            answers=data,
+            file_path=permanent_docx_path
+        )
+
+        admin = get_current_admin()
+        log_audit(admin["username"], "amaliyot", "generate_amaliyot_doc", "success",
+                  {"doc_id": doc_id, "tab_name": tab_name, "tumani": tumani, "students_count": len(students)},
+                  request.remote_addr)
+
+        return jsonify({
+            "success": True,
+            "message": f"Amaliyot buyrug'i ({len(students)} ta talaba bilan) muvaffaqiyatli shakllantirildi!",
+            "doc_id": doc_id,
+            "download_docx_url": f"/api/documents/download_docx/{doc_id}",
+            "view_url": f"/api/documents/download_docx/{doc_id}"
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": f"Xatolik yuz berdi: {str(e)}"}), 500
 
 
 # ============================================================
