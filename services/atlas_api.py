@@ -1412,21 +1412,33 @@ def api_contracts_group_screenshots():
 @atlas_api.route("/contracts/download-excel/<session_id>", methods=["GET"])
 def api_contracts_download_excel(session_id):
     """Yangilangan Excel faylini yuklab olish"""
-    for fname in os.listdir(CONTRACT_STORAGE_DIR):
-        if fname.startswith(session_id) and fname.endswith(".xlsx"):
-            fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
-            download_name = fname.replace(f"{session_id}_", "")
-            return send_file(fpath, as_attachment=True, download_name=download_name)
+    if os.path.exists(CONTRACT_STORAGE_DIR):
+        for fname in os.listdir(CONTRACT_STORAGE_DIR):
+            if fname.startswith(session_id) and fname.endswith(".xlsx"):
+                fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
+                download_name = fname.replace(f"{session_id}_", "")
+                return send_file(fpath, as_attachment=True, download_name=download_name)
+
+    sess = get_contract_session_by_id(session_id)
+    if sess and sess.get("excel_url"):
+        from flask import redirect
+        return redirect(sess.get("excel_url"))
     return jsonify({"success": False, "error": "Excel fayli topilmadi."}), 404
 
 
 @atlas_api.route("/contracts/download-xulosa/<session_id>", methods=["GET"])
 def api_contracts_download_xulosa(session_id):
     """Xulosa rasmini yuklab olish"""
-    for fname in os.listdir(CONTRACT_STORAGE_DIR):
-        if session_id in fname and fname.endswith(".png") and "xulosa" in fname:
-            fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
-            return send_file(fpath, as_attachment=False, mimetype="image/png")
+    if os.path.exists(CONTRACT_STORAGE_DIR):
+        for fname in os.listdir(CONTRACT_STORAGE_DIR):
+            if session_id in fname and fname.endswith(".png") and "xulosa" in fname:
+                fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
+                return send_file(fpath, as_attachment=False, mimetype="image/png")
+
+    sess = get_contract_session_by_id(session_id)
+    if sess and sess.get("xulosa_url"):
+        from flask import redirect
+        return redirect(sess.get("xulosa_url"))
     return jsonify({"success": False, "error": "Xulosa rasmi topilmadi."}), 404
 
 

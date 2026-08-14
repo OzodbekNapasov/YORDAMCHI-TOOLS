@@ -1283,15 +1283,17 @@ const ATLAS = {
 
   renderContractUpdater(container) {
     container.innerHTML = `
-      <div class="card" style="margin-bottom: 20px;">
-        <div class="card-header">
-          <div class="card-title">${this.icons.analytics} Kontrakt To'lovlarini Yangilash & Debitorka Taqqoslash</div>
-          <span class="badge badge-success">Formulalar 100% Saqlanadi</span>
+      <div class="card" style="margin-bottom: 24px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h2 style="font-size:23px;font-weight:800;color:#ffffff;margin-bottom:8px;letter-spacing:-0.02em;">Kontrakt To'lovlarini Yangilash & Debitorka Taqqoslash</h2>
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);border-radius:var(--radius-pill);color:#34d399;font-size:11px;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">
+            ${this.icons.check} FORMULALAR 100% SAQLANADI
+          </div>
+          <p style="font-size: 0.88rem; color: rgba(94, 234, 212, 0.8); max-width:760px; margin:0 auto; line-height:1.5;">
+            Asosiy Baza (.xlsx) va Bank Debitorkasi (.xlsx) fayllarini sudrab olib kelib tashlang.
+            Tizim ismlarni sun'iy intellekt va fuzzy taqqoslash orqali moslashtirib, to'lovlarni yangilaydi hamda XULOSA hisobotini tayyorlaydi.
+          </p>
         </div>
-        <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 20px;">
-          Asosiy Baza (.xlsx) va Bank Debitorkasi (.xlsx) fayllarini sudrab olib kelib (Drag & Drop / Swipe) tashlang.
-          Tizim ismlarni sun'iy intellekt va Levenshtein fuzzy algoritmi orqali solishtirib, to'lovlarni yangilaydi hamda XULOSA hisobotini tayyorlaydi.
-        </p>
 
         <!-- DROPZONES -->
         <div class="dropzone-container">
@@ -1550,10 +1552,10 @@ const ATLAS = {
     const xulosaCount = (data.xulosa_rows || []).length;
 
     return `
-      <div class="card" style="margin-top:24px;border:1px solid rgba(0,240,255,0.25);">
-        <div class="card-header">
-          <div class="card-title">${this.icons.check} Yangilanish Natijalari & Tahliliy Hisobot</div>
-          <span class="badge badge-success">Sessiya: ${data.session_id}</span>
+      <div class="card" style="margin-top:24px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h2 style="font-size:24px;font-weight:800;color:#ffffff;margin-bottom:6px;letter-spacing:-0.02em;">Yangilanish Natijalari & Tahliliy Hisobot</h2>
+          <div style="font-size:13px;color:rgba(94,234,212,0.85);">Muvaffaqiyatli taqqoslandi va kontrakt bazasi yangilandi</div>
         </div>
 
         <!-- KPI CARDS -->
@@ -1746,14 +1748,16 @@ const ATLAS = {
   // ============================================================
   renderGroupScreenshotsView(container) {
     container.innerHTML = `
-      <div class="card" style="margin-bottom: 20px;">
-        <div class="card-header">
-          <div class="card-title">${this.icons.dashboard} Guruhlar Bo'yicha HD Screenshotlar Generatori</div>
-          <span class="badge badge-cyan">3x Ultra HD Times New Roman</span>
+      <div class="card" style="margin-bottom: 24px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h2 style="font-size:23px;font-weight:800;color:#ffffff;margin-bottom:8px;letter-spacing:-0.02em;">Guruhlar Bo'yicha HD Screenshotlar Generatori</h2>
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.35);border-radius:var(--radius-pill);color:#38bdf8;font-size:11px;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">
+            ${this.icons.dashboard} 3X ULTRA HD SCREENSHOTLAR
+          </div>
+          <p style="font-size: 0.88rem; color: rgba(94, 234, 212, 0.8); max-width:760px; margin:0 auto; line-height:1.5;">
+            Asosiy Baza Excel (.xlsx) faylini sudrab tashlang yoki tanlang. Tizim barcha guruhlar hamda Xulosa jadvalining screenshotlarini chizadi.
+          </p>
         </div>
-        <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 20px;">
-          Asosiy Baza Excel (.xlsx) faylini sudrab tashlang yoki tanlang. Tizim barcha guruhlarni avtomatik aniqlab, har bir guruh uchun to'lov va qarzlar jadvali screenshotlarini chizadi.
-        </p>
 
         <div class="file-dropzone ${this.contractState.ssBazaFile ? 'has-file' : ''}" id="dropzone-ss-baza" style="margin-bottom:20px;">
           <input type="file" id="file-input-ss-baza" accept=".xlsx" style="display:none;">
@@ -1957,10 +1961,10 @@ const ATLAS = {
   renderScreenshotsGalleryHTML(data) {
     const groups = data.groups || [];
     return `
-      <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-          <div class="card-title">${this.icons.dashboard} Tayyor Screenshotlar Galereyasi (${data.total_groups} ta guruh)</div>
-          <span class="badge badge-success">Sana: ${data.date_str}</span>
+      <div class="card" style="margin-top:24px;">
+        <div style="text-align:center;margin-bottom:22px;">
+          <h2 style="font-size:23px;font-weight:800;color:#ffffff;margin-bottom:6px;letter-spacing:-0.02em;">Tayyor Screenshotlar Galereyasi</h2>
+          <div style="font-size:13px;color:rgba(94,234,212,0.85);">Jami ${data.total_groups} ta guruh (va Xulosa) screenshotlari tayyorlandi • Sana: ${data.date_str}</div>
         </div>
 
         <div class="contract-action-bar">

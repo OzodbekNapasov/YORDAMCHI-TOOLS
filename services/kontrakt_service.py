@@ -916,18 +916,33 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                     except Exception as img_err:
                         print(f"Xulosa send error: {img_err}")
 
-                # 3. Send Excel Document (Local file or Remote Supabase URL)
+                # 3. Send Excel Document (Local file or Remote Supabase URL) — sessiya raqamisiz toza fayl nomi
                 if excel_path:
                     try:
+                        clean_filename = "Yangilangan_Kontraktlar_Bazasi.xlsx"
+                        if isinstance(excel_path, str):
+                            raw_name = os.path.basename(excel_path.split("?")[0])
+                            # Sessiya prefiksini olib tashlash (masalan: 8c1c18cb2407_11.08.2026_GACHA_KONTRAKTLAR.xlsx -> 11.08.2026_GACHA_KONTRAKTLAR.xlsx)
+                            if "_" in raw_name:
+                                parts = raw_name.split("_", 1)
+                                if len(parts[0]) >= 8:
+                                    clean_filename = parts[1]
+                                else:
+                                    clean_filename = raw_name
+                            else:
+                                clean_filename = raw_name
+
                         if isinstance(excel_path, str) and excel_path.startswith(('http://', 'https://')):
                             resp = requests.get(excel_path, timeout=25)
                             if resp.status_code == 200:
                                 ef = io.BytesIO(resp.content)
-                                ef.name = "Yangilangan_Kontraktlar_Bazasi.xlsx"
+                                ef.name = clean_filename
                                 bot.send_document(cid_str, document=ef, caption="📄 <b>Yangilangan Kontraktlar Bazasi (.xlsx)</b>", parse_mode="HTML")
                         elif isinstance(excel_path, str) and os.path.exists(excel_path):
-                            with open(excel_path, 'rb') as ef:
-                                bot.send_document(cid_str, document=ef, caption="📄 <b>Yangilangan Kontraktlar Bazasi (.xlsx)</b>", parse_mode="HTML")
+                            with open(excel_path, 'rb') as ef_file:
+                                ef_bytes = io.BytesIO(ef_file.read())
+                                ef_bytes.name = clean_filename
+                                bot.send_document(cid_str, document=ef_bytes, caption="📄 <b>Yangilangan Kontraktlar Bazasi (.xlsx)</b>", parse_mode="HTML")
                     except Exception as doc_err:
                         print(f"Excel send error: {doc_err}")
 
