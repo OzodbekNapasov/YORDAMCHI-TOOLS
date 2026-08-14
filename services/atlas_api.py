@@ -727,7 +727,7 @@ def api_get_documents_list():
     q = request.args.get("q", "").strip()
     tpl_filter = request.args.get("template", "").strip()
     page = max(int(request.args.get("page", 1)), 1)
-    limit = min(max(int(request.args.get("limit", 20)), 5), 100)
+    limit = min(max(int(request.args.get("limit", 20)), 5), 1000)
     offset = (page - 1) * limit
 
     conn = get_db_connection()

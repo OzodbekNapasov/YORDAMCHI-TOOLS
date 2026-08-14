@@ -392,7 +392,7 @@ const ATLAS = {
   // ============================================================
   async loadOrders(container, selectedTplId = 'buyruq_akademik_tatil') {
     let currentTpl = selectedTplId;
-    let activeTab = 'create'; // 'create' | 'archive'
+    let activeTab = 'create'; // 'create' | 'by_group' | 'archive'
 
     const render = () => {
       container.innerHTML = `
@@ -400,8 +400,11 @@ const ATLAS = {
           <button class="tab-pill-btn ${activeTab === 'create' ? 'active' : ''}" id="tab-orders-create">
             ${this.icons.plus} <span>Yangi Buyruq Shakllantirish</span>
           </button>
+          <button class="tab-pill-btn ${activeTab === 'by_group' ? 'active' : ''}" id="tab-orders-by-group">
+            ${this.icons.groups} <span>Guruhlar Kesimi Bo'yicha</span>
+          </button>
           <button class="tab-pill-btn ${activeTab === 'archive' ? 'active' : ''}" id="tab-orders-archive">
-            ${this.icons.archive} <span>Buyruqlar Arxivi</span>
+            ${this.icons.archive} <span>Barcha Buyruqlar Arxivi</span>
           </button>
         </div>
 
@@ -410,6 +413,11 @@ const ATLAS = {
 
       document.getElementById('tab-orders-create').addEventListener('click', () => {
         activeTab = 'create';
+        render();
+      });
+
+      document.getElementById('tab-orders-by-group').addEventListener('click', () => {
+        activeTab = 'by_group';
         render();
       });
 
@@ -468,8 +476,10 @@ const ATLAS = {
           });
         });
 
-        // Render document generator form for this specific template (archive shown inside renderDocumentGenerator)
+        // Render document generator form for this specific template
         this.renderDocumentGenerator(document.getElementById('order-form-box'), currentTpl);
+      } else if (activeTab === 'by_group') {
+        this.renderOrdersByGroup(contentBox);
       } else {
         // Render all orders in archive
         this.renderDocumentArchive(contentBox, 'buyruq_akademik_tatil', false);
@@ -477,6 +487,310 @@ const ATLAS = {
     };
 
     render();
+  },
+
+  // ============================================================
+  // GURUHLAR KESIMI BO'YICHA BUYRUQLAR RO'YXATI VA JAMI HISOBOTI
+  // ============================================================
+  async renderOrdersByGroup(container) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Guruhlar kesimidagi buyruqlar tahlili yuklanmoqda...</div>`;
+
+    const [docsRes, groupsRes] = await Promise.all([
+      this.api('/api/documents/list?limit=1000'),
+      this.api('/api/groups/academic')
+    ]);
+
+    const allDocs = docsRes?.documents || [];
+    const studentGroups = groupsRes?.groups || [];
+
+    // Filter only orders
+    const orders = allDocs.filter(d => d.template_id && d.template_id.startsWith('buyruq_'));
+
+    // Helper to get group name from order
+    const getOrderGroup = (d) => {
+      const p = d.parsed_data || {};
+      return (p.guruhi || p.GURUHI || p.avvalgi_guruhi || p.guruh || '').trim();
+    };
+
+    // Helper to get course from order
+    const getOrderCourse = (d) => {
+      const p = d.parsed_data || {};
+      const grpName = getOrderGroup(d);
+      const matchedGrp = studentGroups.find(g => g.group_name === grpName);
+      if (matchedGrp && matchedGrp.course_level) return parseInt(matchedGrp.course_level);
+      const c = parseInt(p.kursi || p.KURSI);
+      if (!isNaN(c) && c > 0) return c;
+      if (grpName.startsWith('24-')) return 2;
+      if (grpName.startsWith('25-')) return 1;
+      return 1;
+    };
+
+    let selectedCourse = 'all'; // 'all', 1, 2, 3, 4
+    let selectedGroup = 'all';
+    let searchQuery = '';
+
+    const renderView = () => {
+      // Filter orders based on user selection
+      let filteredOrders = orders.filter(d => {
+        const grp = getOrderGroup(d);
+        const crs = getOrderCourse(d);
+        const fio = (d.recipient_fio || '').toLowerCase();
+        const bNum = (d.parsed_data?.buyruq_raqami || '').toLowerCase();
+
+        if (selectedCourse !== 'all' && crs !== parseInt(selectedCourse)) return false;
+        if (selectedGroup !== 'all' && grp !== selectedGroup) return false;
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          if (!fio.includes(q) && !bNum.includes(q) && !grp.toLowerCase().includes(q)) return false;
+        }
+        return true;
+      });
+
+      // Statistics calculations
+      const totalOrders = orders.length;
+      const tatilOrders = orders.filter(o => o.template_id === 'buyruq_akademik_tatil').length;
+      const chiqarishOrders = orders.filter(o => o.template_id === 'buyruq_safidan_chiqarish').length;
+      const tiklashOrders = orders.filter(o => o.template_id === 'buyruq_qayta_tiklash').length;
+      const otkazishOrders = orders.filter(o => o.template_id === 'buyruq_guruhdan_guruhga').length;
+      
+      const uniqueGroupsWithOrders = new Set(orders.map(o => getOrderGroup(o)).filter(Boolean)).size;
+
+      // Group filtered orders by course and then by group
+      const courseGroupsMap = {}; // { 1: { '25-19': [orders] }, 2: { '24-11': [orders] } }
+
+      // Initialize all registered student groups in their courses
+      studentGroups.forEach(sg => {
+        const crs = sg.course_level || 1;
+        if (!courseGroupsMap[crs]) courseGroupsMap[crs] = {};
+        if (!courseGroupsMap[crs][sg.group_name]) {
+          courseGroupsMap[crs][sg.group_name] = {
+            group_info: sg,
+            orders: []
+          };
+        }
+      });
+
+      // Place each filtered order into its bucket
+      filteredOrders.forEach(ord => {
+        const crs = getOrderCourse(ord);
+        const grp = getOrderGroup(ord) || 'Noma\'lum guruh';
+        if (!courseGroupsMap[crs]) courseGroupsMap[crs] = {};
+        if (!courseGroupsMap[crs][grp]) {
+          const matched = studentGroups.find(g => g.group_name === grp);
+          courseGroupsMap[crs][grp] = {
+            group_info: matched || { group_name: grp, rahbar_name: '', course_level: crs },
+            orders: []
+          };
+        }
+        courseGroupsMap[crs][grp].orders.push(ord);
+      });
+
+      container.innerHTML = `
+        <!-- KPI SUMMARY CARDS (JAMI HISOBOTI) -->
+        <div class="contract-kpi-grid" style="margin-bottom:24px;">
+          <div class="contract-kpi-card" style="border-top:3px solid #38bdf8;">
+            <span class="contract-kpi-label">Jami Buyruqlar</span>
+            <span class="contract-kpi-val highlight-cyan">${totalOrders} ta</span>
+          </div>
+          <div class="contract-kpi-card" style="border-top:3px solid #fbbf24;">
+            <span class="contract-kpi-label">Akademik Ta'til</span>
+            <span class="contract-kpi-val highlight-warn">${tatilOrders} ta</span>
+          </div>
+          <div class="contract-kpi-card" style="border-top:3px solid #f87171;">
+            <span class="contract-kpi-label">Safidan Chiqarish</span>
+            <span class="contract-kpi-val" style="color:#f87171;">${chiqarishOrders} ta</span>
+          </div>
+          <div class="contract-kpi-card" style="border-top:3px solid #34d399;">
+            <span class="contract-kpi-label">Tiklash & O'tkazish</span>
+            <span class="contract-kpi-val highlight-green">${tiklashOrders + otkazishOrders} ta</span>
+          </div>
+        </div>
+
+        <!-- FILTERS BAR -->
+        <div class="glass-card" style="margin-bottom:24px;padding:16px 20px;">
+          <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:13px;font-weight:700;color:var(--color-text-main);">Kurs filtri:</span>
+              <button class="tab-pill-btn ${selectedCourse === 'all' ? 'active' : ''}" data-course-filter="all" style="height:32px;padding:0 12px;font-size:12px;">
+                Barchasi
+              </button>
+              <button class="tab-pill-btn ${selectedCourse == '1' ? 'active' : ''}" data-course-filter="1" style="height:32px;padding:0 12px;font-size:12px;">
+                1-kurs
+              </button>
+              <button class="tab-pill-btn ${selectedCourse == '2' ? 'active' : ''}" data-course-filter="2" style="height:32px;padding:0 12px;font-size:12px;">
+                2-kurs
+              </button>
+              <button class="tab-pill-btn ${selectedCourse == '3' ? 'active' : ''}" data-course-filter="3" style="height:32px;padding:0 12px;font-size:12px;">
+                3-kurs
+              </button>
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <select id="by-group-select" class="select-control" style="width:200px;height:36px;font-size:12.5px;">
+                <option value="all">-- Barcha guruhlar --</option>
+                ${studentGroups.map(g => `<option value="${g.group_name}" ${selectedGroup === g.group_name ? 'selected' : ''}>${g.group_name} (${g.course_level || 1}-kurs)</option>`).join('')}
+              </select>
+
+              <input type="text" id="by-group-search" class="input-control" style="width:220px;height:36px;font-size:12.5px;" placeholder="F.I.O yoki buyruq №..." value="${searchQuery}">
+            </div>
+          </div>
+        </div>
+
+        <!-- ACCORDIONS / CARDS BY COURSE & GROUP -->
+        <div id="orders-grouped-container">
+          ${(() => {
+            const sortedCourses = Object.keys(courseGroupsMap).map(Number).sort((a, b) => a - b);
+            if (sortedCourses.length === 0) {
+              return `<div class="glass-card" style="text-align:center;padding:36px;color:rgba(255,255,255,0.4);">Hech qanday guruh yoki buyruq ma'lumotlari topilmadi.</div>`;
+            }
+
+            return sortedCourses.map(courseNum => {
+              if (selectedCourse !== 'all' && courseNum !== parseInt(selectedCourse)) return '';
+
+              const groupsInCourse = courseGroupsMap[courseNum] || {};
+              const groupKeys = Object.keys(groupsInCourse).sort();
+
+              // Calculate total orders in this course
+              const courseOrdersCount = Object.values(groupsInCourse).reduce((acc, g) => acc + g.orders.length, 0);
+
+              // If a specific group is selected, only show that group
+              const renderedGroupCards = groupKeys.map(grpKey => {
+                if (selectedGroup !== 'all' && grpKey !== selectedGroup) return '';
+                const gData = groupsInCourse[grpKey];
+                const gOrders = gData.orders;
+                const gInfo = gData.group_info || {};
+
+                if (gOrders.length === 0 && (selectedGroup !== 'all' || searchQuery)) return '';
+
+                return `
+                  <div class="glass-card" style="margin-bottom:18px;border-left:4px solid ${courseNum == 1 ? '#00f0ff' : courseNum == 2 ? '#00ff88' : '#fbbf24'};">
+                    <div class="card-header-flex" style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);">
+                      <div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <h3 style="font-size:16px;font-weight:700;color:#ffffff;margin:0;">Guruh: <span style="color:var(--accent-glow);">${grpKey}</span></h3>
+                          <span class="badge ${courseNum == 1 ? 'badge-cyan' : 'badge-success'}">${courseNum}-kurs</span>
+                        </div>
+                        <div style="font-size:12.5px;color:rgba(255,255,255,0.6);margin-top:4px;">
+                          ${gInfo.rahbar_name ? `Guruh rahbari: <b style="color:#38bdf8;">${gInfo.rahbar_name}</b>` : 'Guruh rahbari kiritilmagan'}
+                        </div>
+                      </div>
+                      <div>
+                        <span class="badge ${gOrders.length > 0 ? 'badge-warning' : 'badge-secondary'}" style="font-size:12px;">
+                          ${gOrders.length} ta buyruq
+                        </span>
+                      </div>
+                    </div>
+
+                    ${gOrders.length === 0 ? `
+                      <div style="padding:14px;font-size:12.5px;color:rgba(255,255,255,0.35);font-style:italic;">
+                        Ushbu guruh bo'yicha hali rasmiy buyruq shakllantirilmagan.
+                      </div>
+                    ` : `
+                      <div class="table-responsive">
+                        <table class="glass-table">
+                          <thead>
+                            <tr>
+                              <th style="width:40px;">№</th>
+                              <th>Talaba F.I.O</th>
+                              <th>Buyruq Turi</th>
+                              <th>Buyruq № va Sanasi</th>
+                              <th>Asos / Tafsilot</th>
+                              <th style="text-align:right;">Amallar</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${gOrders.map((ord, oIdx) => {
+                              const p = ord.parsed_data || {};
+                              let typeBadge = 'badge-info';
+                              if (ord.template_id === 'buyruq_akademik_tatil') typeBadge = 'badge-warning';
+                              else if (ord.template_id === 'buyruq_safidan_chiqarish') typeBadge = 'badge-danger';
+                              else if (ord.template_id === 'buyruq_qayta_tiklash') typeBadge = 'badge-success';
+                              else if (ord.template_id === 'buyruq_guruhdan_guruhga') typeBadge = 'badge-cyan';
+
+                              return `
+                                <tr>
+                                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${oIdx + 1}</td>
+                                  <td><b style="color:#ffffff;font-size:13.5px;">${ord.recipient_fio}</b></td>
+                                  <td><span class="badge ${typeBadge}">${ord.template_name}</span></td>
+                                  <td class="mono" style="font-size:12.5px;color:rgba(94,234,212,0.9);">
+                                    ${p.buyruq_raqami ? `№ ${p.buyruq_raqami}` : '-'} <br>
+                                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">${p.sanasi || p.SANA || ord.created_at}</span>
+                                  </td>
+                                  <td style="font-size:12px;color:rgba(255,255,255,0.7);">
+                                    ${p.asos_turi ? `Asos: <b>${p.asos_turi}</b><br>` : ''}
+                                    ${p.yangi_guruhi ? `Yangi guruh: <b style="color:var(--accent-glow);">${p.yangi_guruhi}</b>` : ''}
+                                    ${p.yonalishi ? `Yo'nalish: ${p.yonalishi}` : ''}
+                                  </td>
+                                  <td style="text-align:right;">
+                                    <div style="display:flex;gap:5px;justify-content:flex-end;">
+                                      <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${ord.id}', '${ord.recipient_fio}', ${ord.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                                      <a href="/api/documents/download_docx/${ord.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                                      <button class="btn-icon" onclick="ATLAS.openEditDocModal(${ord.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
+                                      <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${ord.id})" title="O'chirish">${this.icons.trash}</button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              `;
+                            }).join('')}
+                          </tbody>
+                        </table>
+                      </div>
+                    `}
+                  </div>
+                `;
+              }).join('');
+
+              if (!renderedGroupCards.trim()) return '';
+
+              return `
+                <div style="margin-bottom:32px;">
+                  <!-- COURSE BANNER -->
+                  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);">
+                    <span style="font-size:1.4rem;">🎓</span>
+                    <h2 style="font-size:17px;font-weight:800;color:#ffffff;margin:0;">
+                      ${courseNum}-BOSQICH (${courseNum}-KURS) GURUHLARI
+                    </h2>
+                    <span class="badge ${courseNum == 1 ? 'badge-cyan' : 'badge-success'}" style="margin-left:auto;">
+                      Jami ${courseOrdersCount} ta buyruq
+                    </span>
+                  </div>
+
+                  ${renderedGroupCards}
+                </div>
+              `;
+            }).join('');
+          })()}
+        </div>
+      `;
+
+      // Event listeners for Course pills
+      container.querySelectorAll('[data-course-filter]').forEach(b => {
+        b.addEventListener('click', () => {
+          selectedCourse = b.dataset.courseFilter;
+          renderView();
+        });
+      });
+
+      // Event listener for Group dropdown
+      const grpSelect = document.getElementById('by-group-select');
+      if (grpSelect) {
+        grpSelect.addEventListener('change', (e) => {
+          selectedGroup = e.target.value;
+          renderView();
+        });
+      }
+
+      // Event listener for search
+      const searchInp = document.getElementById('by-group-search');
+      if (searchInp) {
+        searchInp.addEventListener('input', (e) => {
+          searchQuery = e.target.value;
+          renderView();
+        });
+      }
+    };
+
+    renderView();
   },
 
   // ============================================================
@@ -684,19 +998,33 @@ const ATLAS = {
                   </select>
                 </div>
                 <div class="form-group" id="subgroup-guruh">
-                  <label class="form-label" id="label-guruh">Guruhi</label>
-                  <input type="text" id="doc-guruhi" class="input-control" placeholder="204" value="204" list="academic-groups-list">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <label class="form-label" id="label-guruh" style="margin-bottom:0;">Guruhi</label>
+                    <button type="button" id="btn-toggle-custom-guruh" style="background:none;border:none;color:var(--accent-glow);font-size:11.5px;cursor:pointer;text-decoration:underline;">
+                      + Maxsus guruh
+                    </button>
+                  </div>
+                  <select id="doc-guruhi-select" class="select-control" style="margin-bottom:6px;">
+                    <option value="">-- Guruhni tanlang --</option>
+                  </select>
+                  <input type="text" id="doc-guruhi" class="input-control" placeholder="Guruh nomini kiriting (masalan: 104)..." style="display:none;">
                 </div>
               </div>
             </div>
 
             <!-- Yangi guruh -->
             <div class="form-group" id="group-yangi-guruh" style="display:none;">
-              <label class="form-label">Yangi Guruh (O'tkazilayotgan / Tiklanayotgan)</label>
-              <input type="text" id="doc-yangi-guruhi" class="input-control" placeholder="205" value="205" list="academic-groups-list">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <label class="form-label" style="margin-bottom:0;">Yangi Guruh (O'tkazilayotgan / Tiklanayotgan)</label>
+                <button type="button" id="btn-toggle-custom-yangi-guruh" style="background:none;border:none;color:var(--accent-glow);font-size:11.5px;cursor:pointer;text-decoration:underline;">
+                  + Maxsus guruh
+                </button>
+              </div>
+              <select id="doc-yangi-guruhi-select" class="select-control" style="margin-bottom:6px;">
+                <option value="">-- Yangi guruhni tanlang --</option>
+              </select>
+              <input type="text" id="doc-yangi-guruhi" class="input-control" placeholder="Yangi guruh nomini kiriting..." style="display:none;">
             </div>
-
-            <datalist id="academic-groups-list"></datalist>
 
             <div class="form-group">
               <label class="form-label">Berilgan Sana</label>
@@ -725,14 +1053,91 @@ const ATLAS = {
       <div id="specific-tpl-archive-box"></div>
     `;
 
-    // Load academic groups datalist asynchronously
+    // Load academic groups into dropdowns
     this.api('/api/groups/academic').then(res => {
       const gList = res?.groups || [];
-      const dlist = document.getElementById('academic-groups-list');
-      if (dlist && gList.length > 0) {
-        dlist.innerHTML = gList.map(g => `<option value="${g.group_name}">`).join('');
-      }
+      const sel1 = document.getElementById('doc-guruhi-select');
+      const sel2 = document.getElementById('doc-yangi-guruhi-select');
+
+      const populateSelect = (sel) => {
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- Guruhni tanlang --</option>' +
+          gList.map(g => {
+            const extra = g.rahbar_name ? ` (${g.course_level || 1}-kurs | ${g.rahbar_name})` : ` (${g.course_level || 1}-kurs)`;
+            return `<option value="${g.group_name}" data-course="${g.course_level || 1}" data-rahbar="${g.rahbar_name || ''}">${g.group_name}${extra}</option>`;
+          }).join('') +
+          '<option value="__custom__">✨ Maxsus guruh (Qo\'lda yozish)...</option>';
+      };
+
+      populateSelect(sel1);
+      populateSelect(sel2);
     });
+
+    // Toggle custom group inputs
+    const inp1 = document.getElementById('doc-guruhi');
+    const sel1 = document.getElementById('doc-guruhi-select');
+    const btnCustom1 = document.getElementById('btn-toggle-custom-guruh');
+    const courseSel = document.getElementById('doc-kursi');
+
+    if (sel1 && inp1) {
+      sel1.addEventListener('change', () => {
+        if (sel1.value === '__custom__') {
+          inp1.style.display = 'block';
+          inp1.focus();
+        } else {
+          inp1.style.display = 'none';
+          inp1.value = sel1.value;
+          const opt = sel1.options[sel1.selectedIndex];
+          if (opt && opt.dataset.course && courseSel) {
+            courseSel.value = opt.dataset.course;
+          }
+        }
+      });
+    }
+
+    if (btnCustom1 && inp1 && sel1) {
+      btnCustom1.addEventListener('click', () => {
+        if (inp1.style.display === 'none') {
+          inp1.style.display = 'block';
+          sel1.value = '__custom__';
+          inp1.focus();
+        } else {
+          inp1.style.display = 'none';
+          sel1.value = '';
+          inp1.value = '';
+        }
+      });
+    }
+
+    const inp2 = document.getElementById('doc-yangi-guruhi');
+    const sel2 = document.getElementById('doc-yangi-guruhi-select');
+    const btnCustom2 = document.getElementById('btn-toggle-custom-yangi-guruh');
+
+    if (sel2 && inp2) {
+      sel2.addEventListener('change', () => {
+        if (sel2.value === '__custom__') {
+          inp2.style.display = 'block';
+          inp2.focus();
+        } else {
+          inp2.style.display = 'none';
+          inp2.value = sel2.value;
+        }
+      });
+    }
+
+    if (btnCustom2 && inp2 && sel2) {
+      btnCustom2.addEventListener('click', () => {
+        if (inp2.style.display === 'none') {
+          inp2.style.display = 'block';
+          sel2.value = '__custom__';
+          inp2.focus();
+        } else {
+          inp2.style.display = 'none';
+          sel2.value = '';
+          inp2.value = '';
+        }
+      });
+    }
 
     const tplSelect = document.getElementById('doc-tpl-select');
     const groupAsos = document.getElementById('group-asos-turi');
@@ -817,6 +1222,25 @@ const ATLAS = {
       const fio = document.getElementById('doc-fio').value.trim();
       const sana = document.getElementById('doc-sana').value.trim();
 
+      const getGuruhVal = () => {
+        const inp = document.getElementById('doc-guruhi');
+        const sel = document.getElementById('doc-guruhi-select');
+        if (inp && inp.value.trim()) return inp.value.trim();
+        if (sel && sel.value && sel.value !== '__custom__') return sel.value.trim();
+        return (inp?.value || sel?.value || '').trim();
+      };
+
+      const getYangiGuruhVal = () => {
+        const inp = document.getElementById('doc-yangi-guruhi');
+        const sel = document.getElementById('doc-yangi-guruhi-select');
+        if (inp && inp.value.trim()) return inp.value.trim();
+        if (sel && sel.value && sel.value !== '__custom__') return sel.value.trim();
+        return (inp?.value || sel?.value || '').trim();
+      };
+
+      const finalGuruh = getGuruhVal();
+      const finalYangiGuruh = getYangiGuruhVal();
+
       const answers = {
         FIO: fio,
         IFO: fio,
@@ -831,28 +1255,28 @@ const ATLAS = {
         answers['YONALISH'] = document.getElementById('doc-yonalish').value;
         answers['OQUV_YILI'] = document.getElementById('doc-oquv-yili').value;
         answers['KURSI'] = document.getElementById('doc-kursi').value;
-        answers['GURUHI'] = document.getElementById('doc-guruhi').value;
+        answers['GURUHI'] = finalGuruh;
       } else if (tpl_id === 'buyruq_akademik_tatil') {
         answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
         answers['kursi'] = document.getElementById('doc-kursi').value;
-        answers['guruhi'] = document.getElementById('doc-guruhi').value;
+        answers['guruhi'] = finalGuruh;
       } else if (tpl_id === 'buyruq_qayta_tiklash') {
         answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
         answers['avvalgi_buyruq_raqami'] = document.getElementById('doc-avv-raqam').value;
         answers['avvalgi_buyruq_sanasi'] = document.getElementById('doc-avv-sana').value;
         answers['kursi'] = document.getElementById('doc-kursi').value;
-        answers['avvalgi_guruhi'] = document.getElementById('doc-guruhi').value;
-        answers['yangi_guruhi'] = document.getElementById('doc-yangi-guruhi').value;
+        answers['avvalgi_guruhi'] = finalGuruh;
+        answers['yangi_guruhi'] = finalYangiGuruh;
       } else if (tpl_id === 'buyruq_guruhdan_guruhga') {
         answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
         answers['yonalishi'] = document.getElementById('doc-yonalish').value;
-        answers['avvalgi_guruhi'] = document.getElementById('doc-guruhi').value;
-        answers['yangi_guruhi'] = document.getElementById('doc-yangi-guruhi').value;
+        answers['avvalgi_guruhi'] = finalGuruh;
+        answers['yangi_guruhi'] = finalYangiGuruh;
       } else if (tpl_id === 'buyruq_safidan_chiqarish') {
         answers['asos_turi'] = document.getElementById('doc-asos-turi').value;
         answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
         answers['kursi'] = document.getElementById('doc-kursi').value;
-        answers['avvalgi_guruhi'] = document.getElementById('doc-guruhi').value;
+        answers['avvalgi_guruhi'] = finalGuruh;
       }
 
       const res = await this.api('/api/documents/generate', 'POST', { template_id: tpl_id, answers });
