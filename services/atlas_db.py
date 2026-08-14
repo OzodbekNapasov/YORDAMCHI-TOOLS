@@ -256,9 +256,30 @@ def init_db():
     conn.close()
 
 
+def _sync_supabase_async(endpoint: str, payload: dict):
+    """Supabase Cloud bazasiga fonda avtomatik sinxronlash"""
+    import threading
+    def _worker():
+        try:
+            import requests
+            supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+            supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+            if supa_url and supa_key:
+                headers = {
+                    "apikey": supa_key,
+                    "Authorization": f"Bearer {supa_key}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                }
+                requests.post(f"{supa_url}/rest/v1/{endpoint}", headers=headers, json=payload, timeout=5)
+        except Exception:
+            pass
+    threading.Thread(target=_worker, daemon=True).start()
+
+
 # Yordamchi DB Funksiyalari
 def log_audit(actor: str, module: str, action: str, status: str = "success", details: dict = None, ip: str = None):
-    """Audit log qayd qilish"""
+    """Audit log qayd qilish (Mahalliy SQLite + Supabase Cloud)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -268,12 +289,22 @@ def log_audit(actor: str, module: str, action: str, status: str = "success", det
         """, (actor, module, action, status, json.dumps(details or {}), ip or ""))
         conn.commit()
         conn.close()
+
+        # Supabase Cloud ga fonda yuborish
+        _sync_supabase_async("atlas_audit_logs", {
+            "actor": actor,
+            "module": module,
+            "action": action,
+            "status": status,
+            "details_json": details or {},
+            "ip_address": ip or ""
+        })
     except Exception as e:
         print(f"Audit log error: {e}")
 
 
 def track_user_activity(telegram_id: int, username: str = "", first_name: str = "", last_name: str = ""):
-    """Foydalanuvchi faolligini qayd qilish va yangilash"""
+    """Foydalanuvchi faolligini qayd qilish va yangilash (Mahalliy SQLite + Supabase Cloud)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -294,6 +325,16 @@ def track_user_activity(telegram_id: int, username: str = "", first_name: str = 
         ))
         conn.commit()
         conn.close()
+
+        # Supabase Cloud ga fonda yuborish
+        _sync_supabase_async("atlas_users", {
+            "telegram_id": telegram_id,
+            "username": username or "",
+            "first_name": first_name or "",
+            "last_name": last_name or "",
+            "role": "user",
+            "status": "active"
+        })
     except Exception as e:
         print(f"Track user error: {e}")
 
@@ -324,7 +365,7 @@ def track_group_activity(telegram_id: int, title: str, username: str = "", group
 
 
 def log_generated_document(template_id: str, template_name: str, recipient_fio: str, data: dict, file_type: str = "png", file_path: str = "", created_by: str = "bot"):
-    """Yaratilgan hujjatni arxivga qo'shish"""
+    """Yaratilgan hujjatni arxivga qo'shish (Mahalliy SQLite + Supabase Cloud)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -334,6 +375,17 @@ def log_generated_document(template_id: str, template_name: str, recipient_fio: 
         """, (template_id, template_name, recipient_fio, json.dumps(data), file_type, file_path, created_by))
         conn.commit()
         conn.close()
+
+        # Supabase Cloud ga fonda yuborish
+        _sync_supabase_async("atlas_generated_docs", {
+            "template_id": template_id,
+            "template_name": template_name,
+            "recipient_fio": recipient_fio,
+            "data_json": data,
+            "file_type": file_type,
+            "storage_path": file_path,
+            "created_by": created_by
+        })
     except Exception as e:
         print(f"Log doc error: {e}")
 
