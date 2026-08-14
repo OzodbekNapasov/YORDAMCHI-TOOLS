@@ -88,15 +88,17 @@ def render_docx_template_to_image(
         left_x = 355
         right_x = 2300
         content_w = right_x - left_x
+        tab_indent_x = 503  # 1 abzas / Tab surilishi (1.25 cm)
 
-        # 3. Kirish gapi (Qatoriga to'lib turishi - Full Justified)
+        # 3. Kirish gapi (Abzas / Tab bilan boshlanib, o'ng tomongacha to'lib turishi)
         draw.rectangle([(0, 1350), (img.width, 1490)], fill=(255, 255, 255))
         intro_words = ["Ushbu", "ma’lumotnoma", "shuni", "tasdiqlaydiki,", "haqiqatdan", "ham"]
+        intro_w = right_x - tab_indent_x
         words_w = sum(f_reg.getbbox(w)[2] - f_reg.getbbox(w)[0] for w in intro_words)
         gaps = len(intro_words) - 1
-        gap_px = (content_w - words_w) / gaps
+        gap_px = (intro_w - words_w) / gaps
 
-        cur_x = float(left_x)
+        cur_x = float(tab_indent_x)
         intro_y = 1406
         for w in intro_words:
             draw.text((int(round(cur_x)), intro_y), w, fill=(0, 0, 0), font=f_reg)
