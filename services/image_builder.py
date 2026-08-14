@@ -157,17 +157,16 @@ def render_docx_template_to_image(
         curr_y += 30
 
         # 5. Shahar va Sana
-        f_meta_bold = _get_font(28, bold=True)
         f_meta_reg = _get_font(28, bold=False)
-        draw.text((margin_x, curr_y), "Qarshi shahri", fill=(0, 0, 0), font=f_meta_bold)
+        draw.text((margin_x, curr_y), "Qarshi shahri", fill=(0, 0, 0), font=f_meta_reg)
 
-        sana_val = str(data.get("SANA", "13.08.2026")).strip()
+        sana_val = str(data.get("SANA", "14.08.2026")).strip()
         if not (sana_val.endswith("y.") or sana_val.endswith("y")):
             sana_val += " y."
         bbox = f_meta_reg.getbbox(sana_val)
         tw = bbox[2] - bbox[0]
         draw.text((margin_x + content_w - tw, curr_y), sana_val, fill=(0, 0, 0), font=f_meta_reg)
-        curr_y += 180
+        curr_y += 240
 
         # 6. Sarlavha: MA'LUMOTNOMA (Bold, 38pt)
         f_title = _get_font(38, bold=True)
@@ -175,49 +174,66 @@ def render_docx_template_to_image(
         bbox = f_title.getbbox(title_str)
         tw = bbox[2] - bbox[0]
         draw.text((margin_x + (content_w - tw) // 2, curr_y), title_str, fill=(0, 0, 0), font=f_title)
-        curr_y += 130
+        curr_y += 120
 
         # 7. Kirish jumlasi
         f_body = _get_font(28, bold=False)
+        f_body_b = _get_font(28, bold=True)
         intro_str = "Ushbu     ma’lumotnoma     shuni     tasdiqlaydiki,     haqiqatdan     ham"
         bbox = f_body.getbbox(intro_str)
         tw = bbox[2] - bbox[0]
         draw.text((margin_x + (content_w - tw) // 2, curr_y), intro_str, fill=(0, 0, 0), font=f_body)
         curr_y += 85
 
-        # 8. Asosiy Matn (Word-wrapping)
+        # 8. Asosiy Matn (FIO, OQUV_YILI, YONALISH qalin va Word-wrapping bilan)
         fio = str(data.get("FIO", "")).strip()
         oquv_yili = str(data.get("OQUV_YILI", "2026/2027")).strip()
         yonalish = str(data.get("YONALISH", "")).strip()
         boshlash_yili = oquv_yili.split("/")[0] if "/" in oquv_yili else "2026"
 
-        full_text = f"{fio} {oquv_yili}-o‘quv yilida {yonalish} yo‘nalishiga shartnoma asosida o‘qishga qabul qilindi. Talaba o‘qishni {boshlash_yili}-yil sentyabr oyidan boshlaydi."
+        tokens = []
+        for w in fio.split():
+            tokens.append((w, True))
+        tokens.append((f"{oquv_yili}-o‘quv", True))
+        tokens.append(("yilida", False))
+        for w in yonalish.split():
+            tokens.append((w, True))
+        tokens.append(("yo‘nalishiga", False))
+        tokens.append(("shartnoma", False))
 
-        words = full_text.split()
+        rest_phrase = f"asosida o‘qishga qabul qilindi. Talaba o‘qishni {boshlash_yili}-yil sentyabr oyidan boshlaydi."
+        for w in rest_phrase.split():
+            tokens.append((w, False))
+
         lines = []
         current_line = []
         current_w = 0
         space_w = f_body.getbbox(" ")[2] - f_body.getbbox(" ")[0]
 
-        for word in words:
-            bb = f_body.getbbox(word)
+        for word, is_bold in tokens:
+            fnt = f_body_b if is_bold else f_body
+            bb = fnt.getbbox(word)
             w_px = bb[2] - bb[0]
             test_w = current_w + (space_w if current_line else 0) + w_px
             if test_w > content_w and current_line:
-                lines.append(" ".join(current_line))
-                current_line = [word]
+                lines.append(current_line)
+                current_line = [(word, is_bold, w_px)]
                 current_w = w_px
             else:
-                current_line.append(word)
+                current_line.append((word, is_bold, w_px))
                 current_w = test_w
 
         if current_line:
-            lines.append(" ".join(current_line))
+            lines.append(current_line)
 
         for line in lines:
-            bb = f_body.getbbox(line)
-            tw = bb[2] - bb[0]
-            draw.text((margin_x + (content_w - tw) // 2, curr_y), line, fill=(0, 0, 0), font=f_body)
+            tot_line_w = sum(w for _, _, w in line) + (len(line) - 1) * space_w
+            start_x = margin_x + (content_w - tot_line_w) // 2
+            line_x = start_x
+            for word, is_bold, w_px in line:
+                fnt = f_body_b if is_bold else f_body
+                draw.text((line_x, curr_y), word, fill=(0, 0, 0), font=fnt)
+                line_x += w_px + space_w
             curr_y += 60
 
         curr_y += 50
