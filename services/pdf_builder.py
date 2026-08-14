@@ -4,10 +4,6 @@
 #  Pechat, imzo, qalin (bold) va qiya (italic) matnlar bilan!
 # ============================================================
 
-import os
-import io
-import pymupdf  # PyMuPDF image renderer
-
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
@@ -17,7 +13,10 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-from config import LOGO_FILE, PECHAT_FILE, IMZO_FILE, FONT_FILE
+try:
+    from docbot_config import LOGO_FILE, PECHAT_FILE, IMZO_FILE, FONT_FILE
+except ImportError:
+    from config import LOGO_FILE, PECHAT_FILE, IMZO_FILE, FONT_FILE
 
 _FONT_REGISTERED = False
 
@@ -199,11 +198,12 @@ def build_document_image(
 
     # ── 8. PDF Sahifasini 300 DPI Sifatli PNG RASMGA aylantirish ──────────────────
     pdf_bytes = buf.getvalue()
-    pdf_doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
-    page = pdf_doc[0]
-
-    # 300 DPI ravshanlik (tushunarli va tiniq rasm)
-    pix = page.get_pixmap(dpi=300)
-    pix.save(output_img_path)
-
-    pdf_doc.close()
+    try:
+        import fitz as pymupdf
+        pdf_doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+        page = pdf_doc[0]
+        pix = page.get_pixmap(dpi=300)
+        pix.save(output_img_path)
+        pdf_doc.close()
+    except Exception as ie:
+        print(f"pymupdf rendering failed: {ie}")

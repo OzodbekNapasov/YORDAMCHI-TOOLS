@@ -14,7 +14,10 @@ try:
 except Exception:
     REDIS_AVAILABLE = False
 
-from config import REDIS_URL
+try:
+    from docbot_config import REDIS_URL
+except ImportError:
+    from config import REDIS_URL
 
 _local_store: dict = {}
 
