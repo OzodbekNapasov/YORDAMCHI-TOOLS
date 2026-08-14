@@ -8,64 +8,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import fitz  # PyMuPDF
 from PIL import Image
-
-
-# ── DOCX → PDF ───────────────────────────────────────────────────────────────
-
-def docx_to_pdf(docx_path: str, pdf_path: str) -> None:
-    """
-    LibreOffice headless yordamida .docx ni .pdf ga o'giradi.
-    LibreOffice o'rnatilgan bo'lishi kerak:
-      Windows: https://www.libreoffice.org/download/download/
-      Linux  : sudo apt install libreoffice
-    """
-    out_dir = str(Path(pdf_path).parent)
-
-    # LibreOffice yo'llari (Windows va Linux)
-    lo_paths = [
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-        "soffice",        # Linux / PATH da bo'lsa
-        "libreoffice",
-    ]
-
-    soffice = None
-    for path in lo_paths:
-        if os.path.exists(path) or _command_exists(path):
-            soffice = path
-            break
-
-    if soffice is None:
-        raise RuntimeError(
-            "LibreOffice topilmadi!\n"
-            "O'rnating: https://www.libreoffice.org/download/download/\n"
-            "Yoki Windows da: winget install LibreOffice.LibreOffice"
-        )
-
-    result = subprocess.run(
-        [soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, docx_path],
-        capture_output=True, text=True, timeout=60
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"LibreOffice xatosi:\n{result.stderr}")
-
-    # LibreOffice chiqargan fayl nomini aniqlaymiz
-    generated = Path(out_dir) / (Path(docx_path).stem + ".pdf")
-    if str(generated) != pdf_path:
-        generated.rename(pdf_path)
-
-
-def _command_exists(cmd: str) -> bool:
-    try:
-        subprocess.run([cmd, "--version"], capture_output=True, timeout=5)
-        return True
-    except Exception:
-        return False
-
-
-# ── Pechat va imzoni PDF ustiga qo'yish ──────────────────────────────────────
 
 def add_stamp_to_pdf(
     pdf_path: str,
@@ -75,13 +18,12 @@ def add_stamp_to_pdf(
     stamp_config: dict,
     page_index: int = -1,        # -1 = oxirgi sahifa
 ) -> None:
-    """
-    stamp_config misoli:
-      {
-        "pechat": {"x_mm": 30, "y_mm": 240, "w_mm": 40, "h_mm": 40},
-        "imzo":   {"x_mm": 100, "y_mm": 248, "w_mm": 50, "h_mm": 15},
-      }
-    """
+    try:
+        import fitz  # PyMuPDF
+    except Exception as ie:
+        print(f"PyMuPDF fitz not available: {ie}")
+        return
+
     doc = fitz.open(pdf_path)
     page_idx = page_index if page_index >= 0 else len(doc) - 1
     page = doc[page_idx]

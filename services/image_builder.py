@@ -7,7 +7,6 @@
 
 import os
 import requests
-import pypdfium2 as pdfium
 from services.docx_filler import fill_template
 try:
     from docbot_config import find_template_file
@@ -28,6 +27,11 @@ def render_docx_template_to_image(
     2. Gotenberg LibreOffice API orqali uni PDF ga o'tkazadi.
     3. pypdfium2 yordamida 300 DPI o'ta tiniq PNG rasmga aylantiradi.
     """
+    try:
+        import pypdfium2 as pdfium
+    except Exception as ie:
+        print(f"pdfium not available: {ie}")
+        return False
     template_path = find_template_file(template_filename)
     if not os.path.exists(template_path):
         return False

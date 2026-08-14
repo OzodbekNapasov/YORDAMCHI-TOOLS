@@ -6,5 +6,4 @@ Flask
 gunicorn
 Pillow
 python-docx
-requests
-pypdfium2
+requests
