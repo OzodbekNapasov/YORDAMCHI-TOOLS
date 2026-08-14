@@ -242,8 +242,11 @@ def process_docbot_generation(chat_id, tpl, answers):
                 bot.send_photo(
                     chat_id,
                     photo=pf,
-                    caption=f"✅ <b>{escape_html_text(fio)}</b> uchun rasmiy ma'lumotnoma muvaffaqiyatli tayyorlandi!\n\n"
-                            f"🎓 <i>Asl shablon formati va muhr/imzolar 100% saqlangan holda rasm ko'rinishida yuborildi.</i>",
+                    caption=f"✅ <b>{escape_html_text(fio)}</b> uchun <b>1-kursga qabul ma'lumotnomasi</b> tayyor!\n\n"
+                            f"📚 <b>Yo'nalish:</b> {escape_html_text(answers.get('YONALISH', ''))}\n"
+                            f"📅 <b>O'quv yili:</b> {escape_html_text(answers.get('OQUV_YILI', ''))}\n"
+                            f"📆 <b>Sana:</b> {escape_html_text(answers.get('SANA', ''))}\n\n"
+                            f"<i>Asl shablon formati va rasmiy muhr/imzolar bilan tasdiqlangan.</i>",
                     parse_mode="HTML",
                     reply_markup=get_docs_folder_keyboard()
                 )

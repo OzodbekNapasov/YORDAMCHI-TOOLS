@@ -54,7 +54,7 @@ today_str = datetime.now().strftime("%d.%m.%Y")
 TEMPLATES = [
     {
         "id": "qabul_1_kurs",
-        "name": "🎓 1-kursga qabul ma'lumotnomasi",
+        "name": "🎓 1-kursga qabul",
         "file": TEMPLATE_FILE,
         "filename": "malumotnoma.docx",
         "steps": [
@@ -68,8 +68,9 @@ TEMPLATES = [
                 "question": "📚 Yo'nalishni tanlang yoki kiriting:",
                 "buttons": [
                     ["Hamshiralik ishi"],
-                    ["Feldsherlik ishi"],
-                    ["Farmatsiya ishi"]
+                    ["Davolash ishi (Feldsherlik)"],
+                    ["Farmatsiya"],
+                    ["Stomatologiya ishi"]
                 ]
             },
             {
