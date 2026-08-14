@@ -240,6 +240,27 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_contract_sessions_created ON contract_sessions(created_at DESC)")
 
+    # Amaliyot Yo'nalishlari Tablari Jadvali
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS amaliyot_tabs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tab_name TEXT NOT NULL,
+        direction TEXT,
+        duration_years TEXT,
+        semester TEXT,
+        template_file TEXT,
+        order_num INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amaliyot_tabs_order ON amaliyot_tabs(order_num ASC)")
+
+    # Boshlang'ich amaliyot tabi
+    cursor.execute("""
+    INSERT OR IGNORE INTO amaliyot_tabs (id, tab_name, direction, duration_years, semester, template_file, order_num)
+    VALUES (1, 'Hamshiralik ishi - 3 yillik - 2-semestr', 'Hamshiralik ishi', '3 yillik', '2-semestr', 'Amaliyot/Hamshiralik ishi - 3 - yillik - 2-semestr/3 yillik 2-semestr.docx', 1)
+    """)
+
     # Boshlang'ich tizim sozlamalari
     default_settings = [
         ("bot_name", "Qarshi Tibbiyot Texnikumi Bot", "general", "Botning rasmiy nomi"),
@@ -950,6 +971,168 @@ def delete_contract_session(session_id: str):
     except Exception as e:
         print(f"Delete contract session error: {e}")
         return False
+
+
+# ============================================================
+# AMALIYOT TABLARI VA BUYRUQLARI BOSHQARUVI
+# ============================================================
+
+def get_amaliyot_tabs():
+    """Barcha amaliyot tablarini tartiblangan holda olish (SQLite + Supabase Cloud fallback)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM amaliyot_tabs ORDER BY order_num ASC, id ASC")
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        if rows:
+            return rows
+    except Exception as e:
+        print(f"Get amaliyot tabs sqlite error: {e}")
+
+    try:
+        import requests
+        supa_url, supa_key = _get_supabase_credentials()
+        if supa_url and supa_key:
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}"
+            }
+            resp = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_tabs?select=*&order=order_num.asc,id.asc", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                cloud_tabs = resp.json()
+                if cloud_tabs:
+                    try:
+                        conn = get_db_connection()
+                        c = conn.cursor()
+                        for t in cloud_tabs:
+                            c.execute("""
+                            INSERT OR REPLACE INTO amaliyot_tabs (id, tab_name, direction, duration_years, semester, template_file, order_num)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                t.get("id"),
+                                t.get("tab_name"),
+                                t.get("direction", ""),
+                                t.get("duration_years", ""),
+                                t.get("semester", ""),
+                                t.get("template_file", ""),
+                                t.get("order_num", 0)
+                            ))
+                        conn.commit()
+                        conn.close()
+                    except Exception:
+                        pass
+                    return cloud_tabs
+    except Exception as se:
+        print(f"Supabase fetch amaliyot tabs error: {se}")
+
+    # Standart boshlang'ich tab
+    return [{
+        "id": 1,
+        "tab_name": "Hamshiralik ishi - 3 yillik - 2-semestr",
+        "direction": "Hamshiralik ishi",
+        "duration_years": "3 yillik",
+        "semester": "2-semestr",
+        "template_file": "Amaliyot/Hamshiralik ishi - 3 - yillik - 2-semestr/3 yillik 2-semestr.docx",
+        "order_num": 1
+    }]
+
+
+def create_amaliyot_tab(tab_name: str, direction: str = "", duration_years: str = "", semester: str = "", template_file: str = "", order_num: int = 0):
+    """Yangi amaliyot tabini qo'shish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        if order_num == 0:
+            cursor.execute("SELECT COALESCE(MAX(order_num), 0) + 1 FROM amaliyot_tabs")
+            order_num = cursor.fetchone()[0]
+
+        cursor.execute("""
+        INSERT INTO amaliyot_tabs (tab_name, direction, duration_years, semester, template_file, order_num)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (tab_name, direction, duration_years, semester, template_file, order_num))
+        new_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud-ga saqlash
+        _sync_supabase_async("atlas_amaliyot_tabs", {
+            "id": new_id,
+            "tab_name": tab_name,
+            "direction": direction,
+            "duration_years": duration_years,
+            "semester": semester,
+            "template_file": template_file,
+            "order_num": order_num
+        }, method="POST", params="?on_conflict=id")
+
+        return {"success": True, "id": new_id, "tab_name": tab_name}
+    except Exception as e:
+        print(f"Create amaliyot tab error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def update_amaliyot_tab(tab_id: int, tab_name: str, direction: str = "", duration_years: str = "", semester: str = "", template_file: str = ""):
+    """Amaliyot tabini tahrirlash"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE amaliyot_tabs
+        SET tab_name = ?, direction = ?, duration_years = ?, semester = ?, template_file = CASE WHEN ? != '' THEN ? ELSE template_file END
+        WHERE id = ?
+        """, (tab_name, direction, duration_years, semester, template_file, template_file, tab_id))
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud-da yangilash
+        _sync_supabase_async("atlas_amaliyot_tabs", {
+            "tab_name": tab_name,
+            "direction": direction,
+            "duration_years": duration_years,
+            "semester": semester
+        }, method="PATCH", params=f"?id=eq.{tab_id}")
+
+        return {"success": True}
+    except Exception as e:
+        print(f"Update amaliyot tab error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def delete_amaliyot_tab(tab_id: int):
+    """Amaliyot tabini o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM amaliyot_tabs WHERE id = ?", (tab_id,))
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud-dan o'chirish
+        _sync_supabase_async("atlas_amaliyot_tabs", {}, method="DELETE", params=f"?id=eq.{tab_id}")
+        return {"success": True}
+    except Exception as e:
+        print(f"Delete amaliyot tab error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def reorder_amaliyot_tabs(tab_orders: list):
+    """Amaliyot tablari tartibini yangilash (Drag & Drop / O'rin almashtirish)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        for item in tab_orders:
+            t_id = item.get("id")
+            o_num = item.get("order_num")
+            if t_id is not None and o_num is not None:
+                cursor.execute("UPDATE amaliyot_tabs SET order_num = ? WHERE id = ?", (o_num, t_id))
+                _sync_supabase_async("atlas_amaliyot_tabs", {"order_num": o_num}, method="PATCH", params=f"?id=eq.{t_id}")
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        print(f"Reorder amaliyot tabs error: {e}")
+        return {"success": False, "error": str(e)}
 
 
 if __name__ == "__main__":

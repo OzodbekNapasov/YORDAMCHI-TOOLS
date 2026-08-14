@@ -746,12 +746,22 @@ def _ensure_doc_files(doc):
             else:
                 filename = "Talabalar safidan chiqarish - 1-asos.docx"
 
-        try:
-            tpl_file_path = find_template_file(filename)
-            fill_template(tpl_file_path, docx_path, data_dict)
-            render_docx_template_to_image(filename, fpath, data_dict)
-        except Exception as e:
-            print(f"Rebuild doc files error: {e}")
+        if tpl_id.startswith("amaliyot") or tpl_id == "amaliyot_buyruq":
+            try:
+                from services.amaliyot_service import fill_amaliyot_template
+                tpl_file_path = os.path.join(TEMPLATES_DIR, "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
+                if not os.path.exists(tpl_file_path):
+                    tpl_file_path = find_template_file("3 yillik 2-semestr.docx")
+                fill_amaliyot_template(tpl_file_path, data_dict, docx_path)
+            except Exception as ae:
+                print(f"Rebuild amaliyot doc error: {ae}")
+        else:
+            try:
+                tpl_file_path = find_template_file(filename)
+                fill_template(tpl_file_path, docx_path, data_dict)
+                render_docx_template_to_image(filename, fpath, data_dict)
+            except Exception as e:
+                print(f"Rebuild doc files error: {e}")
 
     return fpath, docx_path
 
@@ -1053,6 +1063,147 @@ def api_update_academic_group(group_id):
                   request.remote_addr)
         return jsonify({"success": True, "message": f"Guruh '{group_name}' muvaffaqiyatli yangilandi va Supabase-ga saqlandi."})
     return jsonify({"success": False, "error": "Guruhni yangilashda xatolik yuz berdi."}), 500
+
+
+# ============================================================
+# 8.3 AMALIYOT BUYRUQLARI VA TABLARI (PRACTICE ORDERS) ENDPOINTS
+# ============================================================
+
+@atlas_api.route("/amaliyot/districts", methods=["GET"])
+@admin_required
+def api_amaliyot_districts():
+    from services.amaliyot_service import DISTRICT_DOCTORS
+    return jsonify({
+        "success": True,
+        "districts": list(DISTRICT_DOCTORS.keys()),
+        "district_doctors": DISTRICT_DOCTORS
+    })
+
+
+@atlas_api.route("/amaliyot/tabs", methods=["GET"])
+@admin_required
+def api_get_amaliyot_tabs():
+    from services.atlas_db import get_amaliyot_tabs
+    tabs = get_amaliyot_tabs()
+    return jsonify({"success": True, "tabs": tabs})
+
+
+@atlas_api.route("/amaliyot/tabs", methods=["POST"])
+@admin_required
+def api_create_amaliyot_tab():
+    data = request.get_json() or {}
+    tab_name = data.get("tab_name", "").strip()
+    if not tab_name:
+        return jsonify({"success": False, "error": "Tab nomi kiritilmadi."}), 400
+
+    from services.atlas_db import create_amaliyot_tab
+    res = create_amaliyot_tab(
+        tab_name=tab_name,
+        direction=data.get("direction", ""),
+        duration_years=data.get("duration_years", ""),
+        semester=data.get("semester", ""),
+        template_file=data.get("template_file", "")
+    )
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/tabs/<int:tab_id>", methods=["PUT"])
+@admin_required
+def api_update_amaliyot_tab(tab_id):
+    data = request.get_json() or {}
+    tab_name = data.get("tab_name", "").strip()
+    if not tab_name:
+        return jsonify({"success": False, "error": "Tab nomi kiritilmadi."}), 400
+
+    from services.atlas_db import update_amaliyot_tab
+    res = update_amaliyot_tab(
+        tab_id=tab_id,
+        tab_name=tab_name,
+        direction=data.get("direction", ""),
+        duration_years=data.get("duration_years", ""),
+        semester=data.get("semester", ""),
+        template_file=data.get("template_file", "")
+    )
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/tabs/<int:tab_id>", methods=["DELETE"])
+@admin_required
+def api_delete_amaliyot_tab(tab_id):
+    from services.atlas_db import delete_amaliyot_tab
+    res = delete_amaliyot_tab(tab_id)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/tabs/reorder", methods=["POST"])
+@admin_required
+def api_reorder_amaliyot_tabs():
+    data = request.get_json() or {}
+    orders = data.get("orders", [])
+    from services.atlas_db import reorder_amaliyot_tabs
+    res = reorder_amaliyot_tabs(orders)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/generate", methods=["POST"])
+@admin_required
+def api_generate_amaliyot_doc():
+    data = request.get_json() or {}
+    tab_id = data.get("tab_id", 1)
+    tab_name = data.get("tab_name", "Hamshiralik ishi - 3 yillik - 2-semestr")
+    
+    tumani = data.get("tumani", "").strip() or "Shahrisabz shahar"
+    from services.amaliyot_service import DISTRICT_DOCTORS, fill_amaliyot_template
+    shu_tuman_shifokori = data.get("shu_tuman_shifokori", "").strip() or DISTRICT_DOCTORS.get(tumani, "Bosh shifokor")
+    
+    buyruq_raqami = data.get("buyruq_raqami", "").strip() or "____"
+    buyruq_sanasi = data.get("buyruq_sanasi", "").strip() or datetime.now().strftime("%d.%m.%Y")
+    
+    students = data.get("students", [])
+    guruhlar = data.get("guruhlar", [])
+    
+    # Recipient FIO
+    fio = students[0].get("fio") if students else f"Amaliyot buyrug'i ({tumani})"
+    
+    # Template path
+    tpl_path = os.path.join(TEMPLATES_DIR, "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
+    if not os.path.exists(tpl_path):
+        tpl_path = find_template_file("3 yillik 2-semestr.docx")
+
+    # Temp paths
+    session_uid = uuid.uuid4().hex[:8]
+    temp_docx = os.path.join(tempfile.gettempdir(), f"amaliyot_{session_uid}.docx")
+    
+    fill_amaliyot_template(tpl_path, data, temp_docx)
+    
+    # Save permanent docx
+    permanent_docx_path = os.path.join(SAVED_DOCS_DIR, f"amaliyot_{session_uid}.docx")
+    import shutil
+    shutil.copy2(temp_docx, permanent_docx_path)
+
+    # Save to cloud DB
+    from services.atlas_db import save_generated_document_to_cloud
+    tpl_display_name = f"Amaliyot: {tab_name} ({tumani})"
+    doc_id = save_generated_document_to_cloud(
+        template_id=f"amaliyot_{tab_id}",
+        template_name=tpl_display_name,
+        recipient_fio=fio,
+        answers=data,
+        file_path=permanent_docx_path
+    )
+
+    admin = get_current_admin()
+    log_audit(admin["username"], "amaliyot", "generate_amaliyot_doc", "success",
+              {"doc_id": doc_id, "tab_name": tab_name, "tumani": tumani, "students_count": len(students)},
+              request.remote_addr)
+
+    return jsonify({
+        "success": True,
+        "message": f"Amaliyot buyrug'i ({len(students)} ta talaba bilan) muvaffaqiyatli shakllantirildi!",
+        "doc_id": doc_id,
+        "download_docx_url": f"/api/documents/download_docx/{doc_id}",
+        "view_url": f"/api/documents/download_docx/{doc_id}"
+    })
 
 
 

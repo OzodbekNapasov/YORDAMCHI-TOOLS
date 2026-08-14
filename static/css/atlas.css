@@ -409,12 +409,13 @@ body {
   font-size: 13.5px;
   outline: none;
   resize: vertical;
-  min-height: 90px;
-  transition: var(--transition);
+  outline: none;
+  transition: border-color 0.15s;
 }
-.textarea-control:focus {
+
+.table-input-cell:focus {
   border-color: var(--accent-glow);
-  box-shadow: 0 0 14px rgba(46, 229, 157, 0.2);
+  background: rgba(6, 26, 30, 0.9);
 }
 
 /* Primary Button (Crisp, High-Contrast, No stretching) */
@@ -1738,6 +1739,208 @@ input:checked + .slider:before {
   .glass-card {
     padding: 16px 14px;
   }
+}
+
+/* ============================================================
+   BROWSER-LIKE TABS BAR & AMALIYOT STYLES
+   ============================================================ */
+.browser-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: rgba(4, 20, 23, 0.85);
+  border: 1px solid rgba(0, 203, 169, 0.2);
+  border-radius: 14px;
+  padding: 8px 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.browser-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.browser-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(10, 36, 40, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.browser-tab:hover {
+  background: rgba(16, 54, 60, 0.85);
+  color: #ffffff;
+  border-color: rgba(0, 240, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.browser-tab.active {
+  background: linear-gradient(135deg, rgba(0, 203, 169, 0.22), rgba(6, 38, 42, 0.95));
+  border-color: rgba(0, 240, 255, 0.6);
+  color: #00f0ff;
+  box-shadow: 0 4px 16px rgba(0, 203, 169, 0.2);
+}
+
+.browser-tab-icon {
+  font-size: 14px;
+}
+
+.browser-tab-title {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browser-tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.tab-btn-mini {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-btn-mini:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.tab-btn-mini.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+.browser-tab-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(0, 203, 169, 0.12);
+  border: 1px dashed rgba(0, 203, 169, 0.45);
+  border-radius: 9px;
+  color: var(--accent-glow);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.browser-tab-add-btn:hover {
+  background: rgba(0, 203, 169, 0.25);
+  border-color: var(--accent-glow);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 203, 169, 0.25);
+}
+
+.amaliyot-helper-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(0, 203, 169, 0.12), rgba(3, 30, 34, 0.85));
+  border: 1px solid rgba(0, 203, 169, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  color: #a7f3d0;
+  font-size: 13px;
+}
+
+.amaliyot-helper-badge {
+  background: rgba(0, 203, 169, 0.2);
+  border: 1px solid rgba(0, 203, 169, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-weight: 700;
+  color: #ffffff;
+  user-select: all;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.amaliyot-helper-badge:hover {
+  background: rgba(0, 203, 169, 0.4);
+}
+
+.students-table-wrapper {
+  background: rgba(6, 24, 28, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 14px;
+  margin-bottom: 16px;
+}
+
+.students-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.students-data-table th {
+  background: rgba(10, 36, 40, 0.95);
+  color: var(--accent-glow);
+  padding: 10px 8px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0, 203, 169, 0.25);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.students-data-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.students-data-table tr:hover {
+  background: rgba(0, 203, 169, 0.04);
+}
+
+.table-input-cell {
+  width: 100%;
+  background: rgba(4, 18, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #ffffff;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.table-input-cell:focus {
+  border-color: var(--accent-glow);
+  background: rgba(6, 26, 30, 0.9);
 }
 
 
