@@ -86,6 +86,40 @@ def fmt_num(val):
         return str(val)
 
 
+def cleanup_old_contract_temp_files(max_age_seconds: int = 600):
+    """
+    10 daqiqadan (600 soniya) oshgan barcha vaqtinchalik kontrakt screenshotlari,
+    rasmlar va ZIP fayllarini avtomatik tozalab xotirani bo'shatadi.
+    """
+    import shutil
+    import time
+
+    now = time.time()
+    dirs_to_clean = [
+        CONTRACT_STORAGE_DIR,
+        tempfile.gettempdir()
+    ]
+
+    for base_dir in dirs_to_clean:
+        if not os.path.exists(base_dir):
+            continue
+        try:
+            for item in os.listdir(base_dir):
+                item_path = os.path.join(base_dir, item)
+                if any(k in item for k in ['screenshots_', 'screenshot_', 'xulosa_', 'Guruhlar_Screenshotlari_', 'KONTRAKTLAR', 'debitorka']):
+                    try:
+                        mtime = os.path.getmtime(item_path)
+                        if now - mtime > max_age_seconds:
+                            if os.path.isdir(item_path):
+                                shutil.rmtree(item_path, ignore_errors=True)
+                            else:
+                                os.remove(item_path)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+
 def get_font(size, bold=True):
     bundled_tnr = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts', 'TimesNewRomanBold.ttf')
     if os.path.exists(bundled_tnr):
@@ -478,6 +512,8 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
     Baza va debitorka fayllarini taqqoslab, formulalarga tegmasdan yangilaydi,
     xulosa rasmi va to'liq tahliliy hisobotni qaytaradi.
     """
+    cleanup_old_contract_temp_files(max_age_seconds=600)
+
     if not session_id:
         session_id = uuid.uuid4().hex[:12]
 
@@ -782,31 +818,69 @@ def execute_group_screenshots(baza_path, session_id=None):
         if rahbar and guruh and str(rahbar).strip() and str(guruh).strip():
             if str(rahbar).lower().startswith(('jami', 'итого', 'guruh rahbari')): continue
             g_str = str(guruh).strip()
-            if g_str.endswith('.0'): g_str = g_str[:-2]
-            if g_str in excluded_groups: continue
+    for row in range(boshlanish_row, sheet.max_row + 1):
+        fio = sheet.cell(row=row, column=ism_ustun).value
+        if fio and str(fio).strip() and not str(fio).lower().startswith(('familiya', 'f.i.sh', 'итого', 'jami', 'guruh')):
+            guruh_val = sheet.cell(row=row, column=guruh_ustun).value
+            guruh_str = str(guruh_val).strip() if guruh_val else "Noma'lum"
+            if guruh_str.endswith('.0'): guruh_str = guruh_str[:-2]
 
-            g_students = guruhlar.get(g_str, [])
-            soni = len(g_students)
-            if soni == 0 and int(sheet.cell(row=r, column=5).value or 0) == 0:
-                continue
+            try:
+                kerak_sum = float(sheet.cell(row=row, column=kerak_ustun).value or 0)
+            except Exception:
+                kerak_sum = 0.0
 
-            qarz_sum = sum(r['qarzi'] for r in g_students if r['qarzi'] > 0)
-            xulosa_rows.append({
-                'rahbar': str(rahbar).strip(),
-                'guruh': g_str,
-                'soni': soni if soni > 0 else int(sheet.cell(row=r, column=5).value or 0),
-                'qarz': qarz_sum
+            try:
+                tolangan_sum = float(sheet.cell(row=row, column=tolov_ustun).value or 0)
+            except Exception:
+                tolangan_sum = 0.0
+
+            qarz_sum = max(0.0, kerak_sum - tolangan_sum)
+
+            if guruh_str not in guruhlar:
+                guruhlar[guruh_str] = []
+
+            guruhlar[guruh_str].append({
+                'fio': str(fio).strip(),
+                'kerak': kerak_sum,
+                'tolandi': tolangan_sum,
+                'qarzi': qarz_sum
             })
 
     wb.close()
 
-    if not guruhlar:
-        return {"success": False, "error": "Fayldan guruhlar ma'lumotlari topilmadi"}
+    # Build Xulosa summary rows
+    xulosa_rows = []
+    for g_idx, g_name in enumerate(sorted(guruhlar.keys())):
+        rows = guruhlar[g_name]
+        tot_kerak = sum(r['kerak'] for r in rows)
+        tot_tolangan = sum(r['tolandi'] for r in rows)
+        tot_qarz = sum(r['qarzi'] for r in rows if r['qarzi'] > 0)
+        
+        rahbar_nomi = "Biriktirilmagan"
+        try:
+            from services.atlas_db import get_student_groups
+            all_groups = get_student_groups()
+            matched = next((g for g in all_groups if g.get("group_name") == g_name), None)
+            if matched and matched.get("rahbar_name"):
+                rahbar_nomi = matched.get("rahbar_name")
+        except Exception:
+            pass
 
+        xulosa_rows.append({
+            't_r': g_idx + 1,
+            'guruh': g_name,
+            'rahbar': rahbar_nomi,
+            'soni': len(rows),
+            'kerak': tot_kerak,
+            'tolandi': tot_tolangan,
+            'qarz': tot_qarz
+        })
+
+    generated_groups = []
     session_screenshots_dir = os.path.join(CONTRACT_STORAGE_DIR, f"screenshots_{session_id}")
     os.makedirs(session_screenshots_dir, exist_ok=True)
 
-    generated_groups = []
     zip_path = os.path.join(CONTRACT_STORAGE_DIR, f"Guruhlar_Screenshotlari_{session_id}.zip")
 
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_f:
@@ -824,7 +898,6 @@ def execute_group_screenshots(baza_path, session_id=None):
             except Exception:
                 pass
 
-            sb_xul_url = upload_document_to_supabase(xul_img_path, f"contracts/screenshots/{session_id}_{xul_filename}")
             tot_xul_debt = sum(x['qarz'] for x in xulosa_rows if x['qarz'] > 0)
             tot_xul_students = sum(x['soni'] for x in xulosa_rows)
 
@@ -833,7 +906,7 @@ def execute_group_screenshots(baza_path, session_id=None):
                 "is_xulosa": True,
                 "student_count": tot_xul_students,
                 "debt_total": tot_xul_debt,
-                "image_url": sb_xul_url or f"/api/contracts/download-screenshot/{session_id}/XULOSA",
+                "image_url": f"/api/contracts/download-screenshot/{session_id}/XULOSA",
                 "download_url": f"/api/contracts/download-screenshot/{session_id}/XULOSA",
                 "local_path": xul_img_path
             })
@@ -845,11 +918,7 @@ def execute_group_screenshots(baza_path, session_id=None):
             img_path = os.path.join(session_screenshots_dir, clean_filename)
 
             generate_group_table_image(g_name, date_str, rows_data, img_path)
-
             zip_f.write(img_path, clean_filename)
-
-            # Upload individual image to Supabase Storage
-            sb_url = upload_document_to_supabase(img_path, f"contracts/screenshots/{session_id}_{clean_filename}")
 
             tot_debt = sum(r['qarzi'] for r in rows_data if r['qarzi'] > 0)
             generated_groups.append({
@@ -857,7 +926,7 @@ def execute_group_screenshots(baza_path, session_id=None):
                 "is_xulosa": False,
                 "student_count": len(rows_data),
                 "debt_total": tot_debt,
-                "image_url": sb_url or f"/api/contracts/download-screenshot/{session_id}/{g_name}",
+                "image_url": f"/api/contracts/download-screenshot/{session_id}/{g_name}",
                 "download_url": f"/api/contracts/download-screenshot/{session_id}/{g_name}",
                 "local_path": img_path
             })
