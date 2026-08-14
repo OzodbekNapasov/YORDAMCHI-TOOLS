@@ -704,6 +704,19 @@ def api_generate_document():
     conn.commit()
     conn.close()
 
+    # Supabase Cloud ga darhol sinxronlash
+    _sync_supabase_async("atlas_generated_docs", {
+        "id": doc_id,
+        "template_id": target_tpl["id"],
+        "template_name": target_tpl["name"],
+        "recipient_fio": fio,
+        "data_json": answers,
+        "file_type": "png",
+        "file_url": supabase_cdn_url,
+        "storage_path": permanent_png_path,
+        "created_by": "web_admin"
+    })
+
     admin = get_current_admin()
     log_audit(admin["username"], "documents", "generate_document", "success", {"doc_id": doc_id, "template": target_tpl["name"], "fio": fio, "cdn_url": supabase_cdn_url}, request.remote_addr)
 
@@ -721,126 +734,19 @@ def api_generate_document():
     })
 
 
-@atlas_api.route("/documents/list", methods=["GET"])
-@admin_required
-def api_get_documents_list():
-    q = request.args.get("q", "").strip()
-    tpl_filter = request.args.get("template", "").strip()
-    page = max(int(request.args.get("page", 1)), 1)
-    limit = min(max(int(request.args.get("limit", 20)), 5), 1000)
-    offset = (page - 1) * limit
+def _ensure_doc_files(doc):
+    """Serverless muhitda fayllar /tmp dan o'chib ketgan bo'lsa, ularni on-the-fly qayta yaratadi"""
+    fpath = doc.get("file_path") or ""
+    docx_path = fpath.rsplit(".", 1)[0] + ".docx" if "." in fpath else ""
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    if not fpath or not os.path.exists(fpath) or not os.path.exists(docx_path):
+        uid = f"doc_{doc['id']}"
+        safe_fio = "".join(c for c in str(doc.get("recipient_fio", "")) if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
+        fpath = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.png")
+        docx_path = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.docx")
 
-    query = "SELECT * FROM generated_docs WHERE 1=1"
-    params = []
-
-    if q:
-        query += " AND (recipient_fio LIKE ? OR data_json LIKE ?)"
-        params.extend([f"%{q}%", f"%{q}%"])
-
-    if tpl_filter:
-        query += " AND template_id = ?"
-        params.append(tpl_filter)
-
-    count_query = query.replace("SELECT *", "SELECT COUNT(*)")
-    cursor.execute(count_query, params)
-    total_count = cursor.fetchone()[0]
-
-    query += " ORDER BY id DESC LIMIT ? OFFSET ?"
-    params.extend([limit, offset])
-
-    cursor.execute(query, params)
-    docs = []
-    for r in cursor.fetchall():
-        d = dict(r)
-        try:
-            d["parsed_data"] = json.loads(d.get("data_json") or "{}")
-        except Exception:
-            d["parsed_data"] = {}
-        d["file_exists"] = os.path.exists(d.get("file_path", ""))
-        png_path = d.get("file_path", "")
-        docx_path = png_path.rsplit(".", 1)[0] + ".docx" if "." in png_path else ""
-        d["docx_exists"] = os.path.exists(docx_path)
-        docs.append(d)
-
-    conn.close()
-
-    return jsonify({
-        "success": True,
-        "documents": docs,
-        "pagination": {
-            "total": total_count,
-            "page": page,
-            "limit": limit,
-            "pages": (total_count + limit - 1) // limit
-        }
-    })
-
-
-@atlas_api.route("/documents/view/<int:doc_id>", methods=["GET"])
-@admin_required
-def api_view_document(doc_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
-    doc = cursor.fetchone()
-    conn.close()
-
-    if not doc:
-        return jsonify({"error": "Hujjat topilmadi."}), 404
-
-    fpath = doc["file_path"]
-    if not os.path.exists(fpath):
-        return jsonify({"error": "Hujjat fayli diskda topilmadi."}), 404
-
-    return send_file(fpath, mimetype="image/png", as_attachment=False)
-
-
-@atlas_api.route("/documents/download/<int:doc_id>", methods=["GET"])
-@admin_required
-def api_download_document_by_id(doc_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
-    doc = cursor.fetchone()
-    conn.close()
-
-    if not doc:
-        return jsonify({"error": "Hujjat topilmadi."}), 404
-
-    fpath = doc["file_path"]
-    if not os.path.exists(fpath):
-        return jsonify({"error": "Hujjat fayli diskda topilmadi."}), 404
-
-    fio = str(doc["recipient_fio"]).strip()
-    tpl_name = str(doc["template_name"]).strip()
-    tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
-    suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
-    download_filename = f"{fio} — {tpl_clean} {suffix}.png"
-    return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=download_filename)
-
-
-@atlas_api.route("/documents/download_docx/<int:doc_id>", methods=["GET"])
-@admin_required
-def api_download_docx_by_id(doc_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
-    doc = cursor.fetchone()
-    conn.close()
-
-    if not doc:
-        return jsonify({"error": "Hujjat topilmadi."}), 404
-
-    png_path = doc["file_path"]
-    docx_path = png_path.rsplit(".", 1)[0] + ".docx" if "." in png_path else ""
-
-    # Agar docx fayli yo'q bo'lsa, uni tezkor to'ldirib qayta tiklaymiz
-    if not os.path.exists(docx_path):
-        data_dict = json.loads(doc.get("data_json") or "{}")
-        tpl_id = doc["template_id"]
+        data_dict = doc.get("parsed_data") or {}
+        tpl_id = doc.get("template_id", "")
         filename = "malumotnoma.docx"
         for t in DOCBOT_TEMPLATES:
             if t["id"] == tpl_id:
@@ -853,8 +759,91 @@ def api_download_docx_by_id(doc_id):
             else:
                 filename = "Talabalar safidan chiqarish - 1-asos.docx"
 
-        tpl_file_path = find_template_file(filename)
-        fill_template(tpl_file_path, docx_path, data_dict)
+        try:
+            tpl_file_path = find_template_file(filename)
+            fill_template(tpl_file_path, docx_path, data_dict)
+            render_docx_template_to_image(filename, fpath, data_dict)
+        except Exception as e:
+            print(f"Rebuild doc files error: {e}")
+
+    return fpath, docx_path
+
+
+@atlas_api.route("/documents/list", methods=["GET"])
+@admin_required
+def api_get_documents_list():
+    q = request.args.get("q", "").strip()
+    tpl_filter = request.args.get("template", "").strip()
+    page = max(int(request.args.get("page", 1)), 1)
+    limit = min(max(int(request.args.get("limit", 20)), 5), 1000)
+    offset = (page - 1) * limit
+
+    from services.atlas_db import get_saved_documents
+    docs = get_saved_documents(q=q, template_id=tpl_filter, limit=limit, offset=offset)
+
+    total_count = len(docs)
+    for d in docs:
+        d["file_exists"] = True
+        d["docx_exists"] = True
+
+    return jsonify({
+        "success": True,
+        "documents": docs,
+        "pagination": {
+            "total": total_count,
+            "page": page,
+            "limit": limit,
+            "pages": (total_count + limit - 1) // limit if limit else 1
+        }
+    })
+
+
+@atlas_api.route("/documents/view/<int:doc_id>", methods=["GET"])
+@admin_required
+def api_view_document(doc_id):
+    from services.atlas_db import get_document_by_id
+    doc = get_document_by_id(doc_id)
+    if not doc:
+        return jsonify({"error": "Hujjat topilmadi."}), 404
+
+    fpath, _ = _ensure_doc_files(doc)
+    if not os.path.exists(fpath):
+        return jsonify({"error": "Hujjat fayli shakllantirilmadi."}), 404
+
+    return send_file(fpath, mimetype="image/png", as_attachment=False)
+
+
+@atlas_api.route("/documents/download/<int:doc_id>", methods=["GET"])
+@admin_required
+def api_download_document_by_id(doc_id):
+    from services.atlas_db import get_document_by_id
+    doc = get_document_by_id(doc_id)
+    if not doc:
+        return jsonify({"error": "Hujjat topilmadi."}), 404
+
+    fpath, _ = _ensure_doc_files(doc)
+    if not os.path.exists(fpath):
+        return jsonify({"error": "Hujjat fayli shakllantirilmadi."}), 404
+
+    fio = str(doc["recipient_fio"]).strip()
+    tpl_name = str(doc["template_name"]).strip()
+    tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
+    suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
+    download_filename = f"{fio} — {tpl_clean} {suffix}.png"
+    return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=download_filename)
+
+
+@atlas_api.route("/documents/download_docx/<int:doc_id>", methods=["GET"])
+@admin_required
+def api_download_docx_by_id(doc_id):
+    from services.atlas_db import get_document_by_id
+    doc = get_document_by_id(doc_id)
+    if not doc:
+        return jsonify({"error": "Hujjat topilmadi."}), 404
+
+    _, docx_path = _ensure_doc_files(doc)
+    if not os.path.exists(docx_path):
+        return jsonify({"error": "Word fayli shakllantirilmadi."}), 404
 
     fio = str(doc["recipient_fio"]).strip()
     tpl_name = str(doc["template_name"]).strip()

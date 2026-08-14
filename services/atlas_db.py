@@ -467,6 +467,126 @@ def update_generated_document(doc_id: int, recipient_fio: str, data: dict, file_
         return False
 
 
+def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, offset: int = 0):
+    """Barcha saqlangan hujjatlarni olish (SQLite + Supabase Cloud avtomatik yuklash)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "SELECT * FROM generated_docs WHERE 1=1"
+        params = []
+        if q:
+            query += " AND (recipient_fio LIKE ? OR data_json LIKE ?)"
+            params.extend([f"%{q}%", f"%{q}%"])
+        if template_id:
+            query += " AND template_id = ?"
+            params.append(template_id)
+        query += " ORDER BY id DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        cursor.execute(query, params)
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        if rows:
+            for r in rows:
+                try:
+                    r["parsed_data"] = json.loads(r.get("data_json") or "{}") if isinstance(r.get("data_json"), str) else r.get("data_json") or {}
+                except Exception:
+                    r["parsed_data"] = {}
+            return rows
+    except Exception as e:
+        print(f"Sqlite get docs error: {e}")
+
+    # Agar SQLite bo'sh bo'lsa (Serverless konteyner yangilanganda), Supabase Cloud'dan yuklash
+    try:
+        import requests
+        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+        supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+        if supa_url and supa_key:
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}"
+            }
+            url = f"{supa_url}/rest/v1/atlas_generated_docs?select=*&order=id.desc&limit={limit}&offset={offset}"
+            if template_id:
+                url += f"&template_id=eq.{template_id}"
+            if q:
+                url += f"&recipient_fio=ilike.*{q}*"
+            resp = requests.get(url, headers=headers, timeout=6)
+            if resp.status_code == 200:
+                cloud_docs = resp.json()
+                if cloud_docs:
+                    try:
+                        conn = get_db_connection()
+                        c = conn.cursor()
+                        for d in cloud_docs:
+                            d_json = json.dumps(d.get("data_json") or {}) if isinstance(d.get("data_json"), dict) else str(d.get("data_json") or "{}")
+                            c.execute("""
+                            INSERT OR REPLACE INTO generated_docs (id, template_id, template_name, recipient_fio, data_json, file_type, file_path, created_by, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                d.get("id"),
+                                d.get("template_id"),
+                                d.get("template_name"),
+                                d.get("recipient_fio"),
+                                d_json,
+                                d.get("file_type", "png"),
+                                d.get("storage_path") or d.get("file_url") or "",
+                                d.get("created_by", "web_admin"),
+                                d.get("created_at")
+                            ))
+                        conn.commit()
+                        conn.close()
+                    except Exception as cache_err:
+                        print(f"Cache docs error: {cache_err}")
+
+                    for cd in cloud_docs:
+                        cd["parsed_data"] = cd.get("data_json") or {}
+                    return cloud_docs
+    except Exception as se:
+        print(f"Supabase fetch docs error: {se}")
+
+    return []
+
+
+def get_document_by_id(doc_id: int):
+    """Bitta hujjatni ID bo'yicha olish (SQLite + Supabase Cloud fallback)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            d = dict(row)
+            try:
+                d["parsed_data"] = json.loads(d.get("data_json") or "{}") if isinstance(d.get("data_json"), str) else d.get("data_json") or {}
+            except Exception:
+                d["parsed_data"] = {}
+            return d
+    except Exception as e:
+        print(f"Get doc by id sqlite error: {e}")
+
+    try:
+        import requests
+        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+        supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+        if supa_url and supa_key:
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}"
+            }
+            resp = requests.get(f"{supa_url}/rest/v1/atlas_generated_docs?id=eq.{doc_id}&select=*", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                results = resp.json()
+                if results:
+                    d = results[0]
+                    d["parsed_data"] = d.get("data_json") or {}
+                    return d
+    except Exception as se:
+        print(f"Get doc by id supabase error: {se}")
+
+    return None
+
+
 # O'quv Guruhlari (Academic Student Groups) Boshqaruvi
 def get_student_groups():
     """Barcha o'quv guruhlarini tartib bo'yicha olish (SQLite + Supabase Cloud fallback)"""
