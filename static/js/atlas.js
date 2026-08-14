@@ -609,7 +609,15 @@ const ATLAS = {
   },
 
   async deleteDocumentFromArchive(docId) {
-    if (!confirm("Haqiqatdan ham ushbu ma'lumotnomani arxivdan butunlay o'chirmoqchimisiz?")) return;
+    const confirmed = await this.confirm({
+      title: "Arxivdan O'chirish",
+      message: "Haqiqatdan ham ushbu ma'lumotnomani arxivdan butunlay o'chirmoqchimisiz?",
+      confirmText: "O'chirish",
+      cancelText: "Bekor qilish",
+      isDanger: true
+    });
+    if (!confirmed) return;
+
     const res = await this.api(`/api/documents/${docId}`, 'DELETE');
     if (res && res.success) {
       this.toast(res.message, 'success');
@@ -1237,6 +1245,75 @@ const ATLAS = {
       </div>
     `;
     el.classList.add('active');
+  },
+
+  confirm(options = {}) {
+    const {
+      title = "Tasdiqlash",
+      message = "Harakatni tasdiqlaysizmi?",
+      confirmText = "Tasdiqlash",
+      cancelText = "Bekor qilish",
+      isDanger = false
+    } = typeof options === 'string' ? { message: options } : options;
+
+    return new Promise((resolve) => {
+      const el = document.getElementById('modal-container');
+      const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-primary';
+      const icon = isDanger ? this.icons.alert : this.icons.check;
+
+      el.innerHTML = `
+        <div class="modal-box confirm-dialog-box">
+          <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;">
+            <div style="width:42px;height:42px;border-radius:var(--radius-sm);background:${isDanger ? 'rgba(239,68,68,0.15)' : 'rgba(0,203,169,0.15)'};border:1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(0,203,169,0.3)'};display:flex;align-items:center;justify-content:center;color:${isDanger ? '#f87171' : 'var(--accent-glow)'};flex-shrink:0;">
+              ${icon}
+            </div>
+            <div>
+              <div class="card-title" style="font-size:16px;margin-bottom:6px;">${title}</div>
+              <div style="font-size:13.5px;color:rgba(255,255,255,0.75);line-height:1.45;">${message}</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px;">
+            <button type="button" class="btn-sm btn-secondary" id="confirm-modal-cancel">${cancelText} (Esc)</button>
+            <button type="button" class="btn-sm ${confirmBtnClass}" id="confirm-modal-ok">${confirmText} (Enter)</button>
+          </div>
+        </div>
+      `;
+      el.classList.add('active');
+
+      const okBtn = document.getElementById('confirm-modal-ok');
+      const cancelBtn = document.getElementById('confirm-modal-cancel');
+      if (okBtn) okBtn.focus();
+
+      const cleanup = () => {
+        window.removeEventListener('keydown', onKeyDown);
+        el.classList.remove('active');
+      };
+
+      const onConfirm = () => {
+        cleanup();
+        resolve(true);
+      };
+
+      const onCancel = () => {
+        cleanup();
+        resolve(false);
+      };
+
+      const onKeyDown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onConfirm();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          onCancel();
+        }
+      };
+
+      if (okBtn) okBtn.addEventListener('click', onConfirm);
+      if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+      window.addEventListener('keydown', onKeyDown);
+    });
   },
 
   closeModal() {
