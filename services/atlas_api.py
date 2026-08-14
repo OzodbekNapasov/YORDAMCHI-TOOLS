@@ -694,28 +694,15 @@ def api_generate_document():
     except Exception:
         pass
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-    INSERT INTO generated_docs (template_id, template_name, recipient_fio, data_json, file_type, file_path, created_by)
-    VALUES (?, ?, ?, ?, 'png', ?, 'web_admin')
-    """, (target_tpl["id"], target_tpl["name"], fio, json.dumps(answers), permanent_png_path))
-    doc_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-
-    # Supabase Cloud ga darhol sinxronlash
-    _sync_supabase_async("atlas_generated_docs", {
-        "id": doc_id,
-        "template_id": target_tpl["id"],
-        "template_name": target_tpl["name"],
-        "recipient_fio": fio,
-        "data_json": answers,
-        "file_type": "png",
-        "file_url": supabase_cdn_url,
-        "storage_path": permanent_png_path,
-        "created_by": "web_admin"
-    })
+    from services.atlas_db import save_generated_document_to_cloud
+    doc_id = save_generated_document_to_cloud(
+        template_id=target_tpl["id"],
+        template_name=target_tpl["name"],
+        recipient_fio=fio,
+        answers=answers,
+        file_path=permanent_png_path,
+        cdn_url=supabase_cdn_url
+    )
 
     admin = get_current_admin()
     log_audit(admin["username"], "documents", "generate_document", "success", {"doc_id": doc_id, "template": target_tpl["name"], "fio": fio, "cdn_url": supabase_cdn_url}, request.remote_addr)

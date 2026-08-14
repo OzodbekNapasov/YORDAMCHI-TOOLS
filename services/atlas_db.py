@@ -432,32 +432,60 @@ def track_group_activity(telegram_id: int, title: str, username: str = "", group
         conn.close()
     except Exception as e:
         print(f"Track group error: {e}")
+def save_generated_document_to_cloud(template_id: str, template_name: str, recipient_fio: str, answers: dict, file_path: str, cdn_url: str = "") -> int:
+    """Hujjatni Supabase Cloud bazasiga saqlab, uning haqiqiy global ID raqamini oladi"""
+    supa_url, supa_key = _get_supabase_credentials()
+    cloud_id = None
+    if supa_url and supa_key:
+        try:
+            import requests
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation"
+            }
+            payload = {
+                "template_id": template_id,
+                "template_name": template_name,
+                "recipient_fio": recipient_fio,
+                "data_json": answers,
+                "file_type": "png",
+                "file_url": cdn_url,
+                "storage_path": file_path,
+                "created_by": "web_admin"
+            }
+            res = requests.post(f"{supa_url}/rest/v1/atlas_generated_docs", headers=headers, json=payload, timeout=6)
+            if res.status_code in [200, 201]:
+                data = res.json()
+                if data and isinstance(data, list) and len(data) > 0:
+                    cloud_id = data[0].get("id")
+        except Exception as se:
+            print(f"Supabase create doc error: {se}")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if cloud_id:
+        cursor.execute("""
+        INSERT OR REPLACE INTO generated_docs (id, template_id, template_name, recipient_fio, data_json, file_type, file_path, created_by)
+        VALUES (?, ?, ?, ?, ?, 'png', ?, 'web_admin')
+        """, (cloud_id, template_id, template_name, recipient_fio, json.dumps(answers), file_path))
+        doc_id = cloud_id
+    else:
+        cursor.execute("""
+        INSERT INTO generated_docs (template_id, template_name, recipient_fio, data_json, file_type, file_path, created_by)
+        VALUES (?, ?, ?, ?, 'png', ?, 'web_admin')
+        """, (template_id, template_name, recipient_fio, json.dumps(answers), file_path))
+        doc_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+    return doc_id
 
 
 def log_generated_document(template_id: str, template_name: str, recipient_fio: str, data: dict, file_type: str = "png", file_path: str = "", created_by: str = "bot"):
-    """Yaratilgan hujjatni arxivga qo'shish (Mahalliy SQLite + Supabase Cloud)"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-        INSERT INTO generated_docs (template_id, template_name, recipient_fio, data_json, file_type, file_path, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (template_id, template_name, recipient_fio, json.dumps(data), file_type, file_path, created_by))
-        conn.commit()
-        conn.close()
-
-        # Supabase Cloud ga fonda yuborish
-        _sync_supabase_async("atlas_generated_docs", {
-            "template_id": template_id,
-            "template_name": template_name,
-            "recipient_fio": recipient_fio,
-            "data_json": data,
-            "file_type": file_type,
-            "storage_path": file_path,
-            "created_by": created_by
-        })
-    except Exception as e:
-        print(f"Log doc error: {e}")
+    """Yaratilgan hujjatni arxivga qo'shish"""
+    return save_generated_document_to_cloud(template_id, template_name, recipient_fio, data, file_path, "")
 
 
 def update_generated_document(doc_id: int, recipient_fio: str, data: dict, file_path: str = ""):
@@ -626,11 +654,31 @@ def get_student_groups():
                 "apikey": supa_key,
                 "Authorization": f"Bearer {supa_key}"
             }
-            resp = requests.get(f"{supa_url}/rest/v1/atlas_student_groups?select=*&order=order_num.asc,group_name.asc", headers=headers, timeout=5)
+            resp = requests.get(f"{supa_url}/rest/v1/atlas_student_groups?select=*", headers=headers, timeout=5)
             if resp.status_code == 200:
                 cloud_groups = resp.json()
-                # Local SQLite ga keshlab qo'yish
                 if cloud_groups:
+                    for g in cloud_groups:
+                        notes_val = g.get('notes')
+                        if notes_val:
+                            try:
+                                n_dict = json.loads(notes_val) if isinstance(notes_val, str) else notes_val
+                                if isinstance(n_dict, dict):
+                                    if not g.get('rahbar_name'):
+                                        g['rahbar_name'] = n_dict.get('rahbar', '')
+                                    if not g.get('order_num'):
+                                        g['order_num'] = int(n_dict.get('order', 0))
+                            except Exception:
+                                if not g.get('rahbar_name'):
+                                    g['rahbar_name'] = str(notes_val)
+                        if not g.get('order_num'):
+                            g['order_num'] = 0
+                        if not g.get('rahbar_name'):
+                            g['rahbar_name'] = ''
+
+                    cloud_groups.sort(key=lambda x: (int(x.get('order_num') or 0), int(x.get('course_level') or 1), str(x.get('group_name') or '')))
+
+                    # Local SQLite ga keshlab qo'yish
                     try:
                         conn = get_db_connection()
                         c = conn.cursor()
@@ -681,11 +729,6 @@ def bulk_add_student_groups(items_data):
     elif isinstance(items_data, str):
         lines = [line.strip() for line in items_data.splitlines() if line.strip()]
         for idx, line in enumerate(lines):
-            # Parse line formats:
-            # "24-11 - Rahmatova.Sh - 2-kurs"
-            # "24-11, Rahmatova.Sh, 2"
-            # "24-11 \t Rahmatova.Sh \t 2"
-            # "24-11 Rahmatova.Sh"
             parts = []
             if "\t" in line:
                 parts = [p.strip() for p in line.split("\t") if p.strip()]
@@ -703,7 +746,6 @@ def bulk_add_student_groups(items_data):
             rahbar = ""
             course = 1
 
-            # Default course inference from name
             m = re.search(r'([1-4])\d{2}', g_name)
             if m:
                 course = int(m.group(1))
@@ -758,12 +800,12 @@ def bulk_add_student_groups(items_data):
             added += 1
 
             # Supabase Cloud ga saqlash
+            notes_json = json.dumps({"rahbar": rahbar, "order": order_num})
             _sync_supabase_async("atlas_student_groups", {
                 "group_name": g_name,
-                "rahbar_name": rahbar,
                 "course_level": course,
                 "direction": direction,
-                "order_num": order_num
+                "notes": notes_json
             }, method="POST", params="?on_conflict=group_name")
         except Exception as e:
             print(f"Error inserting group {g_name}: {e}")
@@ -806,11 +848,11 @@ def update_student_group(group_id: int, group_name: str, course_level: int, rahb
         conn.close()
 
         # Supabase-ga sinxronlash
+        notes_json = json.dumps({"rahbar": rahbar_name, "order": order_num})
         _sync_supabase_async("atlas_student_groups", {
             "group_name": group_name,
             "course_level": course_level,
-            "rahbar_name": rahbar_name,
-            "order_num": order_num
+            "notes": notes_json
         }, method="PATCH", params=f"?id=eq.{group_id}")
         return True
     except Exception as e:
