@@ -4,4 +4,7 @@ fuzzywuzzy
 python-Levenshtein
 Flask
 gunicorn
-Pillow
+Pillow
+python-docx
+requests
+pypdfium2

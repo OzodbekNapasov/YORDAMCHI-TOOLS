@@ -8,12 +8,18 @@ import tempfile
 import html
 import re
 import json
+import uuid
 from fuzzywuzzy import fuzz
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
+# Docbot integratsiyasi uchun modullar
+from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
+from services.image_builder import render_docx_template_to_image
+from services.docx_filler import fill_template
+
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "1.6.1"
+BOT_VERSION = "2.0.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
 
 def is_user_allowed(message):
@@ -62,11 +68,12 @@ def check_and_notify_updates():
                 last_ver = f.read().strip()
 
         if last_ver != BOT_VERSION:
-            update_msg = f"🔔 <b>TIZIMDA YANGI YANGILANISH! (v{BOT_VERSION})</b>\n\n" \
-                         f"✨ <b>Yangi o'zgarishlar va imkoniyatlar:</b>\n" \
-                         f"• 🔒 <b>Maxfiy Xavfsizlik Rejimi (Stealth Mode):</b> Begonalarga bot tugmalari mutlaqo ko'rinmaydi (`ReplyKeyboardRemove`) hamda bot nima maqsadda yaratilgani umuman oshkor etilmaydi.\n" \
-                         f"• 👑 <b>Yagona Admin Cheklovi:</b> Bot 100% faqat sizning ID ingizga (`8135594558`) biriktirildi.\n\n" \
-                         f"<i>Platformadan bemalol foydalanishingiz mumkin! 🚀</i>"
+            update_msg = f"🚀 <b>YANGI BIRLASHTIRILGAN PLATFORMA! (v{BOT_VERSION})</b>\n\n" \
+                         f"✨ <b>Barcha hujjat loyihalaringiz bitta joyga yig'ildi:</b>\n" \
+                         f"• 📑 <b>Hujjat Generator (Docbot):</b> 1-kursga qabul ma'lumotnomalari va boshqa rasmiy hujjatlar endi to'g'ridan-to'g'ri ushbu bot ichida tayyorlanadi va 300 DPI tiniq rasm / Word formatida yuboriladi!\n" \
+                         f"• 📝 <b>Kontrakt Yangilovchi:</b> Bank debitorkasi va Asosiy Baza integratsiyasi, HD screenshotlar va avtomatik Xulasa rasmlari saqlangan.\n" \
+                         f"• 🔒 <b>Single Admin Whitelist:</b> Barcha imkoniyatlar faqat sizning ID ingizga (`8135594558`) biriktirilgan.\n\n" \
+                         f"<i>Birlashgan platformadan bemalol foydalanishingiz mumkin! 🎉</i>"
 
             try:
                 bot.send_message(PRIMARY_ADMIN_ID, update_msg, parse_mode="HTML", reply_markup=get_main_keyboard())
@@ -165,7 +172,89 @@ def get_main_keyboard(suggested_date=None):
     btn1 = telebot.types.KeyboardButton("📝 Kontraktni yangilash")
     btn2 = telebot.types.KeyboardButton("📸 Guruh screenshotlarini olish")
     markup.add(btn1, btn2)
+    
+    # Docbot shablon tugmalarini qo'shish
+    for tpl in DOCBOT_TEMPLATES:
+        markup.add(telebot.types.KeyboardButton(tpl["name"]))
+        
     return markup
+
+def make_step_keyboard(button_rows):
+    if not button_rows:
+        return telebot.types.ReplyKeyboardRemove()
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for row in button_rows:
+        btns = [telebot.types.KeyboardButton(b) for b in row]
+        markup.add(*btns)
+    return markup
+
+def start_docbot_wizard(chat_id, tpl_index):
+    tpl = DOCBOT_TEMPLATES[tpl_index]
+    first_step = tpl["steps"][0]
+    user_data[chat_id] = {
+        "holat": "docbot_step",
+        "tpl_index": tpl_index,
+        "step": 0,
+        "answers": {}
+    }
+    
+    markup = make_step_keyboard(first_step.get("buttons"))
+    send_safe_message(
+        chat_id,
+        f"✅ <b>{escape_html_text(tpl['name'])}</b> tanlandi.\n\n"
+        f"<b>(1/{len(tpl['steps'])})</b> {first_step['question']}",
+        reply_markup=markup
+    )
+
+def process_docbot_generation(chat_id, tpl, answers):
+    uid = uuid.uuid4().hex[:8]
+    filename = tpl.get("filename", "malumotnoma.docx")
+    output_png = os.path.join(tempfile.gettempdir(), f"doc_{uid}.png")
+    output_docx = os.path.join(tempfile.gettempdir(), f"doc_{uid}.docx")
+
+    progress = TelegramProgress(bot, chat_id, "⏳ Sizning shabloningiz bo'yicha tiniq RASM va HUJJAT tayyorlanmoqda...")
+
+    try:
+        progress.update("⚙️ Hujjat to'ldirilmoqda va shakllantirilmoqda...", 50)
+        success = render_docx_template_to_image(filename, output_png, answers, tempfile.gettempdir())
+        
+        fio = answers.get("FIO", "Talaba").strip()
+        
+        if success and os.path.exists(output_png):
+            custom_img_name = f"{fio} ma'lumotnoma.png"
+            with open(output_png, "rb") as pf:
+                bot.send_document(
+                    chat_id,
+                    pf,
+                    visible_file_name=custom_img_name,
+                    caption=f"✅ <b>{escape_html_text(custom_img_name)}</b> muvaffaqiyatli tayyorlandi!\n\n"
+                            f"🖼 Siz yaratgan rasmiy shablon bo'yicha tiniq rasm shaklida yuborildi.\n"
+                            f"Yangi harakat uchun menyudan tanlang.",
+                    parse_mode="HTML",
+                    reply_markup=get_main_keyboard()
+                )
+        else:
+            template_path = find_template_file(filename)
+            fill_template(template_path, output_docx, answers)
+            custom_doc_name = f"{fio} ma'lumotnoma.docx"
+            with open(output_docx, "rb") as df:
+                bot.send_document(
+                    chat_id,
+                    df,
+                    visible_file_name=custom_doc_name,
+                    caption=f"✅ <b>{escape_html_text(custom_doc_name)}</b> tayyorlandi!\nYangi harakat uchun menyudan tanlang.",
+                    parse_mode="HTML",
+                    reply_markup=get_main_keyboard()
+                )
+
+        progress.success("✅ Tayyor!")
+    except Exception as e:
+        progress.error(f"❌ Xatolik yuz berdi:\n<code>{escape_html_text(str(e))}</code>")
+    finally:
+        for f in [output_png, output_docx]:
+            if os.path.exists(f):
+                try: os.remove(f)
+                except Exception: pass
 
 def escape_html_text(text):
     """HTML rejimida maxsus belgilarni xavfsiz qilish"""
@@ -653,10 +742,43 @@ def handle_text_messages(message):
         return
     save_user_chat_id(chat_id)
     holat = user_data.get(chat_id, {}).get("holat")
+    user_text = message.text.strip()
+
+    # Docbot shablonlarini tanlashni tekshirish
+    for idx, tpl in enumerate(DOCBOT_TEMPLATES):
+        if user_text == tpl["name"].strip():
+            start_docbot_wizard(chat_id, idx)
+            return
+
+    # Docbot savol-javob zanjiri (FSM)
+    if holat == "docbot_step":
+        u_info = user_data[chat_id]
+        tpl_index = u_info["tpl_index"]
+        step = u_info["step"]
+        answers = u_info["answers"]
+        tpl = DOCBOT_TEMPLATES[tpl_index]
+        current_step_info = tpl["steps"][step]
+
+        answers[current_step_info["field"]] = user_text
+        step += 1
+
+        if step < len(tpl["steps"]):
+            next_step_info = tpl["steps"][step]
+            u_info["step"] = step
+            u_info["answers"] = answers
+            markup = make_step_keyboard(next_step_info.get("buttons"))
+            send_safe_message(
+                chat_id,
+                f"<b>({step + 1}/{len(tpl['steps'])})</b> {next_step_info['question']}",
+                reply_markup=markup
+            )
+        else:
+            user_data[chat_id] = {}
+            process_docbot_generation(chat_id, tpl, answers)
+        return
 
     if holat == "sana_kutish":
-        sana_matni = message.text.strip()
-        sana_matni = sana_matni.replace("📅", "").strip()
+        sana_matni = user_text.replace("📅", "").strip()
 
         try:
             cheklov_sanasi = datetime.strptime(sana_matni, "%d.%m.%Y")
