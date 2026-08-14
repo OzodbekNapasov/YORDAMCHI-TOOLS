@@ -188,7 +188,19 @@ def init_db():
     )
     """)
 
-    # 11. Administrator hisob jadvali
+    # 11. O'quv guruhlari (Academic student groups) jadvali
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS student_groups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        group_name TEXT UNIQUE NOT NULL,
+        course_level INTEGER DEFAULT 1,
+        direction TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # 12. Administrator hisob jadvali
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS admins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -264,8 +276,8 @@ def init_db():
     conn.close()
 
 
-def _sync_supabase_async(endpoint: str, payload: dict):
-    """Supabase Cloud bazasiga fonda avtomatik sinxronlash"""
+def _sync_supabase_async(endpoint: str, payload: dict, method: str = "POST", params: str = ""):
+    """Supabase Cloud bazasiga fonda avtomatik sinxronlash (POST, PATCH, DELETE)"""
     import threading
     def _worker():
         try:
@@ -279,7 +291,13 @@ def _sync_supabase_async(endpoint: str, payload: dict):
                     "Content-Type": "application/json",
                     "Prefer": "return=minimal"
                 }
-                requests.post(f"{supa_url}/rest/v1/{endpoint}", headers=headers, json=payload, timeout=5)
+                url = f"{supa_url}/rest/v1/{endpoint}{params}"
+                if method.upper() == "POST":
+                    requests.post(url, headers=headers, json=payload, timeout=5)
+                elif method.upper() == "PATCH":
+                    requests.patch(url, headers=headers, json=payload, timeout=5)
+                elif method.upper() == "DELETE":
+                    requests.delete(url, headers=headers, timeout=5)
         except Exception:
             pass
     threading.Thread(target=_worker, daemon=True).start()
@@ -348,7 +366,7 @@ def track_user_activity(telegram_id: int, username: str = "", first_name: str = 
 
 
 def track_group_activity(telegram_id: int, title: str, username: str = "", group_type: str = "group", members_count: int = 0):
-    """Guruh yoki kanal faolligini qayd qilish"""
+    """Telegram guruh yoki kanal faolligini qayd qilish"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -396,6 +414,109 @@ def log_generated_document(template_id: str, template_name: str, recipient_fio: 
         })
     except Exception as e:
         print(f"Log doc error: {e}")
+
+
+def update_generated_document(doc_id: int, recipient_fio: str, data: dict, file_path: str = ""):
+    """Tahrirlangan hujjatni arxivda yangilash (Mahalliy SQLite + Supabase Cloud)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE generated_docs
+        SET recipient_fio = ?, data_json = ?, file_path = CASE WHEN ? != '' THEN ? ELSE file_path END
+        WHERE id = ?
+        """, (recipient_fio, json.dumps(data), file_path, file_path, doc_id))
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud-da yangilash
+        _sync_supabase_async("atlas_generated_docs", {
+            "recipient_fio": recipient_fio,
+            "data_json": data,
+            "storage_path": file_path
+        }, method="PATCH", params=f"?id=eq.{doc_id}")
+        return True
+    except Exception as e:
+        print(f"Update doc error: {e}")
+        return False
+
+
+# O'quv Guruhlari (Academic Student Groups) Boshqaruvi
+def get_student_groups():
+    """Barcha o'quv guruhlarini olish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM student_groups ORDER BY group_name ASC")
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        return rows
+    except Exception as e:
+        print(f"Get student groups error: {e}")
+        return []
+
+
+def bulk_add_student_groups(lines_text: str):
+    """
+    Foydalanuvchi tomonidan har bir qatorda (abzasda) bittadan kiritilgan
+    guruhlarni tahlil qilib, bazaga va Supabase-ga ommaviy saqlaydi.
+    """
+    if not lines_text:
+        return {"added": 0, "skipped": 0, "total": 0}
+
+    lines = [line.strip() for line in lines_text.splitlines() if line.strip()]
+    added = 0
+    skipped = 0
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    for g_name in lines:
+        try:
+            # Kursni taxmin qilish (masalan, 101 -> 1, 204 -> 2, 301 -> 3)
+            course = 1
+            import re
+            m = re.search(r'([1-4])\d{2}', g_name)
+            if m:
+                course = int(m.group(1))
+
+            cursor.execute("""
+            INSERT INTO student_groups (group_name, course_level)
+            VALUES (?, ?)
+            """, (g_name, course))
+            added += 1
+
+            # Supabase-ga sinxronlash
+            _sync_supabase_async("atlas_student_groups", {
+                "group_name": g_name,
+                "course_level": course
+            })
+        except sqlite3.IntegrityError:
+            skipped += 1
+        except Exception as e:
+            print(f"Error inserting group {g_name}: {e}")
+            skipped += 1
+
+    conn.commit()
+    conn.close()
+    return {"added": added, "skipped": skipped, "total": len(lines)}
+
+
+def delete_student_group(group_id: int):
+    """O'quv guruhini o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM student_groups WHERE id = ?", (group_id,))
+        conn.commit()
+        conn.close()
+
+        # Supabase-dan o'chirish
+        _sync_supabase_async("atlas_student_groups", {}, method="DELETE", params=f"?id=eq.{group_id}")
+        return True
+    except Exception as e:
+        print(f"Delete group error: {e}")
+        return False
 
 
 if __name__ == "__main__":

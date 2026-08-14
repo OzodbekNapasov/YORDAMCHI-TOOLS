@@ -539,12 +539,17 @@ def _render_buyruq(template_filename: str, data: dict, output_png_path: str) -> 
     draw.text((tab_indent_x, cur_y), asos_text, fill=(0, 0, 0), font=f_italic)
     cur_y += 120
 
-    # 9. FOOTER (DIRECTOR + STAMP)
-    footer_banner_png = os.path.join(base_dir, "templates", "stamps", "word_footer_banner.png")
-    footer_y = max(cur_y + 80, 2900)
-    if os.path.exists(footer_banner_png):
-        foot_img = Image.open(footer_banner_png).convert("RGBA")
-        img.paste(foot_img, (445, footer_y), foot_img if "A" in foot_img.getbands() else None)
+    # 9. FOOTER (Asl Word shablonidagi kabi: Faqat matn, pechat va imzosiz)
+    footer_y = max(cur_y + 120, 2980)
+    draw.text((left_margin, footer_y), "“Qarshi tibbiyot texnikumi”", fill=(0, 0, 0), font=f_bold)
+
+    dir_label = "ijrochi direktori:"
+    dir_name = "Sh.Raxmonov"
+    bb_dn = f_bold.getbbox(dir_name)
+    w_dn = bb_dn[2] - bb_dn[0]
+
+    draw.text((left_margin, footer_y + 70), dir_label, fill=(0, 0, 0), font=f_reg)
+    draw.text((right_margin - w_dn, footer_y + 70), dir_name, fill=(0, 0, 0), font=f_bold)
 
     img.save(output_png_path, "PNG", quality=100)
     return True

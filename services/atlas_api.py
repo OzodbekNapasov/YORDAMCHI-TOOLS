@@ -907,15 +907,84 @@ def api_resend_document_telegram(doc_id):
         return jsonify({"success": True, "message": "Hujjat Telegramingizga yuborildi!"})
     except Exception as e:
         return jsonify({"success": False, "error": f"Telegram xatosi: {str(e)}"}), 500
+@atlas_api.route("/documents/<int:doc_id>", methods=["PUT"])
 @admin_required
-def api_download_document(file_id):
-    out_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
-    target_file = os.path.join(out_dir, f"generated_{file_id}.png")
+def api_update_document(doc_id):
+    data = request.get_json() or {}
+    answers = data.get("answers", {})
 
-    if not os.path.exists(target_file):
-        return jsonify({"error": "Fayl topilmadi yoki muddati tugagan."}), 404
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+    doc = cursor.fetchone()
+    conn.close()
 
-    return send_file(target_file, mimetype="image/png", as_attachment=False)
+    if not doc:
+        return jsonify({"success": False, "error": "Hujjat topilmadi."}), 404
+
+    tpl_id = doc["template_id"]
+    target_tpl = None
+    for t in DOCBOT_TEMPLATES:
+        if t["id"] == tpl_id:
+            target_tpl = t
+            break
+
+    if not target_tpl:
+        target_tpl = DOCBOT_TEMPLATES[0]
+
+    fio = answers.get("FIO") or answers.get("IFO") or doc["recipient_fio"]
+    if "FIO" in answers: answers["IFO"] = answers["FIO"]
+    if "IFO" in answers: answers["FIO"] = answers["IFO"]
+
+    png_path = doc["file_path"]
+    docx_path = png_path.rsplit(".", 1)[0] + ".docx" if "." in png_path else ""
+
+    if tpl_id == "buyruq_safidan_chiqarish":
+        asos_turi = str(answers.get("asos_turi", "Talaba arizasi")).strip()
+        if "bildirgi" in asos_turi.lower() or "rahbar" in asos_turi.lower():
+            template_filename = "Talabalar safidan chiqarish — 2-asos.docx"
+        else:
+            template_filename = "Talabalar safidan chiqarish - 1-asos.docx"
+    else:
+        template_filename = target_tpl.get("filename", "malumotnoma.docx")
+
+    template_file_path = find_template_file(template_filename)
+    if not template_file_path:
+        return jsonify({"success": False, "error": f"Shablon fayli topilmadi: {template_filename}"}), 400
+
+    # 1. Re-fill Word (.docx)
+    if docx_path and os.path.exists(os.path.dirname(docx_path)):
+        fill_template(template_file_path, docx_path, answers)
+
+    # 2. Re-render 300 DPI PNG
+    if png_path and os.path.exists(os.path.dirname(png_path)):
+        render_docx_template_to_image(template_filename, png_path, answers)
+
+    # 3. Update Supabase Storage
+    try:
+        from services.supabase_storage import upload_document_to_supabase
+        base_png = os.path.basename(png_path)
+        upload_document_to_supabase(png_path, base_png)
+        if docx_path and os.path.exists(docx_path):
+            upload_document_to_supabase(docx_path, os.path.basename(docx_path))
+    except Exception:
+        pass
+
+    # 4. Update in Database
+    from services.atlas_db import update_generated_document
+    update_generated_document(doc_id, fio, answers, png_path)
+
+    admin = get_current_admin()
+    log_audit(admin["username"], "documents", "update_document", "success", {"doc_id": doc_id, "fio": fio}, request.remote_addr)
+
+    return jsonify({
+        "success": True,
+        "message": "Hujjat muvaffaqiyatli tahrirlandi va yangilandi!",
+        "doc_id": doc_id,
+        "view_url": f"/api/documents/view/{doc_id}",
+        "download_url": f"/api/documents/download/{doc_id}",
+        "download_docx_url": f"/api/documents/download_docx/{doc_id}"
+    })
 
 
 @atlas_api.route("/documents/history", methods=["GET"])
@@ -927,6 +996,51 @@ def api_get_doc_history():
     docs = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return jsonify({"success": True, "history": docs})
+
+
+# ============================================================
+# 8.2 O'QUV GURUHLARI (ACADEMIC GROUPS) ENDPOINTS
+# ============================================================
+
+@atlas_api.route("/groups/academic", methods=["GET"])
+@admin_required
+def api_get_academic_groups():
+    from services.atlas_db import get_student_groups
+    groups = get_student_groups()
+    return jsonify({"success": True, "groups": groups, "total": len(groups)})
+
+
+@atlas_api.route("/groups/academic/bulk", methods=["POST"])
+@admin_required
+def api_bulk_add_academic_groups():
+    data = request.get_json() or {}
+    text = data.get("text", "").strip()
+    if not text:
+        return jsonify({"success": False, "error": "Guruhlar matni bo'sh bo'lishi mumkin emas."}), 400
+
+    from services.atlas_db import bulk_add_student_groups
+    res = bulk_add_student_groups(text)
+
+    admin = get_current_admin()
+    log_audit(admin["username"], "groups", "bulk_add_groups", "success", res, request.remote_addr)
+
+    return jsonify({
+        "success": True,
+        "message": f"Muvaffaqiyatli qo'shildi: {res['added']} ta guruh. (O'tkazib yuborilgan/mavjud: {res['skipped']} ta)",
+        "result": res
+    })
+
+
+@atlas_api.route("/groups/academic/<int:group_id>", methods=["DELETE"])
+@admin_required
+def api_delete_academic_group(group_id):
+    from services.atlas_db import delete_student_group
+    success = delete_student_group(group_id)
+    if success:
+        admin = get_current_admin()
+        log_audit(admin["username"], "groups", "delete_group", "warning", {"group_id": group_id}, request.remote_addr)
+        return jsonify({"success": True, "message": "Guruh o'chirildi."})
+    return jsonify({"success": False, "error": "Guruhni o'chirishda xatolik."}), 500
 
 
 # ============================================================

@@ -3,7 +3,7 @@
 -- Run this in your Supabase SQL Editor (1-Click Setup)
 -- ============================================================
 
--- 1. Generated Documents Table (300 DPI Certificates Archive)
+-- 1. Generated Documents Table (300 DPI Certificates & Orders Archive)
 CREATE TABLE IF NOT EXISTS public.atlas_generated_docs (
     id BIGSERIAL PRIMARY KEY,
     template_id TEXT NOT NULL,
@@ -42,14 +42,27 @@ CREATE TABLE IF NOT EXISTS public.atlas_audit_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 4. Enable Row Level Security & Allow Service Role Full Access
+-- 4. Student Academic Groups Table (O'quv guruhlari)
+CREATE TABLE IF NOT EXISTS public.atlas_student_groups (
+    id BIGSERIAL PRIMARY KEY,
+    group_name TEXT UNIQUE NOT NULL,
+    course_level INT DEFAULT 1,
+    direction TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 5. Enable Row Level Security & Allow Service Role Full Access
 ALTER TABLE public.atlas_generated_docs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.atlas_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.atlas_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.atlas_student_groups ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow service_role full access to atlas_generated_docs" ON public.atlas_generated_docs FOR ALL TO service_role USING (true);
 CREATE POLICY "Allow service_role full access to atlas_users" ON public.atlas_users FOR ALL TO service_role USING (true);
 CREATE POLICY "Allow service_role full access to atlas_audit_logs" ON public.atlas_audit_logs FOR ALL TO service_role USING (true);
+CREATE POLICY "Allow service_role full access to atlas_student_groups" ON public.atlas_student_groups FOR ALL TO service_role USING (true);
 
--- Allow public read access to generated documents if public
+-- Allow public read access to generated documents and groups
 CREATE POLICY "Allow public read access to atlas_generated_docs" ON public.atlas_generated_docs FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to atlas_student_groups" ON public.atlas_student_groups FOR SELECT USING (true);

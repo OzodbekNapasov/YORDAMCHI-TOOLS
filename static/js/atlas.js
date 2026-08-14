@@ -9,9 +9,7 @@ const ATLAS = {
   token: localStorage.getItem('atlas_token') || '',
   user: JSON.parse(localStorage.getItem('atlas_user') || 'null'),
   currentRoute: 'documents', // Asosiy fokus hujjatlar va bot boshqaruvi
-  activeDocTab: 'generate',  // 'generate' yoki 'archive'
-
-  // Professional SVG Icon Library (Strictly Zero Emojis)
+  activeDocTab: 'generate',  // 'generate' yoki 'archiv  // Professional SVG Icon Library (Strictly Zero Emojis)
   icons: {
     dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
     documents: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
@@ -37,8 +35,10 @@ const ATLAS = {
     refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
     user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
-    eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
     eyeOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+    edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
     brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`
   },
 
@@ -110,17 +110,34 @@ const ATLAS = {
   // Router
   navigate(route) {
     this.currentRoute = route;
+
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.route === route);
     });
+    document.querySelectorAll('.nav-sub-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.route === route);
+    });
+
+    const isDocSubRoute = route.startsWith('doc_');
+    const docGroupHeader = document.getElementById('nav-header-docs');
+    if (docGroupHeader) {
+      docGroupHeader.classList.toggle('active', route === 'documents' || isDocSubRoute);
+    }
 
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       const titles = {
-        documents: 'Ma\'lumotnomalar & Hujjatlar Arxivi',
+        documents: 'Ma\'lumotnomalar & Buyruqlar Arxivi',
+        doc_qabul_1_kurs: '1-kursga Qabul Ma\'lumotnomasi',
+        doc_oqiyapti: 'O\'qiyotganligi Haqida Ma\'lumotnoma',
+        doc_buyruq_akademik_tatil: 'Akademik Ta\'til Berish Buyrug\'i',
+        doc_buyruq_qayta_tiklash: 'Akademik Ta\'tildan Qayta Tiklash Buyrug\'i',
+        doc_buyruq_guruhdan_guruhga: 'Guruhdan Guruhga O\'tkazish Buyrug\'i',
+        doc_buyruq_safidan_chiqarish: 'Talabalar Safidan Chiqarish Buyrug\'i',
         dashboard: 'Boshqaruv Paneli',
+        academic_groups: 'O\'quv Guruhlari Boshqaruvi',
         users: 'Foydalanuvchilar Boshqaruvi',
-        groups: 'Guruhlar va Kanallar',
+        groups: 'Ulangan Guruhlar va Kanallar',
         messages: 'Xabarlar va Tarqatish',
         automation: 'Avtomatlashtirish',
         tasks: 'Fon Vazifalari',
@@ -135,19 +152,26 @@ const ATLAS = {
     const viewport = document.getElementById('content-viewport');
     if (!viewport) return;
 
-    switch (route) {
-      case 'documents': this.loadDocuments(viewport); break;
-      case 'dashboard': this.loadDashboard(viewport); break;
-      case 'users': this.loadUsers(viewport); break;
-      case 'groups': this.loadGroups(viewport); break;
-      case 'messages': this.loadMessages(viewport); break;
-      case 'automation': this.loadAutomation(viewport); break;
-      case 'tasks': this.loadTasks(viewport); break;
-      case 'analytics': this.loadAnalytics(viewport); break;
-      case 'logs': this.loadLogs(viewport); break;
-      case 'settings': this.loadSettings(viewport); break;
-      case 'modules': this.loadModules(viewport); break;
-      default: this.loadDocuments(viewport);
+    if (isDocSubRoute) {
+      const tpl_id = route.replace('doc_', '');
+      this.activeDocTab = 'generate';
+      this.loadDocuments(viewport, tpl_id);
+    } else {
+      switch (route) {
+        case 'documents': this.loadDocuments(viewport); break;
+        case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
+        case 'dashboard': this.loadDashboard(viewport); break;
+        case 'users': this.loadUsers(viewport); break;
+        case 'groups': this.loadGroups(viewport, 'telegram'); break;
+        case 'messages': this.loadMessages(viewport); break;
+        case 'automation': this.loadAutomation(viewport); break;
+        case 'tasks': this.loadTasks(viewport); break;
+        case 'analytics': this.loadAnalytics(viewport); break;
+        case 'logs': this.loadLogs(viewport); break;
+        case 'settings': this.loadSettings(viewport); break;
+        case 'modules': this.loadModules(viewport); break;
+        default: this.loadDocuments(viewport);
+      }
     }
   },
 
@@ -246,20 +270,38 @@ const ATLAS = {
           </div>
 
           <nav class="sidebar-menu">
-            <div class="sidebar-group-title">Hujjatlar & Xizmatlar</div>
-            <div class="nav-item active" data-route="documents">
-              ${this.icons.documents} <span>Hujjatlar & Arxiv</span>
+            <div class="sidebar-group-title">Hujjatlar & Buyruqlar</div>
+            
+            <!-- Expandable Accordion Menu -->
+            <div class="nav-group open" id="nav-group-docs">
+              <div class="nav-group-header" id="nav-header-docs">
+                ${this.icons.documents} <span>Hujjatlar & Buyruqlar</span>
+                <span class="nav-arrow">${this.icons.chevronDown}</span>
+              </div>
+              <div class="nav-sub-menu">
+                <div class="nav-sub-item" data-route="doc_qabul_1_kurs">🎓 1-kursga qabul</div>
+                <div class="nav-sub-item" data-route="doc_oqiyapti">📖 O'qiyotganligi haqida</div>
+                <div class="nav-sub-item" data-route="doc_buyruq_akademik_tatil">📝 Akademik ta'til</div>
+                <div class="nav-sub-item" data-route="doc_buyruq_qayta_tiklash">📝 Qayta tiklash</div>
+                <div class="nav-sub-item" data-route="doc_buyruq_guruhdan_guruhga">📝 Guruh almashtirish</div>
+                <div class="nav-sub-item" data-route="doc_buyruq_safidan_chiqarish">📝 Safidan chiqarish</div>
+                <div class="nav-sub-item" data-route="documents">🗂️ Barcha Arxiv & Tarix</div>
+              </div>
             </div>
+
             <div class="nav-item" data-route="dashboard">
               ${this.icons.dashboard} <span>Boshqaruv Paneli</span>
             </div>
 
-            <div class="sidebar-group-title">Telegram Bot Nazorati</div>
+            <div class="sidebar-group-title">O'quv Bo'limi & Bot Nazorati</div>
+            <div class="nav-item" data-route="academic_groups">
+              ${this.icons.groups} <span>O'quv Guruhlari</span>
+            </div>
             <div class="nav-item" data-route="users">
               ${this.icons.users} <span>Foydalanuvchilar</span>
             </div>
             <div class="nav-item" data-route="groups">
-              ${this.icons.groups} <span>Guruhlar & Kanallar</span>
+              ${this.icons.groups} <span>Telegram Guruhlar</span>
             </div>
             <div class="nav-item" data-route="messages">
               ${this.icons.messages} <span>Xabarlar & E'lonlar</span>
@@ -329,8 +371,20 @@ const ATLAS = {
       <div id="toast-container" class="toast-container"></div>
     `;
 
+    // Accordion Toggle
+    document.getElementById('nav-header-docs').addEventListener('click', () => {
+      document.getElementById('nav-group-docs').classList.toggle('open');
+    });
+
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => this.navigate(btn.dataset.route));
+    });
+
+    document.querySelectorAll('.nav-sub-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.navigate(btn.dataset.route);
+      });
     });
 
     document.getElementById('logout-btn').addEventListener('click', () => this.logout());
@@ -341,14 +395,14 @@ const ATLAS = {
   // ============================================================
   // 1. DOCUMENTS & PERMANENT ARCHIVE (ASOSIY BO'LIM)
   // ============================================================
-  async loadDocuments(container) {
+  async loadDocuments(container, specificTplId = null) {
     container.innerHTML = `
       <div class="tab-pills-row">
         <button class="tab-pill-btn ${this.activeDocTab === 'generate' ? 'active' : ''}" id="tab-doc-gen">
-          ${this.icons.plus} <span>Yangi Ma'lumotnoma Shakllantirish</span>
+          ${this.icons.plus} <span>${specificTplId ? 'Hujjatni Shakllantirish' : 'Yangi Hujjat Shakllantirish'}</span>
         </button>
         <button class="tab-pill-btn ${this.activeDocTab === 'archive' ? 'active' : ''}" id="tab-doc-arch">
-          ${this.icons.archive} <span>Hujjatlar Arxivi & Tarixi</span>
+          ${this.icons.archive} <span>${specificTplId ? 'Ushbu Hujjat Arxivi' : 'Barcha Hujjatlar Arxivi'}</span>
         </button>
       </div>
 
@@ -357,32 +411,32 @@ const ATLAS = {
 
     document.getElementById('tab-doc-gen').addEventListener('click', () => {
       this.activeDocTab = 'generate';
-      this.loadDocuments(container);
+      this.loadDocuments(container, specificTplId);
     });
 
     document.getElementById('tab-doc-arch').addEventListener('click', () => {
       this.activeDocTab = 'archive';
-      this.loadDocuments(container);
+      this.loadDocuments(container, specificTplId);
     });
 
     const contentBox = document.getElementById('doc-tab-content');
     if (this.activeDocTab === 'generate') {
-      this.renderDocumentGenerator(contentBox);
+      this.renderDocumentGenerator(contentBox, specificTplId);
     } else {
-      this.renderDocumentArchive(contentBox);
+      this.renderDocumentArchive(contentBox, specificTplId || '');
     }
   },
 
-  renderDocumentGenerator(container) {
+  renderDocumentGenerator(container, specificTplId = null) {
     const todayStr = new Date().toLocaleDateString('ru-RU');
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:24px;">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:24px;margin-bottom:24px;">
         <!-- Left: Input Form -->
         <div class="glass-card">
           <div class="card-header-flex">
             <div>
               <div class="card-title">Rasmiy Hujjatlar & Buyruqlar Generatori</div>
-              <div class="card-subtitle">Ultra HD (300 DPI A4) rasm va tahrirlanadigan Word (.docx) holida bir zumda shakllantirish</div>
+              <div class="card-subtitle">Ultra HD (300 DPI A4) rasm va asl Word (.docx) holida bir zumda shakllantirish</div>
             </div>
           </div>
 
@@ -391,19 +445,19 @@ const ATLAS = {
               <label class="form-label">Hujjat / Buyruq Shablonini Tanlang</label>
               <select id="doc-tpl-select" class="select-control">
                 <optgroup label="🎓 Ma'lumotnomalar">
-                  <option value="qabul_1_kurs">🎓 1-kursga qabul ma'lumotnomasi</option>
-                  <option value="oqiyapti">📖 O'qiyotganligi haqida ma'lumotnoma</option>
+                  <option value="qabul_1_kurs" ${specificTplId === 'qabul_1_kurs' ? 'selected' : ''}>🎓 1-kursga qabul ma'lumotnomasi</option>
+                  <option value="oqiyapti" ${specificTplId === 'oqiyapti' ? 'selected' : ''}>📖 O'qiyotganligi haqida ma'lumotnoma</option>
                 </optgroup>
                 <optgroup label="📝 Rasmiy Buyruqlar">
-                  <option value="buyruq_akademik_tatil">📝 Akademik ta'til berish buyrug'i</option>
-                  <option value="buyruq_qayta_tiklash">📝 Akademik ta'tildan qayta tiklash buyrug'i</option>
-                  <option value="buyruq_guruhdan_guruhga">📝 Guruhdan guruhga o'tkazish buyrug'i</option>
-                  <option value="buyruq_safidan_chiqarish">📝 Talabalar safidan chiqarish buyrug'i</option>
+                  <option value="buyruq_akademik_tatil" ${specificTplId === 'buyruq_akademik_tatil' ? 'selected' : ''}>📝 Akademik ta'til berish buyrug'i</option>
+                  <option value="buyruq_qayta_tiklash" ${specificTplId === 'buyruq_qayta_tiklash' ? 'selected' : ''}>📝 Akademik ta'tildan qayta tiklash buyrug'i</option>
+                  <option value="buyruq_guruhdan_guruhga" ${specificTplId === 'buyruq_guruhdan_guruhga' ? 'selected' : ''}>📝 Guruhdan guruhga o'tkazish buyrug'i</option>
+                  <option value="buyruq_safidan_chiqarish" ${specificTplId === 'buyruq_safidan_chiqarish' ? 'selected' : ''}>📝 Talabalar safidan chiqarish buyrug'i</option>
                 </optgroup>
               </select>
             </div>
 
-            <!-- Safidan chiqarish asosi (faqat chiqarishda chiqadi) -->
+            <!-- Safidan chiqarish asosi -->
             <div class="form-group" id="group-asos-turi" style="display:none;">
               <label class="form-label">Chiqarish Asosi</label>
               <select id="doc-asos-turi" class="select-control">
@@ -412,13 +466,13 @@ const ATLAS = {
               </select>
             </div>
 
-            <!-- Buyruq raqami (faqat buyruqlarda) -->
+            <!-- Buyruq raqami -->
             <div class="form-group" id="group-buyruq-raqami" style="display:none;">
               <label class="form-label">Buyruq Raqami</label>
               <input type="text" id="doc-buyruq-raqami" class="input-control" placeholder="14-B" value="14-B">
             </div>
 
-            <!-- Avvalgi buyruq rekvizitlari (faqat qayta tiklashda) -->
+            <!-- Avvalgi buyruq rekvizitlari -->
             <div id="group-avvalgi-buyruq" style="display:none;">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
@@ -448,7 +502,7 @@ const ATLAS = {
               </select>
             </div>
 
-            <!-- O'quv yili (faqat ma'lumotnomalarda) -->
+            <!-- O'quv yili -->
             <div class="form-group" id="group-oquv-yili">
               <label class="form-label">O'quv Yili</label>
               <input type="text" id="doc-oquv-yili" class="input-control" placeholder="2026/2027" value="2026/2027">
@@ -468,16 +522,18 @@ const ATLAS = {
                 </div>
                 <div class="form-group" id="subgroup-guruh">
                   <label class="form-label" id="label-guruh">Guruhi</label>
-                  <input type="text" id="doc-guruhi" class="input-control" placeholder="204" value="204">
+                  <input type="text" id="doc-guruhi" class="input-control" placeholder="204" value="204" list="academic-groups-list">
                 </div>
               </div>
             </div>
 
-            <!-- Yangi guruh (qayta tiklash va guruh almashtirishda) -->
+            <!-- Yangi guruh -->
             <div class="form-group" id="group-yangi-guruh" style="display:none;">
               <label class="form-label">Yangi Guruh (O'tkazilayotgan / Tiklanayotgan)</label>
-              <input type="text" id="doc-yangi-guruhi" class="input-control" placeholder="205" value="205">
+              <input type="text" id="doc-yangi-guruhi" class="input-control" placeholder="205" value="205" list="academic-groups-list">
             </div>
+
+            <datalist id="academic-groups-list"></datalist>
 
             <div class="form-group">
               <label class="form-label">Berilgan Sana</label>
@@ -497,11 +553,23 @@ const ATLAS = {
           <div id="doc-preview-box" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="margin-bottom:12px;color:rgba(0,203,169,0.4);">${this.icons.documents}</div>
             <div style="font-size:14.5px;font-weight:700;color:#ffffff;margin-bottom:6px;">Hujjat oldindan ko'rish oynasi</div>
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.65);max-width:320px;">Maydonlarni to'ldirib, tugmani bosing. Tayyorlangan hujjat to'g'ridan-to'g'ri shu yerda aks etadi va Word (.docx) hamda PNG formatida yuklab olishga taqdim etiladi.</div>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.65);max-width:320px;">Maydonlarni to'ldirib, tugmani bosing. Asl Word (.docx) va 300 DPI rasmi shu yerda aks etadi va saqlanadi.</div>
           </div>
         </div>
       </div>
+
+      <!-- Bottom Dedicated Table for this template -->
+      <div id="specific-tpl-archive-box"></div>
     `;
+
+    // Load academic groups datalist asynchronously
+    this.api('/api/groups/academic').then(res => {
+      const gList = res?.groups || [];
+      const dlist = document.getElementById('academic-groups-list');
+      if (dlist && gList.length > 0) {
+        dlist.innerHTML = gList.map(g => `<option value="${g.group_name}">`).join('');
+      }
+    });
 
     const tplSelect = document.getElementById('doc-tpl-select');
     const groupAsos = document.getElementById('group-asos-turi');
@@ -518,7 +586,6 @@ const ATLAS = {
     const updateFormVisibility = () => {
       const val = tplSelect.value;
       
-      // Default yashirish
       groupAsos.style.display = 'none';
       groupBuyruqNum.style.display = 'none';
       groupAvvBuyruq.style.display = 'none';
@@ -570,6 +637,9 @@ const ATLAS = {
         subgroupGuruh.style.display = 'block';
         labelGuruh.innerText = 'Guruhi';
       }
+
+      // Render dedicated archive below
+      this.renderDocumentArchive(document.getElementById('specific-tpl-archive-box'), val, true);
     };
 
     tplSelect.addEventListener('change', updateFormVisibility);
@@ -635,11 +705,14 @@ const ATLAS = {
               <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${fio}', ${res.doc_id})">
                 ${this.icons.eye} <span>Katta ko'rish</span>
               </button>
+              <button class="btn-sm btn-secondary" onclick="ATLAS.openEditDocModal(${res.doc_id})">
+                ${this.icons.edit} <span>Tahrirlash</span>
+              </button>
               <a href="${res.download_docx_url || `/api/documents/download_docx/${res.doc_id}`}" class="btn-sm btn-primary" style="background:#2563eb;border-color:#3b82f6;">
-                ${this.icons.download} <span>Yuklab olish (DOCX)</span>
+                ${this.icons.download} <span>Word (.docx) yuklab olish</span>
               </a>
               <a href="${res.download_url}" class="btn-sm btn-secondary">
-                ${this.icons.download} <span>Yuklab olish (PNG)</span>
+                ${this.icons.download} <span>Rasm (.png)</span>
               </a>
               <button class="btn-sm btn-secondary" onclick="ATLAS.resendDocumentToTelegram(${res.doc_id})">
                 ${this.icons.send} <span>Telegramga yuborish</span>
@@ -647,116 +720,308 @@ const ATLAS = {
             </div>
           </div>
         `;
+        // Refresh bottom table
+        this.renderDocumentArchive(document.getElementById('specific-tpl-archive-box'), tpl_id, true);
       } else {
         this.toast(res ? res.error : 'Hujjat shakllantirishda xatolik', 'error');
       }
     });
   },
 
-  async renderDocumentArchive(container) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Arxiv yuklanmoqda...</div>`;
+  async renderDocumentArchive(container, initialFilter = '', isEmbedded = false) {
+    if (!container) return;
+    container.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);">Arxiv yuklanmoqda...</div>`;
+    
+    let activeFilter = initialFilter;
+    const fetchAndRender = async () => {
+      const url = activeFilter ? `/api/documents/list?template=${encodeURIComponent(activeFilter)}` : '/api/documents/list';
+      const res = await this.api(url);
+      const docs = res?.documents || [];
+
+      container.innerHTML = `
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <div class="card-title">${isEmbedded ? 'Ushbu Shablon Bo\'yicha Yaratilganlar Tarixi' : 'Hujjatlar & Buyruqlar Arxivi'}</div>
+              <div class="card-subtitle">Jami: ${res?.pagination?.total || docs.length} ta hujjat</div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <input type="text" id="arch-search-input" class="input-control" style="width:240px;height:38px;" placeholder="F.I.O bo'yicha qidirish...">
+            </div>
+          </div>
+
+          ${!isEmbedded ? `
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+              <button class="btn-sm ${!activeFilter ? 'btn-primary' : 'btn-secondary'}" data-filter="">Barchasi</button>
+              <button class="btn-sm ${activeFilter === 'qabul_1_kurs' ? 'btn-primary' : 'btn-secondary'}" data-filter="qabul_1_kurs">1-kursga qabul</button>
+              <button class="btn-sm ${activeFilter === 'oqiyapti' ? 'btn-primary' : 'btn-secondary'}" data-filter="oqiyapti">O'qiyotganligi</button>
+              <button class="btn-sm ${activeFilter === 'buyruq_akademik_tatil' ? 'btn-primary' : 'btn-secondary'}" data-filter="buyruq_akademik_tatil">Akademik ta'til</button>
+              <button class="btn-sm ${activeFilter === 'buyruq_qayta_tiklash' ? 'btn-primary' : 'btn-secondary'}" data-filter="buyruq_qayta_tiklash">Qayta tiklash</button>
+              <button class="btn-sm ${activeFilter === 'buyruq_guruhdan_guruhga' ? 'btn-primary' : 'btn-secondary'}" data-filter="buyruq_guruhdan_guruhga">Guruh almashtirish</button>
+              <button class="btn-sm ${activeFilter === 'buyruq_safidan_chiqarish' ? 'btn-primary' : 'btn-secondary'}" data-filter="buyruq_safidan_chiqarish">Safidan chiqarish</button>
+            </div>
+          ` : ''}
+
+          <div class="table-responsive">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th>Vaqt / Sana</th>
+                  <th>Talaba F.I.O</th>
+                  <th>Turi & Shablon</th>
+                  <th>Qo'shimcha Detal</th>
+                  <th>Manba</th>
+                  <th style="text-align:right">Tahrirlash & Yuklab olish</th>
+                </tr>
+              </thead>
+              <tbody id="archive-table-body">
+                ${docs.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hozircha saqlangan hujjatlar yo'q</td></tr>` : ''}
+                ${docs.map(d => {
+                  const p = d.parsed_data || {};
+                  const isBuyruq = d.template_id?.includes('buyruq');
+                  const badgeCls = isBuyruq ? 'badge-warning' : 'badge-info';
+                  return `
+                    <tr>
+                      <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
+                      <td><b>${d.recipient_fio}</b></td>
+                      <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
+                      <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
+                        ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
+                        ${p.YONALISH || p.yonalishi || ''}
+                        ${p.KURSI || p.kursi ? ` (${p.KURSI || p.kursi}-kurs)` : ''}
+                        ${p.GURUHI || p.guruhi || p.avvalgi_guruhi ? ` | ${p.GURUHI || p.guruhi || p.avvalgi_guruhi}-guruh` : ''}
+                        ${p.yangi_guruhi ? ` ➔ ${p.yangi_guruhi}` : ''}
+                      </td>
+                      <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
+                      <td style="text-align:right;">
+                        <div style="display:flex;gap:6px;justify-content:flex-end;">
+                          <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                          <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
+                          <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                          <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
+                          <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
+                          <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      // Filter button listeners
+      container.querySelectorAll('[data-filter]').forEach(b => {
+        b.addEventListener('click', () => {
+          activeFilter = b.dataset.filter;
+          fetchAndRender();
+        });
+      });
+
+      // Search listener
+      const searchInp = document.getElementById('arch-search-input');
+      if (searchInp) {
+        searchInp.addEventListener('input', async (e) => {
+          const q = e.target.value.trim();
+          let sUrl = `/api/documents/list?q=${encodeURIComponent(q)}`;
+          if (activeFilter) sUrl += `&template=${encodeURIComponent(activeFilter)}`;
+          const sRes = await this.api(sUrl);
+          const sDocs = sRes?.documents || [];
+          const tbody = document.getElementById('archive-table-body');
+          if (!tbody) return;
+          if (sDocs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hech qanday hujjat topilmadi</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = sDocs.map(d => {
+            const p = d.parsed_data || {};
+            const isBuyruq = d.template_id?.includes('buyruq');
+            const badgeCls = isBuyruq ? 'badge-warning' : 'badge-info';
+            return `
+              <tr>
+                <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
+                <td><b>${d.recipient_fio}</b></td>
+                <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
+                <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
+                  ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
+                  ${p.YONALISH || p.yonalishi || ''}
+                  ${p.KURSI || p.kursi ? ` (${p.KURSI || p.kursi}-kurs)` : ''}
+                  ${p.GURUHI || p.guruhi || p.avvalgi_guruhi ? ` | ${p.GURUHI || p.guruhi || p.avvalgi_guruhi}-guruh` : ''}
+                  ${p.yangi_guruhi ? ` ➔ ${p.yangi_guruhi}` : ''}
+                </td>
+                <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
+                <td style="text-align:right;">
+                  <div style="display:flex;gap:6px;justify-content:flex-end;">
+                    <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                    <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
+                    <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                    <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
+                    <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
+                    <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        });
+      }
+    };
+
+    fetchAndRender();
+  },
+
+  async openEditDocModal(docId) {
     const res = await this.api('/api/documents/list');
     const docs = res?.documents || [];
+    const doc = docs.find(d => d.id === docId);
+    if (!doc) {
+      this.toast('Hujjat ma\'lumotlari topilmadi', 'error');
+      return;
+    }
 
-    container.innerHTML = `
-      <div class="glass-card">
-        <div class="card-header-flex">
-          <div>
-            <div class="card-title">Yaratilgan Hujjatlar & Buyruqlar Arxivi</div>
-            <div class="card-subtitle">Bot va platforma orqali shakllantirilgan barcha ma'lumotnomalar va buyruqlar (Jami: ${res?.pagination?.total || docs.length} ta)</div>
-          </div>
-          <div style="display:flex;gap:10px;">
-            <input type="text" id="arch-search-input" class="input-control" style="width:240px;height:38px;" placeholder="Talaba F.I.O bo'yicha qidirish...">
-          </div>
+    const p = doc.parsed_data || {};
+    const tpl_id = doc.template_id;
+    const isBuyruq = tpl_id.includes('buyruq');
+
+    this.openModal(`Hujjatni Tahrirlash: ${doc.template_name}`, `
+      <form id="edit-doc-form">
+        <div class="form-group">
+          <label class="form-label">Talabaning To'liq F.I.O</label>
+          <input type="text" id="edit-fio" class="input-control" value="${doc.recipient_fio || ''}" required>
         </div>
 
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Vaqt / Sana</th>
-                <th>Talaba F.I.O</th>
-                <th>Turi & Shablon</th>
-                <th>Qo'shimcha Detal</th>
-                <th>Manba</th>
-                <th style="text-align:right">Yuklab olish & Amallar</th>
-              </tr>
-            </thead>
-            <tbody id="archive-table-body">
-              ${docs.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hozircha arxivda saqlangan hujjatlar yo'q</td></tr>` : ''}
-              ${docs.map(d => {
-                const p = d.parsed_data || {};
-                const isBuyruq = d.template_id?.includes('buyruq');
-                const badgeCls = isBuyruq ? 'badge-warning' : 'badge-info';
-                return `
-                  <tr>
-                    <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
-                    <td><b>${d.recipient_fio}</b></td>
-                    <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
-                    <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
-                      ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
-                      ${p.YONALISH || p.yonalishi || ''}
-                      ${p.KURSI || p.kursi ? ` (${p.KURSI || p.kursi}-kurs)` : ''}
-                      ${p.GURUHI || p.guruhi || p.avvalgi_guruhi ? ` | ${p.GURUHI || p.guruhi || p.avvalgi_guruhi}-guruh` : ''}
-                      ${p.yangi_guruhi ? ` ➔ ${p.yangi_guruhi}` : ''}
-                    </td>
-                    <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
-                    <td style="text-align:right;">
-                      <div style="display:flex;gap:6px;justify-content:flex-end;">
-                        <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
-                        <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
-                        <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
-                        <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
-                        <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
-                      </div>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
+        ${isBuyruq ? `
+          <div class="form-group">
+            <label class="form-label">Buyruq Raqami</label>
+            <input type="text" id="edit-buyruq-raqami" class="input-control" value="${p.buyruq_raqami || '14-B'}" required>
+          </div>
+        ` : ''}
 
-    document.getElementById('arch-search-input').addEventListener('input', async (e) => {
-      const q = e.target.value.trim();
-      const sRes = await this.api(`/api/documents/list?q=${encodeURIComponent(q)}`);
-      const sDocs = sRes?.documents || [];
-      const tbody = document.getElementById('archive-table-body');
-      if (sDocs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hech qanday hujjat topilmadi</td></tr>`;
-        return;
+        ${tpl_id === 'buyruq_safidan_chiqarish' ? `
+          <div class="form-group">
+            <label class="form-label">Chiqarish Asosi</label>
+            <select id="edit-asos-turi" class="select-control">
+              <option value="Talaba arizasi" ${p.asos_turi === 'Talaba arizasi' ? 'selected' : ''}>Talaba arizasi asosida (1-asos)</option>
+              <option value="Rahbarini bildirgisi" ${p.asos_turi === 'Rahbarini bildirgisi' ? 'selected' : ''}>Guruh rahbarining bildirgisi asosida (2-asos)</option>
+            </select>
+          </div>
+        ` : ''}
+
+        ${tpl_id === 'buyruq_qayta_tiklash' ? `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="form-group">
+              <label class="form-label">Avvalgi Buyruq Raqami</label>
+              <input type="text" id="edit-avv-raqam" class="input-control" value="${p.avvalgi_buyruq_raqami || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Avvalgi Buyruq Sanasi</label>
+              <input type="text" id="edit-avv-sana" class="input-control" value="${p.avvalgi_buyruq_sanasi || ''}">
+            </div>
+          </div>
+        ` : ''}
+
+        ${(p.YONALISH || p.yonalishi || tpl_id === 'qabul_1_kurs' || tpl_id === 'oqiyapti' || tpl_id === 'buyruq_guruhdan_guruhga') ? `
+          <div class="form-group">
+            <label class="form-label">Ta'lim Yo'nalishi</label>
+            <input type="text" id="edit-yonalish" class="input-control" value="${p.YONALISH || p.yonalishi || 'Hamshiralik ishi'}">
+          </div>
+        ` : ''}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          ${(p.KURSI || p.kursi) ? `
+            <div class="form-group">
+              <label class="form-label">Kursi</label>
+              <input type="text" id="edit-kursi" class="input-control" value="${p.KURSI || p.kursi || '1'}">
+            </div>
+          ` : ''}
+          ${(p.GURUHI || p.guruhi || p.avvalgi_guruhi) ? `
+            <div class="form-group">
+              <label class="form-label">${tpl_id === 'buyruq_qayta_tiklash' || tpl_id === 'buyruq_guruhdan_guruhga' ? 'Avvalgi guruhi' : 'Guruhi'}</label>
+              <input type="text" id="edit-guruhi" class="input-control" value="${p.GURUHI || p.guruhi || p.avvalgi_guruhi || ''}">
+            </div>
+          ` : ''}
+        </div>
+
+        ${(tpl_id === 'buyruq_qayta_tiklash' || tpl_id === 'buyruq_guruhdan_guruhga') ? `
+          <div class="form-group">
+            <label class="form-label">Yangi Guruh</label>
+            <input type="text" id="edit-yangi-guruhi" class="input-control" value="${p.yangi_guruhi || ''}">
+          </div>
+        ` : ''}
+
+        <div class="form-group">
+          <label class="form-label">Hujjat Sanasi</label>
+          <input type="text" id="edit-sana" class="input-control" value="${p.SANA || p.sanasi || ''}" required>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+          <button type="submit" class="btn-sm btn-primary" id="edit-submit-btn">Saqlash va Yangilash</button>
+        </div>
+      </form>
+    `);
+
+    document.getElementById('edit-doc-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('edit-submit-btn');
+      btn.innerText = 'Yangilanmoqda...';
+
+      const fio = document.getElementById('edit-fio').value.trim();
+      const sana = document.getElementById('edit-sana').value.trim();
+      const answers = {
+        ...p,
+        FIO: fio,
+        IFO: fio,
+        SANA: sana,
+        sanasi: sana
+      };
+
+      const editBuyruq = document.getElementById('edit-buyruq-raqami');
+      if (editBuyruq) answers['buyruq_raqami'] = editBuyruq.value.trim();
+
+      const editAsos = document.getElementById('edit-asos-turi');
+      if (editAsos) answers['asos_turi'] = editAsos.value;
+
+      const editAvvRaqam = document.getElementById('edit-avv-raqam');
+      if (editAvvRaqam) answers['avvalgi_buyruq_raqami'] = editAvvRaqam.value.trim();
+
+      const editAvvSana = document.getElementById('edit-avv-sana');
+      if (editAvvSana) answers['avvalgi_buyruq_sanasi'] = editAvvSana.value.trim();
+
+      const editYonalish = document.getElementById('edit-yonalish');
+      if (editYonalish) {
+        answers['YONALISH'] = editYonalish.value.trim();
+        answers['yonalishi'] = editYonalish.value.trim();
       }
-      tbody.innerHTML = sDocs.map(d => {
-        const p = d.parsed_data || {};
-        const isBuyruq = d.template_id?.includes('buyruq');
-        const badgeCls = isBuyruq ? 'badge-warning' : 'badge-info';
-        return `
-          <tr>
-            <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
-            <td><b>${d.recipient_fio}</b></td>
-            <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
-            <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
-              ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
-              ${p.YONALISH || p.yonalishi || ''}
-              ${p.KURSI || p.kursi ? ` (${p.KURSI || p.kursi}-kurs)` : ''}
-              ${p.GURUHI || p.guruhi || p.avvalgi_guruhi ? ` | ${p.GURUHI || p.guruhi || p.avvalgi_guruhi}-guruh` : ''}
-              ${p.yangi_guruhi ? ` ➔ ${p.yangi_guruhi}` : ''}
-            </td>
-            <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
-            <td style="text-align:right;">
-              <div style="display:flex;gap:6px;justify-content:flex-end;">
-                <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
-                <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
-                <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
-                <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
-                <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+
+      const editKursi = document.getElementById('edit-kursi');
+      if (editKursi) {
+        answers['KURSI'] = editKursi.value.trim();
+        answers['kursi'] = editKursi.value.trim();
+      }
+
+      const editGuruhi = document.getElementById('edit-guruhi');
+      if (editGuruhi) {
+        answers['GURUHI'] = editGuruhi.value.trim();
+        answers['guruhi'] = editGuruhi.value.trim();
+        answers['avvalgi_guruhi'] = editGuruhi.value.trim();
+      }
+
+      const editYangiGuruhi = document.getElementById('edit-yangi-guruhi');
+      if (editYangiGuruhi) answers['yangi_guruhi'] = editYangiGuruhi.value.trim();
+
+      const resUpdate = await this.api(`/api/documents/${docId}`, 'PUT', { answers });
+      btn.innerText = 'Saqlash va Yangilash';
+
+      if (resUpdate && resUpdate.success) {
+        this.toast(resUpdate.message, 'success');
+        this.closeModal();
+        this.loadDocuments(document.getElementById('content-viewport'));
+      } else {
+        this.toast(resUpdate ? resUpdate.error : 'Tahrirlashda xatolik', 'error');
+      }
     });
   },
 
@@ -803,147 +1068,55 @@ const ATLAS = {
   },
 
   // ============================================================
-  // 2. DASHBOARD VIEW
+  // 2. O'QUV GURUHLARI & TELEGRAM GURUHLAR (GURUHLAR BO'LIMI)
   // ============================================================
-  async loadDashboard(container) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Statistika yuklanmoqda...</div>`;
-    const res = await this.api('/api/dashboard/stats');
-    const actRes = await this.api('/api/dashboard/activity');
-
-    if (!res || !res.success) {
-      container.innerHTML = `<div class="glass-card">Statistikalarni yuklashda xatolik yuz berdi.</div>`;
-      return;
-    }
-
-    const m = res.metrics;
-    const b = res.bot;
-    const logs = actRes?.activity || [];
+  async loadGroups(container, activeTab = 'academic') {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Guruhlar yuklanmoqda...</div>`;
 
     container.innerHTML = `
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Yaratilgan Hujjatlar</span>
-            <span class="kpi-value">${m.total_docs}</span>
-            <span class="kpi-change">Arxivda saqlangan</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.documents}</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Bot Foydalanuvchilari</span>
-            <span class="kpi-value">${m.total_users}</span>
-            <span class="kpi-change">+${m.new_users_today} bugun</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.users}</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Yuborilgan Xabarlar</span>
-            <span class="kpi-value">${m.sent_messages}</span>
-            <span class="kpi-change">Muvaffaqiyatli</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.messages}</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Ulangan Guruhlar</span>
-            <span class="kpi-value">${m.total_groups}</span>
-            <span class="kpi-change">Monitoring</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.groups}</div>
-        </div>
+      <div class="tab-pills-row">
+        <button class="tab-pill-btn ${activeTab === 'academic' ? 'active' : ''}" id="tab-grp-academic">
+          ${this.icons.groups} <span>🎓 O'quv Guruhlari (Texnikum)</span>
+        </button>
+        <button class="tab-pill-btn ${activeTab === 'telegram' ? 'active' : ''}" id="tab-grp-telegram">
+          ${this.icons.messages} <span>🤖 Ulangan Telegram Guruhlar</span>
+        </button>
       </div>
 
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
-        <div class="glass-card">
-          <div class="card-header-flex">
-            <div>
-              <div class="card-title">Jonli Faoliyat Jurnali</div>
-              <div class="card-subtitle">Real vaqtdagi amallar oqimi</div>
-            </div>
-            <button class="btn-sm btn-secondary" onclick="ATLAS.navigate('logs')">Barcha loglar</button>
-          </div>
-
-          <div class="table-responsive">
-            <table class="glass-table">
-              <thead>
-                <tr>
-                  <th>Vaqt</th>
-                  <th>Modul</th>
-                  <th>Amal</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${logs.length === 0 ? `<tr><td colspan="4" style="text-align:center;">Hozircha amallar qayd etilmagan</td></tr>` : ''}
-                ${logs.slice(0, 6).map(l => `
-                  <tr>
-                    <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${l.timestamp.substring(11, 19)}</td>
-                    <td><span class="badge badge-info">${l.module}</span></td>
-                    <td><b>${l.action}</b></td>
-                    <td><span class="badge badge-${l.status === 'success' ? 'success' : 'error'}">${l.status}</span></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:20px;">
-          <div class="glass-card">
-            <div class="card-header-flex">
-              <div class="card-title">Bot Holati</div>
-              <span class="badge badge-success">Online</span>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
-              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
-                <span style="color:rgba(255,255,255,0.6)">Username:</span>
-                <b class="mono" style="color:var(--accent-glow)">${b.username}</b>
-              </div>
-              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
-                <span style="color:rgba(255,255,255,0.6)">Rejim:</span>
-                <b>${b.mode.toUpperCase()}</b>
-              </div>
-              <div style="display:flex;justify-content:space-between;">
-                <span style="color:rgba(255,255,255,0.6)">Versiya:</span>
-                <span class="badge badge-info">v${b.version}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-card">
-            <div class="card-title" style="margin-bottom:14px;">Tezkor O'tish</div>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;" onclick="ATLAS.navigate('documents')">
-                ${this.icons.plus} <span>Yangi ma'lumotnoma yaratish</span>
-              </button>
-              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;" onclick="ATLAS.navigate('messages')">
-                ${this.icons.send} <span>Xabar yuborish</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div id="groups-tab-content"></div>
     `;
+
+    document.getElementById('tab-grp-academic').addEventListener('click', () => {
+      this.loadGroups(container, 'academic');
+    });
+    document.getElementById('tab-grp-telegram').addEventListener('click', () => {
+      this.loadGroups(container, 'telegram');
+    });
+
+    const contentBox = document.getElementById('groups-tab-content');
+    if (activeTab === 'academic') {
+      this.renderAcademicGroups(contentBox);
+    } else {
+      this.renderTelegramGroups(contentBox);
+    }
   },
 
-  // ============================================================
-  // 3. USERS, GROUPS, MESSAGES, TASKS, AUTOMATION, ANALYTICS, LOGS, SETTINGS
-  // ============================================================
-  async loadUsers(container) {
-    const res = await this.api('/api/users');
-    const users = res?.users || [];
+  async renderAcademicGroups(container) {
+    const res = await this.api('/api/groups/academic');
+    const groups = res?.groups || [];
 
     container.innerHTML = `
       <div class="glass-card">
         <div class="card-header-flex">
           <div>
-            <div class="card-title">Foydalanuvchilar Ro'yxati</div>
-            <div class="card-subtitle">Jami ${users.length} ta foydalanuvchi</div>
+            <div class="card-title">Texnikum O'quv Guruhlari Ro'yxati</div>
+            <div class="card-subtitle">Barcha kurslar bo'yicha guruhlar ro'yxati (Jami: ${groups.length} ta)</div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <input type="text" id="acad-group-search" class="input-control" style="width:220px;height:38px;" placeholder="Guruh nomini qidirish...">
+            <button class="btn-sm btn-primary" id="btn-add-academic-groups">
+              ${this.icons.plus} <span>Guruh qo'shish</span>
+            </button>
           </div>
         </div>
 
@@ -951,25 +1124,23 @@ const ATLAS = {
           <table class="glass-table">
             <thead>
               <tr>
-                <th>Telegram ID</th>
-                <th>Ism / Familiya</th>
-                <th>Username</th>
-                <th>Status</th>
+                <th>№</th>
+                <th>Guruh Nomi</th>
+                <th>Bosqich / Kursi</th>
+                <th>Qo'shilgan Sana</th>
                 <th style="text-align:right">Amallar</th>
               </tr>
             </thead>
-            <tbody>
-              ${users.length === 0 ? `<tr><td colspan="5" style="text-align:center;">Foydalanuvchilar yo'q</td></tr>` : ''}
-              ${users.map(u => `
+            <tbody id="acad-groups-tbody">
+              ${groups.length === 0 ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hozircha o'quv guruhlari kiritilmagan. Yuqoridagi "Guruh qo'shish" tugmasini bosing.</td></tr>` : ''}
+              ${groups.map((g, idx) => `
                 <tr>
-                  <td class="mono"><b>${u.telegram_id}</b></td>
-                  <td>${u.first_name || ''} ${u.last_name || ''}</td>
-                  <td><span class="mono" style="color:var(--text-secondary)">@${u.username || 'mavjud_emas'}</span></td>
-                  <td><span class="badge badge-${u.status === 'active' ? 'success' : 'error'}">${u.status}</span></td>
+                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${idx + 1}</td>
+                  <td><b>${g.group_name}</b></td>
+                  <td><span class="badge badge-info">${g.course_level || 1}-kurs</span></td>
+                  <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${g.created_at || '-'}</td>
                   <td style="text-align:right;">
-                    <div style="display:flex;gap:6px;justify-content:flex-end;">
-                      <button class="btn-icon" onclick="ATLAS.openSendMessageModal(${u.telegram_id})" title="Xabar">${this.icons.send}</button>
-                    </div>
+                    <button class="btn-icon" onclick="ATLAS.deleteAcademicGroup(${g.id})" title="O'chirish">${this.icons.trash}</button>
                   </td>
                 </tr>
               `).join('')}
@@ -978,34 +1149,88 @@ const ATLAS = {
         </div>
       </div>
     `;
+
+    document.getElementById('btn-add-academic-groups').addEventListener('click', () => {
+      this.openBulkAddGroupsModal();
+    });
+
+    document.getElementById('acad-group-search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const tbody = document.getElementById('acad-groups-tbody');
+      const filtered = groups.filter(g => g.group_name.toLowerCase().includes(q));
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hech qanday guruh topilmadi</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = filtered.map((g, idx) => `
+        <tr>
+          <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${idx + 1}</td>
+          <td><b>${g.group_name}</b></td>
+          <td><span class="badge badge-info">${g.course_level || 1}-kurs</span></td>
+          <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${g.created_at || '-'}</td>
+          <td style="text-align:right;">
+            <button class="btn-icon" onclick="ATLAS.deleteAcademicGroup(${g.id})" title="O'chirish">${this.icons.trash}</button>
+          </td>
+        </tr>
+      `).join('');
+    });
   },
 
-  openSendMessageModal(telegramId) {
-    this.openModal(`Foydalanuvchiga Xabar (ID: ${telegramId})`, `
-      <form id="direct-msg-form">
+  openBulkAddGroupsModal() {
+    this.openModal("Yangi O'quv Guruhlarini Kiritish", `
+      <form id="bulk-groups-form">
         <div class="form-group">
-          <label class="form-label">Xabar matni (HTML format)</label>
-          <textarea id="direct-msg-text" class="textarea-control" placeholder="Hurmatli talaba..." required></textarea>
+          <label class="form-label">Guruhlar ro'yxati (Har bir abzasda / qatorda bittadan yozing)</label>
+          <div style="font-size:12px;color:rgba(94,234,212,0.8);margin-bottom:8px;">
+            Masalan:<br>
+            <code>101-Hamshiralik<br>102-Hamshiralik<br>201-Davolash<br>204-Stomatologiya</code>
+          </div>
+          <textarea id="bulk-groups-text" class="textarea-control" style="min-height:160px;font-family:'JetBrains Mono', monospace;" placeholder="101-Hamshiralik&#10;102-Hamshiralik&#10;201-Davolash&#10;204-Stomatologiya" required></textarea>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-          <button type="submit" class="btn-sm btn-primary">Yuborish</button>
+          <button type="submit" class="btn-sm btn-primary" id="save-groups-btn">Guruhlarni Saqlash</button>
         </div>
       </form>
     `);
 
-    document.getElementById('direct-msg-form').addEventListener('submit', async (e) => {
+    document.getElementById('bulk-groups-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const txt = document.getElementById('direct-msg-text').value;
-      const res = await this.api(`/api/users/${telegramId}/message`, 'POST', { text: txt });
+      const txt = document.getElementById('bulk-groups-text').value;
+      const btn = document.getElementById('save-groups-btn');
+      btn.innerText = 'Saqlanmoqda...';
+
+      const res = await this.api('/api/groups/academic/bulk', 'POST', { text: txt });
+      btn.innerText = 'Guruhlarni Saqlash';
+
       if (res && res.success) {
-        this.toast('Xabar yuborildi', 'success');
+        this.toast(res.message, 'success');
         this.closeModal();
+        this.loadGroups(document.getElementById('content-viewport'), 'academic');
+      } else {
+        this.toast(res ? res.error : 'Guruhlar qo\'shishda xatolik', 'error');
       }
     });
   },
 
-  async loadGroups(container) {
+  async deleteAcademicGroup(groupId) {
+    const confirmed = await this.confirm({
+      title: "Guruhni O'chirish",
+      message: "Haqiqatdan ham ushbu guruhni ro'yxatdan o'chirmoqchimisiz?",
+      confirmText: "O'chirish",
+      cancelText: "Bekor qilish",
+      isDanger: true
+    });
+    if (!confirmed) return;
+
+    const res = await this.api(`/api/groups/academic/${groupId}`, 'DELETE');
+    if (res && res.success) {
+      this.toast(res.message, 'success');
+      this.loadGroups(document.getElementById('content-viewport'), 'academic');
+    }
+  },
+
+  async renderTelegramGroups(container) {
     const res = await this.api('/api/groups');
     const groups = res?.groups || [];
 
@@ -1013,7 +1238,7 @@ const ATLAS = {
       <div class="glass-card">
         <div class="card-header-flex">
           <div>
-            <div class="card-title">Ulangan Guruhlar va Kanallar</div>
+            <div class="card-title">Ulangan Telegram Guruhlar va Kanallar</div>
             <div class="card-subtitle">Bot a'zo bo'lgan rasmiy guruhlar</div>
           </div>
         </div>
