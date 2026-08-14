@@ -1109,20 +1109,6 @@ const ATLAS = {
       });
     }
 
-    if (btnCustom2 && inp2 && sel2) {
-      btnCustom2.addEventListener('click', () => {
-        if (inp2.style.display === 'none') {
-          inp2.style.display = 'block';
-          sel2.value = '__custom__';
-          inp2.focus();
-        } else {
-          inp2.style.display = 'none';
-          sel2.value = '';
-          inp2.value = '';
-        }
-      });
-    }
-
     const tplSelect = document.getElementById('doc-tpl-select');
     if (specificTplId && tplSelect) {
       tplSelect.value = specificTplId;
