@@ -142,5 +142,9 @@ TEMPLATES = [
     }
 ]
 
-TEMP_DIR = "/tmp" if os.path.exists("/tmp") else os.path.join(BASE_DIR, "temp")
-os.makedirs(TEMP_DIR, exist_ok=True)
+is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+TEMP_DIR = "/tmp" if is_serverless else os.path.join(BASE_DIR, "temp")
+try:
+    os.makedirs(TEMP_DIR, exist_ok=True)
+except Exception:
+    pass

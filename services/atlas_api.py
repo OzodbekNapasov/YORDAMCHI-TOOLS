@@ -612,8 +612,16 @@ def api_run_task():
 # 8. DOCUMENTS & FILES GENERATOR & PERMANENT ARCHIVE ENDPOINTS
 # ============================================================
 
-SAVED_DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "saved_documents")
-os.makedirs(SAVED_DOCS_DIR, exist_ok=True)
+is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+if is_serverless:
+    SAVED_DOCS_DIR = "/tmp/saved_documents"
+else:
+    SAVED_DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "saved_documents")
+
+try:
+    os.makedirs(SAVED_DOCS_DIR, exist_ok=True)
+except Exception:
+    pass
 
 @atlas_api.route("/documents/templates", methods=["GET"])
 @admin_required

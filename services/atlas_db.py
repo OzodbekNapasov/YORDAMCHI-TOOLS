@@ -10,11 +10,20 @@ import time
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "atlas.db")
+is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+if is_serverless:
+    DB_PATH = "/tmp/atlas.db"
+else:
+    DB_PATH = os.path.join(BASE_DIR, "atlas.db")
 
 
 def get_db_connection():
     """Ma'lumotlar bazasiga ulanish (dictionary cursor bilan)"""
+    if is_serverless and not os.path.exists(DB_PATH):
+        try:
+            init_db()
+        except Exception:
+            pass
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn

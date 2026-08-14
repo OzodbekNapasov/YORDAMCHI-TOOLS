@@ -270,8 +270,15 @@ def process_docbot_generation(chat_id, tpl, answers):
                     reply_markup=get_docs_folder_keyboard()
                 )
             # Doimiy arxivga saqlash
-            saved_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
-            os.makedirs(saved_dir, exist_ok=True)
+            is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+            if is_serverless:
+                saved_dir = "/tmp/saved_documents"
+            else:
+                saved_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
+            try:
+                os.makedirs(saved_dir, exist_ok=True)
+            except Exception:
+                pass
             safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
             permanent_png = os.path.join(saved_dir, f"{uid}_{safe_fio}.png")
             try:
