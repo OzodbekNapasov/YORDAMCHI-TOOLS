@@ -640,9 +640,9 @@ def api_generate_document():
     uid = uuid.uuid4().hex[:8]
     filename = target_tpl.get("filename", "malumotnoma.docx")
     fio = str(answers.get("FIO", "Talaba")).strip()
-    safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-')).rstrip()
+    safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
     
-    # Doimiy saqlash papkasi
+    # Doimiy saqlash papkasi (bo'shliqlar va ' belgilari to'liq saqlanadi)
     permanent_png_path = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.png")
 
     ok = render_docx_template_to_image(filename, permanent_png_path, answers)
@@ -761,8 +761,10 @@ def api_download_document_by_id(doc_id):
     if not os.path.exists(fpath):
         return jsonify({"error": "Hujjat fayli diskda topilmadi."}), 404
 
-    fio = doc["recipient_fio"].replace(" ", "_")
-    return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=f"{fio}_malumotnoma.png")
+    fio = str(doc["recipient_fio"]).strip()
+    tpl_clean = str(doc["template_name"]).replace("🎓", "").replace("📖", "").strip()
+    download_filename = f"{fio} — {tpl_clean} ma'lumotnomasi.png"
+    return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=download_filename)
 
 
 @atlas_api.route("/documents/<int:doc_id>", methods=["DELETE"])

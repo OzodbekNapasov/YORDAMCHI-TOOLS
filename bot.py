@@ -272,7 +272,7 @@ def process_docbot_generation(chat_id, tpl, answers):
             # Doimiy arxivga saqlash
             saved_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
             os.makedirs(saved_dir, exist_ok=True)
-            safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-')).rstrip()
+            safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-', "'", "’", "‘", "ʼ")).strip()
             permanent_png = os.path.join(saved_dir, f"{uid}_{safe_fio}.png")
             try:
                 import shutil

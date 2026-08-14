@@ -626,12 +626,13 @@ const ATLAS = {
   },
 
   openImageModal(imgUrl, title) {
+    const downloadName = `${title} — ma'lumotnoma.png`;
     this.openModalLarge(`${title} — Ma'lumotnoma (300 DPI A4)`, `
       <div style="text-align:center;">
         <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="${title}">
         <div class="modal-footer" style="justify-content:center;">
           <a href="${imgUrl}" target="_blank" class="btn-sm btn-secondary">${this.icons.eye} Yangi oynada ochish</a>
-          <a href="${imgUrl}" download="${title}.png" class="btn-sm btn-primary">${this.icons.download} Yuklab olish</a>
+          <a href="${imgUrl}" download="${downloadName}" class="btn-sm btn-primary">${this.icons.download} Yuklab olish (PNG)</a>
         </div>
       </div>
     `);
