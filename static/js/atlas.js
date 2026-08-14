@@ -1,24 +1,26 @@
 // ============================================================
 //  static/js/atlas.js
 //  ATLAS Universal Bot Platform — Single Page Application Engine
+//  Shaxsiy Markaziy Boshqaruv & Hujjatlar Arxiv Tizimi
 //  NO EMOJIS — 100% SVG Vector UI & Dynamic REST API Client
 // ============================================================
 
 const ATLAS = {
   token: localStorage.getItem('atlas_token') || '',
   user: JSON.parse(localStorage.getItem('atlas_user') || 'null'),
-  currentRoute: 'dashboard',
-  refreshInterval: null,
+  currentRoute: 'documents', // Asosiy fokus hujjatlar va bot boshqaruvi
+  activeDocTab: 'generate',  // 'generate' yoki 'archive'
 
-  // Professional SVG Icon Library (Zero emojis)
+  // Professional SVG Icon Library (Strictly Zero Emojis)
   icons: {
     dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
+    documents: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+    archive: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`,
     users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
     groups: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
     messages: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
     automation: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
     tasks: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-    documents: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
     analytics: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
     logs: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>`,
     settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
@@ -40,7 +42,7 @@ const ATLAS = {
     brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`
   },
 
-  // API Request Wrapper
+  // API Wrapper
   async api(endpoint, method = 'GET', body = null) {
     const headers = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
@@ -73,16 +75,16 @@ const ATLAS = {
     const el = document.createElement('div');
     el.className = `toast toast-${type}`;
     const icon = type === 'success' ? this.icons.check : (type === 'error' ? this.icons.alert : this.icons.bell);
-    el.innerHTML = `<span style="width:18px;height:18px;display:inline-block">${icon}</span><span>${message}</span>`;
+    el.innerHTML = `<span>${icon}</span><span>${message}</span>`;
     container.appendChild(el);
 
     setTimeout(() => {
       el.style.opacity = '0';
       setTimeout(() => el.remove(), 300);
-    }, 4000);
+    }, 3500);
   },
 
-  // Initialization
+  // Init Application
   init() {
     this.bindGlobalEvents();
     if (!this.token || !this.user) {
@@ -94,7 +96,6 @@ const ATLAS = {
   },
 
   bindGlobalEvents() {
-    // Global shortcut Ctrl+K
     window.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -106,7 +107,7 @@ const ATLAS = {
     });
   },
 
-  // Navigation
+  // Router
   navigate(route) {
     this.currentRoute = route;
     document.querySelectorAll('.nav-item').forEach(el => {
@@ -116,37 +117,37 @@ const ATLAS = {
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       const titles = {
+        documents: 'Ma\'lumotnomalar & Hujjatlar Arxivi',
         dashboard: 'Boshqaruv Paneli',
-        users: 'Foydalanuvchilar',
+        users: 'Foydalanuvchilar Boshqaruvi',
         groups: 'Guruhlar va Kanallar',
         messages: 'Xabarlar va Tarqatish',
         automation: 'Avtomatlashtirish',
         tasks: 'Fon Vazifalari',
-        documents: 'Hujjatlar Generatori',
         analytics: 'Statistika va Tahlil',
         logs: 'Tizim Loglari',
         settings: 'Bot va Tizim Sozlamalari',
         modules: 'Modullar Boshqaruvi'
       };
-      pageTitle.innerText = titles[route] || 'ATLAS Platformasi';
+      pageTitle.innerText = titles[route] || 'ATLAS Boshqaruv Markazi';
     }
 
     const viewport = document.getElementById('content-viewport');
     if (!viewport) return;
 
     switch (route) {
+      case 'documents': this.loadDocuments(viewport); break;
       case 'dashboard': this.loadDashboard(viewport); break;
       case 'users': this.loadUsers(viewport); break;
       case 'groups': this.loadGroups(viewport); break;
       case 'messages': this.loadMessages(viewport); break;
       case 'automation': this.loadAutomation(viewport); break;
       case 'tasks': this.loadTasks(viewport); break;
-      case 'documents': this.loadDocuments(viewport); break;
       case 'analytics': this.loadAnalytics(viewport); break;
       case 'logs': this.loadLogs(viewport); break;
       case 'settings': this.loadSettings(viewport); break;
       case 'modules': this.loadModules(viewport); break;
-      default: this.loadDashboard(viewport);
+      default: this.loadDocuments(viewport);
     }
   },
 
@@ -162,8 +163,8 @@ const ATLAS = {
             ${this.icons.brandLogo}
             <div class="auth-logo-text">ATLAS</div>
           </div>
-          <h2 class="auth-title">Xush kelibsiz</h2>
-          <p class="auth-subtitle">Platformaga kirish uchun hisob ma'lumotlaringizni kiriting</p>
+          <h2 class="auth-title">Shaxsiy Boshqaruv Markazi</h2>
+          <p class="auth-subtitle">Platformaga kirish uchun parolingizni kiriting</p>
 
           <form id="login-form">
             <div class="form-group">
@@ -183,19 +184,12 @@ const ATLAS = {
               </div>
             </div>
 
-            <div class="auth-remember-row">
-              <label class="auth-checkbox">
-                <input type="checkbox" id="remember-me" checked>
-                <span>Meni eslab qol</span>
-              </label>
-            </div>
-
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-primary btn-block" style="margin-top:24px;">
               <span>Tizimga kirish</span>
             </button>
           </form>
 
-          <div class="auth-footer-tag">ATLAS CONTROL PLATFORM v2.1.0</div>
+          <div style="margin-top:28px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;">ATLAS PRIVATE CONTROL v2.1.0</div>
         </div>
       </div>
     `;
@@ -218,9 +212,9 @@ const ATLAS = {
         this.user = res.user;
         localStorage.setItem('atlas_token', res.token);
         localStorage.setItem('atlas_user', JSON.stringify(res.user));
-        this.toast('Tizimga muvaffaqiyatli kirildi', 'success');
+        this.toast('Muvaffaqiyatli kirdingiz', 'success');
         this.renderApp();
-        this.navigate('dashboard');
+        this.navigate('documents');
       } else {
         this.toast(res ? res.error : 'Login xatosi', 'error');
       }
@@ -237,7 +231,7 @@ const ATLAS = {
   },
 
   // ============================================================
-  // APP SHELL VIEW
+  // APP SHELL
   // ============================================================
   renderApp() {
     const root = document.getElementById('app-root');
@@ -252,34 +246,34 @@ const ATLAS = {
           </div>
 
           <nav class="sidebar-menu">
-            <div class="sidebar-group-title">Asosiy Boshqaruv</div>
+            <div class="sidebar-group-title">Hujjatlar & Xizmatlar</div>
+            <div class="nav-item active" data-route="documents">
+              ${this.icons.documents} <span>Hujjatlar & Arxiv</span>
+            </div>
             <div class="nav-item" data-route="dashboard">
               ${this.icons.dashboard} <span>Boshqaruv Paneli</span>
             </div>
+
+            <div class="sidebar-group-title">Telegram Bot Nazorati</div>
             <div class="nav-item" data-route="users">
               ${this.icons.users} <span>Foydalanuvchilar</span>
             </div>
             <div class="nav-item" data-route="groups">
-              ${this.icons.groups} <span>Guruhlar va Kanallar</span>
+              ${this.icons.groups} <span>Guruhlar & Kanallar</span>
             </div>
             <div class="nav-item" data-route="messages">
-              ${this.icons.messages} <span>Xabarlar va Tarqatish</span>
-            </div>
-
-            <div class="sidebar-group-title">Xizmatlar & Hujjatlar</div>
-            <div class="nav-item" data-route="documents">
-              ${this.icons.documents} <span>Hujjatlar Generatori</span>
-            </div>
-            <div class="nav-item" data-route="automation">
-              ${this.icons.automation} <span>Avtomatlashtirish</span>
+              ${this.icons.messages} <span>Xabarlar & E'lonlar</span>
             </div>
             <div class="nav-item" data-route="tasks">
               ${this.icons.tasks} <span>Fon Vazifalari</span>
             </div>
+            <div class="nav-item" data-route="automation">
+              ${this.icons.automation} <span>Avtomatlashtirish</span>
+            </div>
 
-            <div class="sidebar-group-title">Monitoring & Tizim</div>
+            <div class="sidebar-group-title">Monitoring & Xavfsizlik</div>
             <div class="nav-item" data-route="analytics">
-              ${this.icons.analytics} <span>Statistika va Tahlil</span>
+              ${this.icons.analytics} <span>Statistika & Tahlil</span>
             </div>
             <div class="nav-item" data-route="logs">
               ${this.icons.logs} <span>Tizim Loglari</span>
@@ -295,8 +289,8 @@ const ATLAS = {
           <div class="sidebar-footer">
             <div class="user-avatar-badge">${(this.user?.full_name || 'A').charAt(0)}</div>
             <div class="user-info">
-              <div class="user-name">${this.user?.full_name || 'Administrator'}</div>
-              <div class="user-role">${this.user?.role || 'Superadmin'}</div>
+              <div class="user-name">${this.user?.full_name || 'Bosh Administrator'}</div>
+              <div class="user-role">Shaxsiy Boshqaruv</div>
             </div>
             <button class="btn-logout" id="logout-btn" title="Chiqish">${this.icons.logout}</button>
           </div>
@@ -306,10 +300,10 @@ const ATLAS = {
         <main class="main-wrapper">
           <header class="header">
             <div class="header-left">
-              <h1 class="page-title" id="page-title">Boshqaruv Paneli</h1>
+              <h1 class="page-title" id="page-title">Ma'lumotnomalar & Hujjatlar Arxivi</h1>
               <div class="global-search-bar">
                 <span class="search-icon-fixed">${this.icons.search}</span>
-                <input type="text" id="global-search-input" placeholder="Qidirish...">
+                <input type="text" id="global-search-input" placeholder="Tezkor qidirish...">
                 <span class="search-shortcut">Ctrl+K</span>
               </div>
             </div>
@@ -322,23 +316,19 @@ const ATLAS = {
               <button class="header-btn" id="refresh-view-btn" title="Yangilash">${this.icons.refresh}</button>
               <button class="header-btn" id="notif-btn" title="Bildirishnomalar">
                 ${this.icons.bell}
-                <div class="badge-dot"></div>
               </button>
             </div>
           </header>
 
-          <div class="content-body" id="content-viewport">
-            <!-- Dynamic Route Content Goes Here -->
-          </div>
+          <div class="content-body" id="content-viewport"></div>
         </main>
       </div>
 
-      <!-- MODAL & SEARCH OVERLAYS -->
+      <!-- MODALS & TOAST -->
       <div class="modal-overlay" id="modal-container"></div>
       <div id="toast-container" class="toast-container"></div>
     `;
 
-    // Bind sidebar clicks
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => this.navigate(btn.dataset.route));
     });
@@ -349,420 +339,69 @@ const ATLAS = {
   },
 
   // ============================================================
-  // 1. DASHBOARD VIEW
-  // ============================================================
-  async loadDashboard(container) {
-    container.innerHTML = `<div style="text-align:center;padding:50px;color:rgba(255,255,255,0.5)">Ma'lumotlar yuklanmoqda...</div>`;
-    const res = await this.api('/api/dashboard/stats');
-    const actRes = await this.api('/api/dashboard/activity');
-
-    if (!res || !res.success) {
-      container.innerHTML = `<div class="glass-card">Statistikalarni yuklashda xatolik.</div>`;
-      return;
-    }
-
-    const m = res.metrics;
-    const b = res.bot;
-    const logs = actRes?.activity || [];
-
-    container.innerHTML = `
-      <!-- KPI Cards Grid -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Jami Foydalanuvchilar</span>
-            <span class="kpi-value">${m.total_users}</span>
-            <span class="kpi-change">+${m.new_users_today} bugun</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.users}</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Faol Foydalanuvchilar</span>
-            <span class="kpi-value">${m.active_users_24h}</span>
-            <span class="kpi-change">24 soat ichida</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.analytics}</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Yuborilgan Xabarlar</span>
-            <span class="kpi-value">${m.sent_messages}</span>
-            <span class="kpi-change">Muvaffaqiyatli</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.messages}</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-info">
-            <span class="kpi-label">Yaratilgan Hujjatlar</span>
-            <span class="kpi-value">${m.total_docs}</span>
-            <span class="kpi-change">300 DPI A4 format</span>
-          </div>
-          <div class="kpi-icon-box">${this.icons.documents}</div>
-        </div>
-      </div>
-
-      <!-- Main Columns: Quick Actions & Live Activity -->
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
-        <!-- Left: Activity Log Stream -->
-        <div class="glass-card">
-          <div class="card-header-flex">
-            <div>
-              <div class="card-title">Jonli Faoliyat Oqimi</div>
-              <div class="card-subtitle">Foydalanuvchilar va tizim harakatlari real vaqtda</div>
-            </div>
-            <button class="btn-sm btn-secondary" onclick="ATLAS.navigate('logs')">Barchasi</button>
-          </div>
-
-          <div class="table-responsive">
-            <table class="glass-table">
-              <thead>
-                <tr>
-                  <th>Vaqt</th>
-                  <th>Modul</th>
-                  <th>Harakat</th>
-                  <th>Ijrochi</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${logs.length === 0 ? `<tr><td colspan="5" style="text-align:center">Hozircha amallar yo'q</td></tr>` : ''}
-                ${logs.slice(0, 7).map(l => `
-                  <tr>
-                    <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6)">${l.timestamp.substring(11, 19)}</td>
-                    <td><span class="badge badge-info">${l.module}</span></td>
-                    <td><b>${l.action}</b></td>
-                    <td class="mono" style="font-size:12px">${l.actor}</td>
-                    <td><span class="badge badge-${l.status === 'success' ? 'success' : 'error'}">${l.status}</span></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Right: Bot Status & Quick Controls -->
-        <div style="display:flex;flex-direction:column;gap:24px;">
-          <div class="glass-card">
-            <div class="card-header-flex">
-              <div class="card-title">Bot Holati</div>
-              <span class="badge badge-success">Online</span>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;">
-              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
-                <span style="color:rgba(255,255,255,0.6)">Username:</span>
-                <b class="mono" style="color:var(--accent-glow)">${b.username}</b>
-              </div>
-              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
-                <span style="color:rgba(255,255,255,0.6)">Rejim:</span>
-                <b>${b.mode.toUpperCase()}</b>
-              </div>
-              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
-                <span style="color:rgba(255,255,255,0.6)">Versiya:</span>
-                <span class="badge badge-info">v${b.version}</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;">
-                <span style="color:rgba(255,255,255,0.6)">Uptime:</span>
-                <b style="color:#10b981">${b.uptime}</b>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-card">
-            <div class="card-title" style="margin-bottom:16px;">Tezkor Harakatlar</div>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;padding:10px 14px;" onclick="ATLAS.navigate('documents')">
-                ${this.icons.documents} <span>Ma'lumotnoma yaratish</span>
-              </button>
-              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;padding:10px 14px;" onclick="ATLAS.navigate('messages')">
-                ${this.icons.send} <span>Ommaviy xabar yuborish</span>
-              </button>
-              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;padding:10px 14px;" onclick="ATLAS.runQuickTask('sync')">
-                ${this.icons.refresh} <span>Guruhlarni sinxronlash</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  },
-
-  // ============================================================
-  // 2. USERS VIEW
-  // ============================================================
-  async loadUsers(container) {
-    container.innerHTML = `<div style="text-align:center;padding:50px;color:rgba(255,255,255,0.5)">Foydalanuvchilar yuklanmoqda...</div>`;
-    const res = await this.api('/api/users');
-    const users = res?.users || [];
-
-    container.innerHTML = `
-      <div class="glass-card">
-        <div class="card-header-flex">
-          <div>
-            <div class="card-title">Foydalanuvchilar Ro'yxati</div>
-            <div class="card-subtitle">Jami ${res?.pagination?.total || users.length} ta foydalanuvchi</div>
-          </div>
-          <div style="display:flex;gap:12px;">
-            <input type="text" id="users-search-input" class="input-control" style="height:38px;padding:0 14px;width:240px;" placeholder="Ism yoki Telegram ID...">
-            <select id="users-status-select" class="select-control" style="height:38px;">
-              <option value="">Barcha statuslar</option>
-              <option value="active">Faol</option>
-              <option value="blocked">Bloklangan</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Telegram ID</th>
-                <th>Ism / Familiya</th>
-                <th>Username</th>
-                <th>Rol</th>
-                <th>Status</th>
-                <th>Oxirgi Faollik</th>
-                <th style="text-align:right">Amallar</th>
-              </tr>
-            </thead>
-            <tbody id="users-table-body">
-              ${users.length === 0 ? `<tr><td colspan="7" style="text-align:center">Foydalanuvchilar topilmadi</td></tr>` : ''}
-              ${users.map(u => `
-                <tr>
-                  <td class="mono"><b>${u.telegram_id}</b></td>
-                  <td>${u.first_name || ''} ${u.last_name || ''}</td>
-                  <td><span class="mono" style="color:var(--text-secondary)">@${u.username || 'mavjud_emas'}</span></td>
-                  <td><span class="badge badge-${u.role === 'admin' ? 'warning' : 'info'}">${u.role}</span></td>
-                  <td><span class="badge badge-${u.status === 'active' ? 'success' : 'error'}">${u.status}</span></td>
-                  <td style="font-size:12.5px;color:rgba(255,255,255,0.6)">${u.last_active_at || u.created_at}</td>
-                  <td style="text-align:right">
-                    <div style="display:flex;gap:6px;justify-content:flex-end;">
-                      <button class="btn-icon" onclick="ATLAS.openSendMessageModal(${u.telegram_id})" title="Xabar yozish">${this.icons.send}</button>
-                      <button class="btn-icon" onclick="ATLAS.toggleUserBlock(${u.telegram_id}, '${u.status}')" title="${u.status === 'active' ? 'Bloklash' : 'Ochish'}">
-                        ${this.icons.alert}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('users-search-input').addEventListener('input', (e) => {
-      this.filterUsersTable(e.target.value);
-    });
-  },
-
-  async toggleUserBlock(telegramId, currentStatus) {
-    const nextStatus = currentStatus === 'active' ? 'blocked' : 'active';
-    const res = await this.api(`/api/users/${telegramId}/status`, 'PUT', { status: nextStatus });
-    if (res && res.success) {
-      this.toast(res.message, 'success');
-      this.navigate('users');
-    }
-  },
-
-  openSendMessageModal(telegramId) {
-    this.openModal(`Foydalanuvchiga Xabar Yuborish (ID: ${telegramId})`, `
-      <form id="direct-msg-form">
-        <div class="form-group">
-          <label class="form-label">Xabar matni (HTML format qo'llab-quvvatlanadi)</label>
-          <textarea id="direct-msg-text" class="textarea-control" placeholder="Hurmatli talaba..." required></textarea>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-          <button type="submit" class="btn-sm btn-primary">Yuborish</button>
-        </div>
-      </form>
-    `);
-
-    document.getElementById('direct-msg-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const txt = document.getElementById('direct-msg-text').value;
-      const res = await this.api(`/api/users/${telegramId}/message`, 'POST', { text: txt });
-      if (res && res.success) {
-        this.toast('Xabar foydalanuvchiga yetkazildi', 'success');
-        this.closeModal();
-      } else {
-        this.toast(res ? res.error : 'Xatolik', 'error');
-      }
-    });
-  },
-
-  // ============================================================
-  // 3. GROUPS VIEW
-  // ============================================================
-  async loadGroups(container) {
-    container.innerHTML = `<div style="text-align:center;padding:50px;color:rgba(255,255,255,0.5)">Guruhlar yuklanmoqda...</div>`;
-    const res = await this.api('/api/groups');
-    const groups = res?.groups || [];
-
-    container.innerHTML = `
-      <div class="glass-card">
-        <div class="card-header-flex">
-          <div>
-            <div class="card-title">Guruhlar va Kanallar</div>
-            <div class="card-subtitle">Bot a'zo bo'lgan rasmiy guruhlar monitoringi</div>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Telegram ID</th>
-                <th>Nomi</th>
-                <th>Turi</th>
-                <th>A'zolar Soni</th>
-                <th>Admin Huquqi</th>
-                <th>Oxirgi Faollik</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${groups.length === 0 ? `<tr><td colspan="6" style="text-align:center">Hozircha biriktirilgan guruhlar yo'q</td></tr>` : ''}
-              ${groups.map(g => `
-                <tr>
-                  <td class="mono"><b>${g.telegram_id}</b></td>
-                  <td><b>${g.title}</b></td>
-                  <td><span class="badge badge-info">${g.type}</span></td>
-                  <td>${g.members_count} ta</td>
-                  <td><span class="badge badge-success">Mavjud</span></td>
-                  <td style="font-size:12.5px;color:rgba(255,255,255,0.6)">${g.last_activity_at}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  },
-
-  // ============================================================
-  // 4. MESSAGES / BROADCAST VIEW
-  // ============================================================
-  async loadMessages(container) {
-    container.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-        <!-- Left: Create Broadcast -->
-        <div class="glass-card">
-          <div class="card-title" style="margin-bottom:6px;">Yangi Ommaviy Xabar Tarqatish</div>
-          <div class="card-subtitle" style="margin-bottom:20px;">Barcha foydalanuvchilar yoki tanlangan guruhlarga yuborish</div>
-
-          <form id="broadcast-form">
-            <div class="form-group">
-              <label class="form-label">Kampaniya nomi</label>
-              <input type="text" id="bc-title" class="input-control" placeholder="E'lon yoki Yangilik" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Qabul qiluvchilar auditoriyasi</label>
-              <select id="bc-target" class="select-control" style="width:100%;">
-                <option value="all_users">Barcha faol foydalanuvchilar</option>
-                <option value="groups">Barcha ulangan guruhlar</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Xabar Matni (HTML teglari qo'llaniladi)</label>
-              <textarea id="bc-content" class="textarea-control" style="min-height:140px;" placeholder="Hurmatli talabalar va xodimlar..." required></textarea>
-            </div>
-
-            <button type="submit" class="btn-primary">
-              ${this.icons.send} <span>Tarqatishni boshlash</span>
-            </button>
-          </form>
-        </div>
-
-        <!-- Right: Broadcasts History & Live Progress -->
-        <div class="glass-card">
-          <div class="card-title" style="margin-bottom:6px;">Tarqatishlar Tarixi</div>
-          <div class="card-subtitle" style="margin-bottom:20px;">Oldingi ommaviy xabarlar hisoboti</div>
-
-          <div id="broadcasts-history-list" style="display:flex;flex-direction:column;gap:12px;">
-            <div style="color:rgba(255,255,255,0.5);font-size:13px;">Tarix yuklanmoqda...</div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    this.loadBroadcastHistory();
-
-    document.getElementById('broadcast-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const title = document.getElementById('bc-title').value;
-      const target = document.getElementById('bc-target').value;
-      const content = document.getElementById('bc-content').value;
-
-      const res = await this.api('/api/broadcasts', 'POST', { title, target, content });
-      if (res && res.success) {
-        this.toast(`Xabar tarqatish boshlandi! Jami: ${res.total_recipients} ta qabul qiluvchi`, 'success');
-        document.getElementById('broadcast-form').reset();
-        this.loadBroadcastHistory();
-      }
-    });
-  },
-
-  async loadBroadcastHistory() {
-    const listEl = document.getElementById('broadcasts-history-list');
-    if (!listEl) return;
-    const res = await this.api('/api/broadcasts');
-    const items = res?.broadcasts || [];
-
-    if (items.length === 0) {
-      listEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">Hali hech qanday ommaviy xabar yuborilmagan.</div>`;
-      return;
-    }
-
-    listEl.innerHTML = items.map(b => `
-      <div style="background:rgba(12,38,41,0.6);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <b>${b.title}</b>
-          <span class="badge badge-${b.status === 'completed' ? 'success' : (b.status === 'running' ? 'warning' : 'info')}">${b.status}</span>
-        </div>
-        <div style="font-size:12.5px;color:rgba(255,255,255,0.7);margin-bottom:8px;">${b.content.substring(0, 80)}...</div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(94,234,212,0.8);">
-          <span>Yetkazildi: ${b.delivered_count} / ${b.total_recipients}</span>
-          <span class="mono">${b.created_at}</span>
-        </div>
-      </div>
-    `).join('');
-  },
-
-  // ============================================================
-  // 5. DOCUMENTS GENERATOR VIEW (1-kursga qabul & O'qiyapti)
+  // 1. DOCUMENTS & PERMANENT ARCHIVE (ASOSIY BO'LIM)
   // ============================================================
   async loadDocuments(container) {
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-        <!-- Left: Form -->
+      <div class="tab-pills-row">
+        <button class="tab-pill-btn ${this.activeDocTab === 'generate' ? 'active' : ''}" id="tab-doc-gen">
+          ${this.icons.plus} <span>Yangi Ma'lumotnoma Shakllantirish</span>
+        </button>
+        <button class="tab-pill-btn ${this.activeDocTab === 'archive' ? 'active' : ''}" id="tab-doc-arch">
+          ${this.icons.archive} <span>Hujjatlar Arxivi & Tarixi</span>
+        </button>
+      </div>
+
+      <div id="doc-tab-content"></div>
+    `;
+
+    document.getElementById('tab-doc-gen').addEventListener('click', () => {
+      this.activeDocTab = 'generate';
+      this.loadDocuments(container);
+    });
+
+    document.getElementById('tab-doc-arch').addEventListener('click', () => {
+      this.activeDocTab = 'archive';
+      this.loadDocuments(container);
+    });
+
+    const contentBox = document.getElementById('doc-tab-content');
+    if (this.activeDocTab === 'generate') {
+      this.renderDocumentGenerator(contentBox);
+    } else {
+      this.renderDocumentArchive(contentBox);
+    }
+  },
+
+  renderDocumentGenerator(container) {
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:24px;">
+        <!-- Left: Input Form -->
         <div class="glass-card">
-          <div class="card-title" style="margin-bottom:6px;">Rasmiy Ma'lumotnoma Generatori</div>
-          <div class="card-subtitle" style="margin-bottom:20px;">Ultra HD (300 DPI A4) formatda tayyorlash</div>
+          <div class="card-header-flex">
+            <div>
+              <div class="card-title">Rasmiy Ma'lumotnoma Generatori</div>
+              <div class="card-subtitle">Ultra HD (300 DPI A4) formatda bir zumda shakllantirish va avtomatik arxivlash</div>
+            </div>
+          </div>
 
           <form id="doc-gen-form">
             <div class="form-group">
-              <label class="form-label">Shablon turini tanlang</label>
-              <select id="doc-tpl-select" class="select-control" style="width:100%;">
+              <label class="form-label">Shablon turi</label>
+              <select id="doc-tpl-select" class="select-control">
                 <option value="qabul_1_kurs">1-kursga qabul ma'lumotnomasi</option>
                 <option value="oqiyapti">O'qiyotganligi haqida ma'lumotnoma</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Talabaning to'liq F.I.O</label>
+              <label class="form-label">Talabaning To'liq F.I.O</label>
               <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="Napasov Ozodbek Zafar o’g’li" required>
             </div>
 
             <div class="form-group">
               <label class="form-label">Ta'lim Yo'nalishi</label>
-              <select id="doc-yonalish" class="select-control" style="width:100%;">
+              <select id="doc-yonalish" class="select-control">
                 <option value="Hamshiralik ishi">Hamshiralik ishi</option>
                 <option value="Davolash ishi (Feldsherlik)">Davolash ishi (Feldsherlik)</option>
                 <option value="Farmatsiya">Farmatsiya</option>
@@ -771,24 +410,25 @@ const ATLAS = {
             </div>
 
             <div class="form-group">
-              <label class="form-label">O'quv yili</label>
+              <label class="form-label">O'quv Yili</label>
               <input type="text" id="doc-oquv-yili" class="input-control" placeholder="2026/2027" value="2026/2027" required>
             </div>
 
             <div id="extra-oqiyapti-fields" style="display:none;">
-              <div class="form-group">
-                <label class="form-label">Kursi</label>
-                <select id="doc-kursi" class="select-control" style="width:100%;">
-                  <option value="1">1-kurs</option>
-                  <option value="2" selected>2-kurs</option>
-                  <option value="3">3-kurs</option>
-                  <option value="4">4-kurs</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Guruhi</label>
-                <input type="text" id="doc-guruhi" class="input-control" placeholder="201" value="201">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label class="form-label">Kursi</label>
+                  <select id="doc-kursi" class="select-control">
+                    <option value="1">1-kurs</option>
+                    <option value="2" selected>2-kurs</option>
+                    <option value="3">3-kurs</option>
+                    <option value="4">4-kurs</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Guruhi</label>
+                  <input type="text" id="doc-guruhi" class="input-control" placeholder="201" value="201">
+                </div>
               </div>
             </div>
 
@@ -797,18 +437,20 @@ const ATLAS = {
               <input type="text" id="doc-sana" class="input-control" placeholder="14.08.2026" value="14.08.2026" required>
             </div>
 
-            <button type="submit" class="btn-primary" id="doc-generate-btn">
-              ${this.icons.documents} <span>Hujjatni shakllantirish</span>
-            </button>
+            <div style="margin-top:22px;">
+              <button type="submit" class="btn-primary btn-block" id="doc-generate-btn">
+                ${this.icons.documents} <span>Hujjatni shakllantirish va saqlash</span>
+              </button>
+            </div>
           </form>
         </div>
 
-        <!-- Right: Live Preview & Download -->
-        <div class="glass-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:500px;text-align:center;">
+        <!-- Right: HD Preview Box -->
+        <div class="glass-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:520px;text-align:center;">
           <div id="doc-preview-box" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="width:64px;height:64px;color:rgba(0,203,169,0.3);margin-bottom:14px;">${this.icons.documents}</div>
-            <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Hujjat oldindan ko'rish maydoni</div>
-            <div style="font-size:13px;color:rgba(94,234,212,0.6);max-width:320px;">Chapdagi maydonlarni to'ldirib, "Hujjatni shakllantirish" tugmasini bosing.</div>
+            <div style="margin-bottom:12px;color:rgba(0,203,169,0.4);">${this.icons.documents}</div>
+            <div style="font-size:14.5px;font-weight:700;color:#ffffff;margin-bottom:6px;">Hujjat oldindan ko'rish oynasi</div>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.65);max-width:320px;">Maydonlarni to'ldirib, tugmani bosing. Tayyorlangan hujjat to'g'ridan-to'g'ri shu yerda aks etadi va arxivga tushadi.</div>
           </div>
         </div>
       </div>
@@ -817,12 +459,9 @@ const ATLAS = {
     const tplSelect = document.getElementById('doc-tpl-select');
     const extraFields = document.getElementById('extra-oqiyapti-fields');
     tplSelect.addEventListener('change', () => {
-      extraFields.style.display = tplSelect.value === 'oqiyapti' ? 'block' : 'none';
-      if (tplSelect.value === 'oqiyapti') {
-        document.getElementById('doc-oquv-yili').value = '2024/2025';
-      } else {
-        document.getElementById('doc-oquv-yili').value = '2026/2027';
-      }
+      const isOqiyapti = tplSelect.value === 'oqiyapti';
+      extraFields.style.display = isOqiyapti ? 'block' : 'none';
+      document.getElementById('doc-oquv-yili').value = isOqiyapti ? '2024/2025' : '2026/2027';
     });
 
     document.getElementById('doc-gen-form').addEventListener('submit', async (e) => {
@@ -843,69 +482,321 @@ const ATLAS = {
       }
 
       const res = await this.api('/api/documents/generate', 'POST', { template_id: tpl_id, answers });
-      btn.innerHTML = `${this.icons.documents} <span>Hujjatni shakllantirish</span>`;
+      btn.innerHTML = `${this.icons.documents} <span>Hujjatni shakllantirish va saqlash</span>`;
 
       if (res && res.success) {
         this.toast(res.message, 'success');
         const prevBox = document.getElementById('doc-preview-box');
         prevBox.innerHTML = `
-          <img src="${res.download_url}" style="max-width:100%;max-height:460px;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
-          <div style="display:flex;gap:12px;margin-top:20px;">
-            <a href="${res.download_url}" target="_blank" class="btn-sm btn-secondary">${this.icons.eye} To'liq ko'rish</a>
-            <a href="${res.download_url}" download="Malumotnoma.png" class="btn-sm btn-primary">${this.icons.download} Yuklab olish</a>
+          <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
+            <img src="${res.view_url}" style="max-width:100%;max-height:430px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
+            <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
+              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${answers.FIO}')">
+                ${this.icons.eye} <span>Katta o'lchamda ko'rish</span>
+              </button>
+              <a href="${res.download_url}" class="btn-sm btn-primary">
+                ${this.icons.download} <span>Yuklab olish (PNG)</span>
+              </a>
+              <button class="btn-sm btn-secondary" onclick="ATLAS.resendDocumentToTelegram(${res.doc_id})">
+                ${this.icons.send} <span>Telegramga yuborish</span>
+              </button>
+            </div>
           </div>
         `;
       } else {
-        this.toast(res ? res.error : 'Hujjat yaratishda xatolik', 'error');
+        this.toast(res ? res.error : 'Hujjat shakllantirishda xatolik', 'error');
       }
     });
   },
 
-  // ============================================================
-  // 6. AUTOMATIONS VIEW
-  // ============================================================
-  async loadAutomation(container) {
-    const res = await this.api('/api/automations');
-    const list = res?.automations || [];
+  async renderDocumentArchive(container) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Arxiv yuklanmoqda...</div>`;
+    const res = await this.api('/api/documents/list');
+    const docs = res?.documents || [];
 
     container.innerHTML = `
       <div class="glass-card">
         <div class="card-header-flex">
           <div>
-            <div class="card-title">Avtomatlashtirish Qoidalari</div>
-            <div class="card-subtitle">Trigger va shartlar asosidagi avtomatik jarayonlar</div>
+            <div class="card-title">Yaratilgan Hujjatlar Arxivi & Ro'yxati</div>
+            <div class="card-subtitle">Bot va platforma orqali shakllantirilgan barcha ma'lumotnomalar (Jami: ${res?.pagination?.total || docs.length} ta)</div>
           </div>
-          <button class="btn-sm btn-primary" onclick="ATLAS.openNewAutomationModal()">${this.icons.plus} Yangi Qoida</button>
+          <div style="display:flex;gap:10px;">
+            <input type="text" id="arch-search-input" class="input-control" style="width:240px;height:38px;" placeholder="Talaba F.I.O bo'yicha qidirish...">
+          </div>
         </div>
 
         <div class="table-responsive">
           <table class="glass-table">
             <thead>
               <tr>
-                <th>Qoida Nomi</th>
-                <th>Trigger Turi</th>
-                <th>Trigger Qiymati</th>
-                <th>Amal (Action)</th>
-                <th>Holati</th>
-                <th style="text-align:right">Boshqarish</th>
+                <th>Vaqt / Sana</th>
+                <th>Talaba F.I.O</th>
+                <th>Hujjat Shablon</th>
+                <th>Yo'nalish / Detal</th>
+                <th>Manba</th>
+                <th style="text-align:right">Amallar</th>
+              </tr>
+            </thead>
+            <tbody id="archive-table-body">
+              ${docs.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hozircha arxivda saqlangan hujjatlar yo'q</td></tr>` : ''}
+              ${docs.map(d => {
+                const p = d.parsed_data || {};
+                return `
+                  <tr>
+                    <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
+                    <td><b>${d.recipient_fio}</b></td>
+                    <td><span class="badge badge-info">${d.template_name}</span></td>
+                    <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">${p.YONALISH || '-'} ${p.KURSI ? `(${p.KURSI}-kurs)` : ''}</td>
+                    <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
+                    <td style="text-align:right;">
+                      <div style="display:flex;gap:6px;justify-content:flex-end;">
+                        <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}')" title="Katta ko'rish">${this.icons.eye}</button>
+                        <a href="/api/documents/download/${d.id}" class="btn-icon" title="Yuklab olish">${this.icons.download}</a>
+                        <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
+                        <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('arch-search-input').addEventListener('input', async (e) => {
+      const q = e.target.value.trim();
+      const sRes = await this.api(`/api/documents/list?q=${encodeURIComponent(q)}`);
+      const sDocs = sRes?.documents || [];
+      const tbody = document.getElementById('archive-table-body');
+      if (sDocs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:rgba(255,255,255,0.4);">Hech qanday hujjat topilmadi</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = sDocs.map(d => {
+        const p = d.parsed_data || {};
+        return `
+          <tr>
+            <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
+            <td><b>${d.recipient_fio}</b></td>
+            <td><span class="badge badge-info">${d.template_name}</span></td>
+            <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">${p.YONALISH || '-'} ${p.KURSI ? `(${p.KURSI}-kurs)` : ''}</td>
+            <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
+            <td style="text-align:right;">
+              <div style="display:flex;gap:6px;justify-content:flex-end;">
+                <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}')" title="Katta ko'rish">${this.icons.eye}</button>
+                <a href="/api/documents/download/${d.id}" class="btn-icon" title="Yuklab olish">${this.icons.download}</a>
+                <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
+                <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    });
+  },
+
+  async resendDocumentToTelegram(docId) {
+    this.toast('Telegramga yuborilmoqda...', 'info');
+    const res = await this.api(`/api/documents/resend/${docId}`, 'POST');
+    if (res && res.success) {
+      this.toast(res.message, 'success');
+    } else {
+      this.toast(res ? res.error : 'Telegramga yuborishda xatolik', 'error');
+    }
+  },
+
+  async deleteDocumentFromArchive(docId) {
+    if (!confirm("Haqiqatdan ham ushbu ma'lumotnomani arxivdan butunlay o'chirmoqchimisiz?")) return;
+    const res = await this.api(`/api/documents/${docId}`, 'DELETE');
+    if (res && res.success) {
+      this.toast(res.message, 'success');
+      this.loadDocuments(document.getElementById('content-viewport'));
+    }
+  },
+
+  openImageModal(imgUrl, title) {
+    this.openModalLarge(`${title} — Ma'lumotnoma (300 DPI A4)`, `
+      <div style="text-align:center;">
+        <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="${title}">
+        <div class="modal-footer" style="justify-content:center;">
+          <a href="${imgUrl}" target="_blank" class="btn-sm btn-secondary">${this.icons.eye} Yangi oynada ochish</a>
+          <a href="${imgUrl}" download="${title}.png" class="btn-sm btn-primary">${this.icons.download} Yuklab olish</a>
+        </div>
+      </div>
+    `);
+  },
+
+  // ============================================================
+  // 2. DASHBOARD VIEW
+  // ============================================================
+  async loadDashboard(container) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Statistika yuklanmoqda...</div>`;
+    const res = await this.api('/api/dashboard/stats');
+    const actRes = await this.api('/api/dashboard/activity');
+
+    if (!res || !res.success) {
+      container.innerHTML = `<div class="glass-card">Statistikalarni yuklashda xatolik yuz berdi.</div>`;
+      return;
+    }
+
+    const m = res.metrics;
+    const b = res.bot;
+    const logs = actRes?.activity || [];
+
+    container.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <span class="kpi-label">Yaratilgan Hujjatlar</span>
+            <span class="kpi-value">${m.total_docs}</span>
+            <span class="kpi-change">Arxivda saqlangan</span>
+          </div>
+          <div class="kpi-icon-box">${this.icons.documents}</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <span class="kpi-label">Bot Foydalanuvchilari</span>
+            <span class="kpi-value">${m.total_users}</span>
+            <span class="kpi-change">+${m.new_users_today} bugun</span>
+          </div>
+          <div class="kpi-icon-box">${this.icons.users}</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <span class="kpi-label">Yuborilgan Xabarlar</span>
+            <span class="kpi-value">${m.sent_messages}</span>
+            <span class="kpi-change">Muvaffaqiyatli</span>
+          </div>
+          <div class="kpi-icon-box">${this.icons.messages}</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <span class="kpi-label">Ulangan Guruhlar</span>
+            <span class="kpi-value">${m.total_groups}</span>
+            <span class="kpi-change">Monitoring</span>
+          </div>
+          <div class="kpi-icon-box">${this.icons.groups}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <div class="card-title">Jonli Faoliyat Jurnali</div>
+              <div class="card-subtitle">Real vaqtdagi amallar oqimi</div>
+            </div>
+            <button class="btn-sm btn-secondary" onclick="ATLAS.navigate('logs')">Barcha loglar</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th>Vaqt</th>
+                  <th>Modul</th>
+                  <th>Amal</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${logs.length === 0 ? `<tr><td colspan="4" style="text-align:center;">Hozircha amallar qayd etilmagan</td></tr>` : ''}
+                ${logs.slice(0, 6).map(l => `
+                  <tr>
+                    <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${l.timestamp.substring(11, 19)}</td>
+                    <td><span class="badge badge-info">${l.module}</span></td>
+                    <td><b>${l.action}</b></td>
+                    <td><span class="badge badge-${l.status === 'success' ? 'success' : 'error'}">${l.status}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div class="card-title">Bot Holati</div>
+              <span class="badge badge-success">Online</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                <span style="color:rgba(255,255,255,0.6)">Username:</span>
+                <b class="mono" style="color:var(--accent-glow)">${b.username}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                <span style="color:rgba(255,255,255,0.6)">Rejim:</span>
+                <b>${b.mode.toUpperCase()}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:rgba(255,255,255,0.6)">Versiya:</span>
+                <span class="badge badge-info">v${b.version}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-title" style="margin-bottom:14px;">Tezkor O'tish</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;" onclick="ATLAS.navigate('documents')">
+                ${this.icons.plus} <span>Yangi ma'lumotnoma yaratish</span>
+              </button>
+              <button class="btn-sm btn-secondary" style="width:100%;justify-content:flex-start;" onclick="ATLAS.navigate('messages')">
+                ${this.icons.send} <span>Xabar yuborish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  // ============================================================
+  // 3. USERS, GROUPS, MESSAGES, TASKS, AUTOMATION, ANALYTICS, LOGS, SETTINGS
+  // ============================================================
+  async loadUsers(container) {
+    const res = await this.api('/api/users');
+    const users = res?.users || [];
+
+    container.innerHTML = `
+      <div class="glass-card">
+        <div class="card-header-flex">
+          <div>
+            <div class="card-title">Foydalanuvchilar Ro'yxati</div>
+            <div class="card-subtitle">Jami ${users.length} ta foydalanuvchi</div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="glass-table">
+            <thead>
+              <tr>
+                <th>Telegram ID</th>
+                <th>Ism / Familiya</th>
+                <th>Username</th>
+                <th>Status</th>
+                <th style="text-align:right">Amallar</th>
               </tr>
             </thead>
             <tbody>
-              ${list.length === 0 ? `<tr><td colspan="6" style="text-align:center">Hozircha qoidalar yo'q</td></tr>` : ''}
-              ${list.map(a => `
+              ${users.length === 0 ? `<tr><td colspan="5" style="text-align:center;">Foydalanuvchilar yo'q</td></tr>` : ''}
+              ${users.map(u => `
                 <tr>
-                  <td><b>${a.name}</b></td>
-                  <td><span class="badge badge-info">${a.trigger_type}</span></td>
-                  <td class="mono"><code>${a.trigger_value}</code></td>
-                  <td>${a.action_type}</td>
-                  <td>
-                    <label class="switch">
-                      <input type="checkbox" ${a.is_active ? 'checked' : ''} onchange="ATLAS.toggleAutomation(${a.id})">
-                      <span class="slider"></span>
-                    </label>
-                  </td>
-                  <td style="text-align:right">
-                    <button class="btn-icon" onclick="ATLAS.deleteAutomation(${a.id})" title="O'chirish">${this.icons.trash}</button>
+                  <td class="mono"><b>${u.telegram_id}</b></td>
+                  <td>${u.first_name || ''} ${u.last_name || ''}</td>
+                  <td><span class="mono" style="color:var(--text-secondary)">@${u.username || 'mavjud_emas'}</span></td>
+                  <td><span class="badge badge-${u.status === 'active' ? 'success' : 'error'}">${u.status}</span></td>
+                  <td style="text-align:right;">
+                    <div style="display:flex;gap:6px;justify-content:flex-end;">
+                      <button class="btn-icon" onclick="ATLAS.openSendMessageModal(${u.telegram_id})" title="Xabar">${this.icons.send}</button>
+                    </div>
                   </td>
                 </tr>
               `).join('')}
@@ -916,73 +807,119 @@ const ATLAS = {
     `;
   },
 
-  async toggleAutomation(id) {
-    const res = await this.api(`/api/automations/${id}/toggle`, 'POST');
-    if (res && res.success) this.toast('Qoida holati yangilandi', 'success');
-  },
-
-  async deleteAutomation(id) {
-    if (!confirm("Haqiqatdan ham ushbu qoidani o'chirmoqchimisiz?")) return;
-    const res = await this.api(`/api/automations/${id}`, 'DELETE');
-    if (res && res.success) {
-      this.toast('Qoida o\'chirildi', 'success');
-      this.navigate('automation');
-    }
-  },
-
-  openNewAutomationModal() {
-    this.openModal('Yangi Avtomatlashtirish Qoidasi', `
-      <form id="new-auto-form">
+  openSendMessageModal(telegramId) {
+    this.openModal(`Foydalanuvchiga Xabar (ID: ${telegramId})`, `
+      <form id="direct-msg-form">
         <div class="form-group">
-          <label class="form-label">Qoida Nomi</label>
-          <input type="text" id="auto-name" class="input-control" placeholder="Guruhga yangi a'zo qo'shilganda" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Trigger Turi</label>
-          <select id="auto-trigger-type" class="select-control" style="width:100%;">
-            <option value="command">Buyruq yozilganda (masalan: /start)</option>
-            <option value="keyword">Kalit so'z topilganda</option>
-            <option value="user_join">Foydalanuvchi guruhga kirganda</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Trigger Qiymati</label>
-          <input type="text" id="auto-trigger-val" class="input-control" placeholder="/start yoki kontrakt" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Amal Turi</label>
-          <select id="auto-action-type" class="select-control" style="width:100%;">
-            <option value="send_message">Avtomatik xabar yuborish</option>
-            <option value="alert_admin">Administratorga bildirishnoma</option>
-          </select>
+          <label class="form-label">Xabar matni (HTML format)</label>
+          <textarea id="direct-msg-text" class="textarea-control" placeholder="Hurmatli talaba..." required></textarea>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-          <button type="submit" class="btn-sm btn-primary">Saqlash</button>
+          <button type="submit" class="btn-sm btn-primary">Yuborish</button>
         </div>
       </form>
     `);
 
-    document.getElementById('new-auto-form').addEventListener('submit', async (e) => {
+    document.getElementById('direct-msg-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const body = {
-        name: document.getElementById('auto-name').value,
-        trigger_type: document.getElementById('auto-trigger-type').value,
-        trigger_value: document.getElementById('auto-trigger-val').value,
-        action_type: document.getElementById('auto-action-type').value
-      };
-      const res = await this.api('/api/automations', 'POST', body);
+      const txt = document.getElementById('direct-msg-text').value;
+      const res = await this.api(`/api/users/${telegramId}/message`, 'POST', { text: txt });
       if (res && res.success) {
-        this.toast('Yangi qoida saqlandi', 'success');
+        this.toast('Xabar yuborildi', 'success');
         this.closeModal();
-        this.navigate('automation');
       }
     });
   },
 
-  // ============================================================
-  // 7. TASKS VIEW
-  // ============================================================
+  async loadGroups(container) {
+    const res = await this.api('/api/groups');
+    const groups = res?.groups || [];
+
+    container.innerHTML = `
+      <div class="glass-card">
+        <div class="card-header-flex">
+          <div>
+            <div class="card-title">Ulangan Guruhlar va Kanallar</div>
+            <div class="card-subtitle">Bot a'zo bo'lgan rasmiy guruhlar</div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="glass-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Guruh Nomi</th>
+                <th>Turi</th>
+                <th>A'zolar Soni</th>
+                <th>Holat</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${groups.length === 0 ? `<tr><td colspan="5" style="text-align:center;">Hozircha guruhlar yo'q</td></tr>` : ''}
+              ${groups.map(g => `
+                <tr>
+                  <td class="mono"><b>${g.telegram_id}</b></td>
+                  <td><b>${g.title}</b></td>
+                  <td><span class="badge badge-info">${g.type}</span></td>
+                  <td>${g.members_count} ta</td>
+                  <td><span class="badge badge-success">Faol</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  },
+
+  async loadMessages(container) {
+    container.innerHTML = `
+      <div class="glass-card" style="max-width:640px;margin:0 auto;">
+        <div class="card-title" style="margin-bottom:6px;">Xabar Yuborish & E'lonlar</div>
+        <div class="card-subtitle" style="margin-bottom:20px;">Barcha bot foydalanuvchilariga yoki guruhlarga yuborish</div>
+
+        <form id="broadcast-form">
+          <div class="form-group">
+            <label class="form-label">Xabar / E'lon Sarlavhasi</label>
+            <input type="text" id="bc-title" class="input-control" placeholder="E'lon" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Kimga yuborilsin?</label>
+            <select id="bc-target" class="select-control">
+              <option value="all_users">Barcha foydalanuvchilarga</option>
+              <option value="groups">Barcha ulangan guruhlarga</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Xabar Matni (HTML teglari ishlaydi)</label>
+            <textarea id="bc-content" class="textarea-control" style="min-height:120px;" placeholder="Hurmatli talabalar..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary btn-block">
+            ${this.icons.send} <span>Yuborishni boshlash</span>
+          </button>
+        </form>
+      </div>
+    `;
+
+    document.getElementById('broadcast-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('bc-title').value;
+      const target = document.getElementById('bc-target').value;
+      const content = document.getElementById('bc-content').value;
+
+      const res = await this.api('/api/broadcasts', 'POST', { title, target, content });
+      if (res && res.success) {
+        this.toast(`Xabar tarqatilmoqda! (${res.total_recipients} ta qabul qiluvchi)`, 'success');
+        document.getElementById('broadcast-form').reset();
+      }
+    });
+  },
+
   async loadTasks(container) {
     const res = await this.api('/api/tasks');
     const tasks = res?.tasks || [];
@@ -994,7 +931,7 @@ const ATLAS = {
             <div class="card-title">Fon Vazifalari va Jarayonlar</div>
             <div class="card-subtitle">Asinxron bajarilgan amallar jurnali</div>
           </div>
-          <button class="btn-sm btn-primary" onclick="ATLAS.runQuickTask('custom')">${this.icons.plus} Yangi Vazifa Boshlash</button>
+          <button class="btn-sm btn-primary" id="start-task-btn">${this.icons.plus} <span>Yangi Vazifa Boshlash</span></button>
         </div>
 
         <div class="table-responsive">
@@ -1009,12 +946,12 @@ const ATLAS = {
               </tr>
             </thead>
             <tbody>
-              ${tasks.length === 0 ? `<tr><td colspan="5" style="text-align:center">Hozircha vazifalar yo'q</td></tr>` : ''}
+              ${tasks.length === 0 ? `<tr><td colspan="5" style="text-align:center;">Vazifalar yo'q</td></tr>` : ''}
               ${tasks.map(t => `
                 <tr>
                   <td><b>${t.task_name}</b></td>
                   <td><span class="badge badge-info">${t.task_type}</span></td>
-                  <td><span class="badge badge-${t.status === 'completed' ? 'success' : (t.status === 'running' ? 'warning' : 'error')}">${t.status}</span></td>
+                  <td><span class="badge badge-${t.status === 'completed' ? 'success' : 'warning'}">${t.status}</span></td>
                   <td class="mono" style="font-size:12px;">${t.started_at || t.created_at}</td>
                   <td>${t.duration_seconds}s</td>
                 </tr>
@@ -1024,73 +961,26 @@ const ATLAS = {
         </div>
       </div>
     `;
+
+    document.getElementById('start-task-btn').addEventListener('click', async () => {
+      const res = await this.api('/api/tasks/run', 'POST', { name: 'Tizim ma\'lumotlarini yangilash', type: 'sync' });
+      if (res && res.success) {
+        this.toast(res.message, 'success');
+        this.loadTasks(container);
+      }
+    });
   },
 
-  async runQuickTask(type) {
-    const res = await this.api('/api/tasks/run', 'POST', { name: 'Tizim ma\'lumotlarini yangilash', type });
-    if (res && res.success) {
-      this.toast(res.message, 'success');
-      this.navigate('tasks');
-    }
-  },
-
-  // ============================================================
-  // 8. ANALYTICS VIEW
-  // ============================================================
-  async loadAnalytics(container) {
-    const res = await this.api('/api/analytics/charts');
-    const labels = res?.labels || ['Du', 'Se', 'Chor', 'Pay', 'Ju', 'Sha', 'Yak'];
-    const s = res?.series || { users: [4, 6, 8, 12, 15, 18, 22], messages: [10, 18, 25, 30, 42, 38, 50] };
-
-    container.innerHTML = `
-      <div class="glass-card" style="margin-bottom:24px;">
-        <div class="card-header-flex">
-          <div>
-            <div class="card-title">Faollik Trendlari (Oxirgi 7 kun)</div>
-            <div class="card-subtitle">Foydalanuvchilar soni va yuborilgan xabarlar dinamikasi</div>
-          </div>
-          <span class="badge badge-info">7 Kunlik</span>
-        </div>
-
-        <!-- Clean SVG Visual Chart -->
-        <div style="width:100%;height:260px;display:flex;align-items:flex-end;gap:18px;padding-top:20px;">
-          ${labels.map((lbl, idx) => {
-            const uVal = s.users[idx] || 5;
-            const mVal = s.messages[idx] || 15;
-            const hU = Math.min(uVal * 8, 180);
-            const hM = Math.min(mVal * 3.5, 220);
-            return `
-              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-                <div style="display:flex;gap:6px;align-items:flex-end;width:100%;justify-content:center;">
-                  <div style="width:18px;height:${hU}px;background:var(--accent-gradient);border-radius:4px 4px 0 0;" title="Foydalanuvchilar: ${uVal}"></div>
-                  <div style="width:18px;height:${hM}px;background:rgba(6,182,212,0.6);border-radius:4px 4px 0 0;" title="Xabarlar: ${mVal}"></div>
-                </div>
-                <span style="font-size:12px;color:rgba(255,255,255,0.6);">${lbl}</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-        <div style="display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:12.5px;">
-          <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:var(--accent-glow);border-radius:2px;"></div><span>Foydalanuvchilar</span></div>
-          <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:rgb(6,182,212);border-radius:2px;"></div><span>Xabarlar Oqimi</span></div>
-        </div>
-      </div>
-    `;
-  },
-
-  // ============================================================
-  // 9. LOGS VIEW
-  // ============================================================
-  async loadLogs(container) {
-    const res = await this.api('/api/logs');
-    const logs = res?.logs || [];
+  async loadAutomation(container) {
+    const res = await this.api('/api/automations');
+    const list = res?.automations || [];
 
     container.innerHTML = `
       <div class="glass-card">
         <div class="card-header-flex">
           <div>
-            <div class="card-title">Tizim Audit Loglari</div>
-            <div class="card-subtitle">Barcha amallar va hodisalar xavfsiz qaydnomasi</div>
+            <div class="card-title">Avtomatlashtirish Qoidalari</div>
+            <div class="card-subtitle">Bot avtomatik javoblari</div>
           </div>
         </div>
 
@@ -1098,24 +988,27 @@ const ATLAS = {
           <table class="glass-table">
             <thead>
               <tr>
-                <th>Vaqt</th>
-                <th>Modul</th>
-                <th>Harakat</th>
-                <th>Ijrochi</th>
-                <th>Status</th>
-                <th>Detallar</th>
+                <th>Qoida Nomi</th>
+                <th>Trigger Turi</th>
+                <th>Qiymati</th>
+                <th>Amal</th>
+                <th>Holati</th>
               </tr>
             </thead>
             <tbody>
-              ${logs.length === 0 ? `<tr><td colspan="6" style="text-align:center">Loglar mavjud emas</td></tr>` : ''}
-              ${logs.map(l => `
+              ${list.length === 0 ? `<tr><td colspan="5" style="text-align:center;">Qoidalar yo'q</td></tr>` : ''}
+              ${list.map(a => `
                 <tr>
-                  <td class="mono" style="font-size:12px;">${l.timestamp}</td>
-                  <td><span class="badge badge-info">${l.module}</span></td>
-                  <td><b>${l.action}</b></td>
-                  <td class="mono">${l.actor}</td>
-                  <td><span class="badge badge-${l.status === 'success' ? 'success' : (l.status === 'error' ? 'error' : 'warning')}">${l.status}</span></td>
-                  <td class="mono" style="font-size:11.5px;color:rgba(94,234,212,0.8);">${l.details_json || '{}'}</td>
+                  <td><b>${a.name}</b></td>
+                  <td><span class="badge badge-info">${a.trigger_type}</span></td>
+                  <td class="mono"><code>${a.trigger_value}</code></td>
+                  <td>${a.action_type}</td>
+                  <td>
+                    <label class="switch">
+                      <input type="checkbox" ${a.is_active ? 'checked' : ''} onchange="ATLAS.toggleAutomation(${a.id})">
+                      <span class="slider"></span>
+                    </label>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
@@ -1125,39 +1018,104 @@ const ATLAS = {
     `;
   },
 
-  // ============================================================
-  // 10. MODULES VIEW
-  // ============================================================
+  async toggleAutomation(id) {
+    const res = await this.api(`/api/automations/${id}/toggle`, 'POST');
+    if (res && res.success) this.toast('Holat o\'zgartirildi', 'success');
+  },
+
+  async loadAnalytics(container) {
+    const res = await this.api('/api/analytics/charts');
+    const labels = res?.labels || ['Du', 'Se', 'Chor', 'Pay', 'Ju', 'Sha', 'Yak'];
+    const s = res?.series || { users: [4, 6, 8, 12, 15, 18, 22], messages: [10, 18, 25, 30, 42, 38, 50] };
+
+    container.innerHTML = `
+      <div class="glass-card">
+        <div class="card-header-flex">
+          <div>
+            <div class="card-title">Faollik Trendlari (Oxirgi 7 kun)</div>
+            <div class="card-subtitle">Foydalanuvchilar va xabarlar oqimi</div>
+          </div>
+        </div>
+
+        <div style="width:100%;height:240px;display:flex;align-items:flex-end;gap:18px;padding-top:20px;">
+          ${labels.map((lbl, idx) => {
+            const uVal = s.users[idx] || 5;
+            const mVal = s.messages[idx] || 15;
+            const hU = Math.min(uVal * 7, 160);
+            const hM = Math.min(mVal * 3, 200);
+            return `
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                <div style="display:flex;gap:5px;align-items:flex-end;justify-content:center;">
+                  <div style="width:16px;height:${hU}px;background:var(--accent-gradient);border-radius:3px 3px 0 0;" title="Foydalanuvchilar: ${uVal}"></div>
+                  <div style="width:16px;height:${hM}px;background:rgba(6,182,212,0.6);border-radius:3px 3px 0 0;" title="Xabarlar: ${mVal}"></div>
+                </div>
+                <span style="font-size:11.5px;color:rgba(255,255,255,0.6);">${lbl}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  },
+
+  async loadLogs(container) {
+    const res = await this.api('/api/logs');
+    const logs = res?.logs || [];
+
+    container.innerHTML = `
+      <div class="glass-card">
+        <div class="card-header-flex">
+          <div>
+            <div class="card-title">Tizim Audit Loglari</div>
+            <div class="card-subtitle">Barcha amallar xavfsiz qaydnomasi</div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="glass-table">
+            <thead>
+              <tr>
+                <th>Vaqt</th>
+                <th>Modul</th>
+                <th>Amal</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.length === 0 ? `<tr><td colspan="4" style="text-align:center;">Loglar yo'q</td></tr>` : ''}
+              ${logs.map(l => `
+                <tr>
+                  <td class="mono" style="font-size:12px;">${l.timestamp}</td>
+                  <td><span class="badge badge-info">${l.module}</span></td>
+                  <td><b>${l.action}</b></td>
+                  <td><span class="badge badge-${l.status === 'success' ? 'success' : 'error'}">${l.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  },
+
   async loadModules(container) {
     const res = await this.api('/api/modules');
     const mods = res?.modules || [];
 
     container.innerHTML = `
       <div class="glass-card">
-        <div class="card-header-flex">
-          <div>
-            <div class="card-title">Modullar Boshqaruvi</div>
-            <div class="card-subtitle">Botning mustaqil modullarini yoqish yoki o'chirish</div>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:20px;">
+        <div class="card-title" style="margin-bottom:18px;">Bot Modullari Boshqaruvi</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
           ${mods.map(m => `
-            <div style="background:rgba(12,38,41,0.6);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:20px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;">
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                  <b style="font-size:15px;">${m.name}</b>
-                  <label class="switch">
-                    <input type="checkbox" ${m.is_enabled ? 'checked' : ''} onchange="ATLAS.toggleModule('${m.key}')">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-                <p style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.4;">${m.description}</p>
+            <div style="background:rgba(8,28,30,0.7);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <b>${m.name}</b>
+                <label class="switch">
+                  <input type="checkbox" ${m.is_enabled ? 'checked' : ''} onchange="ATLAS.toggleModule('${m.key}')">
+                  <span class="slider"></span>
+                </label>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(94,234,212,0.6);">
-                <span>Kalit: <code>${m.key}</code></span>
-                <span class="badge badge-${m.is_enabled ? 'success' : 'error'}">${m.is_enabled ? 'Faol' : 'O\'chiq'}</span>
-              </div>
+              <p style="font-size:12.5px;color:rgba(255,255,255,0.7);">${m.description}</p>
             </div>
           `).join('')}
         </div>
@@ -1170,47 +1128,34 @@ const ATLAS = {
     if (res && res.success) this.toast('Modul holati yangilandi', 'success');
   },
 
-  // ============================================================
-  // 11. SETTINGS VIEW
-  // ============================================================
   async loadSettings(container) {
     container.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-        <!-- Left: Password Change -->
         <div class="glass-card">
-          <div class="card-title" style="margin-bottom:6px;">Xavfsizlik & Parol</div>
-          <div class="card-subtitle" style="margin-bottom:20px;">Administrator hisob parolini o'zgartirish</div>
-
+          <div class="card-title" style="margin-bottom:16px;">Admin Parolini O'zgartirish</div>
           <form id="change-pwd-form">
             <div class="form-group">
               <label class="form-label">Joriy Parol</label>
               <input type="password" id="old-pwd" class="input-control" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Yangi Parol (Kamida 6 belgi)</label>
+              <label class="form-label">Yangi Parol</label>
               <input type="password" id="new-pwd" class="input-control" required>
             </div>
-            <button type="submit" class="btn-primary">Parolni yangilash</button>
+            <button type="submit" class="btn-primary btn-block">Saqlash</button>
           </form>
         </div>
 
-        <!-- Right: Bot Info -->
         <div class="glass-card">
-          <div class="card-title" style="margin-bottom:6px;">Tizim Sozlamalari</div>
-          <div class="card-subtitle" style="margin-bottom:20px;">Telegram bot konfiguratsiyasi</div>
-
-          <div style="display:flex;flex-direction:column;gap:14px;font-size:13.5px;">
+          <div class="card-title" style="margin-bottom:16px;">Bot Konfiguratsiyasi</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;">
             <div>
-              <span class="form-label">Bosh Administrator Telegram ID</span>
+              <span class="form-label">Bosh Admin Telegram ID</span>
               <input type="text" class="input-control" value="8135594558" readonly>
             </div>
             <div>
-              <span class="form-label">Bot Token Holati</span>
-              <input type="text" class="input-control" value="•••••••••••••••••••••••••••••" readonly>
-            </div>
-            <div>
               <span class="form-label">Ishlash Rejimi</span>
-              <input type="text" class="input-control" value="Webhook (Avtomatik)" readonly>
+              <input type="text" class="input-control" value="Shaxsiy Boshqaruv / Webhook" readonly>
             </div>
           </div>
         </div>
@@ -1221,7 +1166,6 @@ const ATLAS = {
       e.preventDefault();
       const old_password = document.getElementById('old-pwd').value;
       const new_password = document.getElementById('new-pwd').value;
-
       const res = await this.api('/api/auth/change_password', 'POST', { old_password, new_password });
       if (res && res.success) {
         this.toast(res.message, 'success');
@@ -1236,36 +1180,30 @@ const ATLAS = {
   // GLOBAL SEARCH & MODALS
   // ============================================================
   openGlobalSearch() {
-    this.openModal('Global Qidiruv (Ctrl+K)', `
-      <div style="margin-bottom:16px;">
-        <input type="text" id="modal-search-input" class="input-control" placeholder="Foydalanuvchi, hujjat yoki log..." autofocus>
+    this.openModal('Tezkor Qidiruv (Ctrl+K)', `
+      <div style="margin-bottom:14px;">
+        <input type="text" id="modal-search-input" class="input-control" placeholder="Hujjat, talaba F.I.O yoki log..." autofocus>
       </div>
-      <div id="modal-search-results" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
-        <div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">Qidirish uchun kamida 2 ta harf yozing...</div>
+      <div id="modal-search-results" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;">
+        <div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">Kamida 2 ta harf yozing...</div>
       </div>
     `);
 
     document.getElementById('modal-search-input').addEventListener('input', async (e) => {
       const q = e.target.value.trim();
       const resBox = document.getElementById('modal-search-results');
-      if (q.length < 2) {
-        resBox.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">Qidirish uchun kamida 2 ta harf yozing...</div>`;
-        return;
-      }
-
+      if (q.length < 2) return;
       const res = await this.api(`/api/search?q=${encodeURIComponent(q)}`);
       const items = res?.results || [];
-
       if (items.length === 0) {
         resBox.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">Hech narsa topilmadi.</div>`;
         return;
       }
-
       resBox.innerHTML = items.map(it => `
-        <div style="background:rgba(12,38,41,0.6);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="ATLAS.closeModal(); ATLAS.navigate('${it.route}')">
+        <div style="background:rgba(10,32,35,0.6);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="ATLAS.closeModal(); ATLAS.navigate('${it.route}')">
           <div>
             <b>${it.title}</b>
-            <div style="font-size:12px;color:rgba(94,234,212,0.7);">${it.subtitle}</div>
+            <div style="font-size:11.5px;color:rgba(94,234,212,0.7);">${it.subtitle}</div>
           </div>
           <span class="badge badge-info">${it.type}</span>
         </div>
@@ -1287,11 +1225,24 @@ const ATLAS = {
     el.classList.add('active');
   },
 
+  openModalLarge(title, contentHtml) {
+    const el = document.getElementById('modal-container');
+    el.innerHTML = `
+      <div class="modal-box modal-box-large">
+        <div class="modal-header">
+          <div class="card-title">${title}</div>
+          <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">${contentHtml}</div>
+      </div>
+    `;
+    el.classList.add('active');
+  },
+
   closeModal() {
     const el = document.getElementById('modal-container');
     if (el) el.classList.remove('active');
   }
 };
 
-// Start ATLAS App on DOM Ready
 document.addEventListener('DOMContentLoaded', () => ATLAS.init());

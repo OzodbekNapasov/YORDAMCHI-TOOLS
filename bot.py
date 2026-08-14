@@ -269,13 +269,24 @@ def process_docbot_generation(chat_id, tpl, answers):
                     parse_mode="HTML",
                     reply_markup=get_docs_folder_keyboard()
                 )
+            # Doimiy arxivga saqlash
+            saved_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
+            os.makedirs(saved_dir, exist_ok=True)
+            safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-')).rstrip()
+            permanent_png = os.path.join(saved_dir, f"{uid}_{safe_fio}.png")
+            try:
+                import shutil
+                shutil.copy2(output_png, permanent_png)
+            except Exception:
+                permanent_png = output_png
+
             log_generated_document(
                 template_id=tpl.get("id", "malumotnoma"),
                 template_name=tpl.get("name", "Ma'lumotnoma"),
                 recipient_fio=fio,
                 data=answers,
                 file_type="png",
-                file_path="",
+                file_path=permanent_png,
                 created_by=f"bot_user_{chat_id}"
             )
             log_audit(

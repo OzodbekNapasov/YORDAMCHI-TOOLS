@@ -609,8 +609,11 @@ def api_run_task():
 
 
 # ============================================================
-# 8. DOCUMENTS & FILES GENERATOR ENDPOINTS
+# 8. DOCUMENTS & FILES GENERATOR & PERMANENT ARCHIVE ENDPOINTS
 # ============================================================
+
+SAVED_DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "saved_documents")
+os.makedirs(SAVED_DOCS_DIR, exist_ok=True)
 
 @atlas_api.route("/documents/templates", methods=["GET"])
 @admin_required
@@ -625,7 +628,6 @@ def api_generate_document():
     tpl_id = str(data.get("template_id", "qabul_1_kurs")).strip()
     answers = data.get("answers", {})
 
-    # Shablonni topish
     target_tpl = None
     for t in DOCBOT_TEMPLATES:
         if t["id"] == tpl_id:
@@ -637,37 +639,179 @@ def api_generate_document():
 
     uid = uuid.uuid4().hex[:8]
     filename = target_tpl.get("filename", "malumotnoma.docx")
-    out_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
-    os.makedirs(out_dir, exist_ok=True)
-    out_png_path = os.path.join(out_dir, f"generated_{uid}.png")
+    fio = str(answers.get("FIO", "Talaba")).strip()
+    safe_fio = "".join(c for c in fio if c.isalnum() or c in (' ', '_', '-')).rstrip()
+    
+    # Doimiy saqlash papkasi
+    permanent_png_path = os.path.join(SAVED_DOCS_DIR, f"{uid}_{safe_fio}.png")
 
-    ok = render_docx_template_to_image(filename, out_png_path, answers)
-    if not ok or not os.path.exists(out_png_path):
+    ok = render_docx_template_to_image(filename, permanent_png_path, answers)
+    if not ok or not os.path.exists(permanent_png_path):
         return jsonify({"success": False, "error": "Hujjat rasmini shakllantirishda xatolik yuz berdi."}), 500
 
-    fio = answers.get("FIO", "Talaba").strip()
-    log_generated_document(
-        template_id=target_tpl["id"],
-        template_name=target_tpl["name"],
-        recipient_fio=fio,
-        data=answers,
-        file_type="png",
-        file_path=out_png_path,
-        created_by="web_admin"
-    )
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO generated_docs (template_id, template_name, recipient_fio, data_json, file_type, file_path, created_by)
+    VALUES (?, ?, ?, ?, 'png', ?, 'web_admin')
+    """, (target_tpl["id"], target_tpl["name"], fio, json.dumps(answers), permanent_png_path))
+    doc_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
 
     admin = get_current_admin()
-    log_audit(admin["username"], "documents", "generate_document", "success", {"template": target_tpl["name"], "fio": fio}, request.remote_addr)
+    log_audit(admin["username"], "documents", "generate_document", "success", {"doc_id": doc_id, "template": target_tpl["name"], "fio": fio}, request.remote_addr)
 
     return jsonify({
         "success": True,
-        "message": "Ma'lumotnoma 300 DPI A4 formatida tayyorlandi!",
-        "file_id": uid,
-        "download_url": f"/api/documents/download/{uid}"
+        "message": "Ma'lumotnoma 300 DPI A4 formatida tayyorlandi va arxivga saqlandi!",
+        "doc_id": doc_id,
+        "view_url": f"/api/documents/view/{doc_id}",
+        "download_url": f"/api/documents/download/{doc_id}"
     })
 
 
-@atlas_api.route("/documents/download/<file_id>", methods=["GET"])
+@atlas_api.route("/documents/list", methods=["GET"])
+@admin_required
+def api_get_documents_list():
+    q = request.args.get("q", "").strip()
+    tpl_filter = request.args.get("template", "").strip()
+    page = max(int(request.args.get("page", 1)), 1)
+    limit = min(max(int(request.args.get("limit", 20)), 5), 100)
+    offset = (page - 1) * limit
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM generated_docs WHERE 1=1"
+    params = []
+
+    if q:
+        query += " AND (recipient_fio LIKE ? OR data_json LIKE ?)"
+        params.extend([f"%{q}%", f"%{q}%"])
+
+    if tpl_filter:
+        query += " AND template_id = ?"
+        params.append(tpl_filter)
+
+    count_query = query.replace("SELECT *", "SELECT COUNT(*)")
+    cursor.execute(count_query, params)
+    total_count = cursor.fetchone()[0]
+
+    query += " ORDER BY id DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+
+    cursor.execute(query, params)
+    docs = []
+    for r in cursor.fetchall():
+        d = dict(r)
+        try:
+            d["parsed_data"] = json.loads(d.get("data_json") or "{}")
+        except Exception:
+            d["parsed_data"] = {}
+        d["file_exists"] = os.path.exists(d.get("file_path", ""))
+        docs.append(d)
+
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "documents": docs,
+        "pagination": {
+            "total": total_count,
+            "page": page,
+            "limit": limit,
+            "pages": (total_count + limit - 1) // limit
+        }
+    })
+
+
+@atlas_api.route("/documents/view/<int:doc_id>", methods=["GET"])
+@admin_required
+def api_view_document(doc_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+    doc = cursor.fetchone()
+    conn.close()
+
+    if not doc:
+        return jsonify({"error": "Hujjat topilmadi."}), 404
+
+    fpath = doc["file_path"]
+    if not os.path.exists(fpath):
+        return jsonify({"error": "Hujjat fayli diskda topilmadi."}), 404
+
+    return send_file(fpath, mimetype="image/png", as_attachment=False)
+
+
+@atlas_api.route("/documents/download/<int:doc_id>", methods=["GET"])
+@admin_required
+def api_download_document_by_id(doc_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+    doc = cursor.fetchone()
+    conn.close()
+
+    if not doc:
+        return jsonify({"error": "Hujjat topilmadi."}), 404
+
+    fpath = doc["file_path"]
+    if not os.path.exists(fpath):
+        return jsonify({"error": "Hujjat fayli diskda topilmadi."}), 404
+
+    fio = doc["recipient_fio"].replace(" ", "_")
+    return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=f"{fio}_malumotnoma.png")
+
+
+@atlas_api.route("/documents/<int:doc_id>", methods=["DELETE"])
+@admin_required
+def api_delete_document(doc_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+    doc = cursor.fetchone()
+
+    if doc:
+        fpath = doc["file_path"]
+        if fpath and os.path.exists(fpath):
+            try: os.remove(fpath)
+            except Exception: pass
+
+        cursor.execute("DELETE FROM generated_docs WHERE id = ?", (doc_id,))
+        conn.commit()
+
+    conn.close()
+    admin = get_current_admin()
+    log_audit(admin["username"], "documents", "delete_document", "warning", {"doc_id": doc_id}, request.remote_addr)
+    return jsonify({"success": True, "message": "Hujjat arxivdan o'chirildi."})
+
+
+@atlas_api.route("/documents/resend/<int:doc_id>", methods=["POST"])
+@admin_required
+def api_resend_document_telegram(doc_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+    doc = cursor.fetchone()
+    conn.close()
+
+    if not doc or not os.path.exists(doc["file_path"]):
+        return jsonify({"success": False, "error": "Hujjat fayli topilmadi."}), 404
+
+    try:
+        from bot import bot, PRIMARY_ADMIN_ID
+        with open(doc["file_path"], "rb") as pf:
+            bot.send_photo(
+                PRIMARY_ADMIN_ID,
+                photo=pf,
+                caption=f"✅ <b>{doc['recipient_fio']}</b> uchun <b>{doc['template_name']}</b> (Arxivdan yuborildi)",
+                parse_mode="HTML"
+            )
+        return jsonify({"success": True, "message": "Hujjat Telegramingizga yuborildi!"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Telegram xatosi: {str(e)}"}), 500
 @admin_required
 def api_download_document(file_id):
     out_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
