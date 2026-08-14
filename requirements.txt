@@ -6,4 +6,5 @@ Flask
 gunicorn
 Pillow
 python-docx
-requests
+requests
+python-dotenv

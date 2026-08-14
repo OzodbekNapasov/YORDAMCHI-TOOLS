@@ -5,9 +5,11 @@
 import os
 import json
 from datetime import datetime
-from dotenv import load_dotenv
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 WEBHOOK_HOST: str = os.getenv("WEBHOOK_HOST", "")
