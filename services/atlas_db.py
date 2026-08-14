@@ -244,16 +244,15 @@ def init_db():
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (name, t_type, t_val, cond, a_type, a_payload, act))
 
-    # Standart birlamchi administrator (admin / atlas2026)
-    # Hashlash atlas_auth da tekshiriladi
+    # Standart administrator (Ozodbek / Eua5gd007)
     from hashlib import pbkdf2_hmac
     salt = "atlas_secure_salt_2026"
-    pwd_hash = pbkdf2_hmac('sha256', "atlas2026".encode('utf-8'), salt.encode('utf-8'), 100000).hex()
+    pwd_hash = pbkdf2_hmac('sha256', "Eua5gd007".encode('utf-8'), salt.encode('utf-8'), 100000).hex()
     
     cursor.execute("""
-    INSERT OR IGNORE INTO admins (username, password_hash, salt, full_name, role)
-    VALUES (?, ?, ?, ?, ?)
-    """, ("admin", pwd_hash, salt, "Bosh Administrator", "superadmin"))
+    INSERT OR REPLACE INTO admins (id, username, password_hash, salt, full_name, role)
+    VALUES (1, ?, ?, ?, ?, ?)
+    """, ("Ozodbek", pwd_hash, salt, "Ozodbek Napasov", "superadmin"))
 
     # Boshlang'ich administratorni users jadvaliga kiritish
     cursor.execute("""

@@ -171,7 +171,7 @@ const ATLAS = {
               <label class="form-label">Foydalanuvchi nomi</label>
               <div class="input-container">
                 <span class="input-icon-left">${this.icons.user}</span>
-                <input type="text" id="login-username" class="input-control" placeholder="admin" value="admin" required autocomplete="username">
+                <input type="text" id="login-username" class="input-control" placeholder="Loginni kiriting" required autocomplete="username">
               </div>
             </div>
 
@@ -179,7 +179,7 @@ const ATLAS = {
               <label class="form-label">Maxfiy parol</label>
               <div class="input-container">
                 <span class="input-icon-left">${this.icons.lock}</span>
-                <input type="password" id="login-password" class="input-control" placeholder="••••••••" value="atlas2026" required autocomplete="current-password">
+                <input type="password" id="login-password" class="input-control" placeholder="Parolni kiriting" required autocomplete="current-password">
                 <span class="input-icon-right" id="toggle-pwd-btn">${this.icons.eye}</span>
               </div>
             </div>
