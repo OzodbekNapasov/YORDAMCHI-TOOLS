@@ -238,15 +238,28 @@ def process_docbot_generation(chat_id, tpl, answers):
         fio = answers.get("FIO", "Talaba").strip()
         
         if success and os.path.exists(output_png):
+            doc_title = tpl.get("name", "Ma'lumotnoma").replace("🎓", "").replace("📖", "").strip()
+            caption_lines = [
+                f"✅ <b>{escape_html_text(fio)}</b> uchun <b>{escape_html_text(doc_title)} ma'lumotnomasi</b> tayyor!\n"
+            ]
+            if answers.get("YONALISH"):
+                caption_lines.append(f"📚 <b>Yo'nalish:</b> {escape_html_text(answers['YONALISH'])}")
+            if answers.get("OQUV_YILI"):
+                caption_lines.append(f"📅 <b>O'quv yili:</b> {escape_html_text(answers['OQUV_YILI'])}")
+            if answers.get("KURSI"):
+                caption_lines.append(f"🎯 <b>Kursi:</b> {escape_html_text(answers['KURSI'])}-kurs")
+            if answers.get("GURUHI"):
+                caption_lines.append(f"👥 <b>Guruhi:</b> {escape_html_text(answers['GURUHI'])}-guruh")
+            if answers.get("SANA"):
+                caption_lines.append(f"📆 <b>Sana:</b> {escape_html_text(answers['SANA'])}")
+            
+            caption_lines.append("\n<i>Asl shablon formati va rasmiy muhr/imzolar bilan tasdiqlangan.</i>")
+            
             with open(output_png, "rb") as pf:
                 bot.send_photo(
                     chat_id,
                     photo=pf,
-                    caption=f"✅ <b>{escape_html_text(fio)}</b> uchun <b>1-kursga qabul ma'lumotnomasi</b> tayyor!\n\n"
-                            f"📚 <b>Yo'nalish:</b> {escape_html_text(answers.get('YONALISH', ''))}\n"
-                            f"📅 <b>O'quv yili:</b> {escape_html_text(answers.get('OQUV_YILI', ''))}\n"
-                            f"📆 <b>Sana:</b> {escape_html_text(answers.get('SANA', ''))}\n\n"
-                            f"<i>Asl shablon formati va rasmiy muhr/imzolar bilan tasdiqlangan.</i>",
+                    caption="\n".join(caption_lines),
                     parse_mode="HTML",
                     reply_markup=get_docs_folder_keyboard()
                 )

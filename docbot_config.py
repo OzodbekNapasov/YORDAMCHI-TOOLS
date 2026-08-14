@@ -55,7 +55,7 @@ TEMPLATES = [
     {
         "id": "qabul_1_kurs",
         "name": "🎓 1-kursga qabul",
-        "file": TEMPLATE_FILE,
+        "file": find_template_file("malumotnoma.docx"),
         "filename": "malumotnoma.docx",
         "steps": [
             {
@@ -79,6 +79,57 @@ TEMPLATES = [
                 "buttons": [
                     ["2026/2027", "2025/2026"]
                 ]
+            },
+            {
+                "field": "SANA",
+                "question": "📆 Berilgan sanani tanlang yoki qo'lda kiriting:",
+                "buttons": [
+                    [today_str]
+                ]
+            }
+        ]
+    },
+    {
+        "id": "oqiyapti",
+        "name": "📖 O'qiyotganligi haqida",
+        "file": find_template_file("malumotnoma — O'qiyapti degan.docx"),
+        "filename": "malumotnoma — O'qiyapti degan.docx",
+        "steps": [
+            {
+                "field": "FIO",
+                "question": "👤 Talabaning F.I.O ni kiriting:\n<i>(Masalan: Napasov Ozodbek Zafar o’g’li)</i>",
+                "buttons": None
+            },
+            {
+                "field": "YONALISH",
+                "question": "📚 Yo'nalishni tanlang yoki kiriting:",
+                "buttons": [
+                    ["Hamshiralik ishi"],
+                    ["Davolash ishi (Feldsherlik)"],
+                    ["Farmatsiya"],
+                    ["Stomatologiya ishi"]
+                ]
+            },
+            {
+                "field": "OQUV_YILI",
+                "question": "📅 Qaysi o'quv yilida qabul qilingan:\n<i>(Masalan: 2024/2025)</i>",
+                "buttons": [
+                    ["2025/2026", "2024/2025"],
+                    ["2023/2024", "2026/2027"]
+                ]
+            },
+            {
+                "field": "KURSI",
+                "question": "🎯 Nechanchi kursda o'qimoqda?",
+                "buttons": [
+                    ["1", "2"],
+                    ["3", "4"]
+                ]
+            },
+            {
+                "field": "GURUHI",
+                "question": "👥 Guruh raqami yoki nomini kiriting:\n<i>(Masalan: 201 yoki 102)</i>",
+                "buttons": None
             },
             {
                 "field": "SANA",
