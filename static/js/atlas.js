@@ -1587,20 +1587,20 @@ const ATLAS = {
                   <th>To'lov Sanasi</th>
                   <th>Tushgan Pul</th>
                   <th>Jami To'langan</th>
-                  <th>Qoldiq Qarz</th>
+                  <th style="text-align:right;">Qoldiq Qarz</th>
                 </tr>
               </thead>
               <tbody>
                 ${(data.updated_students || []).map((s, idx) => `
                   <tr>
-                    <td>${idx + 1}</td>
-                    <td><b style="color:var(--color-primary);">${s.orig_name}</b></td>
-                    <td><span style="font-size:0.85rem;color:var(--color-text-muted);">${s.deb_name}</span></td>
-                    <td><span class="badge badge-neutral">${s.guruh}</span></td>
-                    <td>${s.date}</td>
-                    <td><b style="color:var(--color-success);">+${(s.amount || 0).toLocaleString()} so'm</b></td>
-                    <td><b>${(s.total_paid || 0).toLocaleString()} so'm</b></td>
-                    <td><span style="color:${s.debt_left > 0 ? 'var(--color-warning)' : 'var(--color-success)'};">${(s.debt_left || 0).toLocaleString()} so'm</span></td>
+                    <td class="mono" style="text-align:center;color:rgba(255,255,255,0.6);">${idx + 1}</td>
+                    <td><b style="color:#38bdf8;font-size:13.5px;">${s.orig_name}</b></td>
+                    <td><span style="font-size:0.85rem;color:rgba(255,255,255,0.6);">${s.deb_name}</span></td>
+                    <td><span class="badge badge-neutral" style="font-weight:700;">${s.guruh}</span></td>
+                    <td class="mono" style="color:rgba(255,255,255,0.7);">${s.date}</td>
+                    <td class="mono" style="text-align:right;"><b style="color:#34d399;font-size:13.5px;">+${(s.amount || 0).toLocaleString()} so'm</b></td>
+                    <td class="mono" style="text-align:right;"><b style="color:#ffffff;">${(s.total_paid || 0).toLocaleString()} so'm</b></td>
+                    <td class="mono" style="text-align:right;"><b style="color:${s.debt_left > 0 ? '#fbbf24' : '#34d399'};">${(s.debt_left || 0).toLocaleString()} so'm</b></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -1613,21 +1613,21 @@ const ATLAS = {
             <table class="table-custom">
               <thead>
                 <tr>
-                  <th>№</th>
-                  <th>Debitorkadagi Noaniq Ism</th>
-                  <th>To'lov Sanasi</th>
-                  <th>Tushgan Pul</th>
-                  <th>Holat</th>
+                  <th style="width:50px;text-align:center;">№</th>
+                  <th>Debitorkadagi Noaniq Ism / To'lov Tafsiloti</th>
+                  <th style="width:130px;">To'lov Sanasi</th>
+                  <th style="width:170px;text-align:right;">Tushgan Pul</th>
+                  <th style="width:160px;text-align:center;">Holat</th>
                 </tr>
               </thead>
               <tbody>
                 ${(data.unmatched_records || []).map((u, idx) => `
                   <tr>
-                    <td>${idx + 1}</td>
-                    <td><b style="color:var(--color-warning);">${u.name}</b></td>
-                    <td>${u.date}</td>
-                    <td><b>${(u.amount || 0).toLocaleString()} so'm</b></td>
-                    <td><span class="badge badge-danger">Bazadan topilmadi</span></td>
+                    <td class="mono" style="text-align:center;color:rgba(255,255,255,0.6);">${idx + 1}</td>
+                    <td><b style="color:#fbbf24;font-size:13px;">${u.name}</b></td>
+                    <td class="mono" style="color:rgba(255,255,255,0.7);">${u.date}</td>
+                    <td class="mono" style="text-align:right;"><b style="color:#ffffff;font-size:13.5px;">${(u.amount || 0).toLocaleString()} so'm</b></td>
+                    <td style="text-align:center;"><span class="badge badge-danger">Bazadan topilmadi</span></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -1640,21 +1640,21 @@ const ATLAS = {
             <table class="table-custom">
               <thead>
                 <tr>
-                  <th>№</th>
+                  <th style="width:50px;text-align:center;">№</th>
                   <th>Guruh Rahbari</th>
-                  <th>Guruh</th>
-                  <th>Talabalar Soni</th>
-                  <th>Qarzdorlik Summasi</th>
+                  <th style="width:120px;text-align:center;">Guruh</th>
+                  <th style="width:140px;text-align:center;">Talabalar Soni</th>
+                  <th style="width:200px;text-align:right;">Qarzdorlik Summasi</th>
                 </tr>
               </thead>
               <tbody>
                 ${(data.xulosa_rows || []).map((x, idx) => `
                   <tr>
-                    <td>${idx + 1}</td>
-                    <td><b>${x.rahbar}</b></td>
-                    <td><span class="badge badge-neutral">${x.guruh}</span></td>
-                    <td>${x.soni} kishi</td>
-                    <td><b style="color:${x.qarz > 0 ? 'var(--color-danger)' : 'var(--color-success)'};">${(x.qarz || 0).toLocaleString()} so'm</b></td>
+                    <td class="mono" style="text-align:center;color:rgba(255,255,255,0.6);">${idx + 1}</td>
+                    <td><b style="color:#ffffff;font-size:13.5px;">${x.rahbar}</b></td>
+                    <td style="text-align:center;"><span class="badge badge-info" style="font-weight:700;">${x.guruh}</span></td>
+                    <td class="mono" style="text-align:center;color:#38bdf8;"><b>${x.soni} kishi</b></td>
+                    <td class="mono" style="text-align:right;"><b style="color:${x.qarz > 0 ? '#f87171' : '#34d399'};font-size:13.5px;">${(x.qarz || 0).toLocaleString()} so'm</b></td>
                   </tr>
                 `).join('')}
               </tbody>

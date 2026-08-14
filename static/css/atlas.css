@@ -848,49 +848,83 @@ body {
   justify-content: center;
 }
 
-/* Glass Tables */
-.table-responsive {
+/* Glass & Custom Tables (Crisp Grid Lines & Colors) */
+.table-responsive,
+.table-container {
   width: 100%;
   overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 203, 169, 0.35);
+  background: rgba(5, 20, 22, 0.75);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  margin-top: 14px;
 }
+
+.table-custom,
 .glass-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 4px;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
 }
-.glass-table th {
-  padding: 10px 14px;
+
+.table-custom thead th,
+.glass-table thead th {
+  padding: 13px 14px;
   font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(94, 234, 212, 0.6);
-  text-align: left;
-  border: none;
+  color: var(--accent-glow);
+  background: linear-gradient(180deg, rgba(12, 42, 46, 0.98), rgba(6, 26, 29, 0.98));
+  border-bottom: 2px solid rgba(0, 203, 169, 0.5);
+  border-right: 1px solid rgba(0, 203, 169, 0.2);
+  white-space: nowrap;
 }
+
+.table-custom thead th:last-child,
+.glass-table thead th:last-child {
+  border-right: none;
+}
+
+.table-custom tbody tr,
 .glass-table tbody tr {
-  background: rgba(10, 32, 35, 0.5);
+  border-bottom: 1px solid rgba(0, 203, 169, 0.12);
   transition: var(--transition);
 }
-.glass-table tbody tr:hover {
-  background: rgba(14, 46, 50, 0.8);
+
+.table-custom tbody tr:nth-child(even),
+.glass-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
 }
+
+.table-custom tbody tr:nth-child(odd),
+.glass-table tbody tr:nth-child(odd) {
+  background: rgba(8, 30, 33, 0.55);
+}
+
+.table-custom tbody tr:hover,
+.glass-table tbody tr:hover {
+  background: rgba(0, 203, 169, 0.14) !important;
+}
+
+.table-custom td,
 .glass-table td {
   padding: 12px 14px;
+  color: rgba(240, 253, 250, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  vertical-align: middle;
   font-size: 13px;
-  color: rgba(240, 253, 250, 0.9);
-  border-top: 1px solid var(--border-glass-subtle);
-  border-bottom: 1px solid var(--border-glass-subtle);
 }
-.glass-table td:first-child {
-  border-left: 1px solid var(--border-glass-subtle);
-  border-top-left-radius: var(--radius-sm);
-  border-bottom-left-radius: var(--radius-sm);
-}
+
+.table-custom td:last-child,
 .glass-table td:last-child {
-  border-right: 1px solid var(--border-glass-subtle);
-  border-top-right-radius: var(--radius-sm);
-  border-bottom-right-radius: var(--radius-sm);
+  border-right: none;
+}
+
+.table-custom td b,
+.glass-table td b {
+  font-weight: 600;
 }
 
 /* Badges */
@@ -898,32 +932,40 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: var(--radius-pill);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 .badge-success {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.18);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 .badge-warning {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.18);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
-.badge-error {
-  background: rgba(239, 68, 68, 0.15);
+.badge-error,
+.badge-danger {
+  background: rgba(239, 68, 68, 0.18);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
-.badge-info {
-  background: rgba(6, 182, 212, 0.15);
+.badge-info,
+.badge-cyan {
+  background: rgba(6, 182, 212, 0.18);
   color: #38bdf8;
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+.badge-neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 /* Modals */

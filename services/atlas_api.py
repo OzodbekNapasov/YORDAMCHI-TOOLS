@@ -1453,7 +1453,7 @@ def api_contracts_download_all_zip(session_id):
 @atlas_api.route("/contracts/send-to-telegram", methods=["POST"])
 @admin_required
 def api_contracts_send_to_telegram():
-    """Telegram guruh yoki kanallariga hisobot va fayllarni forward qilish"""
+    """Telegram guruh yoki shaxsiy botga hisobot, xulosa rasmi va Excel faylini yuborish (Serverless safe)"""
     admin = get_current_admin()
     data = request.get_json(silent=True) or {}
     chat_ids = data.get("chat_ids", [])
@@ -1464,13 +1464,20 @@ def api_contracts_send_to_telegram():
     send_screenshots = data.get("send_screenshots", False)
 
     if not chat_ids:
-        return jsonify({"success": False, "error": "Kamida bitta Telegram guruh yoki chat tanlanishi kerak."}), 400
+        # Default to admin telegram ID if empty
+        chat_ids = ["8135594558"]
 
     excel_path = None
     xulosa_path = None
     group_images = []
 
+    # 1. Fetch Session metadata from DB if session_id is given
+    sess = None
     if session_id:
+        sess = get_contract_session_by_id(session_id)
+
+    # 2. Look for local files first
+    if session_id and os.path.exists(CONTRACT_STORAGE_DIR):
         if send_excel:
             for fname in os.listdir(CONTRACT_STORAGE_DIR):
                 if fname.startswith(session_id) and fname.endswith(".xlsx"):
@@ -1488,6 +1495,30 @@ def api_contracts_send_to_telegram():
                     if fname.endswith(".png"):
                         group_images.append(os.path.join(sdir, fname))
 
+    # 3. If running on Vercel / serverless and local files are missing, use Supabase URLs
+    if sess:
+        if send_excel and not excel_path and sess.get("excel_url"):
+            excel_path = sess.get("excel_url")
+        if send_xulosa and not xulosa_path and sess.get("xulosa_url"):
+            xulosa_path = sess.get("xulosa_url")
+
+        # Build informative caption if generic
+        if not caption_text or caption_text == "<b>ATLAS Platformasi: Kontrakt Hisoboti</b>":
+            m = sess.get("metrics") or {}
+            inc = int(sess.get("total_income", 0))
+            upd = sess.get("updated_count", 0)
+            unm = sess.get("unmatched_count", 0)
+            s_date = sess.get("start_date", "")
+            e_date = sess.get("end_date", "")
+            caption_text = (
+                f"📊 <b>ATLAS Platformasi: Kontraktlar Yangilanish Hisoboti</b>\n\n"
+                f"💰 <b>Jami tushgan pul:</b> {inc:,} so'm\n"
+                f"👥 <b>Yangilangan talabalar:</b> {upd} kishi\n"
+                f"⚠️ <b>Topilmagan to'lovlar:</b> {unm} ta\n"
+                f"📅 <b>Sana oralig'i:</b> {s_date} — {e_date}\n\n"
+                f"<i>Fayllar va Xulosa jadvali quyida biriktirildi 👇</i>"
+            ).replace(",", " ")
+
     res = forward_to_telegram(
         chat_ids=chat_ids,
         caption_text=caption_text,
@@ -1501,7 +1532,7 @@ def api_contracts_send_to_telegram():
         "contracts",
         "send_to_telegram",
         "success" if res.get("success") else "error",
-        {"chat_ids": chat_ids, "session_id": session_id},
+        {"chat_ids": chat_ids, "session_id": session_id, "results": res.get("results")},
         request.remote_addr
     )
 
