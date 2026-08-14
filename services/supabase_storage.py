@@ -8,15 +8,16 @@ import requests
 import json
 import mimetypes
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
-BUCKET_NAME = "documents"
+def get_credentials():
+    from services.atlas_db import _get_supabase_credentials
+    return _get_supabase_credentials()
 
 
 def get_headers():
+    _, key = get_credentials()
     return {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}"
+        "apikey": key,
+        "Authorization": f"Bearer {key}"
     }
 
 
@@ -35,7 +36,8 @@ def upload_document_to_supabase(local_file_path: str, destination_filename: str)
         if not mime_type:
             mime_type = "image/png" if local_file_path.endswith(".png") else "application/octet-stream"
 
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{clean_key}"
+        supa_url, _ = get_credentials()
+        upload_url = f"{supa_url}/storage/v1/object/{BUCKET_NAME}/{clean_key}"
         
         with open(local_file_path, "rb") as f:
             file_data = f.read()
@@ -52,7 +54,7 @@ def upload_document_to_supabase(local_file_path: str, destination_filename: str)
         )
 
         if res.status_code in [200, 201]:
-            public_cdn_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{clean_key}"
+            public_cdn_url = f"{supa_url}/storage/v1/object/public/{BUCKET_NAME}/{clean_key}"
             print(f"[Supabase Storage] Yuklandi: {public_cdn_url}")
             return public_cdn_url
         else:
@@ -68,7 +70,8 @@ def delete_document_from_supabase(destination_filename: str) -> bool:
     Supabase Storage dan faylni o'chiradi.
     """
     try:
-        delete_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{destination_filename}"
+        supa_url, _ = get_credentials()
+        delete_url = f"{supa_url}/storage/v1/object/{BUCKET_NAME}/{destination_filename}"
         res = requests.delete(delete_url, headers=get_headers(), timeout=10)
         return res.status_code in [200, 204]
     except Exception:

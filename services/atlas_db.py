@@ -302,31 +302,49 @@ def init_db():
     conn.close()
 
 
+def _get_supabase_credentials():
+    supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+    supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+    if not supa_key:
+        env_paths = [".env", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")]
+        for ep in env_paths:
+            if os.path.exists(ep):
+                try:
+                    with open(ep, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith("SUPABASE_SERVICE_ROLE_KEY="):
+                                supa_key = line.split("=", 1)[1].strip()
+                            elif not supa_key and line.startswith("SUPABASE_KEY="):
+                                supa_key = line.split("=", 1)[1].strip()
+                            elif line.startswith("SUPABASE_URL=") and not os.environ.get("SUPABASE_URL"):
+                                supa_url = line.split("=", 1)[1].strip()
+                except Exception:
+                    pass
+    return supa_url, supa_key
+
+
 def _sync_supabase_async(endpoint: str, payload: dict, method: str = "POST", params: str = ""):
-    """Supabase Cloud bazasiga fonda avtomatik sinxronlash (POST, PATCH, DELETE)"""
-    import threading
-    def _worker():
-        try:
-            import requests
-            supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-            supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
-            if supa_url and supa_key:
-                headers = {
-                    "apikey": supa_key,
-                    "Authorization": f"Bearer {supa_key}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal"
-                }
-                url = f"{supa_url}/rest/v1/{endpoint}{params}"
-                if method.upper() == "POST":
-                    requests.post(url, headers=headers, json=payload, timeout=5)
-                elif method.upper() == "PATCH":
-                    requests.patch(url, headers=headers, json=payload, timeout=5)
-                elif method.upper() == "DELETE":
-                    requests.delete(url, headers=headers, timeout=5)
-        except Exception:
-            pass
-    threading.Thread(target=_worker, daemon=True).start()
+    """Supabase Cloud bazasiga ishonchli sinxronlash (POST, PATCH, DELETE)"""
+    try:
+        import requests
+        supa_url, supa_key = _get_supabase_credentials()
+        if supa_url and supa_key:
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates"
+            }
+            url = f"{supa_url}/rest/v1/{endpoint}{params}"
+            if method.upper() == "POST":
+                requests.post(url, headers=headers, json=payload, timeout=4)
+            elif method.upper() == "PATCH":
+                requests.patch(url, headers=headers, json=payload, timeout=4)
+            elif method.upper() == "DELETE":
+                requests.delete(url, headers=headers, timeout=4)
+    except Exception as e:
+        print(f"Supabase sync error for {endpoint}: {e}")
 
 
 # Yordamchi DB Funksiyalari
@@ -498,8 +516,7 @@ def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, of
     # Agar SQLite bo'sh bo'lsa (Serverless konteyner yangilanganda), Supabase Cloud'dan yuklash
     try:
         import requests
-        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-        supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+        supa_url, supa_key = _get_supabase_credentials()
         if supa_url and supa_key:
             headers = {
                 "apikey": supa_key,
@@ -510,7 +527,7 @@ def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, of
                 url += f"&template_id=eq.{template_id}"
             if q:
                 url += f"&recipient_fio=ilike.*{q}*"
-            resp = requests.get(url, headers=headers, timeout=6)
+            resp = requests.get(url, headers=headers, timeout=5)
             if resp.status_code == 200:
                 cloud_docs = resp.json()
                 if cloud_docs:
@@ -567,8 +584,7 @@ def get_document_by_id(doc_id: int):
 
     try:
         import requests
-        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-        supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+        supa_url, supa_key = _get_supabase_credentials()
         if supa_url and supa_key:
             headers = {
                 "apikey": supa_key,
@@ -604,8 +620,7 @@ def get_student_groups():
     # Agar SQLite bo'sh bo'lsa (Serverless / Yangi konteynerda), Supabase Cloud'dan o'qib kelish:
     try:
         import requests
-        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-        supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+        supa_url, supa_key = _get_supabase_credentials()
         if supa_url and supa_key:
             headers = {
                 "apikey": supa_key,
@@ -749,7 +764,7 @@ def bulk_add_student_groups(items_data):
                 "course_level": course,
                 "direction": direction,
                 "order_num": order_num
-            })
+            }, method="POST", params="?on_conflict=group_name")
         except Exception as e:
             print(f"Error inserting group {g_name}: {e}")
             skipped += 1

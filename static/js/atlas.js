@@ -946,7 +946,7 @@ const ATLAS = {
             <!-- Buyruq raqami -->
             <div class="form-group" id="group-buyruq-raqami" style="display:none;">
               <label class="form-label">Buyruq Raqami</label>
-              <input type="text" id="doc-buyruq-raqami" class="input-control" placeholder="14-B" value="14-B">
+              <input type="text" id="doc-buyruq-raqami" class="input-control" placeholder="Buyruq raqamini kiriting (masalan: 14-B)" value="">
             </div>
 
             <!-- Avvalgi buyruq rekvizitlari -->
@@ -954,11 +954,11 @@ const ATLAS = {
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
                   <label class="form-label">Avvalgi Buyruq Raqami</label>
-                  <input type="text" id="doc-avv-raqam" class="input-control" placeholder="14-B" value="14-B">
+                  <input type="text" id="doc-avv-raqam" class="input-control" placeholder="Avvalgi buyruq raqami..." value="">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Avvalgi Buyruq Sanasi</label>
-                  <input type="text" id="doc-avv-sana" class="input-control" placeholder="10.02.2025" value="10.02.2025">
+                  <input type="text" id="doc-avv-sana" class="input-control" placeholder="Avvalgi buyruq sanasi (masalan: 10.02.2025)" value="">
                 </div>
               </div>
             </div>
@@ -1054,12 +1054,11 @@ const ATLAS = {
     `;
 
     // Load academic groups into dropdowns
-    this.api('/api/groups/academic').then(res => {
-      const gList = res?.groups || [];
+    const populateAllGroupSelects = (gList) => {
       const sel1 = document.getElementById('doc-guruhi-select');
       const sel2 = document.getElementById('doc-yangi-guruhi-select');
 
-      const populateSelect = (sel) => {
+      const fillSel = (sel) => {
         if (!sel) return;
         sel.innerHTML = '<option value="">-- Guruhni tanlang --</option>' +
           gList.map(g => {
@@ -1069,8 +1068,17 @@ const ATLAS = {
           '<option value="__custom__">✨ Maxsus guruh (Qo\'lda yozish)...</option>';
       };
 
-      populateSelect(sel1);
-      populateSelect(sel2);
+      fillSel(sel1);
+      fillSel(sel2);
+    };
+
+    if (this._academicGroups && this._academicGroups.length > 0) {
+      populateAllGroupSelects(this._academicGroups);
+    }
+    this.api('/api/groups/academic').then(res => {
+      const gList = res?.groups || [];
+      this._academicGroups = gList;
+      populateAllGroupSelects(gList);
     });
 
     // Toggle custom group inputs
