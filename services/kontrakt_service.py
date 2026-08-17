@@ -909,12 +909,20 @@ def execute_group_screenshots(baza_path, session_id=None):
 
 
 # ============================================================
-# 6. FORWARD TO TELEGRAM GROUPS / CHANNELS
+# 6. FORWARD TO TELEGRAM GROUPS / CHANNELS (TARTIBLI & CAPTION BILAN)
 # ============================================================
 
+def natural_sort_key(s):
+    """Matn ichidagi raqamlarni to'g'ri tartiblash (101, 102, 201, 25-16, 25-17...)"""
+    import re
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', str(s))]
+
+
 def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path=None, group_img_paths=None):
-    """Tanlangan Telegram guruhlari yoki shaxsiy chatga bot orqali xabar, rasm va fayllarni jo'natish (Serverless safe)"""
+    """Tanlangan Telegram guruhlari yoki shaxsiy chatga bot orqali xabar, rasm va fayllarni qat'iy tartibda jo'natish (Serverless safe)"""
     try:
+        import io
+        import time
         import telebot
         import requests
         token = os.environ.get("BOT_TOKEN") or "7737397731:AAFFwV8G6v0aE2E72q8vEaA7Jc-w3jYn7v8"
@@ -929,32 +937,52 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                 cid_str = str(cid).strip()
                 if not cid_str: continue
 
-                # 1. Send Caption / Summary Text
+                # 1. Asosiy umumiy xabar / sarlavhani jo'natish
                 if caption_text:
-                    bot.send_message(cid_str, caption_text, parse_mode="HTML")
-
-                # 2. Send Xulosa Image (Local file or Remote Supabase URL)
-                if xulosa_img_path:
                     try:
-                        if isinstance(xulosa_img_path, str) and xulosa_img_path.startswith(('http://', 'https://')):
-                            resp = requests.get(xulosa_img_path, timeout=20)
+                        bot.send_message(cid_str, caption_text, parse_mode="HTML")
+                        time.sleep(0.6)
+                    except Exception as me:
+                        print(f"Message send error: {me}")
+
+                # 2. Rasm ro'yxatidan Xulosa va Guruh rasmlarini aniq ajratish
+                all_images = list(group_img_paths or [])
+                actual_xulosa = xulosa_img_path
+                actual_groups = []
+
+                for img_item in all_images:
+                    img_str = str(img_item)
+                    base_name = os.path.basename(img_str.split("?")[0]).lower()
+                    if "xulosa" in base_name or "00_xulosa" in base_name:
+                        if not actual_xulosa:
+                            actual_xulosa = img_item
+                    else:
+                        actual_groups.append(img_item)
+
+                # 3. 1-bo'lib XULOSA rasmini jo'natish
+                if actual_xulosa:
+                    try:
+                        x_cap = "📊 <b>XULOSA: Guruh rahbarlari va qarzdorliklar jamlanmasi</b>"
+                        if isinstance(actual_xulosa, str) and actual_xulosa.startswith(('http://', 'https://')):
+                            resp = requests.get(actual_xulosa, timeout=25)
                             if resp.status_code == 200:
                                 xf = io.BytesIO(resp.content)
-                                xf.name = "Xulosa_Hisoboti.png"
-                                bot.send_photo(cid_str, photo=xf, caption="📊 <b>Guruh rahbarlari bo'yicha XULOSA hisoboti</b>", parse_mode="HTML")
-                        elif isinstance(xulosa_img_path, str) and os.path.exists(xulosa_img_path):
-                            with open(xulosa_img_path, 'rb') as xf:
-                                bot.send_photo(cid_str, photo=xf, caption="📊 <b>Guruh rahbarlari bo'yicha XULOSA hisoboti</b>", parse_mode="HTML")
+                                xf.name = "00_Xulosa_Hisoboti.png"
+                                bot.send_photo(cid_str, photo=xf, caption=x_cap, parse_mode="HTML")
+                                time.sleep(0.7)
+                        elif isinstance(actual_xulosa, str) and os.path.exists(actual_xulosa):
+                            with open(actual_xulosa, 'rb') as xf:
+                                bot.send_photo(cid_str, photo=xf, caption=x_cap, parse_mode="HTML")
+                                time.sleep(0.7)
                     except Exception as img_err:
                         print(f"Xulosa send error: {img_err}")
 
-                # 3. Send Excel Document (Local file or Remote Supabase URL) — sessiya raqamisiz toza fayl nomi
+                # 4. Agar Excel bazasi mavjud bo'lsa uni jo'natish
                 if excel_path:
                     try:
                         clean_filename = "Yangilangan_Kontraktlar_Bazasi.xlsx"
                         if isinstance(excel_path, str):
                             raw_name = os.path.basename(excel_path.split("?")[0])
-                            # Sessiya prefiksini olib tashlash (masalan: 8c1c18cb2407_11.08.2026_GACHA_KONTRAKTLAR.xlsx -> 11.08.2026_GACHA_KONTRAKTLAR.xlsx)
                             if "_" in raw_name:
                                 parts = raw_name.split("_", 1)
                                 if len(parts[0]) >= 8:
@@ -964,35 +992,52 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                             else:
                                 clean_filename = raw_name
 
+                        e_cap = "📄 <b>Yangilangan Kontraktlar Bazasi (.xlsx)</b>"
                         if isinstance(excel_path, str) and excel_path.startswith(('http://', 'https://')):
                             resp = requests.get(excel_path, timeout=25)
                             if resp.status_code == 200:
                                 ef = io.BytesIO(resp.content)
                                 ef.name = clean_filename
-                                bot.send_document(cid_str, document=ef, caption="📄 <b>Yangilangan Kontraktlar Bazasi (.xlsx)</b>", parse_mode="HTML")
+                                bot.send_document(cid_str, document=ef, caption=e_cap, parse_mode="HTML")
+                                time.sleep(0.7)
                         elif isinstance(excel_path, str) and os.path.exists(excel_path):
                             with open(excel_path, 'rb') as ef_file:
                                 ef_bytes = io.BytesIO(ef_file.read())
                                 ef_bytes.name = clean_filename
-                                bot.send_document(cid_str, document=ef_bytes, caption="📄 <b>Yangilangan Kontraktlar Bazasi (.xlsx)</b>", parse_mode="HTML")
+                                bot.send_document(cid_str, document=ef_bytes, caption=e_cap, parse_mode="HTML")
+                                time.sleep(0.7)
                     except Exception as doc_err:
                         print(f"Excel send error: {doc_err}")
 
-                # 4. Send Group Screenshots
-                if group_img_paths:
-                    for g_img in group_img_paths:
+                # 5. Guruhlarni ketma-ket, tartiblangan holda har birining tagiga Guruhi yozilib jo'natish
+                if actual_groups:
+                    def extract_group_name(item):
+                        bname = os.path.basename(str(item).split("?")[0])
+                        clean = re.sub(r'^(screenshot_)?', '', bname, flags=re.IGNORECASE)
+                        clean = re.sub(r'\.png$', '', clean, flags=re.IGNORECASE)
+                        return clean.replace('_', ' ').strip()
+
+                    # Guruhlarni tabiiy tartibda (101, 102, 201, 25-16, 25-17...) saralash
+                    sorted_groups = sorted(actual_groups, key=lambda x: natural_sort_key(extract_group_name(x)))
+
+                    for g_img in sorted_groups:
                         try:
+                            g_title = extract_group_name(g_img)
+                            g_cap = f"📌 <b>Guruh: {g_title}</b>\n<i>Qarzdorlik holati jadvali</i>"
+
                             if isinstance(g_img, str) and g_img.startswith(('http://', 'https://')):
-                                resp = requests.get(g_img, timeout=15)
+                                resp = requests.get(g_img, timeout=20)
                                 if resp.status_code == 200:
                                     gf = io.BytesIO(resp.content)
-                                    gf.name = "guruh_screenshot.png"
-                                    bot.send_photo(cid_str, photo=gf)
+                                    gf.name = f"{g_title}.png"
+                                    bot.send_photo(cid_str, photo=gf, caption=g_cap, parse_mode="HTML")
+                                    time.sleep(0.8)
                             elif isinstance(g_img, str) and os.path.exists(g_img):
                                 with open(g_img, 'rb') as gf:
-                                    bot.send_photo(cid_str, photo=gf)
+                                    bot.send_photo(cid_str, photo=gf, caption=g_cap, parse_mode="HTML")
+                                    time.sleep(0.8)
                         except Exception as ss_err:
-                            print(f"Group screenshot send error: {ss_err}")
+                            print(f"Group screenshot send error ({g_img}): {ss_err}")
 
                 results.append({"chat_id": cid_str, "status": "success"})
             except Exception as err:

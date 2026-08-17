@@ -1695,20 +1695,23 @@ def api_contracts_send_to_telegram():
 
         # Build informative caption if generic
         if not caption_text or caption_text == "<b>ATLAS Platformasi: Kontrakt Hisoboti</b>":
-            m = sess.get("metrics") or {}
-            inc = int(sess.get("total_income", 0))
-            upd = sess.get("updated_count", 0)
-            unm = sess.get("unmatched_count", 0)
-            s_date = sess.get("start_date", "")
-            e_date = sess.get("end_date", "")
-            caption_text = (
-                f"📊 <b>ATLAS Platformasi: Kontraktlar Yangilanish Hisoboti</b>\n\n"
-                f"💰 <b>Jami tushgan pul:</b> {inc:,} so'm\n"
-                f"👥 <b>Yangilangan talabalar:</b> {upd} kishi\n"
-                f"⚠️ <b>Topilmagan to'lovlar:</b> {unm} ta\n"
-                f"📅 <b>Sana oralig'i:</b> {s_date} — {e_date}\n\n"
-                f"<i>Fayllar va Xulosa jadvali quyida biriktirildi 👇</i>"
-            ).replace(",", " ")
+            if send_screenshots and not send_excel:
+                caption_text = "📸 <b>Guruhlar Bo'yicha HD Screenshotlar To'plami</b>\n\n<i>Barcha guruhlarning qarzdorlik holati va Xulosa jadvali quyida tartib bilan yuborilmoqda 👇</i>"
+            else:
+                m = sess.get("metrics") or {}
+                inc = int(sess.get("total_income", 0))
+                upd = sess.get("updated_count", 0)
+                unm = sess.get("unmatched_count", 0)
+                s_date = sess.get("start_date", "")
+                e_date = sess.get("end_date", "")
+                caption_text = (
+                    f"📊 <b>ATLAS Platformasi: Kontraktlar Yangilanish Hisoboti</b>\n\n"
+                    f"💰 <b>Jami tushgan pul:</b> {inc:,} so'm\n"
+                    f"👥 <b>Yangilangan talabalar:</b> {upd} kishi\n"
+                    f"⚠️ <b>Topilmagan to'lovlar:</b> {unm} ta\n"
+                    f"📅 <b>Sana oralig'i:</b> {s_date} — {e_date}\n\n"
+                    f"<i>Fayllar va Xulosa jadvali quyida biriktirildi 👇</i>"
+                ).replace(",", " ")
 
     res = forward_to_telegram(
         chat_ids=chat_ids,
