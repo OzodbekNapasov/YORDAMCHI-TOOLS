@@ -3349,10 +3349,13 @@ const ATLAS = {
     const payload = {
       chat_ids: [ADMIN_CHAT_ID],
       session_id: sessionId,
-      caption: '<b>ATLAS Platformasi: Kontrakt Hisoboti</b>',
+      caption: (mode === 'screenshots') 
+        ? "📸 <b>Guruhlar Bo'yicha HD Screenshotlar To'plami</b>\n\n<i>Barcha guruhlarning qarzdorlik holati va Xulosa jadvali quyida tartib bilan yuborilmoqda 👇</i>"
+        : '<b>ATLAS Platformasi: Kontrakt Hisoboti</b>',
       send_excel: (mode === 'update'),
       send_xulosa: (mode === 'update'),
-      send_screenshots: (mode === 'screenshots')
+      send_screenshots: (mode === 'screenshots'),
+      groups: this.contractState.lastSsResult?.groups || []
     };
 
     const sendRes = await this.api('/api/contracts/send-to-telegram', 'POST', payload);

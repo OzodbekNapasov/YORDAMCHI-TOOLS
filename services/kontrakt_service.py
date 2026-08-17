@@ -854,12 +854,7 @@ def execute_group_screenshots(baza_path, session_id=None):
             generate_xulosa_table_image(xulosa_rows, xul_img_path)
             zip_f.write(xul_img_path, xul_filename)
 
-            # Also save as main xulosa image
-            main_xulosa_path = os.path.join(CONTRACT_STORAGE_DIR, f"xulosa_{session_id}_{date_str}.png")
-            try:
-                generate_xulosa_table_image(xulosa_rows, main_xulosa_path)
-            except Exception:
-                pass
+            sb_xul_url = upload_document_to_supabase(xul_img_path, f"contracts/screenshots_{session_id}/{xul_filename}")
 
             tot_xul_debt = sum(x['qarz'] for x in xulosa_rows if x['qarz'] > 0)
             tot_xul_students = sum(x['soni'] for x in xulosa_rows)
@@ -869,8 +864,9 @@ def execute_group_screenshots(baza_path, session_id=None):
                 "is_xulosa": True,
                 "student_count": tot_xul_students,
                 "debt_total": tot_xul_debt,
-                "image_url": f"/api/contracts/download-screenshot/{session_id}/XULOSA",
-                "download_url": f"/api/contracts/download-screenshot/{session_id}/XULOSA",
+                "image_url": sb_xul_url or f"/api/contracts/download-screenshot/{session_id}/XULOSA",
+                "supabase_url": sb_xul_url or "",
+                "download_url": sb_xul_url or f"/api/contracts/download-screenshot/{session_id}/XULOSA",
                 "local_path": xul_img_path
             })
 
@@ -883,19 +879,40 @@ def execute_group_screenshots(baza_path, session_id=None):
             generate_group_table_image(g_name, date_str, rows_data, img_path)
             zip_f.write(img_path, clean_filename)
 
+            sb_img_url = upload_document_to_supabase(img_path, f"contracts/screenshots_{session_id}/{clean_filename}")
+
             tot_debt = sum(r['qarzi'] for r in rows_data if r['qarzi'] > 0)
             generated_groups.append({
                 "group_name": g_name,
                 "is_xulosa": False,
                 "student_count": len(rows_data),
                 "debt_total": tot_debt,
-                "image_url": f"/api/contracts/download-screenshot/{session_id}/{g_name}",
-                "download_url": f"/api/contracts/download-screenshot/{session_id}/{g_name}",
+                "image_url": sb_img_url or f"/api/contracts/download-screenshot/{session_id}/{g_name}",
+                "supabase_url": sb_img_url or "",
+                "download_url": sb_img_url or f"/api/contracts/download-screenshot/{session_id}/{g_name}",
                 "local_path": img_path
             })
 
     # Upload zip to Supabase Storage
     sb_zip_url = upload_document_to_supabase(zip_path, f"contracts/zips/Guruhlar_Screenshotlari_{session_id}.zip")
+
+    # Log session in database
+    try:
+        from services.atlas_db import log_contract_session
+        log_contract_session(
+            session_id=session_id,
+            filename=f"Screenshots_{date_str}.xlsx",
+            start_date=date_str,
+            end_date=date_str,
+            total_income=0.0,
+            updated_count=len(generated_groups),
+            unmatched_count=0,
+            excel_url=sb_zip_url or "",
+            xulosa_url=generated_groups[0]["supabase_url"] if generated_groups else "",
+            metrics={"total_groups": len(generated_groups), "groups": generated_groups, "zip_url": sb_zip_url or ""}
+        )
+    except Exception as dbe:
+        print(f"Log screenshot session error: {dbe}")
 
     return {
         "success": True,

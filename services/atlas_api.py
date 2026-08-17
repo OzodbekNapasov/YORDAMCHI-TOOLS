@@ -1686,12 +1686,26 @@ def api_contracts_send_to_telegram():
                     if fname.endswith(".png"):
                         group_images.append(os.path.join(sdir, fname))
 
-    # 3. If running on Vercel / serverless and local files are missing, use Supabase URLs
+    # 3. Direct payload groups check
+    req_groups = data.get("groups") or []
+    if req_groups and send_screenshots:
+        for g in req_groups:
+            img_target = g.get("supabase_url") or g.get("image_url") or g.get("local_path")
+            if img_target and img_target not in group_images:
+                group_images.append(img_target)
+
+    # 4. If running on Vercel / serverless and local files are missing, use Supabase URLs
     if sess:
         if send_excel and not excel_path and sess.get("excel_url"):
             excel_path = sess.get("excel_url")
         if send_xulosa and not xulosa_path and sess.get("xulosa_url"):
             xulosa_path = sess.get("xulosa_url")
+        if send_screenshots and not group_images:
+            m_groups = (sess.get("metrics") or {}).get("groups") or []
+            for g in m_groups:
+                img_target = g.get("supabase_url") or g.get("image_url") or g.get("local_path")
+                if img_target and img_target not in group_images:
+                    group_images.append(img_target)
 
         # Build informative caption if generic
         if not caption_text or caption_text == "<b>ATLAS Platformasi: Kontrakt Hisoboti</b>":
