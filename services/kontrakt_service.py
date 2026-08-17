@@ -815,9 +815,9 @@ def execute_group_screenshots(baza_path, session_id=None):
     xulosa_rows = []
     for g_idx, g_name in enumerate(sorted(guruhlar.keys())):
         rows = guruhlar[g_name]
-        tot_kerak = sum(r['kerak'] for r in rows)
-        tot_tolangan = sum(r['tolandi'] for r in rows)
-        tot_qarz = sum(r['qarzi'] for r in rows if r['qarzi'] > 0)
+        tot_kerak = sum(float(r.get('kerak', 0.0)) for r in rows)
+        tot_tolangan = sum(float(r.get('jami', 0.0)) for r in rows)
+        tot_qarz = sum(float(r.get('qarzi', 0.0)) for r in rows if float(r.get('qarzi', 0.0)) > 0)
         
         rahbar_nomi = "Biriktirilmagan"
         try:
@@ -835,6 +835,7 @@ def execute_group_screenshots(baza_path, session_id=None):
             'rahbar': rahbar_nomi,
             'soni': len(rows),
             'kerak': tot_kerak,
+            'jami': tot_tolangan,
             'tolandi': tot_tolangan,
             'qarz': tot_qarz
         })
