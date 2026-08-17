@@ -1732,7 +1732,8 @@ def api_contracts_send_to_telegram():
         caption_text=caption_text,
         excel_path=excel_path,
         xulosa_img_path=xulosa_path,
-        group_img_paths=group_images
+        group_img_paths=group_images,
+        session_id=session_id
     )
 
     log_audit(

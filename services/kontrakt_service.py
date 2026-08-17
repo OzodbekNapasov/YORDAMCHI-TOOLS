@@ -935,7 +935,77 @@ def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', str(s))]
 
 
-def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path=None, group_img_paths=None):
+def resolve_image_bytes(img_item, session_id=None, group_name=None):
+    """Fayl yo'li, to'liq URL, nisbiy havola yoki Supabase CDN dan rasm baytlarini 100% ishonchli yuklab olish"""
+    if not img_item:
+        return None, None
+
+    img_str = str(img_item).strip()
+
+    # 1. Agar to'liq URL bo'lsa
+    if img_str.startswith(('http://', 'https://')):
+        try:
+            resp = requests.get(img_str, timeout=25)
+            if resp.status_code == 200 and len(resp.content) > 100:
+                bname = os.path.basename(img_str.split("?")[0])
+                return resp.content, bname
+        except Exception as e:
+            print(f"Error fetching URL {img_str}: {e}")
+
+    # 2. Agar mahalliy fayl bo'lsa
+    if os.path.exists(img_str):
+        try:
+            with open(img_str, 'rb') as f:
+                data = f.read()
+                if len(data) > 100:
+                    return data, os.path.basename(img_str)
+        except Exception as e:
+            print(f"Error reading local file {img_str}: {e}")
+
+    # 3. Supabase Cloud Storage to'g'ridan-to'g'ri CDN dan olish
+    try:
+        from services.atlas_db import _get_supabase_credentials
+        supa_url, supa_key = _get_supabase_credentials()
+        
+        # A. Agar session_id va group_name berilgan bo'lsa
+        if session_id and group_name:
+            clean_gname = str(group_name).replace('/', '_').replace(' ', '_')
+            fname = "00_XULOSA_Guruh_Rahbarlari.png" if "xulosa" in str(group_name).lower() else f"screenshot_{clean_gname}.png"
+            direct_supa_url = f"{supa_url}/storage/v1/object/public/documents/contracts/screenshots_{session_id}/{fname}"
+            resp = requests.get(direct_supa_url, timeout=20)
+            if resp.status_code == 200 and len(resp.content) > 100:
+                return resp.content, fname
+
+        # B. Agar img_str ichida session_id va guruh nomi bo'lsa
+        if "download-screenshot" in img_str:
+            parts = img_str.split("/")
+            if len(parts) >= 2:
+                s_id = parts[-2]
+                g_n = parts[-1]
+                clean_g = g_n.replace('/', '_').replace(' ', '_')
+                fname = "00_XULOSA_Guruh_Rahbarlari.png" if "xulosa" in g_n.lower() else f"screenshot_{clean_g}.png"
+                direct_supa_url = f"{supa_url}/storage/v1/object/public/documents/contracts/screenshots_{s_id}/{fname}"
+                resp = requests.get(direct_supa_url, timeout=20)
+                if resp.status_code == 200 and len(resp.content) > 100:
+                    return resp.content, fname
+    except Exception as supa_err:
+        print(f"Supabase direct resolve error: {supa_err}")
+
+    # 4. Agar nisbiy URL bo'lsa (/api/contracts/...)
+    if img_str.startswith('/'):
+        full_web_url = f"https://atlas-my-tools.vercel.app{img_str}"
+        try:
+            resp = requests.get(full_web_url, timeout=25, allow_redirects=True)
+            if resp.status_code == 200 and len(resp.content) > 100:
+                bname = os.path.basename(img_str.split("?")[0]) or "screenshot.png"
+                return resp.content, bname
+        except Exception as e:
+            print(f"Error fetching relative URL {full_web_url}: {e}")
+
+    return None, None
+
+
+def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path=None, group_img_paths=None, session_id=None):
     """Tanlangan Telegram guruhlari yoki shaxsiy chatga bot orqali xabar, rasm va fayllarni qat'iy tartibda jo'natish (Serverless safe)"""
     try:
         import io
@@ -958,7 +1028,7 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                 if caption_text:
                     try:
                         bot.send_message(cid_str, caption_text, parse_mode="HTML")
-                        time.sleep(0.6)
+                        time.sleep(0.5)
                     except Exception as me:
                         print(f"Message send error: {me}")
 
@@ -979,18 +1049,15 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                 # 3. 1-bo'lib XULOSA rasmini jo'natish
                 if actual_xulosa:
                     try:
-                        x_cap = "📊 <b>XULOSA: Guruh rahbarlari va qarzdorliklar jamlanmasi</b>"
-                        if isinstance(actual_xulosa, str) and actual_xulosa.startswith(('http://', 'https://')):
-                            resp = requests.get(actual_xulosa, timeout=25)
-                            if resp.status_code == 200:
-                                xf = io.BytesIO(resp.content)
-                                xf.name = "00_Xulosa_Hisoboti.png"
-                                bot.send_photo(cid_str, photo=xf, caption=x_cap, parse_mode="HTML")
-                                time.sleep(0.7)
-                        elif isinstance(actual_xulosa, str) and os.path.exists(actual_xulosa):
-                            with open(actual_xulosa, 'rb') as xf:
-                                bot.send_photo(cid_str, photo=xf, caption=x_cap, parse_mode="HTML")
-                                time.sleep(0.7)
+                        x_bytes, x_name = resolve_image_bytes(actual_xulosa, session_id=session_id, group_name="XULOSA")
+                        if x_bytes:
+                            x_cap = "📊 <b>XULOSA: Guruh rahbarlari va qarzdorliklar jamlanmasi</b>"
+                            xf = io.BytesIO(x_bytes)
+                            xf.name = "00_Xulosa_Hisoboti.png"
+                            bot.send_photo(cid_str, photo=xf, caption=x_cap, parse_mode="HTML")
+                            time.sleep(0.6)
+                        else:
+                            print("Xulosa image bytes could not be resolved.")
                     except Exception as img_err:
                         print(f"Xulosa send error: {img_err}")
 
@@ -1016,13 +1083,13 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                                 ef = io.BytesIO(resp.content)
                                 ef.name = clean_filename
                                 bot.send_document(cid_str, document=ef, caption=e_cap, parse_mode="HTML")
-                                time.sleep(0.7)
+                                time.sleep(0.6)
                         elif isinstance(excel_path, str) and os.path.exists(excel_path):
                             with open(excel_path, 'rb') as ef_file:
                                 ef_bytes = io.BytesIO(ef_file.read())
                                 ef_bytes.name = clean_filename
                                 bot.send_document(cid_str, document=ef_bytes, caption=e_cap, parse_mode="HTML")
-                                time.sleep(0.7)
+                                time.sleep(0.6)
                     except Exception as doc_err:
                         print(f"Excel send error: {doc_err}")
 
@@ -1042,17 +1109,14 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                             g_title = extract_group_name(g_img)
                             g_cap = f"📌 <b>Guruh: {g_title}</b>\n<i>Qarzdorlik holati jadvali</i>"
 
-                            if isinstance(g_img, str) and g_img.startswith(('http://', 'https://')):
-                                resp = requests.get(g_img, timeout=20)
-                                if resp.status_code == 200:
-                                    gf = io.BytesIO(resp.content)
-                                    gf.name = f"{g_title}.png"
-                                    bot.send_photo(cid_str, photo=gf, caption=g_cap, parse_mode="HTML")
-                                    time.sleep(0.8)
-                            elif isinstance(g_img, str) and os.path.exists(g_img):
-                                with open(g_img, 'rb') as gf:
-                                    bot.send_photo(cid_str, photo=gf, caption=g_cap, parse_mode="HTML")
-                                    time.sleep(0.8)
+                            g_bytes, g_fname = resolve_image_bytes(g_img, session_id=session_id, group_name=g_title)
+                            if g_bytes:
+                                gf = io.BytesIO(g_bytes)
+                                gf.name = f"{g_title}.png"
+                                bot.send_photo(cid_str, photo=gf, caption=g_cap, parse_mode="HTML")
+                                time.sleep(0.6)
+                            else:
+                                print(f"Could not resolve image bytes for group: {g_title} ({g_img})")
                         except Exception as ss_err:
                             print(f"Group screenshot send error ({g_img}): {ss_err}")
 
