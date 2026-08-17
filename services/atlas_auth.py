@@ -66,6 +66,8 @@ def get_current_admin():
         token = auth_header[7:].strip()
     elif "atlas_token" in request.cookies:
         token = request.cookies.get("atlas_token")
+    elif "token" in request.args:
+        token = request.args.get("token")
 
     if not token or "." not in token:
         return None

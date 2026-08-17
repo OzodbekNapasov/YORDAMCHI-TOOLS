@@ -1501,8 +1501,6 @@ const ATLAS = {
             const resultBox = document.getElementById('amaliyot-result-box');
             const groupsStr = finalGroups.join(', ') || 'Guruh';
             const downloadFilename = `${finalTumani} - ${groupsStr} - ${validStudents.length} ta talaba.docx`;
-            
-            // Mana shu 2 qatorni qo'shasiz:
             const userToken = localStorage.getItem('atlas_token') || this.token || '';
             const downloadUrlWithToken = `${res.download_docx_url}?token=${encodeURIComponent(userToken)}`;
 
@@ -2109,8 +2107,8 @@ const ATLAS = {
                         <div style="display:flex;gap:6px;justify-content:flex-end;">
                           <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
                           <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
-                          <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
-                          <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
+                          <a href="/api/documents/download_docx/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                          <a href="/api/documents/download/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
                           <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
                           <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
                         </div>
@@ -2168,8 +2166,8 @@ const ATLAS = {
                   <div style="display:flex;gap:6px;justify-content:flex-end;">
                     <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
                     <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
-                    <a href="/api/documents/download_docx/${d.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
-                    <a href="/api/documents/download/${d.id}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
+                    <a href="/api/documents/download_docx/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
+                    <a href="/api/documents/download/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
                     <button class="btn-icon" onclick="ATLAS.resendDocumentToTelegram(${d.id})" title="Telegramga yuborish">${this.icons.send}</button>
                     <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${d.id})" title="Arxivdan o'chirish">${this.icons.trash}</button>
                   </div>

@@ -35,6 +35,9 @@ from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+
 atlas_api = Blueprint("atlas_api", __name__, url_prefix="/api")
 
 # Broadcast monitoring uchun xotiradagi holatlar
