@@ -1496,11 +1496,15 @@ const ATLAS = {
           const res = await this.api('/api/amaliyot/generate', 'POST', payload);
           btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
 
-          if (res?.success) {
+                   if (res?.success) {
             this.showToast("Amaliyot buyrug'i muvaffaqiyatli shakllantirildi!", "success");
             const resultBox = document.getElementById('amaliyot-result-box');
             const groupsStr = finalGroups.join(', ') || 'Guruh';
             const downloadFilename = `${finalTumani} - ${groupsStr} - ${validStudents.length} ta talaba.docx`;
+            
+            // Mana shu 2 qatorni qo'shasiz:
+            const userToken = localStorage.getItem('atlas_token') || this.token || '';
+            const downloadUrlWithToken = `${res.download_docx_url}?token=${encodeURIComponent(userToken)}`;
 
             resultBox.innerHTML = `
               <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:20px;text-align:left;">
@@ -1520,7 +1524,7 @@ const ATLAS = {
                   • <b>Fayl nomi:</b> <span style="color:#5eead4;font-family:monospace;font-size:12px;">${downloadFilename}</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <a href="${res.download_docx_url}" class="btn-primary btn-block" style="text-decoration:none;" download="${downloadFilename}">
+                  <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;" download="${downloadFilename}">
                     📥 Word (.docx) Hujjatini Yuklab Olish
                   </a>
                 </div>
