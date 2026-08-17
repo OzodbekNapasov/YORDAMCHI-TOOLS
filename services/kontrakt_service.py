@@ -809,44 +809,6 @@ def execute_group_screenshots(baza_path, session_id=None):
             "qarzi": qarzi_num
         })
 
-    # 2. Xulosa ma'lumotlarini ajratib olish (114, 115, 116 chiqariladi)
-    xulosa_rows = []
-    excluded_groups = {'114', '115', '116', '114.0', '115.0', '116.0'}
-    for r in range(1, 20):
-        rahbar = sheet.cell(row=r, column=3).value
-        guruh = sheet.cell(row=r, column=4).value
-        if rahbar and guruh and str(rahbar).strip() and str(guruh).strip():
-            if str(rahbar).lower().startswith(('jami', 'итого', 'guruh rahbari')): continue
-            g_str = str(guruh).strip()
-    for row in range(boshlanish_row, sheet.max_row + 1):
-        fio = sheet.cell(row=row, column=ism_ustun).value
-        if fio and str(fio).strip() and not str(fio).lower().startswith(('familiya', 'f.i.sh', 'итого', 'jami', 'guruh')):
-            guruh_val = sheet.cell(row=row, column=guruh_ustun).value
-            guruh_str = str(guruh_val).strip() if guruh_val else "Noma'lum"
-            if guruh_str.endswith('.0'): guruh_str = guruh_str[:-2]
-
-            try:
-                kerak_sum = float(sheet.cell(row=row, column=kerak_ustun).value or 0)
-            except Exception:
-                kerak_sum = 0.0
-
-            try:
-                tolangan_sum = float(sheet.cell(row=row, column=tolov_ustun).value or 0)
-            except Exception:
-                tolangan_sum = 0.0
-
-            qarz_sum = max(0.0, kerak_sum - tolangan_sum)
-
-            if guruh_str not in guruhlar:
-                guruhlar[guruh_str] = []
-
-            guruhlar[guruh_str].append({
-                'fio': str(fio).strip(),
-                'kerak': kerak_sum,
-                'tolandi': tolangan_sum,
-                'qarzi': qarz_sum
-            })
-
     wb.close()
 
     # Build Xulosa summary rows
