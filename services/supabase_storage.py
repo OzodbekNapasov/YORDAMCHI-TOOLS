@@ -8,6 +8,8 @@ import requests
 import json
 import mimetypes
 
+BUCKET_NAME = "documents"
+
 def get_credentials():
     from services.atlas_db import _get_supabase_credentials
     return _get_supabase_credentials()
@@ -31,7 +33,7 @@ def upload_document_to_supabase(local_file_path: str, destination_filename: str)
 
     try:
         import re
-        clean_key = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', destination_filename)
+        clean_key = re.sub(r'[^a-zA-Z0-9_\-\.\/]', '_', destination_filename)
         mime_type, _ = mimetypes.guess_type(local_file_path)
         if not mime_type:
             mime_type = "image/png" if local_file_path.endswith(".png") else "application/octet-stream"
