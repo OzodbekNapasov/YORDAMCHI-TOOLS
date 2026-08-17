@@ -85,6 +85,10 @@ const ATLAS = {
     }, 3500);
   },
 
+  showToast(message, type = 'success') {
+    return this.toast(message, type);
+  },
+
   // Init Application
   init() {
     this.bindGlobalEvents();
@@ -931,7 +935,7 @@ const ATLAS = {
             await this.api(`/api/amaliyot/tabs/${tId}`, 'DELETE');
             tabs = tabs.filter(t => t.id !== tId);
             if (activeTabId === tId) activeTabId = tabs[0]?.id || 1;
-            this.showToast('Tab muvaffaqiyatli o\'chirildi', 'success');
+            this.toast('Tab muvaffaqiyatli o\'chirildi', 'success');
             render();
           }
         });
@@ -1000,7 +1004,7 @@ const ATLAS = {
 
           if (res?.success) {
             this.closeModal();
-            this.showToast("Yangi tab muvaffaqiyatli ochildi!", "success");
+            this.toast("Yangi tab muvaffaqiyatli ochildi!", "success");
             tabs.push({
               id: res.id,
               tab_name: tName,
@@ -1266,11 +1270,11 @@ const ATLAS = {
         muddatiInp.value = sampleMuddati;
         startInp.value = "08.06.2026";
         endInp.value = "06.07.2026";
-        this.showToast("Amaliyot muddati joylashtirildi!", "success");
+        this.toast("Amaliyot muddati joylashtirildi!", "success");
       });
       copySampleBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(sampleMuddati);
-        this.showToast("Nusxalandi: " + sampleMuddati, "info");
+        this.toast("Nusxalandi: " + sampleMuddati, "info");
       });
 
       // Students Table dynamic rendering
@@ -1446,7 +1450,7 @@ const ATLAS = {
             if (grpInpEl) grpInpEl.value = selectedGroups.join(', ');
             updateStudentsTable();
             this.closeModal();
-            this.showToast(`${parsed.length} ta talaba va ${selectedGroups.length} ta guruh yuklandi!`, 'success');
+            this.toast(`${parsed.length} ta talaba va ${selectedGroups.length} ta guruh yuklandi!`, 'success');
           }
         });
       });
@@ -1497,7 +1501,7 @@ const ATLAS = {
           btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
 
                    if (res?.success) {
-            this.showToast("Amaliyot buyrug'i muvaffaqiyatli shakllantirildi!", "success");
+            this.toast("Amaliyot buyrug'i muvaffaqiyatli shakllantirildi!", "success");
             const resultBox = document.getElementById('amaliyot-result-box');
             const groupsStr = finalGroups.join(', ') || 'Guruh';
             const downloadFilename = `${finalTumani} - ${groupsStr} - ${validStudents.length} ta talaba.docx`;
