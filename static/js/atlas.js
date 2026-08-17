@@ -96,8 +96,50 @@ const ATLAS = {
       this.renderLogin();
     } else {
       this.renderApp();
+      this.startSystemStatusTimer();
       this.navigate(this.currentRoute);
     }
+  },
+
+  // Live System Version & Elapsed Time Tracker
+  startSystemStatusTimer() {
+    if (!this.systemDeployTime) {
+      this.systemDeployTime = new Date();
+    }
+
+    const updateDisplay = () => {
+      const clockEl = document.getElementById('sys-update-clock');
+      const elapsedEl = document.getElementById('sys-elapsed-badge');
+      if (!clockEl || !elapsedEl) return;
+
+      const d = this.systemDeployTime;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      clockEl.innerText = `${day}.${month}.${year}, ${hours}:${minutes}`;
+
+      const now = new Date();
+      const diffSec = Math.floor((now - d) / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHours = Math.floor(diffMin / 60);
+
+      if (diffMin < 1) {
+        elapsedEl.innerText = "hozirgina";
+        elapsedEl.style.color = "#34d399";
+      } else if (diffMin < 60) {
+        elapsedEl.innerText = `${diffMin} daqiqa oldin`;
+        elapsedEl.style.color = "#5eead4";
+      } else {
+        elapsedEl.innerText = `${diffHours} soat ${diffMin % 60} daq oldin`;
+        elapsedEl.style.color = "#fbbf24";
+      }
+    };
+
+    updateDisplay();
+    if (this._statusTimer) clearInterval(this._statusTimer);
+    this._statusTimer = setInterval(updateDisplay, 15000);
   },
 
   bindGlobalEvents() {
@@ -301,6 +343,19 @@ const ATLAS = {
             </div>
           </nav>
 
+          <!-- SYSTEM STATUS & LIVE UPDATE CORNER WIDGET -->
+          <div class="system-status-corner">
+            <div class="sys-badge-top">
+              <span class="sys-live-dot"></span>
+              <span class="sys-ver-code">ATLAS v2.5.2 PRO</span>
+              <span class="sys-core-tag">AI-Titanium Core</span>
+            </div>
+            <div class="sys-update-meta">
+              <div class="sys-update-date">🕒 Yangilandi: <b id="sys-update-clock" style="color:#ffffff;">...</b></div>
+              <div style="color:rgba(94,234,212,0.7);font-size:10px;">Holati: <span class="sys-elapsed-badge" id="sys-elapsed-badge">hozirgina</span></div>
+            </div>
+          </div>
+
           <div class="sidebar-footer">
             <div class="user-avatar-badge">${(this.user?.full_name || 'A').charAt(0)}</div>
             <div class="user-info">
@@ -390,7 +445,12 @@ const ATLAS = {
     });
 
     document.getElementById('logout-btn').addEventListener('click', () => this.logout());
-    document.getElementById('refresh-view-btn').addEventListener('click', () => this.navigate(this.currentRoute));
+    document.getElementById('refresh-view-btn').addEventListener('click', () => {
+      this.systemDeployTime = new Date();
+      this.startSystemStatusTimer();
+      this.navigate(this.currentRoute);
+      this.toast("Tizim va ma'lumotlar yangilandi", "info");
+    });
     document.getElementById('global-search-input').addEventListener('click', () => this.openGlobalSearch());
   },
 
