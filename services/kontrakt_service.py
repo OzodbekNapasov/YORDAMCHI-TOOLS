@@ -942,7 +942,7 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
         import time
         import telebot
         import requests
-        token = os.environ.get("BOT_TOKEN") or "7737397731:AAFFwV8G6v0aE2E72q8vEaA7Jc-w3jYn7v8"
+        token = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
         bot = telebot.TeleBot(token)
 
         results = []
