@@ -861,36 +861,18 @@ const ATLAS = {
   },
 
   // ============================================================
-  // 1.5 AMALIYOT BO'LIMI (BROWSER-LIKE MULTI-TAB AMALIYOT BUYRUQLARI)
+  // 1.5 AMALIYOT BO'LIMI (PAPAKALAR IERARXIYASI & SO'ROVNOMA BOSHQARUVI)
   // ============================================================
   async loadAmaliyot(container) {
-    let tabs = [];
-    let activeTabId = 1;
-    let activeSubView = 'create'; // 'create' | 'archive'
+    let currentFolderId = null;
+    let folderPath = [];
+    let childFolders = [];
+    let currentFolderInfo = null;
+    let semesterSubView = 'survey'; // 'survey' | 'create_order' | 'generate_all' | 'archive'
 
-    try {
-      const res = await this.api('/api/amaliyot/tabs');
-      tabs = res?.tabs || [];
-    } catch (e) {
-      tabs = [];
-    }
-
-    if (!tabs.length) {
-      tabs = [{
-        id: 1,
-        tab_name: "Hamshiralik ishi - 3 yillik - 2-semestr",
-        direction: "Hamshiralik ishi",
-        duration_years: "3 yillik",
-        semester: "2-semestr",
-        order_num: 1
-      }];
-    }
-
-    if (!tabs.some(t => t.id === activeTabId)) {
-      activeTabId = tabs[0].id;
-    }
-
-    const districtDoctors = {
+    let surveyStudents = [];
+    let semesterOrders = [];
+    let districtDoctors = {
       "Shahrisabz shahar": "O.Norboyev",
       "Kitob tuman": "A.Hasanov",
       "Yakkabog' tuman": "S.B.Jo’rayev",
@@ -898,253 +880,828 @@ const ATLAS = {
       "Chiroqchi tuman": "Sh.Ro'ziqulov",
       "Qamashi tuman": "Avazov Shuxrat Shukullayevich"
     };
+    let standardDistricts = Object.keys(districtDoctors);
 
-    let selectedGroups = [];
-    let studentRows = [
-      { id: 1, guruhi: '', fio: '', start_date: '08.06.2026', end_date: '06.07.2026' }
-    ];
+    // Fetch standard districts from server
+    try {
+      const distRes = await this.api('/api/amaliyot/districts');
+      if (distRes?.district_doctors) {
+        districtDoctors = distRes.district_doctors;
+        standardDistricts = distRes.districts || Object.keys(districtDoctors);
+      }
+    } catch (e) {}
 
-    const render = () => {
-      const currentTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+    const folderIcons = {
+      root: "📂",
+      year: "📅",
+      direction: "🩺",
+      groups: "👥",
+      semester: "📚"
+    };
 
-      container.innerHTML = `
-        <!-- BROWSER TABS BAR -->
-        <div class="browser-tabs-container">
-          <div class="browser-tabs-bar" id="browser-tabs-bar">
-            ${tabs.map((tab, idx) => `
-              <div class="browser-tab ${tab.id === activeTabId ? 'active' : ''}" data-tab-id="${tab.id}">
-                <span class="browser-tab-icon">🩺</span>
-                <span class="browser-tab-title" title="${tab.tab_name}">${tab.tab_name}</span>
-                <div class="browser-tab-actions">
-                  ${idx > 0 ? `<button class="tab-btn-mini btn-move-tab-left" data-tab-id="${tab.id}" title="Chapga surish">◀</button>` : ''}
-                  ${idx < tabs.length - 1 ? `<button class="tab-btn-mini btn-move-tab-right" data-tab-id="${tab.id}" title="O'ngga surish">▶</button>` : ''}
-                  ${tabs.length > 1 ? `<button class="tab-btn-mini danger btn-delete-tab" data-tab-id="${tab.id}" title="Tabni o'chirish">✕</button>` : ''}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-          <button class="browser-tab-add-btn" id="btn-add-amaliyot-tab" title="Yangi yo'nalish yoki semestr tabini qo'shish">
-            ${this.icons.plus} <span>Yangi Tab</span>
-          </button>
-        </div>
-
-        <!-- SUB VIEW PILLS -->
-        <div class="tab-pills-row">
-          <button class="tab-pill-btn ${activeSubView === 'create' ? 'active' : ''}" id="tab-amaliyot-create">
-            ${this.icons.plus} <span>Yangi Amaliyot Buyrug'i Shakllantirish</span>
-          </button>
-          <button class="tab-pill-btn ${activeSubView === 'archive' ? 'active' : ''}" id="tab-amaliyot-archive">
-            ${this.icons.archive} <span>Ushbu Yo'nalish Buyruqlari Arxivi</span>
-          </button>
-        </div>
-
-        <!-- CONTENT -->
-        <div id="amaliyot-main-viewport"></div>
-      `;
-
-      // Tab click
-      container.querySelectorAll('.browser-tab').forEach(el => {
-        el.addEventListener('click', (e) => {
-          if (e.target.closest('.tab-btn-mini')) return;
-          activeTabId = parseInt(el.dataset.tabId);
-          render();
-        });
-      });
-
-      // Move left
-      container.querySelectorAll('.btn-move-tab-left').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const tId = parseInt(btn.dataset.tabId);
-          const idx = tabs.findIndex(t => t.id === tId);
-          if (idx > 0) {
-            const temp = tabs[idx];
-            tabs[idx] = tabs[idx - 1];
-            tabs[idx - 1] = temp;
-            tabs.forEach((t, i) => t.order_num = i + 1);
-            await this.api('/api/amaliyot/tabs/reorder', 'POST', { orders: tabs.map(t => ({ id: t.id, order_num: t.order_num })) });
-            render();
-          }
-        });
-      });
-
-      // Move right
-      container.querySelectorAll('.btn-move-tab-right').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const tId = parseInt(btn.dataset.tabId);
-          const idx = tabs.findIndex(t => t.id === tId);
-          if (idx < tabs.length - 1) {
-            const temp = tabs[idx];
-            tabs[idx] = tabs[idx + 1];
-            tabs[idx + 1] = temp;
-            tabs.forEach((t, i) => t.order_num = i + 1);
-            await this.api('/api/amaliyot/tabs/reorder', 'POST', { orders: tabs.map(t => ({ id: t.id, order_num: t.order_num })) });
-            render();
-          }
-        });
-      });
-
-      // Delete tab
-      container.querySelectorAll('.btn-delete-tab').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const tId = parseInt(btn.dataset.tabId);
-          const tabToDelete = tabs.find(t => t.id === tId);
-          if (confirm(`Haqiqatan ham '${tabToDelete?.tab_name}' tabini o'chirmoqchimisiz?`)) {
-            await this.api(`/api/amaliyot/tabs/${tId}`, 'DELETE');
-            tabs = tabs.filter(t => t.id !== tId);
-            if (activeTabId === tId) activeTabId = tabs[0]?.id || 1;
-            this.toast('Tab muvaffaqiyatli o\'chirildi', 'success');
-            render();
-          }
-        });
-      });
-
-      // Add new tab modal
-      document.getElementById('btn-add-amaliyot-tab').addEventListener('click', () => {
-        this.openModal(`
-          <div class="modal-header">
-            <h3>🩺 Yangi Amaliyot Yo'nalishi / Semestr Tabi Qo'shish</h3>
-            <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Tab Nomi</label>
-              <input type="text" id="modal-tab-name" class="input-control" placeholder="Masalan: Davolash ishi - 3 yillik - 4-semestr">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Yo'nalish Nomi</label>
-              <input type="text" id="modal-direction" class="input-control" placeholder="Hamshiralik ishi, Davolash ishi, Farmatsiya...">
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div class="form-group">
-                <label class="form-label">Ta'lim Muddati</label>
-                <select id="modal-duration" class="select-control">
-                  <option value="3 yillik">3 yillik</option>
-                  <option value="2 yillik">2 yillik</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Semestr</label>
-                <select id="modal-semester" class="select-control">
-                  <option value="1-semestr">1-semestr</option>
-                  <option value="2-semestr" selected>2-semestr</option>
-                  <option value="3-semestr">3-semestr</option>
-                  <option value="4-semestr">4-semestr</option>
-                  <option value="5-semestr">5-semestr</option>
-                  <option value="6-semestr">6-semestr</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-            <button class="btn-primary" id="btn-save-new-tab">Saqlash va Tab Ochish</button>
-          </div>
-        `);
-
-        document.getElementById('btn-save-new-tab').addEventListener('click', async () => {
-          const tName = document.getElementById('modal-tab-name').value.trim();
-          if (!tName) {
-            alert("Tab nomini kiriting!");
-            return;
-          }
-          const dir = document.getElementById('modal-direction').value.trim();
-          const dur = document.getElementById('modal-duration').value;
-          const sem = document.getElementById('modal-semester').value;
-
-          const res = await this.api('/api/amaliyot/tabs', 'POST', {
-            tab_name: tName,
-            direction: dir,
-            duration_years: dur,
-            semester: sem,
-            order_num: tabs.length + 1
-          });
-
-          if (res?.success) {
-            this.closeModal();
-            this.toast("Yangi tab muvaffaqiyatli ochildi!", "success");
-            tabs.push({
-              id: res.id,
-              tab_name: tName,
-              direction: dir,
-              duration_years: dur,
-              semester: sem,
-              order_num: tabs.length + 1
-            });
-            activeTabId = res.id;
-            render();
-          } else {
-            alert(res?.error || "Xatolik yuz berdi");
-          }
-        });
-      });
-
-      // Sub-view buttons
-      document.getElementById('tab-amaliyot-create').addEventListener('click', () => {
-        activeSubView = 'create';
-        render();
-      });
-      document.getElementById('tab-amaliyot-archive').addEventListener('click', () => {
-        activeSubView = 'archive';
-        render();
-      });
-
-      const subViewport = document.getElementById('amaliyot-main-viewport');
-      if (activeSubView === 'create') {
-        renderAmaliyotForm(subViewport, currentTab);
-      } else {
-        this.renderDocumentArchive(subViewport, `amaliyot_${currentTab.id}`, true);
+    const getFolderTypeTitle = (type) => {
+      switch (type) {
+        case 'year': return "O'quv Yili";
+        case 'direction': return "Yo'nalish";
+        case 'groups': return "Guruhlar To'plami";
+        case 'semester': return "Semestr";
+        default: return "Papka";
       }
     };
 
-    const renderAmaliyotForm = (viewport, currentTab) => {
+    const getNextChildType = (parentType) => {
+      if (!parentType) return 'year';
+      if (parentType === 'year') return 'direction';
+      if (parentType === 'direction') return 'groups';
+      if (parentType === 'groups') return 'semester';
+      return 'groups';
+    };
+
+    // Load folder state & data
+    const loadFolderData = async (folderId) => {
+      currentFolderId = folderId;
+      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--accent-glow);">Yuklanmoqda...</div>`;
+
+      try {
+        // 1. Fetch Breadcrumb Path
+        if (folderId) {
+          const pathRes = await this.api(`/api/amaliyot/folders/path?folder_id=${folderId}`);
+          folderPath = pathRes?.path || [];
+          currentFolderInfo = folderPath[folderPath.length - 1] || null;
+        } else {
+          folderPath = [];
+          currentFolderInfo = null;
+        }
+
+        // 2. If current folder is SEMESTER, load its Survey & Orders
+        if (currentFolderInfo && currentFolderInfo.folder_type === 'semester') {
+          const [surveyRes, ordersRes] = await Promise.all([
+            this.api(`/api/amaliyot/folders/${folderId}/survey`),
+            this.api(`/api/amaliyot/folders/${folderId}/orders`)
+          ]);
+          surveyStudents = surveyRes?.surveys || [];
+          semesterOrders = ordersRes?.orders || [];
+          renderSemesterDashboard();
+          return;
+        }
+
+        // 3. Otherwise, load child folders list
+        const pQuery = folderId ? `?parent_id=${folderId}` : '';
+        const foldersRes = await this.api(`/api/amaliyot/folders${pQuery}`);
+        childFolders = foldersRes?.folders || [];
+        renderFolderExplorer();
+      } catch (err) {
+        container.innerHTML = `
+          <div class="glass-card" style="padding:24px;text-align:center;">
+            <div style="color:var(--status-error);font-size:16px;font-weight:700;margin-bottom:8px;">Xatolik yuz berdi</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:16px;">${err.message}</div>
+            <button class="btn-primary" id="btn-retry-folder">Qayta yuklash</button>
+          </div>
+        `;
+        document.getElementById('btn-retry-folder')?.addEventListener('click', () => loadFolderData(folderId));
+      }
+    };
+
+    // ============================================================
+    // VIEW 1: FOLDER EXPLORER (IERARXIK PAPKALAR KO'RINISHI)
+    // ============================================================
+    const renderFolderExplorer = () => {
+      const parentType = currentFolderInfo ? currentFolderInfo.folder_type : null;
+      const nextType = getNextChildType(parentType);
+      const nextTypeTitle = getFolderTypeTitle(nextType);
+
+      let headerTitle = "📅 O'quv Yillari Bo'limi";
+      let headerDesc = "Kerakli o'quv yili papkasini tanlang yoki yangisini oching:";
+      if (parentType === 'year') {
+        headerTitle = `🩺 ${currentFolderInfo.name} — Yo'nalishlar`;
+        headerDesc = "Ushbu o'quv yili bo'yicha yo'nalishlar papkalari:";
+      } else if (parentType === 'direction') {
+        headerTitle = `👥 ${currentFolderInfo.name} — Guruhlar To'plami`;
+        headerDesc = "Buyruqlar to'plamini shakllantirish uchun guruhlar papkasini tanlang:";
+      } else if (parentType === 'groups') {
+        headerTitle = `📚 ${currentFolderInfo.name} — Semestrlar`;
+        headerDesc = "Amaliyot o'tash semestrini tanlang:";
+      }
+
+      container.innerHTML = `
+        <div class="amaliyot-explorer-wrapper">
+          <!-- BREADCRUMB BAR -->
+          <div class="amaliyot-breadcrumb-bar">
+            <div class="amaliyot-breadcrumbs">
+              <div class="breadcrumb-node ${!currentFolderId ? 'active' : ''}" data-folder-id="0">
+                <span>🏠 Asosiy</span>
+              </div>
+              ${folderPath.map((node, idx) => `
+                <span class="breadcrumb-sep">/</span>
+                <div class="breadcrumb-node ${idx === folderPath.length - 1 ? 'active' : ''}" data-folder-id="${node.id}">
+                  <span>${folderIcons[node.folder_type] || '📁'} ${node.name}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="breadcrumb-bar-actions">
+              ${folderPath.length > 0 ? `
+                <button class="btn-sm btn-secondary" id="btn-folder-back" title="Oldingi papkaga qaytish">
+                  ◀ Orqaga
+                </button>
+              ` : ''}
+              <button class="btn-sm btn-primary" id="btn-add-folder">
+                ${this.icons.plus} <span>Yangi ${nextTypeTitle} Ochish</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- BANNER -->
+          <div class="glass-card" style="padding:16px 20px;">
+            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:3px;">
+              ${headerTitle}
+            </div>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.8);">
+              ${headerDesc}
+            </div>
+          </div>
+
+          <!-- FOLDERS GRID -->
+          <div class="folders-grid">
+            ${childFolders.map(folder => {
+              const icon = folderIcons[folder.folder_type] || '📁';
+              let badgeText = '';
+              if (folder.folder_type === 'semester') {
+                badgeText = `📊 ${folder.survey_count || 0} ta talaba | 📄 ${folder.orders_count || 0} ta buyruq`;
+              } else {
+                badgeText = `📁 ${folder.children_count || 0} ta ichki papka`;
+              }
+
+              let subText = '';
+              if (folder.extra_data?.duration) subText = `Ta'lim: ${folder.extra_data.duration}`;
+              else if (folder.extra_data?.groups) subText = `Guruhlar: ${folder.extra_data.groups.join(', ')}`;
+              else if (folder.extra_data?.start_date) subText = `Muddat: ${folder.extra_data.start_date} - ${folder.extra_data.end_date}`;
+
+              return `
+                <div class="folder-card" data-folder-id="${folder.id}">
+                  <div class="folder-card-top">
+                    <div class="folder-card-icon">${icon}</div>
+                    <div class="folder-card-actions">
+                      <button class="tab-btn-mini btn-edit-folder" data-folder-id="${folder.id}" title="Tahrirlash">✏️</button>
+                      <button class="tab-btn-mini danger btn-delete-folder" data-folder-id="${folder.id}" title="O'chirish">🗑️</button>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="folder-card-title">${folder.name}</div>
+                    ${subText ? `<div class="folder-card-desc">${subText}</div>` : ''}
+                  </div>
+                  <div class="folder-card-footer">
+                    <span class="folder-stat-badge">${badgeText}</span>
+                    <span style="color:var(--accent-glow);font-size:14px;">➔</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+
+            <!-- Add new folder dashed card -->
+            <div class="folder-card folder-card-add-new" id="card-add-new-folder">
+              <div style="font-size:32px;color:var(--accent-glow);">${this.icons.plus}</div>
+              <div style="font-weight:700;color:#ffffff;font-size:13.5px;">+ Yangi ${nextTypeTitle}</div>
+              <div style="font-size:11.5px;color:rgba(94,234,212,0.7);">Papka yaratish uchun bosing</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Breadcrumb clicks
+      container.querySelectorAll('.breadcrumb-node').forEach(el => {
+        el.addEventListener('click', () => {
+          const fId = parseInt(el.dataset.folderId);
+          loadFolderData(fId || null);
+        });
+      });
+
+      // Back button
+      document.getElementById('btn-folder-back')?.addEventListener('click', () => {
+        if (folderPath.length > 1) {
+          const parentNode = folderPath[folderPath.length - 2];
+          loadFolderData(parentNode.id);
+        } else {
+          loadFolderData(null);
+        }
+      });
+
+      // Open folder on card click (excluding action buttons)
+      container.querySelectorAll('.folder-card:not(.folder-card-add-new)').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.btn-edit-folder') || e.target.closest('.btn-delete-folder')) return;
+          const fId = parseInt(card.dataset.folderId);
+          loadFolderData(fId);
+        });
+      });
+
+      // Add Folder Modals
+      const handleOpenAddModal = () => {
+        openAddFolderModal(currentFolderId, nextType);
+      };
+      document.getElementById('btn-add-folder')?.addEventListener('click', handleOpenAddModal);
+      document.getElementById('card-add-new-folder')?.addEventListener('click', handleOpenAddModal);
+
+      // Edit Folder
+      container.querySelectorAll('.btn-edit-folder').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const fId = parseInt(btn.dataset.folderId);
+          const fObj = childFolders.find(f => f.id === fId);
+          if (fObj) openEditFolderModal(fObj);
+        });
+      });
+
+      // Delete Folder
+      container.querySelectorAll('.btn-delete-folder').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const fId = parseInt(btn.dataset.folderId);
+          const fObj = childFolders.find(f => f.id === fId);
+          if (confirm(`Haqiqatan ham '${fObj?.name}' papkasi va uning barcha ichki ma'lumotlarini o'chirmoqchimisiz?`)) {
+            const res = await this.api(`/api/amaliyot/folders/${fId}`, 'DELETE');
+            if (res?.success) {
+              this.toast("Papka o'chirildi", "success");
+              loadFolderData(currentFolderId);
+            } else {
+              alert(res?.error || "O'chirishda xatolik yuz berdi");
+            }
+          }
+        });
+      });
+    };
+
+    // ============================================================
+    // MODAL: YANGI PAPKA YARATISH (CONTEXT-AWARE)
+    // ============================================================
+    const openAddFolderModal = (parentId, folderType) => {
+      let defaultNamePlaceholder = "2025/2026";
+      let titleLabel = "O'quv Yili Nomi";
+      if (folderType === 'direction') {
+        defaultNamePlaceholder = "Hamshiralik ishi (3 yillik)";
+        titleLabel = "Yo'nalish Nomi";
+      } else if (folderType === 'groups') {
+        defaultNamePlaceholder = "201-204 guruhlar";
+        titleLabel = "Guruhlar To'plami Nomi";
+      } else if (folderType === 'semester') {
+        defaultNamePlaceholder = "2-semestr";
+        titleLabel = "Semestr Nomi";
+      }
+
+      this.openModal(`
+        <div class="modal-header">
+          <h3>📁 Yangi ${getFolderTypeTitle(folderType)} Ochish</h3>
+          <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">${titleLabel}</label>
+            <input type="text" id="modal-folder-name" class="input-control" placeholder="Masalan: ${defaultNamePlaceholder}">
+          </div>
+
+          ${folderType === 'direction' ? `
+            <div class="form-group">
+              <label class="form-label">Ta'lim Muddati</label>
+              <select id="modal-folder-duration" class="select-control">
+                <option value="3 yillik" selected>3 yillik</option>
+                <option value="2 yillik">2 yillik</option>
+              </select>
+            </div>
+          ` : ''}
+
+          ${folderType === 'semester' ? `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Bosqich / Kursi</label>
+                <select id="modal-folder-kursi" class="select-control">
+                  <option value="1" selected>1-kurs</option>
+                  <option value="2">2-kurs</option>
+                  <option value="3">3-kurs</option>
+                  <option value="4">4-kurs</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Boshlanish Sanasi</label>
+                <input type="text" id="modal-folder-start" class="input-control" value="08.06.2026">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tugash Sanasi</label>
+              <input type="text" id="modal-folder-end" class="input-control" value="06.07.2026">
+            </div>
+          ` : ''}
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+          <button class="btn-primary" id="btn-save-modal-folder">Papkani Ochish</button>
+        </div>
+      `);
+
+      document.getElementById('btn-save-modal-folder').addEventListener('click', async () => {
+        const nameVal = document.getElementById('modal-folder-name').value.trim();
+        if (!nameVal) {
+          alert("Papka nomini kiriting!");
+          return;
+        }
+
+        const extra = {};
+        if (folderType === 'direction') {
+          extra.duration = document.getElementById('modal-folder-duration').value;
+        } else if (folderType === 'semester') {
+          extra.kursi = document.getElementById('modal-folder-kursi').value;
+          extra.start_date = document.getElementById('modal-folder-start').value.trim();
+          extra.end_date = document.getElementById('modal-folder-end').value.trim();
+        }
+
+        const res = await this.api('/api/amaliyot/folders', 'POST', {
+          parent_id: parentId,
+          folder_type: folderType,
+          name: nameVal,
+          extra_data: extra
+        });
+
+        if (res?.success) {
+          this.closeModal();
+          this.toast("Yangi papka muvaffaqiyatli ochildi!", "success");
+          loadFolderData(currentFolderId);
+        } else {
+          alert(res?.error || "Xatolik yuz berdi");
+        }
+      });
+    };
+
+    // Modal: Edit Folder
+    const openEditFolderModal = (fObj) => {
+      this.openModal(`
+        <div class="modal-header">
+          <h3>✏️ Papka Nomini Tahrirlash</h3>
+          <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Papka Nomi</label>
+            <input type="text" id="modal-edit-folder-name" class="input-control" value="${fObj.name}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+          <button class="btn-primary" id="btn-save-edit-folder">Saqlash</button>
+        </div>
+      `);
+
+      document.getElementById('btn-save-edit-folder').addEventListener('click', async () => {
+        const nameVal = document.getElementById('modal-edit-folder-name').value.trim();
+        if (!nameVal) return;
+
+        const res = await this.api(`/api/amaliyot/folders/${fObj.id}`, 'PUT', { name: nameVal });
+        if (res?.success) {
+          this.closeModal();
+          this.toast("Papka nomi yangilandi!", "success");
+          loadFolderData(currentFolderId);
+        } else {
+          alert(res?.error || "Xatolik yuz berdi");
+        }
+      });
+    };
+
+    // ============================================================
+    // VIEW 2: SEMESTER DASHBOARD (SO'ROVNOMA + BUYRUQ GENERATORI)
+    // ============================================================
+    const renderSemesterDashboard = () => {
+      const fullPathTitle = folderPath.map(p => p.name).join(' > ');
+      const extra = currentFolderInfo?.extra_data || {};
+      const sDate = extra.start_date || "08.06.2026";
+      const eDate = extra.end_date || "06.07.2026";
+
+      // Calculate District Statistics from surveyStudents
+      const districtStats = {};
+      surveyStudents.forEach(st => {
+        const dName = st.tumani || "Shahrisabz shahar";
+        districtStats[dName] = (districtStats[dName] || 0) + 1;
+      });
+
+      container.innerHTML = `
+        <div class="amaliyot-explorer-wrapper">
+          <!-- BREADCRUMB BAR -->
+          <div class="amaliyot-breadcrumb-bar">
+            <div class="amaliyot-breadcrumbs">
+              <div class="breadcrumb-node" data-folder-id="0">
+                <span>🏠 Asosiy</span>
+              </div>
+              ${folderPath.map((node, idx) => `
+                <span class="breadcrumb-sep">/</span>
+                <div class="breadcrumb-node ${idx === folderPath.length - 1 ? 'active' : ''}" data-folder-id="${node.id}">
+                  <span>${folderIcons[node.folder_type] || '📁'} ${node.name}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="breadcrumb-bar-actions">
+              <button class="btn-sm btn-secondary" id="btn-semester-back">
+                ◀ Guruhlarga qaytish
+              </button>
+            </div>
+          </div>
+
+          <!-- TOP BANNER -->
+          <div class="semester-dashboard-header">
+            <div>
+              <div style="font-size:18px;font-weight:800;color:#ffffff;margin-bottom:4px;">
+                📚 ${currentFolderInfo.name} — Malakaviy Amaliyot Boshqaruvi
+              </div>
+              <div style="font-size:12.5px;color:rgba(94,234,212,0.9);line-height:1.4;">
+                Yo'nalish: <b>${folderPath[1]?.name || 'Hamshiralik'}</b> &nbsp;|&nbsp; 
+                To'plam: <b>${folderPath[2]?.name || 'Guruhlar'}</b> &nbsp;|&nbsp; 
+                Jami so'rovnomada: <b style="color:#34d399;">${surveyStudents.length} ta talaba</b>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <a href="/api/amaliyot/survey/sample-excel" class="btn-sm btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;" download="Amaliyot_Sorownoma_Namuna.xlsx">
+                📥 Excel Shablonini Yuklab Olish
+              </a>
+            </div>
+          </div>
+
+          <!-- SUB VIEW PILLS -->
+          <div class="tab-pills-row">
+            <button class="tab-pill-btn ${semesterSubView === 'survey' ? 'active' : ''}" id="tab-sub-survey">
+              📊 <span>O'tkazilgan So'rovnoma (${surveyStudents.length})</span>
+            </button>
+            <button class="tab-pill-btn ${semesterSubView === 'create_order' ? 'active' : ''}" id="tab-sub-create-order">
+              ➕ <span>Tuman Buyrug'ini Yaratish</span>
+            </button>
+            <button class="tab-pill-btn ${semesterSubView === 'generate_all' ? 'active' : ''}" id="tab-sub-generate-all">
+              ⚡ <span>Barcha Tumanlarni Generatsiya Qilish (ZIP)</span>
+            </button>
+            <button class="tab-pill-btn ${semesterSubView === 'archive' ? 'active' : ''}" id="tab-sub-archive">
+              🗂 <span>Buyruqlar Arxivi (${semesterOrders.length})</span>
+            </button>
+          </div>
+
+          <!-- SUB VIEW CONTAINER -->
+          <div id="semester-sub-content"></div>
+        </div>
+      `;
+
+      // Breadcrumb clicks
+      container.querySelectorAll('.breadcrumb-node').forEach(el => {
+        el.addEventListener('click', () => {
+          const fId = parseInt(el.dataset.folderId);
+          loadFolderData(fId || null);
+        });
+      });
+
+      // Back to groups
+      document.getElementById('btn-semester-back')?.addEventListener('click', () => {
+        if (folderPath.length > 1) {
+          loadFolderData(folderPath[folderPath.length - 2].id);
+        } else {
+          loadFolderData(null);
+        }
+      });
+
+      // Tab clicks
+      document.getElementById('tab-sub-survey').addEventListener('click', () => {
+        semesterSubView = 'survey';
+        renderSemesterDashboard();
+      });
+      document.getElementById('tab-sub-create-order').addEventListener('click', () => {
+        semesterSubView = 'create_order';
+        renderSemesterDashboard();
+      });
+      document.getElementById('tab-sub-generate-all').addEventListener('click', () => {
+        semesterSubView = 'generate_all';
+        renderSemesterDashboard();
+      });
+      document.getElementById('tab-sub-archive').addEventListener('click', () => {
+        semesterSubView = 'archive';
+        renderSemesterDashboard();
+      });
+
+      const subViewport = document.getElementById('semester-sub-content');
+
+      // Render Active Sub-View
+      if (semesterSubView === 'survey') {
+        renderSurveyTab(subViewport, districtStats);
+      } else if (semesterSubView === 'create_order') {
+        renderCreateOrderTab(subViewport, districtStats);
+      } else if (semesterSubView === 'generate_all') {
+        renderGenerateAllTab(subViewport, districtStats);
+      } else if (semesterSubView === 'archive') {
+        renderArchiveTab(subViewport);
+      }
+    };
+
+    // ============================================================
+    // SUB-VIEW 1: TALABALAR SO'ROVNOMASI (SURVEY TAB)
+    // ============================================================
+    const renderSurveyTab = (viewport, districtStats) => {
+      viewport.innerHTML = `
+        <div class="glass-card" style="padding:22px;">
+          <!-- Toolbar / Actions Bar -->
+          <div class="survey-import-bar">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <input type="file" id="survey-excel-file-input" accept=".xlsx, .xls" style="display:none;">
+              <button type="button" class="btn-primary btn-sm" id="btn-trigger-excel-upload">
+                📤 Excel Fayl Yuklash (Import)
+              </button>
+              <a href="/api/amaliyot/survey/sample-excel" class="btn-secondary btn-sm" style="text-decoration:none;" download="Amaliyot_Sorownoma_Namuna.xlsx">
+                📥 Namuna Excel Yuklab Olish
+              </a>
+              <button type="button" class="btn-secondary btn-sm" id="btn-paste-bulk-survey">
+                📋 Matndan Nusxalash
+              </button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button type="button" class="btn-secondary btn-sm" id="btn-add-survey-row">
+                + Qator Qo'shish
+              </button>
+              <button type="button" class="btn-primary btn-sm" id="btn-save-all-survey">
+                💾 So'rovnomani Saqlash
+              </button>
+            </div>
+          </div>
+
+          <!-- District Stats Chips -->
+          <div style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.9);margin-bottom:6px;">
+            📍 Tumanlar bo'yicha taqsimot statistikasi:
+          </div>
+          <div class="district-stats-row">
+            ${Object.keys(districtStats).length > 0 ? Object.entries(districtStats).map(([dName, cnt]) => `
+              <div class="district-stat-chip">
+                <span>${dName}:</span>
+                <span class="district-stat-count">${cnt} ta</span>
+              </div>
+            `).join('') : `
+              <div style="font-size:12px;color:rgba(94,234,212,0.6);font-style:italic;">
+                Talabalar so'rovnomasi hali kiritilmagan. Excel fayl yuklang yoki qatorlar qo'shing.
+              </div>
+            `}
+          </div>
+
+          <!-- Students Survey Table -->
+          <div class="survey-table-wrapper" style="margin-top:14px;">
+            <table class="survey-data-table" id="survey-table">
+              <thead>
+                <tr>
+                  <th style="width:36px;text-align:center;">T/r</th>
+                  <th style="width:90px;">Guruhi</th>
+                  <th>Talabaning F.I.SH</th>
+                  <th style="width:170px;">Amaliyot Tumani</th>
+                  <th style="width:110px;">Boshlanishi</th>
+                  <th style="width:110px;">Tugashi</th>
+                  <th style="width:130px;">Telefon</th>
+                  <th style="width:180px;">Muassasa / Shifoxona</th>
+                  <th style="width:40px;text-align:center;"></th>
+                </tr>
+              </thead>
+              <tbody id="survey-tbody"></tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.8);">
+              💡 Talabalar soni: <b id="survey-total-badge">${surveyStudents.length}</b> ta
+            </div>
+            <button type="button" class="btn-primary" id="btn-save-all-survey-bottom">
+              💾 Barcha O'zgarishlarni Saqlash
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Render Table Rows
+      const updateSurveyTable = () => {
+        const tbody = document.getElementById('survey-tbody');
+        const badge = document.getElementById('survey-total-badge');
+        if (!tbody) return;
+        badge.innerText = surveyStudents.length;
+
+        tbody.innerHTML = surveyStudents.map((st, i) => `
+          <tr>
+            <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${i + 1}.</td>
+            <td>
+              <input type="text" class="survey-input-cell st-input-grp" data-idx="${i}" value="${st.guruhi || ''}" placeholder="201">
+            </td>
+            <td>
+              <input type="text" class="survey-input-cell st-input-fio" data-idx="${i}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
+            </td>
+            <td>
+              <select class="survey-input-cell st-input-tum" data-idx="${i}">
+                ${standardDistricts.map(d => `<option value="${d}" ${st.tumani === d ? 'selected' : ''}>${d}</option>`).join('')}
+                ${!standardDistricts.includes(st.tumani) && st.tumani ? `<option value="${st.tumani}" selected>${st.tumani}</option>` : ''}
+              </select>
+            </td>
+            <td>
+              <input type="text" class="survey-input-cell st-input-start" data-idx="${i}" value="${st.start_date || '08.06.2026'}">
+            </td>
+            <td>
+              <input type="text" class="survey-input-cell st-input-end" data-idx="${i}" value="${st.end_date || '06.07.2026'}">
+            </td>
+            <td>
+              <input type="text" class="survey-input-cell st-input-phone" data-idx="${i}" value="${st.phone || ''}" placeholder="+99890...">
+            </td>
+            <td>
+              <input type="text" class="survey-input-cell st-input-org" data-idx="${i}" value="${st.organization || ''}" placeholder="Tuman TTB Markaziy Shifoxonasi">
+            </td>
+            <td style="text-align:center;">
+              <button type="button" class="tab-btn-mini danger btn-del-survey-row" data-idx="${i}" title="Qatorni o'chirish">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+
+        // Cell listeners
+        tbody.querySelectorAll('.st-input-grp').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].guruhi = e.target.value.trim()));
+        tbody.querySelectorAll('.st-input-fio').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].fio = e.target.value));
+        tbody.querySelectorAll('.st-input-tum').forEach(el => el.addEventListener('change', e => surveyStudents[parseInt(e.target.dataset.idx)].tumani = e.target.value));
+        tbody.querySelectorAll('.st-input-start').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].start_date = e.target.value.trim()));
+        tbody.querySelectorAll('.st-input-end').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].end_date = e.target.value.trim()));
+        tbody.querySelectorAll('.st-input-phone').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].phone = e.target.value.trim()));
+        tbody.querySelectorAll('.st-input-org').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].organization = e.target.value));
+
+        tbody.querySelectorAll('.btn-del-survey-row').forEach(b => {
+          b.addEventListener('click', e => {
+            const idx = parseInt(e.target.dataset.idx);
+            surveyStudents.splice(idx, 1);
+            updateSurveyTable();
+          });
+        });
+      };
+      updateSurveyTable();
+
+      // Trigger Excel Upload
+      const fileInput = document.getElementById('survey-excel-file-input');
+      document.getElementById('btn-trigger-excel-upload').addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async () => {
+        if (!fileInput.files || !fileInput.files[0]) return;
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        this.toast("Excel fayl yuklanmoqda va o'qilmoqda...", "info");
+        try {
+          const userToken = localStorage.getItem('atlas_token') || this.token || '';
+          const res = await fetch(`/api/amaliyot/folders/${currentFolderId}/survey/import`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${userToken}` },
+            body: formData
+          });
+          const json = await res.json();
+          if (json?.success) {
+            this.toast(json.message || "Excel ma'lumotlari muvaffaqiyatli yuklandi!", "success");
+            surveyStudents = json.students || [];
+            renderSemesterDashboard();
+          } else {
+            alert(json?.error || "Excel yuklashda xatolik yuz berdi.");
+          }
+        } catch (err) {
+          alert("Server bilan aloqada xatolik: " + err.message);
+        }
+        fileInput.value = '';
+      });
+
+      // Add Row
+      document.getElementById('btn-add-survey-row').addEventListener('click', () => {
+        surveyStudents.push({
+          guruhi: folderPath[2]?.name ? folderPath[2].name.split('-')[0].replace(/\D/g, '') : '201',
+          fio: '',
+          tumani: standardDistricts[0],
+          start_date: '08.06.2026',
+          end_date: '06.07.2026',
+          phone: '',
+          organization: ''
+        });
+        updateSurveyTable();
+      });
+
+      // Save Survey
+      const handleSaveSurvey = async () => {
+        const valid = surveyStudents.filter(s => s.fio && s.fio.trim());
+        const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/survey`, 'POST', {
+          students: valid,
+          replace_all: true
+        });
+        if (res?.success) {
+          this.toast("So'rovnoma muvaffaqiyatli saqlandi!", "success");
+          renderSemesterDashboard();
+        } else {
+          alert(res?.error || "Saqlashda xatolik yuz berdi");
+        }
+      };
+
+      document.getElementById('btn-save-all-survey').addEventListener('click', handleSaveSurvey);
+      document.getElementById('btn-save-all-survey-bottom').addEventListener('click', handleSaveSurvey);
+
+      // Paste Bulk Text Modal
+      document.getElementById('btn-paste-bulk-survey').addEventListener('click', () => {
+        this.openModal(`
+          <div class="modal-header">
+            <h3>📋 Talabalar Ro'yxatini Ommaviy Nusxalash</h3>
+            <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
+          </div>
+          <div class="modal-body">
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:8px;line-height:1.5;">
+              Har bir qatorga <b>Guruh # F.I.SH # Tuman</b> ko'rinishida nusxalab qo'ying:<br>
+              <span style="display:inline-block;background:rgba(0,0,0,0.4);padding:4px 8px;border-radius:4px;color:#34d399;font-family:monospace;margin-top:4px;">
+                201 # Rahmatova Shaxnoza # Shahrisabz shahar<br>
+                202 # Asraliyev Asilbek # Kitob tuman<br>
+                203 # Nazarova Dilnoza # Yakkabog' tuman
+              </span>
+            </div>
+            <textarea id="modal-bulk-text" class="textarea-control" style="height:200px;font-family:monospace;font-size:12.5px;" placeholder="201 # Rahmatova Shaxnoza # Shahrisabz shahar\n202 # Asraliyev Asilbek # Kitob tuman"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+            <button class="btn-primary" id="btn-apply-bulk-text">Jadvalga Joylash</button>
+          </div>
+        `);
+
+        document.getElementById('btn-apply-bulk-text').addEventListener('click', () => {
+          const raw = document.getElementById('modal-bulk-text').value.trim();
+          if (!raw) return;
+          const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+          const parsed = [];
+
+          lines.forEach(line => {
+            line = line.replace(/^\d+[\.\)\t\s]+/, '').trim();
+            if (!line) return;
+            let g = '201', f = '', tum = 'Shahrisabz shahar';
+
+            if (line.includes('#')) {
+              const p = line.split('#').map(x => x.trim()).filter(x => x);
+              if (p.length >= 3) { g = p[0]; f = p[1]; tum = p[2]; }
+              else if (p.length === 2) { g = p[0]; f = p[1]; }
+              else { f = p[0]; }
+            } else if (line.includes('\t')) {
+              const p = line.split('\t').map(x => x.trim()).filter(x => x);
+              if (p.length >= 3) { g = p[0]; f = p[1]; tum = p[2]; }
+              else if (p.length === 2) { g = p[0]; f = p[1]; }
+              else { f = p[0]; }
+            } else {
+              f = line;
+            }
+
+            if (f) {
+              parsed.push({
+                guruhi: g,
+                fio: f,
+                tumani: tum,
+                start_date: '08.06.2026',
+                end_date: '06.07.2026',
+                phone: '',
+                organization: ''
+              });
+            }
+          });
+
+          if (parsed.length > 0) {
+            surveyStudents = [...surveyStudents, ...parsed];
+            updateSurveyTable();
+            this.closeModal();
+            this.toast(`${parsed.length} ta talaba ro'yxatga qo'shildi!`, "success");
+          }
+        });
+      });
+    };
+
+    // ============================================================
+    // SUB-VIEW 2: YAKKA TUMAN BUYRUG'I SHAKLLANTIRISH
+    // ============================================================
+    const renderCreateOrderTab = (viewport, districtStats) => {
+      let selectedDistrict = standardDistricts[0];
       const todayStr = new Date().toLocaleDateString('ru-RU');
       const sampleMuddati = "2026-yil 08-iyunidan  2026-yil 06-iyuligacha";
 
       viewport.innerHTML = `
         <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:20px;align-items:start;">
-          <!-- LEFT: FORM -->
+          <!-- LEFT FORM -->
           <div class="glass-card" style="padding:22px;">
-            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:4px;">
-              📋 ${currentTab.tab_name} Buyrug'i Generatori
+            <div style="font-size:16px;font-weight:700;color:#ffffff;margin-bottom:4px;">
+              ➕ Tuman Bo'yicha Yakka Buyruq Generatori
             </div>
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.7);margin-bottom:16px;">
-              Tuman, shifokor va o'quvchilar ro'yxatini to'ldirib, rasmiy Word (.docx) hujjatini shakllantiring.
-            </div>
-
-            <!-- Helper sample date banner -->
-            <div class="amaliyot-helper-banner">
-              <div>
-                <span style="font-weight:700;color:#34d399;">💡 Amaliyot muddati namunasi:</span>
-                <span class="amaliyot-helper-badge" id="btn-copy-sample-muddati" title="Nusxalash yoki formaga joylash">${sampleMuddati}</span>
-              </div>
-              <button type="button" class="btn-sm btn-secondary" id="btn-fill-sample-muddati" style="height:28px;padding:0 10px;font-size:11px;">
-                Nusxalab qo'yish
-              </button>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.75);margin-bottom:16px;">
+              Tumanni tanlang. So'rovnomadagi o'sha tumanga biriktirilgan barcha talabalar avtomatik yuklanadi.
             </div>
 
-            <form id="amaliyot-form">
+            <form id="single-amaliyot-form">
               <!-- Tuman & Shifokor -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
-                  <label class="form-label">Tibbiyot Birlashmasi Tumani ({{tumani}})</label>
-                  <select id="amaliyot-tumani" class="select-control">
-                    <option value="Shahrisabz shahar">Shahrisabz shahar</option>
-                    <option value="Kitob tuman">Kitob tuman</option>
-                    <option value="Yakkabog' tuman">Yakkabog' tuman</option>
-                    <option value="Shahrisabz tuman">Shahrisabz tuman</option>
-                    <option value="Chiroqchi tuman">Chiroqchi tuman</option>
-                    <option value="Qamashi tuman">Qamashi tuman</option>
+                  <label class="form-label">Tibbiyot Birlashmasi Tumani</label>
+                  <select id="single-tumani" class="select-control">
+                    ${standardDistricts.map(d => {
+                      const cnt = districtStats[d] || 0;
+                      return `<option value="${d}">${d} (${cnt} ta talaba)</option>`;
+                    }).join('')}
                     <option value="__custom__">✨ + Boshqa tuman...</option>
                   </select>
-                  <input type="text" id="amaliyot-custom-tumani" class="input-control" placeholder="Tuman nomini kiriting..." style="display:none;margin-top:6px;">
+                  <input type="text" id="single-custom-tumani" class="input-control" placeholder="Tuman nomini kiriting..." style="display:none;margin-top:6px;">
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Bosh Shifokor ({{shu_tuman_shifokori}})</label>
-                  <input type="text" id="amaliyot-shifokor" class="input-control" value="O.Norboyev" required>
+                  <label class="form-label">Bosh Shifokor F.I.SH</label>
+                  <input type="text" id="single-shifokor" class="input-control" value="${districtDoctors[standardDistricts[0]] || 'O.Norboyev'}" required>
                 </div>
               </div>
 
@@ -1152,23 +1709,23 @@ const ATLAS = {
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
                   <label class="form-label">Buyruq Raqami</label>
-                  <input type="text" id="amaliyot-buyruq-num" class="input-control" placeholder="Masalan: 28-A" value="">
+                  <input type="text" id="single-buyruq-num" class="input-control" placeholder="Masalan: 28-A" value="">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Buyruq Sanasi</label>
-                  <input type="text" id="amaliyot-buyruq-sana" class="input-control" value="${todayStr}" required>
+                  <input type="text" id="single-buyruq-sana" class="input-control" value="${todayStr}" required>
                 </div>
               </div>
 
-              <!-- O'quv yili va Kursi -->
+              <!-- O'quv Yili va Bosqich -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
                   <label class="form-label">O'quv Yili</label>
-                  <input type="text" id="amaliyot-oquv-yili" class="input-control" value="2025/2026">
+                  <input type="text" id="single-oquv-yili" class="input-control" value="${folderPath[0]?.name || '2025/2026'}">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Bosqich / Kursi</label>
-                  <select id="amaliyot-kursi" class="select-control">
+                  <select id="single-kursi" class="select-control">
                     <option value="1" selected>1-kurs</option>
                     <option value="2">2-kurs</option>
                     <option value="3">3-kurs</option>
@@ -1177,432 +1734,378 @@ const ATLAS = {
                 </div>
               </div>
 
-              <!-- Guruhlar Tanlovi (Soddalashtirilgan va Qulay) -->
+              <!-- Muddati -->
               <div class="form-group">
-                <label class="form-label">Amaliyotga Chiqayotgan Guruhlar ({{guruh_1}}, {{guruh_2}}, ...)</label>
-                <div style="display:flex;gap:8px;">
-                  <input type="text" id="amaliyot-groups-input" class="input-control" placeholder="Masalan: 25-16, 25-17, 25-18, 25-23" value="${selectedGroups.join(', ')}">
-                  <select id="amaliyot-group-quick-select" class="select-control" style="width:210px;">
-                    <option value="">+ Guruh qo'shish...</option>
-                  </select>
-                </div>
-                <div style="font-size:11.5px;color:rgba(94,234,212,0.75);margin-top:4px;">
-                  💡 Guruhlarni vergul bilan yozing yoki ro'yxatni yuklasangiz, barcha guruhlar avtomatik aniqlanadi.
-                </div>
-              </div>
-
-              <!-- Amaliyot Muddati & Sanalar -->
-              <div class="form-group">
-                <label class="form-label">Amaliyot O'tash Muddati (Matn holida)</label>
-                <input type="text" id="amaliyot-muddati-text" class="input-control" value="${sampleMuddati}">
+                <label class="form-label">Amaliyot Muddati (Matn holida)</label>
+                <input type="text" id="single-muddati-text" class="input-control" value="${sampleMuddati}">
               </div>
 
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
-                  <label class="form-label">Amaliyot Boshlanish Sanasi</label>
-                  <input type="text" id="amaliyot-start-date" class="input-control" value="08.06.2026">
+                  <label class="form-label">Boshlanish Sanasi</label>
+                  <input type="text" id="single-start-date" class="input-control" value="08.06.2026">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Amaliyot Tugash Sanasi</label>
-                  <input type="text" id="amaliyot-end-date" class="input-control" value="06.07.2026">
+                  <label class="form-label">Tugash Sanasi</label>
+                  <input type="text" id="single-end-date" class="input-control" value="06.07.2026">
                 </div>
               </div>
 
-              <!-- TALABALAR JADVALI (DYNAMIC ROSTER) -->
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:6px;">
-                <label class="form-label" style="margin-bottom:0;font-size:14px;font-weight:700;color:var(--accent-glow);">
-                  👨‍🎓 Talabalar Ro'yxati (<span id="students-count-badge">${studentRows.length}</span> ta)
-                </label>
-                <div style="display:flex;gap:8px;">
-                  <button type="button" class="btn-sm btn-secondary" id="btn-bulk-import-students">
-                    📋 Ommaviy Nusxalash
-                  </button>
-                  <button type="button" class="btn-sm btn-primary" id="btn-add-student-row">
-                    + Qator Qo'shish
-                  </button>
+              <!-- Filtered Students Section -->
+              <div style="margin-top:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:13.5px;font-weight:700;color:var(--accent-glow);">
+                  👨‍🎓 Ushbu Tumanga Biriktirilgan Talabalar (<span id="single-students-count">0</span> ta)
                 </div>
               </div>
 
-              <div class="students-table-wrapper">
-                <table class="students-data-table" id="students-table">
+              <div class="students-table-wrapper" style="max-height:260px;">
+                <table class="students-data-table" id="single-district-students-table">
                   <thead>
                     <tr>
                       <th style="width:36px;">T/r</th>
-                      <th style="width:110px;">Guruhi</th>
+                      <th style="width:90px;">Guruhi</th>
                       <th>Talabaning F.I.SH</th>
-                      <th style="width:115px;">Boshlanishi</th>
-                      <th style="width:115px;">Tugashi</th>
-                      <th style="width:40px;"></th>
+                      <th style="width:105px;">Boshlanishi</th>
+                      <th style="width:105px;">Tugashi</th>
                     </tr>
                   </thead>
-                  <tbody id="students-tbody"></tbody>
+                  <tbody id="single-district-students-tbody"></tbody>
                 </table>
               </div>
 
-              <div style="margin-top:22px;">
-                <button type="submit" class="btn-primary btn-block" id="btn-generate-amaliyot">
-                  ${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>
+              <div style="margin-top:20px;">
+                <button type="submit" class="btn-primary btn-block" id="btn-generate-single-order">
+                  ${this.icons.documents} <span>Ushbu Tuman Buyrug'ini Shakllantirish va Word Yuklab Olish</span>
                 </button>
               </div>
             </form>
           </div>
 
-          <!-- RIGHT: PREVIEW & RESULT -->
-          <div class="glass-card" style="padding:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:500px;text-align:center;">
-            <div id="amaliyot-result-box" style="width:100%;">
-              <div style="margin-bottom:14px;color:rgba(0,203,169,0.4);font-size:42px;">🩺</div>
-              <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:8px;">Amaliyot Buyrug'i Natijasi</div>
-              <div style="font-size:12.5px;color:rgba(94,234,212,0.65);max-width:320px;margin:0 auto 20px;">
-                Formani to'ldirib tugmani bosing. Rasmiy Word (.docx) hujjati va xulosasi shu yerda tayyor bo'ladi.
+          <!-- RIGHT PREVIEW -->
+          <div class="glass-card" style="padding:22px;min-height:480px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div id="single-order-result-box" style="width:100%;">
+              <div style="font-size:42px;color:rgba(0,203,169,0.4);margin-bottom:12px;">🩺</div>
+              <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">Amaliyot Buyrug'i Natijasi</div>
+              <div style="font-size:12.5px;color:rgba(94,234,212,0.7);max-width:280px;margin:0 auto;">
+                Tumanni tanlang va generatsiya tugmasini bosing. Rasmiy Word (.docx) fayli shu yerda paydo bo'ladi.
               </div>
             </div>
           </div>
         </div>
       `;
 
-      // Populate academic groups into quick select
-      const grpQuickSelect = document.getElementById('amaliyot-group-quick-select');
-      const grpInput = document.getElementById('amaliyot-groups-input');
-      
-      const populateGrpSelect = (gList) => {
-        if (!grpQuickSelect) return;
-        grpQuickSelect.innerHTML = '<option value="">+ Guruh tanlash...</option>' +
-          gList.map(g => `<option value="${g.group_name}">${g.group_name} (${g.course_level || 1}-kurs)</option>`).join('');
-      };
+      const tumanSel = document.getElementById('single-tumani');
+      const customTumInp = document.getElementById('single-custom-tumani');
+      const shifokorInp = document.getElementById('single-shifokor');
+      const tbody = document.getElementById('single-district-students-tbody');
+      const countEl = document.getElementById('single-students-count');
 
-      if (this._academicGroups && this._academicGroups.length > 0) {
-        populateGrpSelect(this._academicGroups);
-      } else {
-        this.api('/api/groups/academic').then(res => {
-          this._academicGroups = res?.groups || [];
-          populateGrpSelect(this._academicGroups);
-        });
-      }
+      let currentDistrictStudents = [];
 
-      // Sync Groups input
-      if (grpInput) {
-        grpInput.addEventListener('input', (e) => {
-          selectedGroups = e.target.value.split(/[,;]+/).map(s => s.trim()).filter(s => s);
-        });
-      }
-
-      if (grpQuickSelect) {
-        grpQuickSelect.addEventListener('change', () => {
-          const val = grpQuickSelect.value;
-          if (val) {
-            let currentVals = grpInput.value.split(/[,;]+/).map(s => s.trim()).filter(s => s);
-            if (!currentVals.includes(val)) {
-              currentVals.push(val);
-              grpInput.value = currentVals.join(', ');
-              selectedGroups = currentVals;
-            }
-            grpQuickSelect.value = '';
-          }
-        });
-      }
-
-      // Tuman change -> auto update Doctor
-      const tumaniSel = document.getElementById('amaliyot-tumani');
-      const shifokorInp = document.getElementById('amaliyot-shifokor');
-      const customTumaniInp = document.getElementById('amaliyot-custom-tumani');
-
-      tumaniSel.addEventListener('change', () => {
-        const val = tumaniSel.value;
-        if (val === '__custom__') {
-          customTumaniInp.style.display = 'block';
-          customTumaniInp.focus();
+      const syncDistrictData = () => {
+        const selTum = tumanSel.value === '__custom__' ? customTumInp.value.trim() : tumanSel.value;
+        if (tumanSel.value === '__custom__') {
+          customTumInp.style.display = 'block';
+          customTumInp.focus();
         } else {
-          customTumaniInp.style.display = 'none';
-          if (districtDoctors[val]) {
-            shifokorInp.value = districtDoctors[val];
-          }
+          customTumInp.style.display = 'none';
+          if (districtDoctors[selTum]) shifokorInp.value = districtDoctors[selTum];
         }
-      });
 
-      // Sample muddati buttons
-      const fillSampleBtn = document.getElementById('btn-fill-sample-muddati');
-      const copySampleBtn = document.getElementById('btn-copy-sample-muddati');
-      const muddatiInp = document.getElementById('amaliyot-muddati-text');
-      const startInp = document.getElementById('amaliyot-start-date');
-      const endInp = document.getElementById('amaliyot-end-date');
+        // Filter students for this district
+        currentDistrictStudents = surveyStudents.filter(s => (s.tumani || '').trim() === selTum);
+        countEl.innerText = currentDistrictStudents.length;
 
-      fillSampleBtn.addEventListener('click', () => {
-        muddatiInp.value = sampleMuddati;
-        startInp.value = "08.06.2026";
-        endInp.value = "06.07.2026";
-        this.toast("Amaliyot muddati joylashtirildi!", "success");
-      });
-      copySampleBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(sampleMuddati);
-        this.toast("Nusxalandi: " + sampleMuddati, "info");
-      });
-
-      // Students Table dynamic rendering
-      const updateStudentsTable = () => {
-        const tbody = document.getElementById('students-tbody');
-        const countBadge = document.getElementById('students-count-badge');
-        if (!tbody) return;
-        countBadge.innerText = studentRows.length;
-
-        tbody.innerHTML = studentRows.map((st, i) => `
-          <tr>
-            <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${i + 1}.</td>
-            <td>
-              <input type="text" class="table-input-cell st-guruh" data-idx="${i}" value="${st.guruhi || ''}" placeholder="25-16">
-            </td>
-            <td>
-              <input type="text" class="table-input-cell st-fio" data-idx="${i}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
-            </td>
-            <td>
-              <input type="text" class="table-input-cell st-start" data-idx="${i}" value="${st.start_date || startInp.value || '08.06.2026'}">
-            </td>
-            <td>
-              <input type="text" class="table-input-cell st-end" data-idx="${i}" value="${st.end_date || endInp.value || '06.07.2026'}">
-            </td>
-            <td style="text-align:center;">
-              ${studentRows.length > 1 ? `<button type="button" class="tab-btn-mini danger btn-del-student-row" data-idx="${i}" title="Qatorni o'chirish">🗑️</button>` : ''}
-            </td>
-          </tr>
-        `).join('');
-
-        // Listeners for cells
-        tbody.querySelectorAll('.st-guruh').forEach(inp => {
-          inp.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.idx);
-            studentRows[idx].guruhi = e.target.value.trim();
-          });
-        });
-        tbody.querySelectorAll('.st-fio').forEach(inp => {
-          inp.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.idx);
-            studentRows[idx].fio = e.target.value;
-          });
-        });
-        tbody.querySelectorAll('.st-start').forEach(inp => {
-          inp.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.idx);
-            studentRows[idx].start_date = e.target.value;
-          });
-        });
-        tbody.querySelectorAll('.st-end').forEach(inp => {
-          inp.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.idx);
-            studentRows[idx].end_date = e.target.value;
-          });
-        });
-
-        tbody.querySelectorAll('.btn-del-student-row').forEach(b => {
-          b.addEventListener('click', (e) => {
-            const idx = parseInt(e.target.dataset.idx);
-            studentRows.splice(idx, 1);
-            updateStudentsTable();
-          });
-        });
+        if (currentDistrictStudents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:rgba(255,255,255,0.5);">Ushbu tumanga so'rovnomada biriktirilgan talaba topilmadi.</td></tr>`;
+        } else {
+          tbody.innerHTML = currentDistrictStudents.map((st, i) => `
+            <tr>
+              <td style="text-align:center;">${i + 1}.</td>
+              <td>${st.guruhi || '201'}</td>
+              <td style="text-align:left;font-weight:600;">${st.fio}</td>
+              <td>${st.start_date || '08.06.2026'}</td>
+              <td>${st.end_date || '06.07.2026'}</td>
+            </tr>
+          `).join('');
+        }
       };
-      updateStudentsTable();
 
-      // Add single row button
-      document.getElementById('btn-add-student-row').addEventListener('click', () => {
-        studentRows.push({
-          id: studentRows.length + 1,
-          guruhi: selectedGroups[0] || '',
-          fio: '',
-          start_date: startInp.value || '08.06.2026',
-          end_date: endInp.value || '06.07.2026'
-        });
-        updateStudentsTable();
-      });
+      tumanSel.addEventListener('change', syncDistrictData);
+      customTumInp.addEventListener('input', syncDistrictData);
+      syncDistrictData();
 
-      // Bulk Import Modal with Hash (#) separator and smart splitter
-      document.getElementById('btn-bulk-import-students').addEventListener('click', () => {
-        this.openModal(`
-          <div class="modal-header">
-            <h3>📋 Talabalar Ro'yxatini Ommaviy Nusxalash</h3>
-            <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
-          </div>
-          <div class="modal-body">
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:8px;line-height:1.5;">
-              Har bir qatorga <b>Guruh # F.I.SH</b> ko'rinishida (yoki Excel/Word ro'yxatidan) nusxalab qo'ying:<br>
-              <span style="display:inline-block;background:rgba(0,0,0,0.4);padding:4px 8px;border-radius:4px;color:#34d399;font-family:monospace;margin-top:4px;">
-                25-16 # Rahmatova.Sh<br>
-                25-16 # Botirova.G<br>
-                25-23 # Asraliyev.A<br>
-                25-17 # Meyliyev.R
-              </span>
-            </div>
-            <textarea id="modal-bulk-students-text" class="textarea-control" style="height:220px;font-family:monospace;font-size:13px;" placeholder="25-16 # Rahmatova.Sh\n25-16 # Botirova.G\n25-23 # Asraliyev.A\n25-17 # Meyliyev.R"></textarea>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-            <button class="btn-primary" id="btn-apply-bulk-students">Jadvalga Yuklash</button>
-          </div>
-        `);
-
-        document.getElementById('btn-apply-bulk-students').addEventListener('click', () => {
-          const rawText = document.getElementById('modal-bulk-students-text').value.trim();
-          if (!rawText) return;
-
-          const lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
-          const parsed = [];
-          const curStart = startInp.value || '08.06.2026';
-          const curEnd = endInp.value || '06.07.2026';
-          const detectedGroups = new Set(selectedGroups);
-
-          lines.forEach(line => {
-            // Remove leading row numbering like 1., 1), 1
-            line = line.replace(/^\d+[\.\)\t\s]+/, '').trim();
-            if (!line) return;
-
-            let g = '';
-            let f = '';
-
-            if (line.includes('#')) {
-              const parts = line.split('#').map(p => p.trim()).filter(p => p);
-              if (parts.length >= 2) {
-                g = parts[0];
-                f = parts.slice(1).join(' ');
-              } else if (parts.length === 1) {
-                f = parts[0];
-              }
-            } else if (line.includes('\t')) {
-              const parts = line.split('\t').map(p => p.trim()).filter(p => p);
-              if (parts.length >= 2) {
-                g = parts[0];
-                f = parts.slice(1).join(' ');
-              } else if (parts.length === 1) {
-                f = parts[0];
-              }
-            } else {
-              // Match group pattern like 25-16, 24-11, 102, 204
-              const m = line.match(/^(\d{1,2}-\d{1,3}|\d{3})\s*[-–—:\s]\s*(.+)$/);
-              if (m) {
-                g = m[1].trim();
-                f = m[2].trim();
-              } else {
-                f = line;
-              }
-            }
-
-            // Remove any duplicated group prefix in FIO
-            if (g && f.startsWith(g)) {
-              f = f.slice(g.length).replace(/^[\s\-–—#:\t]+/, '').trim();
-            }
-
-            if (g) {
-              detectedGroups.add(g);
-            }
-
-            if (f) {
-              parsed.push({
-                id: parsed.length + 1,
-                guruhi: g,
-                fio: f,
-                start_date: curStart,
-                end_date: curEnd
-              });
-            }
-          });
-
-          if (parsed.length > 0) {
-            studentRows = parsed;
-            selectedGroups = Array.from(detectedGroups);
-            const grpInpEl = document.getElementById('amaliyot-groups-input');
-            if (grpInpEl) grpInpEl.value = selectedGroups.join(', ');
-            updateStudentsTable();
-            this.closeModal();
-            this.toast(`${parsed.length} ta talaba va ${selectedGroups.length} ta guruh yuklandi!`, 'success');
-          }
-        });
-      });
-
-      // Submit Form
-      document.getElementById('amaliyot-form').addEventListener('submit', async (e) => {
+      // Submit
+      document.getElementById('single-amaliyot-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btn-generate-amaliyot');
-        btn.innerHTML = `<span>Hujjat shakllantirilmoqda...</span>`;
+        const btn = document.getElementById('btn-generate-single-order');
+        btn.innerHTML = `<span>Shakllantirilmoqda...</span>`;
 
-        const finalTumani = tumaniSel.value === '__custom__' ? customTumaniInp.value.trim() : tumaniSel.value;
-        const finalShifokor = shifokorInp.value.trim();
-        const buyruqNum = document.getElementById('amaliyot-buyruq-num').value.trim();
-        const buyruqSana = document.getElementById('amaliyot-buyruq-sana').value.trim();
-        const oquvYili = document.getElementById('amaliyot-oquv-yili').value.trim();
-        const kursi = document.getElementById('amaliyot-kursi').value;
-        const muddatiText = muddatiInp.value.trim();
-        const startDate = startInp.value.trim();
-        const endDate = endInp.value.trim();
-
-        // Get groups from groups input field or detected from table
-        const grpInpVal = document.getElementById('amaliyot-groups-input').value;
-        let finalGroups = grpInpVal.split(/[,;]+/).map(s => s.trim()).filter(s => s);
-        if (!finalGroups.length) {
-          finalGroups = Array.from(new Set(studentRows.map(s => s.guruhi).filter(g => g)));
-        }
-
-        const validStudents = studentRows.filter(s => s.fio && s.fio.trim());
-
+        const finalTumani = tumanSel.value === '__custom__' ? customTumInp.value.trim() : tumanSel.value;
         const payload = {
-          tab_id: currentTab.id,
-          tab_name: currentTab.tab_name,
           tumani: finalTumani,
-          shu_tuman_shifokori: finalShifokor,
-          buyruq_raqami: buyruqNum,
-          buyruq_sanasi: buyruqSana,
-          oquv_yili: oquvYili,
-          kursi: kursi,
-          guruhlar: finalGroups,
-          amaliyot_muddati: muddatiText,
-          start_date: startDate,
-          end_date: endDate,
-          students: validStudents
+          shu_tuman_shifokori: shifokorInp.value.trim(),
+          buyruq_raqami: document.getElementById('single-buyruq-num').value.trim(),
+          buyruq_sanasi: document.getElementById('single-buyruq-sana').value.trim(),
+          oquv_yili: document.getElementById('single-oquv-yili').value.trim(),
+          kursi: document.getElementById('single-kursi').value,
+          amaliyot_muddati: document.getElementById('single-muddati-text').value.trim(),
+          start_date: document.getElementById('single-start-date').value.trim(),
+          end_date: document.getElementById('single-end-date').value.trim(),
+          students: currentDistrictStudents.length > 0 ? currentDistrictStudents : [{ fio: "Namunaviy Talaba", guruhi: "201" }]
         };
 
         try {
-          const res = await this.api('/api/amaliyot/generate', 'POST', payload);
-          btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
+          const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/generate-single`, 'POST', payload);
+          btn.innerHTML = `${this.icons.documents} <span>Ushbu Tuman Buyrug'ini Shakllantirish va Word Yuklab Olish</span>`;
 
-                   if (res?.success) {
-            this.toast("Amaliyot buyrug'i muvaffaqiyatli shakllantirildi!", "success");
-            const resultBox = document.getElementById('amaliyot-result-box');
-            const groupsStr = finalGroups.join(', ') || 'Guruh';
-            const downloadFilename = `${finalTumani} - ${groupsStr} - ${validStudents.length} ta talaba.docx`;
+          if (res?.success) {
+            this.toast(res.message || "Buyruq shakllantirildi!", "success");
+            const resultBox = document.getElementById('single-order-result-box');
             const userToken = localStorage.getItem('atlas_token') || this.token || '';
             const downloadUrlWithToken = `${res.download_docx_url}?token=${encodeURIComponent(userToken)}`;
+            const fname = `${finalTumani} - ${payload.students.length} ta talaba.docx`;
 
             resultBox.innerHTML = `
               <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:20px;text-align:left;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                  <div style="font-size:24px;">✅</div>
+                  <div style="font-size:26px;">✅</div>
                   <div>
-                    <div style="font-size:15px;font-weight:700;color:#ffffff;">Amaliyot Buyrug'i Tayyor!</div>
-                    <div style="font-size:12px;color:rgba(94,234,212,0.8);">Supabase Cloud bazasida va arxivda saqlandi</div>
+                    <div style="font-size:15px;font-weight:700;color:#ffffff;">${finalTumani} Buyrug'i Tayyor!</div>
+                    <div style="font-size:12px;color:rgba(94,234,212,0.8);">${payload.students.length} ta talaba bilan Word hujjati shakllantirildi</div>
                   </div>
                 </div>
-                <div style="font-size:13px;color:rgba(255,255,255,0.9);line-height:1.6;margin-bottom:16px;">
-                  • <b>Tuman:</b> ${finalTumani}<br>
-                  • <b>Bosh shifokor:</b> ${finalShifokor}<br>
-                  • <b>Guruhlar:</b> ${groupsStr}<br>
-                  • <b>Talabalar soni:</b> ${validStudents.length} ta<br>
-                  • <b>Muddati:</b> ${muddatiText}<br>
-                  • <b>Fayl nomi:</b> <span style="color:#5eead4;font-family:monospace;font-size:12px;">${downloadFilename}</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                  <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;" download="${downloadFilename}">
-                    📥 Word (.docx) Hujjatini Yuklab Olish
-                  </a>
-                </div>
+                <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;margin-top:12px;" download="${fname}">
+                  📥 Word (.docx) Hujjatini Yuklab Olish
+                </a>
               </div>
             `;
           } else {
-            alert(res?.error || "Buyruq shakllantirishda xatolik yuz berdi");
+            alert(res?.error || "Xatolik yuz berdi");
           }
         } catch (err) {
-          btn.innerHTML = `${this.icons.documents} <span>Amaliyot Buyrug'ini Shakllantirish va Saqlash</span>`;
+          btn.innerHTML = `${this.icons.documents} <span>Ushbu Tuman Buyrug'ini Shakllantirish va Word Yuklab Olish</span>`;
           alert("Server bilan aloqada xatolik: " + err.message);
         }
       });
     };
 
-    render();
+    // ============================================================
+    // SUB-VIEW 3: BARCHA TUMANLARNI BIR BOSISHDA SHAKLLANTIRISH (ZIP)
+    // ============================================================
+    const renderGenerateAllTab = (viewport, districtStats) => {
+      const todayStr = new Date().toLocaleDateString('ru-RU');
+      const sampleMuddati = "2026-yil 08-iyunidan  2026-yil 06-iyuligacha";
+      const totalDistrictsCount = Object.keys(districtStats).length;
+
+      viewport.innerHTML = `
+        <div style="max-width:800px;margin:0 auto;">
+          <div class="glass-card" style="padding:28px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+              <div style="font-size:32px;">⚡</div>
+              <div>
+                <div style="font-size:18px;font-weight:800;color:#ffffff;">Barcha Tumanlar Buyruqlarini Bitta Bosishda Shakllantirish</div>
+                <div style="font-size:12.5px;color:rgba(94,234,212,0.85);">
+                  Tizim so'rovnomadagi barcha ${surveyStudents.length} ta talabani tumanlar bo'yicha ajratadi va har bir tuman uchun alohida Word (.docx) faylini tayyorlab, ZIP paketga yig'adi.
+                </div>
+              </div>
+            </div>
+
+            <!-- Detected Districts Summary -->
+            <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:20px;">
+              <div style="font-size:13px;font-weight:700;color:#ffffff;margin-bottom:10px;">
+                📊 Aniqlangan Tumanlar Ro'yxati (${totalDistrictsCount} ta tuman):
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                ${Object.entries(districtStats).map(([tum, cnt]) => `
+                  <div class="district-stat-chip">
+                    <span style="font-weight:600;">${tum}:</span>
+                    <span class="district-stat-count">${cnt} ta talaba</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <form id="batch-generate-form">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label class="form-label">Umumiy Buyruq Raqami</label>
+                  <input type="text" id="batch-buyruq-num" class="input-control" placeholder="Masalan: 28-A" value="">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Buyruq Sanasi</label>
+                  <input type="text" id="batch-buyruq-sana" class="input-control" value="${todayStr}" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Amaliyot O'tash Muddati (Matn)</label>
+                <input type="text" id="batch-muddati-text" class="input-control" value="${sampleMuddati}">
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label class="form-label">Boshlanish Sanasi</label>
+                  <input type="text" id="batch-start-date" class="input-control" value="08.06.2026">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tugash Sanasi</label>
+                  <input type="text" id="batch-end-date" class="input-control" value="06.07.2026">
+                </div>
+              </div>
+
+              <div style="margin-top:20px;">
+                <button type="submit" class="btn-primary btn-block" id="btn-run-batch-generate" ${surveyStudents.length === 0 ? 'disabled' : ''} style="height:46px;font-size:14.5px;">
+                  ⚡ Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish
+                </button>
+              </div>
+            </form>
+
+            <div id="batch-generate-result" style="margin-top:20px;"></div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('batch-generate-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-run-batch-generate');
+        const resBox = document.getElementById('batch-generate-result');
+        btn.disabled = true;
+        btn.innerHTML = `<span>⚡ Barcha tumanlar buyruqlari shakllantirilmoqda...</span>`;
+
+        const payload = {
+          buyruq_raqami: document.getElementById('batch-buyruq-num').value.trim(),
+          buyruq_sanasi: document.getElementById('batch-buyruq-sana').value.trim(),
+          amaliyot_muddati: document.getElementById('batch-muddati-text').value.trim(),
+          start_date: document.getElementById('batch-start-date').value.trim(),
+          end_date: document.getElementById('batch-end-date').value.trim()
+        };
+
+        try {
+          const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/generate-all`, 'POST', payload);
+          btn.disabled = false;
+          btn.innerHTML = `⚡ Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish`;
+
+          if (res?.success) {
+            this.toast("Barcha tumanlar buyruqlari muvaffaqiyatli tayyorlandi!", "success");
+            resBox.innerHTML = `
+              <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:22px;text-align:left;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                  <div style="font-size:28px;">📦</div>
+                  <div>
+                    <div style="font-size:16px;font-weight:700;color:#ffffff;">ZIP Paket Tayyor!</div>
+                    <div style="font-size:12.5px;color:rgba(94,234,212,0.85);">
+                      Jami ${res.total_districts} ta tuman va ${res.total_students} ta talaba bo'yicha Word buyruqlari jamlandi.
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                  <a href="${res.download_zip_url}" class="btn-primary btn-block" style="text-decoration:none;font-size:14.5px;font-weight:700;height:44px;display:flex;align-items:center;justify-content:center;" download="${res.zip_filename}">
+                    📥 Barcha Word Buyruqlarini (ZIP) Yuklab Olish
+                  </a>
+                </div>
+
+                <div style="font-size:12.5px;font-weight:700;color:#ffffff;margin-bottom:8px;">Paket tarkibi:</div>
+                <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                  ${res.files.map(f => `
+                    <div style="display:flex;justify-content:space-between;background:rgba(0,0,0,0.3);padding:6px 10px;border-radius:6px;font-size:12px;">
+                      <span style="color:#ffffff;">📄 <b>${f.tumani}</b> (${f.guruhlar})</span>
+                      <span style="color:#34d399;font-weight:700;">${f.students_count} ta talaba</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          } else {
+            alert(res?.error || "Generatsiya qilishda xatolik yuz berdi");
+          }
+        } catch (err) {
+          btn.disabled = false;
+          btn.innerHTML = `⚡ Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish`;
+          alert("Server bilan aloqada xatolik: " + err.message);
+        }
+      });
+    };
+
+    // ============================================================
+    // SUB-VIEW 4: BUYRUQLAR ARXIVI (ORDERS ARCHIVE)
+    // ============================================================
+    const renderArchiveTab = (viewport) => {
+      if (!semesterOrders.length) {
+        viewport.innerHTML = `
+          <div class="glass-card" style="padding:40px;text-align:center;">
+            <div style="font-size:42px;color:rgba(0,203,169,0.3);margin-bottom:12px;">🗂</div>
+            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">Buyruqlar Arxivi Bo'sh</div>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.7);max-width:320px;margin:0 auto 16px;">
+              Ushbu semestr bo'yicha hali birorta ham tuman buyrug'i shakllantirilmagan.
+            </div>
+            <button class="btn-primary btn-sm" id="btn-go-to-create-order">
+              ➕ Yangi Buyruq Shakllantirish
+            </button>
+          </div>
+        `;
+        document.getElementById('btn-go-to-create-order')?.addEventListener('click', () => {
+          semesterSubView = 'create_order';
+          renderSemesterDashboard();
+        });
+        return;
+      }
+
+      viewport.innerHTML = `
+        <div class="glass-card" style="padding:22px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-size:15px;font-weight:700;color:#ffffff;">
+              🗂 Ushbu Semestr Bo'yicha Shakllantirilgan Buyruqlar (${semesterOrders.length} ta)
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;">
+            ${semesterOrders.map(ord => {
+              const fname = `${ord.tumani} - ${ord.guruhlar || 'Guruh'} - ${ord.students_count} ta talaba.docx`;
+              return `
+                <div style="background:rgba(6,26,28,0.75);border:1px solid rgba(0,203,169,0.25);border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                      <div style="font-size:15px;font-weight:700;color:#ffffff;">🏥 ${ord.tumani}</div>
+                      <button class="tab-btn-mini danger btn-delete-order" data-order-id="${ord.id}" title="Arxivdan o'chirish">🗑️</button>
+                    </div>
+                    <div style="font-size:12px;color:rgba(94,234,212,0.85);line-height:1.5;margin-bottom:12px;">
+                      • <b>Shifokor:</b> ${ord.shu_tuman_shifokori || 'Bosh shifokor'}<br>
+                      • <b>Guruhlar:</b> ${ord.guruhlar || '-'}<br>
+                      • <b>Talabalar:</b> <span style="color:#34d399;font-weight:700;">${ord.students_count} ta</span><br>
+                      • <b>Yaratilgan:</b> ${ord.created_at ? new Date(ord.created_at).toLocaleDateString('ru-RU') : '-'}<br>
+                    </div>
+                  </div>
+                  <div>
+                    <a href="/api/documents/download_docx/${ord.id}" class="btn-primary btn-block btn-sm" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" download="${fname}">
+                      📥 Word (.docx) Yuklab Olish
+                    </a>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      viewport.querySelectorAll('.btn-delete-order').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const ordId = parseInt(btn.dataset.orderId);
+          if (confirm("Ushbu buyruqni arxivdan o'chirmoqchimisiz?")) {
+            const res = await this.api(`/api/amaliyot/orders/${ordId}`, 'DELETE');
+            if (res?.success) {
+              this.toast("Buyruq arxivdan o'chirildi", "success");
+              semesterOrders = semesterOrders.filter(o => o.id !== ordId);
+              renderArchiveTab(viewport);
+            }
+          }
+        });
+      });
+    };
+
+    // Initial Load at Root (Parent = null)
+    loadFolderData(null);
   },
   // ============================================================
   // 2. MA'LUMOTNOMALAR BO'LIMI (MINIMALISTIK & ZAMONAVIY)

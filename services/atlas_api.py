@@ -1090,111 +1090,220 @@ def api_update_academic_group(group_id):
 
 
 # ============================================================
-# 8.3 AMALIYOT BUYRUQLARI VA TABLARI (PRACTICE ORDERS) ENDPOINTS
+# 8.3 AMALIYOT PAPKALAR IERARXIYASI, SO'ROVNOMA VA BUYRUQLAR
 # ============================================================
 
 @atlas_api.route("/amaliyot/districts", methods=["GET"])
 @admin_required
 def api_amaliyot_districts():
-    from services.amaliyot_service import DISTRICT_DOCTORS
+    from services.amaliyot_service import DISTRICT_DOCTORS, STANDARD_DISTRICTS
     return jsonify({
         "success": True,
-        "districts": list(DISTRICT_DOCTORS.keys()),
+        "districts": STANDARD_DISTRICTS,
         "district_doctors": DISTRICT_DOCTORS
     })
 
 
-@atlas_api.route("/amaliyot/tabs", methods=["GET"])
+# --- 1. PAPKALAR (FOLDERS) API ---
+
+@atlas_api.route("/amaliyot/folders", methods=["GET"])
 @admin_required
-def api_get_amaliyot_tabs():
-    from services.atlas_db import get_amaliyot_tabs
-    tabs = get_amaliyot_tabs()
-    return jsonify({"success": True, "tabs": tabs})
+def api_get_amaliyot_folders():
+    parent_id = request.args.get("parent_id")
+    if parent_id in [None, "", "null", "undefined", "0"]:
+        p_val = None
+    else:
+        try:
+            p_val = int(parent_id)
+        except Exception:
+            p_val = None
+
+    from services.atlas_db import get_amaliyot_folder_contents
+    res = get_amaliyot_folder_contents(p_val)
+    return jsonify(res)
 
 
-@atlas_api.route("/amaliyot/tabs", methods=["POST"])
+@atlas_api.route("/amaliyot/folders/path", methods=["GET"])
 @admin_required
-def api_create_amaliyot_tab():
+def api_get_amaliyot_folder_path():
+    folder_id = request.args.get("folder_id")
+    try:
+        f_id = int(folder_id) if folder_id else None
+    except Exception:
+        f_id = None
+
+    from services.atlas_db import get_amaliyot_folder_path
+    res = get_amaliyot_folder_path(f_id)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/folders", methods=["POST"])
+@admin_required
+def api_create_amaliyot_folder():
     data = request.get_json() or {}
-    tab_name = data.get("tab_name", "").strip()
-    if not tab_name:
-        return jsonify({"success": False, "error": "Tab nomi kiritilmadi."}), 400
+    name = str(data.get("name", "")).strip()
+    folder_type = str(data.get("folder_type", "groups")).strip()
+    parent_id = data.get("parent_id")
+    extra_data = data.get("extra_data", {})
 
-    from services.atlas_db import create_amaliyot_tab
-    res = create_amaliyot_tab(
-        tab_name=tab_name,
-        direction=data.get("direction", ""),
-        duration_years=data.get("duration_years", ""),
-        semester=data.get("semester", ""),
-        template_file=data.get("template_file", "")
-    )
+    if not name:
+        return jsonify({"success": False, "error": "Papka nomi kiritilmadi."}), 400
+
+    p_val = int(parent_id) if parent_id not in [None, "", "null", 0, "0"] else None
+
+    from services.atlas_db import create_amaliyot_folder
+    res = create_amaliyot_folder(p_val, folder_type, name, extra_data)
     return jsonify(res)
 
 
-@atlas_api.route("/amaliyot/tabs/<int:tab_id>", methods=["PUT"])
+@atlas_api.route("/amaliyot/folders/<int:folder_id>", methods=["PUT"])
 @admin_required
-def api_update_amaliyot_tab(tab_id):
+def api_update_amaliyot_folder(folder_id):
     data = request.get_json() or {}
-    tab_name = data.get("tab_name", "").strip()
-    if not tab_name:
-        return jsonify({"success": False, "error": "Tab nomi kiritilmadi."}), 400
+    name = str(data.get("name", "")).strip()
+    extra_data = data.get("extra_data")
 
-    from services.atlas_db import update_amaliyot_tab
-    res = update_amaliyot_tab(
-        tab_id=tab_id,
-        tab_name=tab_name,
-        direction=data.get("direction", ""),
-        duration_years=data.get("duration_years", ""),
-        semester=data.get("semester", ""),
-        template_file=data.get("template_file", "")
-    )
+    if not name:
+        return jsonify({"success": False, "error": "Papka nomi bo'sh bo'lishi mumkin emas."}), 400
+
+    from services.atlas_db import update_amaliyot_folder
+    res = update_amaliyot_folder(folder_id, name, extra_data)
     return jsonify(res)
 
 
-@atlas_api.route("/amaliyot/tabs/<int:tab_id>", methods=["DELETE"])
+@atlas_api.route("/amaliyot/folders/<int:folder_id>", methods=["DELETE"])
 @admin_required
-def api_delete_amaliyot_tab(tab_id):
-    from services.atlas_db import delete_amaliyot_tab
-    res = delete_amaliyot_tab(tab_id)
+def api_delete_amaliyot_folder(folder_id):
+    from services.atlas_db import delete_amaliyot_folder
+    res = delete_amaliyot_folder(folder_id)
     return jsonify(res)
 
 
-@atlas_api.route("/amaliyot/tabs/reorder", methods=["POST"])
+# --- 2. TALABALAR SO'ROVNOMASI (SURVEYS) API ---
+
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/survey", methods=["GET"])
 @admin_required
-def api_reorder_amaliyot_tabs():
+def api_get_amaliyot_surveys(folder_id):
+    from services.atlas_db import get_amaliyot_surveys
+    res = get_amaliyot_surveys(folder_id)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/survey", methods=["POST"])
+@admin_required
+def api_save_amaliyot_surveys(folder_id):
     data = request.get_json() or {}
-    orders = data.get("orders", [])
-    from services.atlas_db import reorder_amaliyot_tabs
-    res = reorder_amaliyot_tabs(orders)
+    students = data.get("students", [])
+    replace_all = bool(data.get("replace_all", True))
+
+    from services.atlas_db import save_amaliyot_surveys
+    res = save_amaliyot_surveys(folder_id, students, replace_all)
     return jsonify(res)
 
 
-@atlas_api.route("/amaliyot/generate", methods=["POST"])
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/survey/item", methods=["POST"])
 @admin_required
-def api_generate_amaliyot_doc():
+def api_add_amaliyot_survey_item(folder_id):
+    data = request.get_json() or {}
+    fio = str(data.get("fio", "")).strip()
+    if not fio:
+        return jsonify({"success": False, "error": "Talabaning F.I.SH kiritilmadi."}), 400
+
+    from services.atlas_db import add_amaliyot_survey_item
+    res = add_amaliyot_survey_item(folder_id, data)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/survey/<int:survey_id>", methods=["DELETE"])
+@admin_required
+def api_delete_amaliyot_survey_item(survey_id):
+    from services.atlas_db import delete_amaliyot_survey_item
+    res = delete_amaliyot_survey_item(survey_id)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/survey/sample-excel", methods=["GET"])
+def api_download_sample_survey_excel():
+    """Namunaviy So'rovnoma Excel (.xlsx) faylini generatsiya qilib yuklab beradi"""
+    try:
+        from services.amaliyot_service import generate_sample_survey_excel
+        excel_bytes = generate_sample_survey_excel()
+        return send_file(
+            io.BytesIO(excel_bytes),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name="Amaliyot_Sorownoma_Namuna.xlsx"
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Namuna yaratishda xatolik: {str(e)}"}), 500
+
+
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/survey/import", methods=["POST"])
+@admin_required
+def api_import_amaliyot_survey(folder_id):
+    """Yuklangan Excel fayldan so'rovnoma talabalarini o'qib, bazaga saqlaydi"""
+    try:
+        if "file" not in request.files:
+            return jsonify({"success": False, "error": "Excel fayl yuborilmadi."}), 400
+
+        file = request.files["file"]
+        if not file.filename:
+            return jsonify({"success": False, "error": "Fayl tanlanmadi."}), 400
+
+        file_bytes = file.read()
+        from services.amaliyot_service import parse_survey_excel
+        parsed_students = parse_survey_excel(file_bytes)
+
+        if not parsed_students:
+            return jsonify({"success": False, "error": "Fayldan birorta ham talaba ma'lumoti topilmadi. Ustunlar to'g'riligini tekshiring."}), 400
+
+        from services.atlas_db import save_amaliyot_surveys
+        save_res = save_amaliyot_surveys(folder_id, parsed_students, replace_all=True)
+
+        return jsonify({
+            "success": True,
+            "message": f"Muvaffaqiyatli yuklandi: {len(parsed_students)} ta talaba so'rovnomasi bazaga kiritildi!",
+            "count": len(parsed_students),
+            "students": parsed_students
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Excel o'qishda xatolik: {str(e)}"}), 500
+
+
+# --- 3. BUYRUQLAR (ORDERS) & GENERATOR API ---
+
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/orders", methods=["GET"])
+@admin_required
+def api_get_amaliyot_orders(folder_id):
+    from services.atlas_db import get_amaliyot_orders
+    res = get_amaliyot_orders(folder_id)
+    return jsonify(res)
+
+
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/generate-single", methods=["POST"])
+@admin_required
+def api_generate_single_amaliyot_order(folder_id):
+    """Bitta tuman uchun Word (.docx) buyrug'ini shakllantiradi va arxivga saqlaydi"""
     try:
         data = request.get_json() or {}
-        tab_id = data.get("tab_id", 1)
-        tab_name = data.get("tab_name", "Hamshiralik ishi - 3 yillik - 2-semestr")
-        
         tumani = data.get("tumani", "").strip() or "Shahrisabz shahar"
         from services.amaliyot_service import DISTRICT_DOCTORS, fill_amaliyot_template
         shu_tuman_shifokori = data.get("shu_tuman_shifokori", "").strip() or DISTRICT_DOCTORS.get(tumani, "Bosh shifokor")
         
         buyruq_raqami = data.get("buyruq_raqami", "").strip() or "____"
         buyruq_sanasi = data.get("buyruq_sanasi", "").strip() or datetime.now().strftime("%d.%m.%Y")
+        oquv_yili = data.get("oquv_yili", "2025/2026").strip()
+        kursi = str(data.get("kursi", "1")).strip()
+        amaliyot_muddati = data.get("amaliyot_muddati", "").strip()
+        start_date = data.get("start_date", "08.06.2026").strip()
+        end_date = data.get("end_date", "06.07.2026").strip()
         
         students = data.get("students", [])
         guruhlar = data.get("guruhlar", [])
-        
-        # If guruhlar is empty, collect from students
         if not guruhlar and students:
             guruhlar = sorted(list(set(str(s.get("guruhi", "")).strip() for s in students if str(s.get("guruhi", "")).strip())))
             data["guruhlar"] = guruhlar
 
-        # Recipient FIO
-        fio = students[0].get("fio") if students else f"Amaliyot buyrug'i ({tumani})"
-        
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         saved_dir = os.path.join(tempfile.gettempdir(), "saved_documents")
         os.makedirs(saved_dir, exist_ok=True)
@@ -1215,32 +1324,146 @@ def api_generate_amaliyot_doc():
         import shutil
         shutil.copy2(temp_docx, permanent_docx_path)
 
-        from services.atlas_db import save_generated_document_to_cloud
-        tpl_display_name = f"Amaliyot: {tab_name} ({tumani})"
+        fio = students[0].get("fio") if students else f"Amaliyot buyrug'i ({tumani})"
+        from services.atlas_db import save_generated_document_to_cloud, save_amaliyot_order_record
+        tpl_display_name = f"Amaliyot Buyrug'i: {tumani}"
         doc_id = save_generated_document_to_cloud(
-            template_id=f"amaliyot_{tab_id}",
+            template_id=f"amaliyot_{folder_id}",
             template_name=tpl_display_name,
             recipient_fio=fio,
             answers=data,
             file_path=permanent_docx_path
         )
 
-        admin = get_current_admin()
-        log_audit(admin["username"], "amaliyot", "generate_amaliyot_doc", "success",
-                  {"doc_id": doc_id, "tab_name": tab_name, "tumani": tumani, "students_count": len(students)},
-                  request.remote_addr)
+        data["docx_path"] = permanent_docx_path
+        save_amaliyot_order_record(folder_id, data)
 
         return jsonify({
             "success": True,
-            "message": f"Amaliyot buyrug'i ({len(students)} ta talaba bilan) muvaffaqiyatli shakllantirildi!",
+            "message": f"{tumani} buyrug'i ({len(students)} ta talaba bilan) muvaffaqiyatli shakllantirildi!",
             "doc_id": doc_id,
-            "download_docx_url": f"/api/documents/download_docx/{doc_id}",
-            "view_url": f"/api/documents/download_docx/{doc_id}"
+            "download_docx_url": f"/api/documents/download_docx/{doc_id}"
         })
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": f"Xatolik yuz berdi: {str(e)}"}), 500
+
+
+@atlas_api.route("/amaliyot/folders/<int:folder_id>/generate-all", methods=["POST"])
+@admin_required
+def api_generate_all_amaliyot_orders(folder_id):
+    """So'rovnomadagi barcha tumanlar uchun alohida Word (.docx) buyruqlarini yaratib, ZIP paket qiladi"""
+    try:
+        from services.atlas_db import get_amaliyot_surveys, get_amaliyot_folder, save_amaliyot_order_record, save_generated_document_to_cloud
+        from services.amaliyot_service import generate_all_district_orders, DISTRICT_DOCTORS
+
+        surveys_res = get_amaliyot_surveys(folder_id)
+        students = surveys_res.get("surveys", [])
+        if not students:
+            return jsonify({"success": False, "error": "Ushbu semestr papkasida so'rovnoma talabalari topilmadi. Avval so'rovnomani yuklang."}), 400
+
+        folder_info = get_amaliyot_folder(folder_id) or {}
+        extra = folder_info.get("extra_data", {})
+
+        data = request.get_json() or {}
+        semester_data = {
+            "buyruq_raqami": data.get("buyruq_raqami", "____"),
+            "buyruq_sanasi": data.get("buyruq_sanasi", datetime.now().strftime("%d.%m.%Y")),
+            "oquv_yili": data.get("oquv_yili") or extra.get("oquv_yili", "2025/2026"),
+            "kursi": str(data.get("kursi") or extra.get("kursi", "1")),
+            "amaliyot_muddati": data.get("amaliyot_muddati") or extra.get("amaliyot_muddati", ""),
+            "start_date": data.get("start_date") or extra.get("start_date", "08.06.2026"),
+            "end_date": data.get("end_date") or extra.get("end_date", "06.07.2026")
+        }
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        tpl_path = os.path.join(base_dir, "templates", "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
+        if not os.path.exists(tpl_path):
+            tpl_path = find_template_file("3 yillik 2-semestr.docx")
+
+        if not tpl_path or not os.path.exists(tpl_path):
+            return jsonify({"success": False, "error": "Amaliyot Word shabloni (3 yillik 2-semestr.docx) topilmadi."}), 404
+
+        output_dir = os.path.join(tempfile.gettempdir(), f"amaliyot_batch_{uuid.uuid4().hex[:8]}")
+        res = generate_all_district_orders(tpl_path, semester_data, students, output_dir)
+
+        # Har bir yaratilgan faylni buyruqlar arxiviga kiritish
+        saved_orders = []
+        for file_info in res.get("files", []):
+            order_rec = {
+                "tumani": file_info["tumani"],
+                "shu_tuman_shifokori": file_info["shifokor"],
+                "buyruq_raqami": semester_data["buyruq_raqami"],
+                "buyruq_sanasi": semester_data["buyruq_sanasi"],
+                "oquv_yili": semester_data["oquv_yili"],
+                "kursi": semester_data["kursi"],
+                "guruhlar": file_info["guruhlar"],
+                "amaliyot_muddati": semester_data["amaliyot_muddati"],
+                "start_date": semester_data["start_date"],
+                "end_date": semester_data["end_date"],
+                "docx_path": file_info["file_path"],
+                "students": [s for s in students if (s.get("tumani", "").strip() or "Shahrisabz shahar") == file_info["tumani"]]
+            }
+            save_amaliyot_order_record(folder_id, order_rec)
+
+        # ZIP fayl nomini saqlab, yuklab olish linkini qaytarish
+        zip_filename = res["zip_filename"]
+        permanent_zip_dir = os.path.join(tempfile.gettempdir(), "saved_zips")
+        os.makedirs(permanent_zip_dir, exist_ok=True)
+        import shutil
+        permanent_zip_path = os.path.join(permanent_zip_dir, zip_filename)
+        shutil.copy2(res["zip_path"], permanent_zip_path)
+
+        return jsonify({
+            "success": True,
+            "message": f"Barcha {res['total_districts']} ta tuman uchun {res['total_students']} ta talabaning buyruqlari shakllantirildi va ZIP paketga yig'ildi!",
+            "total_districts": res["total_districts"],
+            "total_students": res["total_students"],
+            "zip_filename": zip_filename,
+            "download_zip_url": f"/api/amaliyot/download-zip/{zip_filename}",
+            "files": res["files"]
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": f"Barcha tumanlar buyruqlarini yaratishda xatolik: {str(e)}"}), 500
+
+
+@atlas_api.route("/amaliyot/download-zip/<filename>", methods=["GET"])
+def api_download_amaliyot_zip(filename):
+    """Generatsiya qilingan barcha tumanlar ZIP faylini yuklab beradi"""
+    safe_filename = os.path.basename(filename)
+    zpath = os.path.join(tempfile.gettempdir(), "saved_zips", safe_filename)
+    if not os.path.exists(zpath):
+        zpath = os.path.join(tempfile.gettempdir(), safe_filename)
+
+    if os.path.exists(zpath):
+        return send_file(zpath, as_attachment=True, download_name=safe_filename)
+    return jsonify({"success": False, "error": "ZIP fayl topilmadi yoki muddati o'tgan."}), 404
+
+
+@atlas_api.route("/amaliyot/orders/<int:order_id>", methods=["DELETE"])
+@admin_required
+def api_delete_amaliyot_order(order_id):
+    from services.atlas_db import delete_amaliyot_order_record
+    res = delete_amaliyot_order_record(order_id)
+    return jsonify(res)
+
+
+# Legacy endpoints support
+@atlas_api.route("/amaliyot/tabs", methods=["GET"])
+@admin_required
+def api_legacy_get_amaliyot_tabs():
+    from services.atlas_db import get_amaliyot_tabs
+    tabs = get_amaliyot_tabs()
+    return jsonify({"success": True, "tabs": tabs})
+
+
+@atlas_api.route("/amaliyot/generate", methods=["POST"])
+@admin_required
+def api_legacy_generate_amaliyot_doc():
+    return api_generate_single_amaliyot_order(1)
 
 
 # ============================================================

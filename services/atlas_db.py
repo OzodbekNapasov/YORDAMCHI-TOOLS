@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or (os.name != 'nt' and os.path.exists("/tmp")))
 if is_serverless:
     DB_PATH = "/tmp/atlas.db"
 else:
@@ -240,7 +240,7 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_contract_sessions_created ON contract_sessions(created_at DESC)")
 
-    # Amaliyot Yo'nalishlari Tablari Jadvali
+    # Amaliyot Yo'nalishlari Tablari Jadvali (Legacy support)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS amaliyot_tabs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,11 +255,122 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_amaliyot_tabs_order ON amaliyot_tabs(order_num ASC)")
 
-    # Boshlang'ich amaliyot tabi
+    # 1. Amaliyot Papkalar Ierarxiyasi (Folders Hierarchy)
     cursor.execute("""
-    INSERT OR IGNORE INTO amaliyot_tabs (id, tab_name, direction, duration_years, semester, template_file, order_num)
-    VALUES (1, 'Hamshiralik ishi - 3 yillik - 2-semestr', 'Hamshiralik ishi', '3 yillik', '2-semestr', 'Amaliyot/Hamshiralik ishi - 3 - yillik - 2-semestr/3 yillik 2-semestr.docx', 1)
+    CREATE TABLE IF NOT EXISTS amaliyot_folders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parent_id INTEGER DEFAULT NULL,
+        folder_type TEXT NOT NULL, -- 'year', 'direction', 'groups', 'semester'
+        name TEXT NOT NULL,
+        extra_data TEXT,           -- JSON: {"duration": "3 yillik", "template_file": "...", "start_date": "...", "end_date": "..."}
+        order_num INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parent_id) REFERENCES amaliyot_folders(id) ON DELETE CASCADE
+    )
     """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amaliyot_folders_parent ON amaliyot_folders(parent_id, order_num ASC)")
+
+    # 2. Amaliyot So'rovnomasi (Surveys / Student District Distribution)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS amaliyot_surveys (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        folder_id INTEGER NOT NULL, -- Semester folder ID
+        guruhi TEXT,
+        fio TEXT NOT NULL,
+        tumani TEXT NOT NULL,
+        start_date TEXT,
+        end_date TEXT,
+        phone TEXT,
+        organization TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (folder_id) REFERENCES amaliyot_folders(id) ON DELETE CASCADE
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amaliyot_surveys_folder ON amaliyot_surveys(folder_id)")
+
+    # 3. Amaliyot Buyruqlari Arxivi (Generated District Orders)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS amaliyot_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        folder_id INTEGER NOT NULL, -- Semester folder ID
+        tumani TEXT NOT NULL,
+        buyruq_raqami TEXT,
+        buyruq_sanasi TEXT,
+        shu_tuman_shifokori TEXT,
+        oquv_yili TEXT,
+        kursi TEXT,
+        guruhlar TEXT,
+        amaliyot_muddati TEXT,
+        start_date TEXT,
+        end_date TEXT,
+        docx_path TEXT,
+        students_count INTEGER DEFAULT 0,
+        students_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (folder_id) REFERENCES amaliyot_folders(id) ON DELETE CASCADE
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amaliyot_orders_folder ON amaliyot_orders(folder_id)")
+
+    # Boshlang'ich Namunaviy Papkalar Ierarxiyasini tekshirish va yaratish
+    cursor.execute("SELECT COUNT(*) as cnt FROM amaliyot_folders")
+    f_cnt_row = cursor.fetchone()
+    if f_cnt_row and f_cnt_row["cnt"] == 0:
+        # Level 1: O'quv yili
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (1, NULL, 'year', '2025/2026', '{}', 1)
+        """)
+        # Level 2: Yo'nalish
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (2, 1, 'direction', 'Hamshiralik ishi (3 yillik)', '{"duration":"3 yillik"}', 1)
+        """)
+        # Level 3: Guruhlar to'plami
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (3, 2, 'groups', '201-204 guruhlar', '{"groups":["201","202","203","204"]}', 1)
+        """)
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (4, 2, 'groups', '205-guruh', '{"groups":["205"]}', 2)
+        """)
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (5, 2, 'groups', '206-guruh', '{"groups":["206"]}', 3)
+        """)
+        # Level 4: Semestrlar (201-204 ichida)
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (6, 3, 'semester', '2-semestr', '{"template_file":"Amaliyot/Hamshiralik ishi - 3 - yillik - 2-semestr/3 yillik 2-semestr.docx","start_date":"08.06.2026","end_date":"06.07.2026","amaliyot_muddati":"2026-yil 08-iyunidan  2026-yil 06-iyuligacha","kursi":"1"}', 1)
+        """)
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (7, 3, 'semester', '3-semestr', '{"kursi":"2"}', 2)
+        """)
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
+        VALUES (8, 3, 'semester', '4-semestr', '{"kursi":"2"}', 3)
+        """)
+
+        # 2-semestr uchun namunaviy talabalar so'rovnomasi (folder_id = 6)
+        demo_survey = [
+            ("201", "Rahmatova Shaxnoza Sherzod qizi", "Shahrisabz shahar", "08.06.2026", "06.07.2026", "+998901234567", "Shahrisabz ShTTB Markaziy Shifoxonasi"),
+            ("201", "Botirova Gulbahor Olimovna", "Shahrisabz shahar", "08.06.2026", "06.07.2026", "+998912345678", "Shahrisabz ShTTB 1-sonli Poliklinika"),
+            ("202", "Asraliyev Asilbek Bekmurod o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026", "+998933456789", "Kitob TTB Markaziy Shifoxonasi"),
+            ("202", "Meyliyev Ruslan Rustam o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026", "+998974567890", "Kitob TTB Shoshilinch Bo'limi"),
+            ("203", "Nazarova Dilnoza Farxod qizi", "Yakkabog' tuman", "08.06.2026", "06.07.2026", "+998995678901", "Yakkabog' TTB Markaziy Poliklinikasi"),
+            ("203", "Qodirov Jasur Anvar o'g'li", "Yakkabog' tuman", "08.06.2026", "06.07.2026", "+998906789012", "Yakkabog' TTB 2-sonli Shifoxonasi"),
+            ("204", "Eshmurodov Bobur Shavkat o'g'li", "Chiroqchi tuman", "08.06.2026", "06.07.2026", "+998917890123", "Chiroqchi TTB Markaziy Shifoxonasi"),
+            ("204", "Xoliqova Madina Zafar qizi", "Qamashi tuman", "08.06.2026", "06.07.2026", "+998988901234", "Qamashi TTB Markaziy Shifoxonasi"),
+            ("204", "Jumanov Sardor Bahodir o'g'li", "Shahrisabz tuman", "08.06.2026", "06.07.2026", "+998909012345", "Shahrisabz Tuman TTB Shifoxonasi")
+        ]
+        for s_grp, s_fio, s_tum, s_st, s_en, s_ph, s_org in demo_survey:
+            cursor.execute("""
+            INSERT INTO amaliyot_surveys (folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization)
+            VALUES (6, ?, ?, ?, ?, ?, ?, ?)
+            """, (s_grp, s_fio, s_tum, s_st, s_en, s_ph, s_org))
 
     # Boshlang'ich tizim sozlamalari
     default_settings = [
@@ -1135,6 +1246,369 @@ def reorder_amaliyot_tabs(tab_orders: list):
         return {"success": False, "error": str(e)}
 
 
+# ============================================================
+# AMALIYOT PAPKALAR IERARXIYASI (FOLDERS HIERARCHY)
+# ============================================================
+
+def get_amaliyot_folder_contents(parent_id=None):
+    """Berilgan parent_id ostidagi barcha papkalar ro'yxatini qaytaradi"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if parent_id is None or parent_id == 0:
+            cursor.execute("SELECT * FROM amaliyot_folders WHERE parent_id IS NULL ORDER BY order_num ASC, id ASC")
+        else:
+            cursor.execute("SELECT * FROM amaliyot_folders WHERE parent_id = ? ORDER BY order_num ASC, id ASC", (parent_id,))
+
+        rows = cursor.fetchall()
+        folders = []
+        for r in rows:
+            f = dict(r)
+            try:
+                f["extra_data"] = json.loads(f["extra_data"]) if f.get("extra_data") else {}
+            except Exception:
+                f["extra_data"] = {}
+
+            # Bolalar sonini yoki semestr statistikasini hisoblash
+            if f.get("folder_type") == "semester":
+                cursor.execute("SELECT COUNT(*) as cnt FROM amaliyot_surveys WHERE folder_id = ?", (f["id"],))
+                f["survey_count"] = cursor.fetchone()["cnt"]
+                cursor.execute("SELECT COUNT(*) as cnt FROM amaliyot_orders WHERE folder_id = ?", (f["id"],))
+                f["orders_count"] = cursor.fetchone()["cnt"]
+            else:
+                cursor.execute("SELECT COUNT(*) as cnt FROM amaliyot_folders WHERE parent_id = ?", (f["id"],))
+                f["children_count"] = cursor.fetchone()["cnt"]
+
+            folders.append(f)
+
+        conn.close()
+        return {"success": True, "folders": folders}
+    except Exception as e:
+        print(f"Get amaliyot folder contents error: {e}")
+        return {"success": False, "error": str(e), "folders": []}
+
+
+def get_amaliyot_folder_path(folder_id: int):
+    """Papkaning ildizidan to o'zigacha bo'lgan yo'lini (Breadcrumb) qaytaradi"""
+    if not folder_id:
+        return {"success": True, "path": []}
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        path = []
+        current_id = folder_id
+
+        while current_id:
+            cursor.execute("SELECT id, parent_id, folder_type, name, extra_data FROM amaliyot_folders WHERE id = ?", (current_id,))
+            row = cursor.fetchone()
+            if not row:
+                break
+            f_dict = dict(row)
+            try:
+                f_dict["extra_data"] = json.loads(f_dict["extra_data"]) if f_dict.get("extra_data") else {}
+            except Exception:
+                f_dict["extra_data"] = {}
+
+            path.insert(0, f_dict)
+            current_id = f_dict.get("parent_id")
+
+        conn.close()
+        return {"success": True, "path": path}
+    except Exception as e:
+        print(f"Get amaliyot folder path error: {e}")
+        return {"success": False, "error": str(e), "path": []}
+
+
+def get_amaliyot_folder(folder_id: int):
+    """Bitta papka ma'lumotlarini olish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM amaliyot_folders WHERE id = ?", (folder_id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            f = dict(row)
+            try:
+                f["extra_data"] = json.loads(f["extra_data"]) if f.get("extra_data") else {}
+            except Exception:
+                f["extra_data"] = {}
+            return f
+        return None
+    except Exception as e:
+        print(f"Get amaliyot folder error: {e}")
+        return None
+
+
+def create_amaliyot_folder(parent_id, folder_type: str, name: str, extra_data: dict = None):
+    """Yangi papka yaratish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if parent_id is None or parent_id == 0:
+            cursor.execute("SELECT COALESCE(MAX(order_num), 0) + 1 FROM amaliyot_folders WHERE parent_id IS NULL")
+            p_val = None
+        else:
+            cursor.execute("SELECT COALESCE(MAX(order_num), 0) + 1 FROM amaliyot_folders WHERE parent_id = ?", (parent_id,))
+            p_val = parent_id
+
+        next_order = cursor.fetchone()[0]
+        extra_json = json.dumps(extra_data or {}, ensure_ascii=False)
+
+        cursor.execute("""
+        INSERT INTO amaliyot_folders (parent_id, folder_type, name, extra_data, order_num)
+        VALUES (?, ?, ?, ?, ?)
+        """, (p_val, folder_type, name, extra_json, next_order))
+        new_id = cursor.lastrowid
+
+        conn.commit()
+        conn.close()
+        return {"success": True, "id": new_id}
+    except Exception as e:
+        print(f"Create amaliyot folder error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def update_amaliyot_folder(folder_id: int, name: str, extra_data: dict = None):
+    """Papka nomi yoki qo'shimcha parametrlarini yangilash"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if extra_data is not None:
+            extra_json = json.dumps(extra_data, ensure_ascii=False)
+            cursor.execute("UPDATE amaliyot_folders SET name = ?, extra_data = ? WHERE id = ?", (name, extra_json, folder_id))
+        else:
+            cursor.execute("UPDATE amaliyot_folders SET name = ? WHERE id = ?", (name, folder_id))
+
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        print(f"Update amaliyot folder error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def delete_amaliyot_folder(folder_id: int):
+    """Papka va uning barcha ichki bolalari, so'rovnomalari va buyruqlarini rekursiv o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Rekursiv barcha bolalar ID larini yig'ish
+        to_delete_ids = [folder_id]
+        idx = 0
+        while idx < len(to_delete_ids):
+            cur_p = to_delete_ids[idx]
+            cursor.execute("SELECT id FROM amaliyot_folders WHERE parent_id = ?", (cur_p,))
+            children = cursor.fetchall()
+            for ch in children:
+                to_delete_ids.append(ch["id"])
+            idx += 1
+
+        for fid in to_delete_ids:
+            cursor.execute("DELETE FROM amaliyot_surveys WHERE folder_id = ?", (fid,))
+            cursor.execute("DELETE FROM amaliyot_orders WHERE folder_id = ?", (fid,))
+            cursor.execute("DELETE FROM amaliyot_folders WHERE id = ?", (fid,))
+
+        conn.commit()
+        conn.close()
+        return {"success": True, "deleted_count": len(to_delete_ids)}
+    except Exception as e:
+        print(f"Delete amaliyot folder error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ============================================================
+# AMALIYOT SO'ROVNOMASI (SURVEYS) BOSHQARUVI
+# ============================================================
+
+def get_amaliyot_surveys(folder_id: int):
+    """Semestr papkasi bo'yicha talabalar so'rovnomasi ro'yxatini olish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT * FROM amaliyot_surveys
+        WHERE folder_id = ?
+        ORDER BY id ASC
+        """, (folder_id,))
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        return {"success": True, "surveys": rows}
+    except Exception as e:
+        print(f"Get amaliyot surveys error: {e}")
+        return {"success": False, "error": str(e), "surveys": []}
+
+
+def save_amaliyot_surveys(folder_id: int, students_list: list, replace_all: bool = True):
+    """Talabalar so'rovnomasini ommaviy saqlash"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if replace_all:
+            cursor.execute("DELETE FROM amaliyot_surveys WHERE folder_id = ?", (folder_id,))
+
+        for st in students_list:
+            fio = st.get("fio", "").strip()
+            if not fio:
+                continue
+            guruhi = st.get("guruhi", "").strip()
+            tumani = st.get("tumani", "").strip() or "Shahrisabz shahar"
+            start_date = st.get("start_date", "").strip() or "08.06.2026"
+            end_date = st.get("end_date", "").strip() or "06.07.2026"
+            phone = st.get("phone", "").strip()
+            organization = st.get("organization", "").strip()
+            notes = st.get("notes", "").strip()
+
+            cursor.execute("""
+            INSERT INTO amaliyot_surveys (folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes))
+
+        conn.commit()
+        conn.close()
+        return {"success": True, "count": len(students_list)}
+    except Exception as e:
+        print(f"Save amaliyot surveys error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def add_amaliyot_survey_item(folder_id: int, st: dict):
+    """Bitta so'rovnoma qatorini qo'shish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO amaliyot_surveys (folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            folder_id,
+            st.get("guruhi", "").strip(),
+            st.get("fio", "").strip(),
+            st.get("tumani", "").strip() or "Shahrisabz shahar",
+            st.get("start_date", "08.06.2026").strip(),
+            st.get("end_date", "06.07.2026").strip(),
+            st.get("phone", "").strip(),
+            st.get("organization", "").strip(),
+            st.get("notes", "").strip()
+        ))
+        new_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return {"success": True, "id": new_id}
+    except Exception as e:
+        print(f"Add amaliyot survey item error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def delete_amaliyot_survey_item(survey_id: int):
+    """Bitta so'rovnoma qatorini o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM amaliyot_surveys WHERE id = ?", (survey_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        print(f"Delete amaliyot survey item error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ============================================================
+# AMALIYOT BUYRUQLARI (ORDERS) BOSHQARUVI
+# ============================================================
+
+def get_amaliyot_orders(folder_id: int):
+    """Semestr papkasi bo'yicha shakllantirilgan buyruqlar ro'yxatini olish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT * FROM amaliyot_orders
+        WHERE folder_id = ?
+        ORDER BY created_at DESC, id DESC
+        """, (folder_id,))
+        rows = []
+        for r in cursor.fetchall():
+            item = dict(r)
+            try:
+                item["students"] = json.loads(item["students_json"]) if item.get("students_json") else []
+            except Exception:
+                item["students"] = []
+            rows.append(item)
+        conn.close()
+        return {"success": True, "orders": rows}
+    except Exception as e:
+        print(f"Get amaliyot orders error: {e}")
+        return {"success": False, "error": str(e), "orders": []}
+
+
+def save_amaliyot_order_record(folder_id: int, data: dict):
+    """Shakllantirilgan buyruqni arxivga yozish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        students = data.get("students", [])
+        students_json = json.dumps(students, ensure_ascii=False)
+        raw_guruhlar = data.get("guruhlar", [])
+        guruhlar_str = ", ".join(raw_guruhlar) if isinstance(raw_guruhlar, list) else str(raw_guruhlar)
+
+        cursor.execute("""
+        INSERT INTO amaliyot_orders (
+            folder_id, tumani, buyruq_raqami, buyruq_sanasi, shu_tuman_shifokori,
+            oquv_yili, kursi, guruhlar, amaliyot_muddati, start_date, end_date,
+            docx_path, students_count, students_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            folder_id,
+            data.get("tumani", "").strip(),
+            data.get("buyruq_raqami", "").strip(),
+            data.get("buyruq_sanasi", "").strip(),
+            data.get("shu_tuman_shifokori", "").strip(),
+            data.get("oquv_yili", "2025/2026").strip(),
+            str(data.get("kursi", "1")).strip(),
+            guruhlar_str,
+            data.get("amaliyot_muddati", "").strip(),
+            data.get("start_date", "").strip(),
+            data.get("end_date", "").strip(),
+            data.get("docx_path", "").strip(),
+            len(students),
+            students_json
+        ))
+        new_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return {"success": True, "id": new_id}
+    except Exception as e:
+        print(f"Save amaliyot order record error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def delete_amaliyot_order_record(order_id: int):
+    """Arxivdagi buyruqni o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM amaliyot_orders WHERE id = ?", (order_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    except Exception as e:
+        print(f"Delete amaliyot order record error: {e}")
+        return {"success": False, "error": str(e)}
+
+
 if __name__ == "__main__":
     init_db()
     print("Database initialized successfully at:", DB_PATH)
+
