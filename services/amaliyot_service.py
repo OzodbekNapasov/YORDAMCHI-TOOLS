@@ -6,7 +6,7 @@ import zipfile
 import io
 from datetime import datetime
 import docx
-from docx.shared import Pt, Inches, RGBColor
+from docx.shared import Pt, Inches, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml import parse_xml, OxmlElement
@@ -38,44 +38,35 @@ STANDARD_DISTRICTS = [
 
 
 def format_amaliyot_muddati(start_date_str: str, end_date_str: str) -> str:
-    """Sanani '2026-yil 08-iyunidan  2026-yil 06-iyuligacha' formatiga o'tkazish"""
-    uzbek_months = {
-        1: ("yanvar", "yanvaridan", "yanvarigacha"),
-        2: ("fevral", "fevralidan", "fevraligacha"),
-        3: ("mart", "martidan", "martigacha"),
-        4: ("aprel", "aprelidan", "apreligacha"),
-        5: ("may", "mayidan", "mayigacha"),
-        6: ("iyun", "iyunidan", "iyunigacha"),
-        7: ("iyul", "iyulidan", "iyuligacha"),
-        8: ("avgust", "avgustidan", "avgustigacha"),
-        9: ("sentabr", "sentabridan", "sentabrigacha"),
-        10: ("oktabr", "oktabridan", "oktabrigacha"),
-        11: ("noyabr", "noyabridan", "noyabrigacha"),
-        12: ("dekabr", "dekabridan", "dekabrigacha")
-    }
-
+    """Sanalarni rasmiy matnga aylantirish"""
     try:
-        s_dt = datetime.strptime(start_date_str.strip(), "%d.%m.%Y")
-        e_dt = datetime.strptime(end_date_str.strip(), "%d.%m.%Y")
+        months_uz = {
+            1: "yanvaridan", 2: "fevralidan", 3: "martidan", 4: "aprelidan",
+            5: "mayidan", 6: "iyunidan", 7: "iyulidan", 8: "avgustidan",
+            9: "sentabridan", 10: "oktabridan", 11: "noyabridan", 12: "dekabridan"
+        }
+        months_uz_end = {
+            1: "yanvarigacha", 2: "fevraligacha", 3: "martigacha", 4: "apreligacha",
+            5: "mayigacha", 6: "iyuligacha", 7: "iyuligacha", 8: "avgustigacha",
+            9: "sentabrigacha", 10: "oktabrigacha", 11: "noyabrigacha", 12: "dekabrigacha"
+        }
+        s_d = datetime.strptime(start_date_str, "%d.%m.%Y")
+        e_d = datetime.strptime(end_date_str, "%d.%m.%Y")
 
-        s_m_str = uzbek_months[s_dt.month][1]  # -dan
-        e_m_str = uzbek_months[e_dt.month][2]  # -gacha
-
-        s_day = f"{s_dt.day:02d}"
-        e_day = f"{e_dt.day:02d}"
-
-        return f"{s_dt.year}-yil {s_day}-{s_m_str}  {e_dt.year}-yil {e_day}-{e_m_str}"
+        s_txt = f"{s_d.year}-yil {s_d.day:02d}-{months_uz.get(s_d.month, 'oyidan')}"
+        e_txt = f"{e_d.year}-yil {e_d.day:02d}-{months_uz_end.get(e_d.month, 'oyigacha')}"
+        return f"{s_txt}  {e_txt}"
     except Exception:
         return f"{start_date_str} dan {end_date_str} gacha"
 
 
-def set_cell_formatted(cell, text, font_name="Times New Roman", font_size=10.5, bold=False, align=WD_ALIGN_PARAGRAPH.CENTER, width=None):
-    """Jadval katakchasiga Times New Roman shriftida ixcham va tekis matn joylash"""
+def set_cell_formatted(cell, text, font_name="Times New Roman", font_size=11, bold=False, align=WD_ALIGN_PARAGRAPH.CENTER, width=None):
+    """Jadval katakchasiga Times New Roman shriftida 11pt tekis matn joylash"""
     cell.text = ""
     p = cell.paragraphs[0] if cell.paragraphs else cell.add_paragraph()
     p.alignment = align
-    p.paragraph_format.space_before = Pt(0.5)
-    p.paragraph_format.space_after = Pt(0.5)
+    p.paragraph_format.space_before = Pt(1.0)
+    p.paragraph_format.space_after = Pt(1.0)
     p.paragraph_format.line_spacing = 1.0
 
     run = p.add_run(str(text))
@@ -84,10 +75,14 @@ def set_cell_formatted(cell, text, font_name="Times New Roman", font_size=10.5, 
     run.font.bold = bold
     run.font.color.rgb = RGBColor(0, 0, 0)
 
-    # Windows va Word uchun Times New Roman rFonts xususiyatini o'rnatish
+    # Windows va Word uchun Times New Roman rFonts va 11pt (22 half-pts) xususiyatini o'rnatish
     rPr = run._r.get_or_add_rPr()
     rFonts = parse_xml(f'<w:rFonts {nsdecls("w")} w:ascii="{font_name}" w:hAnsi="{font_name}" w:cs="{font_name}"/>')
     rPr.append(rFonts)
+    sz = parse_xml(f'<w:sz {nsdecls("w")} w:val="{int(font_size * 2)}"/>')
+    szCs = parse_xml(f'<w:szCs {nsdecls("w")} w:val="{int(font_size * 2)}"/>')
+    rPr.append(sz)
+    rPr.append(szCs)
 
     cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     if width:
@@ -97,7 +92,7 @@ def set_cell_formatted(cell, text, font_name="Times New Roman", font_size=10.5, 
 def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
     """
     Amaliyot shabloni (.docx) ni to'liq to'ldirib, talabalar jadvalini dinamik kengaytiradi.
-    Times New Roman shrifti, qat'iy ustun kengliklari va ixcham qatorlar bilan formatlaydi.
+    Times New Roman shrifti, qat'iy ustun kengliklari va 11pt o'lcham bilan formatlaydi.
     """
     if not os.path.exists(template_path):
         raise FileNotFoundError(f"Amaliyot shabloni topilmadi: {template_path}")
@@ -180,14 +175,15 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
     if len(doc.tables) >= 3 and students:
         t = doc.tables[2]
 
+        # Ustun kengliklari: Guruhi = 1.5 sm, Boshlanishi = 2.4 sm, Tugashi = 2.4 sm
         col_widths = [
-            Inches(0.42),  # 0: T/r
-            Inches(0.72),  # 1: Guruhi
-            Inches(2.55),  # 2: F.I.SH (Keng va 1 qatorga sig'adigan)
-            Inches(0.92),  # 3: Boshlanishi
-            Inches(0.92),  # 4: Tugashi
-            Inches(0.68),  # 5: Bahosi
-            Inches(0.68)   # 6: Imzo
+            Cm(0.9),  # 0: T/r
+            Cm(1.5),  # 1: Guruhi (1.5 sm)
+            Cm(5.6),  # 2: F.I.SH
+            Cm(2.4),  # 3: Amaliyot boshlanishi vaqti (2.4 sm)
+            Cm(2.4),  # 4: Amaliyot tugash vaqti (2.4 sm)
+            Cm(1.9),  # 5: Amaliyot bahosi
+            Cm(1.9)   # 6: Rahbar imzosi
         ]
 
         # Keraksiz shablon qatorlarini tozalash
@@ -200,7 +196,7 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
             new_tr = copy.deepcopy(t.rows[1]._tr)
             t._tbl.append(new_tr)
 
-        # 1. Sarlavha qatorini (Row 0) chiroyli Times New Roman Bold formatlash
+        # 1. Sarlavha qatorini (Row 0) chiroyli Times New Roman 11pt Bold formatlash
         header_titles = [
             "T/r", "Guruhi", "F.I.SH", 
             "Amaliyot boshlanishi vaqti", "Amaliyot tugash vaqti", 
@@ -211,11 +207,11 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
                 title = header_titles[c_idx] if c_idx < len(header_titles) else cell.text
                 set_cell_formatted(
                     cell, title, 
-                    font_name="Times New Roman", font_size=10.0, bold=True, 
+                    font_name="Times New Roman", font_size=11, bold=True, 
                     align=WD_ALIGN_PARAGRAPH.CENTER, width=col_widths[c_idx] if c_idx < len(col_widths) else None
                 )
 
-        # 2. Talabalar qatorlarini (Row 1..N) to'ldirish va Times New Roman formatlash
+        # 2. Talabalar qatorlarini (Row 1..N) to'ldirish va barchasini qat'iy 11pt formatlash
         for idx, st in enumerate(students):
             row = t.rows[idx + 1]
             st_fio = st.get("fio", "").strip()
@@ -223,23 +219,22 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
             st_start = st.get("start_date", "").strip() or start_date
             st_end = st.get("end_date", "").strip() or end_date
 
-            fio_font_size = 9.5 if len(st_fio) > 30 else 10.5
-
             if len(row.cells) > 0:
-                set_cell_formatted(row.cells[0], f"{idx + 1}.", "Times New Roman", 10.5, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[0])
+                set_cell_formatted(row.cells[0], f"{idx + 1}.", "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[0])
             if len(row.cells) > 1:
-                set_cell_formatted(row.cells[1], st_guruh, "Times New Roman", 10.5, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[1])
+                set_cell_formatted(row.cells[1], st_guruh, "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[1])
             if len(row.cells) > 2:
-                set_cell_formatted(row.cells[2], st_fio, "Times New Roman", fio_font_size, False, WD_ALIGN_PARAGRAPH.LEFT, col_widths[2])
+                set_cell_formatted(row.cells[2], st_fio, "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.LEFT, col_widths[2])
             if len(row.cells) > 3:
-                set_cell_formatted(row.cells[3], st_start, "Times New Roman", 10.5, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[3])
+                set_cell_formatted(row.cells[3], st_start, "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[3])
             if len(row.cells) > 4:
-                set_cell_formatted(row.cells[4], st_end, "Times New Roman", 10.5, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[4])
+                set_cell_formatted(row.cells[4], st_end, "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[4])
             if len(row.cells) > 5:
-                set_cell_formatted(row.cells[5], "", "Times New Roman", 10.5, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[5])
+                set_cell_formatted(row.cells[5], "", "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[5])
             if len(row.cells) > 6:
-                set_cell_formatted(row.cells[6], "", "Times New Roman", 10.5, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[6])
+                set_cell_formatted(row.cells[6], "", "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[6])
 
+        # Barcha qatorlardagi ustunlar kengligini va katak parametrlarini biriktirish
         for r in t.rows:
             for c_i, c in enumerate(r.cells):
                 if c_i < len(col_widths):
