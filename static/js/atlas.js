@@ -41,7 +41,22 @@ const ATLAS = {
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
-    brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`
+    brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`,
+    folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+    calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+    bookOpen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+    home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    arrowLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+    arrowRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+    upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+    clipboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
+    save: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+    zap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+    mapPin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+    fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+    package: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`
   },
 
   // API Wrapper
@@ -816,7 +831,7 @@ const ATLAS = {
                 <div style="margin-bottom:32px;">
                   <!-- COURSE BANNER -->
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);">
-                    <span style="font-size:1.4rem;">🎓</span>
+                    <span style="color:var(--accent-glow);display:inline-flex;align-items:center;">${this.icons.bookOpen}</span>
                     <h2 style="font-size:17px;font-weight:800;color:#ffffff;margin:0;">
                       ${courseNum}-BOSQICH (${courseNum}-KURS) GURUHLARI
                     </h2>
@@ -895,11 +910,11 @@ const ATLAS = {
     } catch (e) {}
 
     const folderIcons = {
-      root: "📂",
-      year: "📅",
-      direction: "🩺",
-      groups: "👥",
-      semester: "📚"
+      root: this.icons.folder,
+      year: this.icons.calendar,
+      direction: this.icons.activity,
+      groups: this.icons.groups,
+      semester: this.icons.bookOpen
     };
 
     const getFolderTypeTitle = (type) => {
@@ -973,16 +988,20 @@ const ATLAS = {
       const nextType = getNextChildType(parentType);
       const nextTypeTitle = getFolderTypeTitle(nextType);
 
-      let headerTitle = "📅 O'quv Yillari Bo'limi";
+      let headerIcon = this.icons.calendar;
+      let headerTitle = "O'quv Yillari Bo'limi";
       let headerDesc = "Kerakli o'quv yili papkasini tanlang yoki yangisini oching:";
       if (parentType === 'year') {
-        headerTitle = `🩺 ${currentFolderInfo.name} — Yo'nalishlar`;
+        headerIcon = this.icons.activity;
+        headerTitle = `${currentFolderInfo.name} — Yo'nalishlar`;
         headerDesc = "Ushbu o'quv yili bo'yicha yo'nalishlar papkalari:";
       } else if (parentType === 'direction') {
-        headerTitle = `👥 ${currentFolderInfo.name} — Guruhlar To'plami`;
+        headerIcon = this.icons.groups;
+        headerTitle = `${currentFolderInfo.name} — Guruhlar To'plami`;
         headerDesc = "Buyruqlar to'plamini shakllantirish uchun guruhlar papkasini tanlang:";
       } else if (parentType === 'groups') {
-        headerTitle = `📚 ${currentFolderInfo.name} — Semestrlar`;
+        headerIcon = this.icons.bookOpen;
+        headerTitle = `${currentFolderInfo.name} — Semestrlar`;
         headerDesc = "Amaliyot o'tash semestrini tanlang:";
       }
 
@@ -992,23 +1011,23 @@ const ATLAS = {
           <div class="amaliyot-breadcrumb-bar">
             <div class="amaliyot-breadcrumbs">
               <div class="breadcrumb-node ${!currentFolderId ? 'active' : ''}" data-folder-id="0">
-                <span>🏠 Asosiy</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;">${this.icons.home} Asosiy</span>
               </div>
               ${folderPath.map((node, idx) => `
                 <span class="breadcrumb-sep">/</span>
                 <div class="breadcrumb-node ${idx === folderPath.length - 1 ? 'active' : ''}" data-folder-id="${node.id}">
-                  <span>${folderIcons[node.folder_type] || '📁'} ${node.name}</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;">${folderIcons[node.folder_type] || this.icons.folder} ${node.name}</span>
                 </div>
               `).join('')}
             </div>
 
             <div class="breadcrumb-bar-actions">
               ${folderPath.length > 0 ? `
-                <button class="btn-sm btn-secondary" id="btn-folder-back" title="Oldingi papkaga qaytish">
-                  ◀ Orqaga
+                <button class="btn-sm btn-secondary" id="btn-folder-back" title="Oldingi papkaga qaytish" style="display:inline-flex;align-items:center;gap:6px;">
+                  ${this.icons.arrowLeft} <span>Orqaga</span>
                 </button>
               ` : ''}
-              <button class="btn-sm btn-primary" id="btn-add-folder">
+              <button class="btn-sm btn-primary" id="btn-add-folder" style="display:inline-flex;align-items:center;gap:6px;">
                 ${this.icons.plus} <span>Yangi ${nextTypeTitle} Ochish</span>
               </button>
             </div>
@@ -1016,8 +1035,9 @@ const ATLAS = {
 
           <!-- BANNER -->
           <div class="glass-card" style="padding:16px 20px;">
-            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:3px;">
-              ${headerTitle}
+            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:3px;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--accent-glow);">${headerIcon}</span>
+              <span>${headerTitle}</span>
             </div>
             <div style="font-size:12.5px;color:rgba(94,234,212,0.8);">
               ${headerDesc}
@@ -1027,12 +1047,12 @@ const ATLAS = {
           <!-- FOLDERS GRID -->
           <div class="folders-grid">
             ${childFolders.map(folder => {
-              const icon = folderIcons[folder.folder_type] || '📁';
+              const icon = folderIcons[folder.folder_type] || this.icons.folder;
               let badgeText = '';
               if (folder.folder_type === 'semester') {
-                badgeText = `📊 ${folder.survey_count || 0} ta talaba | 📄 ${folder.orders_count || 0} ta buyruq`;
+                badgeText = `${folder.survey_count || 0} ta talaba | ${folder.orders_count || 0} ta buyruq`;
               } else {
-                badgeText = `📁 ${folder.children_count || 0} ta ichki papka`;
+                badgeText = `${folder.children_count || 0} ta ichki papka`;
               }
 
               let subText = '';
@@ -1043,10 +1063,10 @@ const ATLAS = {
               return `
                 <div class="folder-card" data-folder-id="${folder.id}">
                   <div class="folder-card-top">
-                    <div class="folder-card-icon">${icon}</div>
+                    <div class="folder-card-icon" style="color:var(--accent-glow);">${icon}</div>
                     <div class="folder-card-actions">
-                      <button class="tab-btn-mini btn-edit-folder" data-folder-id="${folder.id}" title="Tahrirlash">✏️</button>
-                      <button class="tab-btn-mini danger btn-delete-folder" data-folder-id="${folder.id}" title="O'chirish">🗑️</button>
+                      <button class="tab-btn-mini btn-edit-folder" data-folder-id="${folder.id}" title="Tahrirlash">${this.icons.edit}</button>
+                      <button class="tab-btn-mini danger btn-delete-folder" data-folder-id="${folder.id}" title="O'chirish">${this.icons.trash}</button>
                     </div>
                   </div>
                   <div>
@@ -1055,7 +1075,7 @@ const ATLAS = {
                   </div>
                   <div class="folder-card-footer">
                     <span class="folder-stat-badge">${badgeText}</span>
-                    <span style="color:var(--accent-glow);font-size:14px;">➔</span>
+                    <span style="color:var(--accent-glow);display:inline-flex;align-items:center;">${this.icons.arrowRight}</span>
                   </div>
                 </div>
               `;
@@ -1063,7 +1083,7 @@ const ATLAS = {
 
             <!-- Add new folder dashed card -->
             <div class="folder-card folder-card-add-new" id="card-add-new-folder">
-              <div style="font-size:32px;color:var(--accent-glow);">${this.icons.plus}</div>
+              <div style="color:var(--accent-glow);">${this.icons.plus}</div>
               <div style="font-weight:700;color:#ffffff;font-size:13.5px;">+ Yangi ${nextTypeTitle}</div>
               <div style="font-size:11.5px;color:rgba(94,234,212,0.7);">Papka yaratish uchun bosing</div>
             </div>
@@ -1151,7 +1171,7 @@ const ATLAS = {
         titleLabel = "Semestr Nomi";
       }
 
-      this.openModal(`📁 Yangi ${getFolderTypeTitle(folderType)} Ochish`, `
+      this.openModal(`Yangi ${getFolderTypeTitle(folderType)} Ochish`, `
         <div class="form-group">
           <label class="form-label">${titleLabel}</label>
           <input type="text" id="modal-folder-name" class="input-control" placeholder="Masalan: ${defaultNamePlaceholder}">
@@ -1229,7 +1249,7 @@ const ATLAS = {
 
     // Modal: Edit Folder
     const openEditFolderModal = (fObj) => {
-      this.openModal('✏️ Papka Nomini Tahrirlash', `
+      this.openModal('Papka Nomini Tahrirlash', `
         <div class="form-group">
           <label class="form-label">Papka Nomi</label>
           <input type="text" id="modal-edit-folder-name" class="input-control" value="${fObj.name}">
@@ -1277,19 +1297,19 @@ const ATLAS = {
           <div class="amaliyot-breadcrumb-bar">
             <div class="amaliyot-breadcrumbs">
               <div class="breadcrumb-node" data-folder-id="0">
-                <span>🏠 Asosiy</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;">${this.icons.home} Asosiy</span>
               </div>
               ${folderPath.map((node, idx) => `
                 <span class="breadcrumb-sep">/</span>
                 <div class="breadcrumb-node ${idx === folderPath.length - 1 ? 'active' : ''}" data-folder-id="${node.id}">
-                  <span>${folderIcons[node.folder_type] || '📁'} ${node.name}</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;">${folderIcons[node.folder_type] || this.icons.folder} ${node.name}</span>
                 </div>
               `).join('')}
             </div>
 
             <div class="breadcrumb-bar-actions">
-              <button class="btn-sm btn-secondary" id="btn-semester-back">
-                ◀ Guruhlarga qaytish
+              <button class="btn-sm btn-secondary" id="btn-semester-back" style="display:inline-flex;align-items:center;gap:6px;">
+                ${this.icons.arrowLeft} <span>Guruhlarga qaytish</span>
               </button>
             </div>
           </div>
@@ -1297,8 +1317,9 @@ const ATLAS = {
           <!-- TOP BANNER -->
           <div class="semester-dashboard-header">
             <div>
-              <div style="font-size:18px;font-weight:800;color:#ffffff;margin-bottom:4px;">
-                📚 ${currentFolderInfo.name} — Malakaviy Amaliyot Boshqaruvi
+              <div style="font-size:18px;font-weight:800;color:#ffffff;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+                <span style="color:var(--accent-glow);">${this.icons.bookOpen}</span>
+                <span>${currentFolderInfo.name} — Malakaviy Amaliyot Boshqaruvi</span>
               </div>
               <div style="font-size:12.5px;color:rgba(94,234,212,0.9);line-height:1.4;">
                 Yo'nalish: <b>${folderPath[1]?.name || 'Hamshiralik'}</b> &nbsp;|&nbsp; 
@@ -1306,26 +1327,21 @@ const ATLAS = {
                 Jami so'rovnomada: <b style="color:#34d399;">${surveyStudents.length} ta talaba</b>
               </div>
             </div>
-            <div style="display:flex;gap:8px;">
-              <a href="/api/amaliyot/survey/sample-excel" class="btn-sm btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;" download="Amaliyot_Sorownoma_Namuna.xlsx">
-                📥 Excel Shablonini Yuklab Olish
-              </a>
-            </div>
           </div>
 
           <!-- SUB VIEW PILLS -->
           <div class="tab-pills-row">
-            <button class="tab-pill-btn ${semesterSubView === 'survey' ? 'active' : ''}" id="tab-sub-survey">
-              📊 <span>O'tkazilgan So'rovnoma (${surveyStudents.length})</span>
+            <button class="tab-pill-btn ${semesterSubView === 'survey' ? 'active' : ''}" id="tab-sub-survey" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.users} <span>O'tkazilgan So'rovnoma (${surveyStudents.length})</span>
             </button>
-            <button class="tab-pill-btn ${semesterSubView === 'create_order' ? 'active' : ''}" id="tab-sub-create-order">
-              ➕ <span>Tuman Buyrug'ini Yaratish</span>
+            <button class="tab-pill-btn ${semesterSubView === 'create_order' ? 'active' : ''}" id="tab-sub-create-order" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.plus} <span>Tuman Buyrug'ini Yaratish</span>
             </button>
-            <button class="tab-pill-btn ${semesterSubView === 'generate_all' ? 'active' : ''}" id="tab-sub-generate-all">
-              ⚡ <span>Barcha Tumanlarni Generatsiya Qilish (ZIP)</span>
+            <button class="tab-pill-btn ${semesterSubView === 'generate_all' ? 'active' : ''}" id="tab-sub-generate-all" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.zap} <span>Barcha Tumanlarni Generatsiya Qilish (ZIP)</span>
             </button>
-            <button class="tab-pill-btn ${semesterSubView === 'archive' ? 'active' : ''}" id="tab-sub-archive">
-              🗂 <span>Buyruqlar Arxivi (${semesterOrders.length})</span>
+            <button class="tab-pill-btn ${semesterSubView === 'archive' ? 'active' : ''}" id="tab-sub-archive" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.archive} <span>Buyruqlar Arxivi (${semesterOrders.length})</span>
             </button>
           </div>
 
@@ -1390,41 +1406,39 @@ const ATLAS = {
       viewport.innerHTML = `
         <div class="glass-card" style="padding:22px;">
           <!-- Helpful Format Note -->
-          <div style="background:rgba(13,92,86,0.25);border:1px dashed rgba(0,203,169,0.4);border-radius:8px;padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,0.9);">
-            <span style="font-size:16px;">💡</span>
-            <span><b>Eslatma:</b> Excel faylingizda faqat <b>Guruhi</b> va <b>Ismi va Familiyasi (F.I.SH)</b> bo'lishi kifoya. Yuklaganingizdan so'ng tumanlar, shifokor va buyruq ma'lumotlari platformaning o'zida biriktiriladi.</span>
+          <div style="background:rgba(13,92,86,0.25);border:1px dashed rgba(0,203,169,0.4);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,0.9);">
+            <span style="color:#34d399;display:inline-flex;align-items:center;">${this.icons.info}</span>
+            <span><b>Eslatma:</b> Excel faylingizda faqat <b>Guruhi</b> va <b>Talabaning F.I.SH</b> bo'lishi kifoya. Amaliyot muddati va sanalari buyruq shakllantirish bosqichida bir martada kiritiladi.</span>
           </div>
 
           <!-- Toolbar / Actions Bar -->
           <div class="survey-import-bar">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <input type="file" id="survey-excel-file-input" accept=".xlsx, .xls" style="display:none;">
-              <button type="button" class="btn-primary btn-sm" id="btn-trigger-excel-upload">
-                📤 Excel Fayl Yuklash (Import)
+              <button type="button" class="btn-primary btn-sm" id="btn-trigger-excel-upload" style="display:inline-flex;align-items:center;gap:6px;">
+                ${this.icons.upload} <span>Excel Fayl Yuklash (Import)</span>
               </button>
-              <a href="/api/amaliyot/survey/sample-excel" class="btn-secondary btn-sm" style="text-decoration:none;" download="Amaliyot_Sorownoma_Namuna.xlsx">
-                📥 Namuna Excel Yuklab Olish
-              </a>
-              <button type="button" class="btn-secondary btn-sm" id="btn-paste-bulk-survey">
-                📋 Matndan Nusxalash
+              <button type="button" class="btn-secondary btn-sm" id="btn-paste-bulk-survey" style="display:inline-flex;align-items:center;gap:6px;">
+                ${this.icons.clipboard} <span>Matndan Nusxalash</span>
               </button>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <div id="survey-save-status" style="font-size:12px;color:rgba(52,211,153,0.95);display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(16,185,129,0.12);border-radius:6px;border:1px solid rgba(52,211,153,0.25);transition:all 0.3s ease;">
-                🟢 Barcha o'zgarishlar saqlangan
+                ${this.icons.check} <span>Barcha o'zgarishlar saqlangan</span>
               </div>
-              <button type="button" class="btn-secondary btn-sm" id="btn-add-survey-row">
-                + Qator Qo'shish
+              <button type="button" class="btn-secondary btn-sm" id="btn-add-survey-row" style="display:inline-flex;align-items:center;gap:6px;">
+                ${this.icons.plus} <span>Qator Qo'shish</span>
               </button>
-              <button type="button" class="btn-primary btn-sm" id="btn-save-all-survey">
-                💾 So'rovnomani Saqlash
+              <button type="button" class="btn-primary btn-sm" id="btn-save-all-survey" style="display:inline-flex;align-items:center;gap:6px;">
+                ${this.icons.save} <span>So'rovnomani Saqlash</span>
               </button>
             </div>
           </div>
 
           <!-- District Stats Chips -->
-          <div style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.9);margin-bottom:6px;">
-            📍 Tumanlar bo'yicha taqsimot statistikasi:
+          <div style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.9);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span style="color:var(--accent-glow);">${this.icons.mapPin}</span>
+            <span>Tumanlar bo'yicha taqsimot statistikasi:</span>
           </div>
           <div class="district-stats-row">
             ${Object.keys(districtStats).length > 0 ? Object.entries(districtStats).map(([dName, cnt]) => `
@@ -1444,13 +1458,11 @@ const ATLAS = {
             <table class="survey-data-table" id="survey-table">
               <thead>
                 <tr>
-                  <th style="width:36px;text-align:center;">T/r</th>
-                  <th style="width:100px;">Guruhi</th>
+                  <th style="width:40px;text-align:center;">T/r</th>
+                  <th style="width:110px;">Guruhi</th>
                   <th>Talabaning F.I.SH</th>
-                  <th style="width:200px;">Amaliyot Tumani</th>
-                  <th style="width:130px;">Boshlanishi</th>
-                  <th style="width:130px;">Tugashi</th>
-                  <th style="width:40px;text-align:center;"></th>
+                  <th style="width:260px;">Amaliyot Tumani</th>
+                  <th style="width:46px;text-align:center;"></th>
                 </tr>
               </thead>
               <tbody id="survey-tbody"></tbody>
@@ -1458,11 +1470,11 @@ const ATLAS = {
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.8);">
-              💡 Talabalar soni: <b id="survey-total-badge">${surveyStudents.length}</b> ta
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.8);display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.users} <span>Talabalar soni: <b id="survey-total-badge">${surveyStudents.length}</b> ta</span>
             </div>
-            <button type="button" class="btn-primary" id="btn-save-all-survey-bottom">
-              💾 Barcha O'zgarishlarni Saqlash
+            <button type="button" class="btn-primary" id="btn-save-all-survey-bottom" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.save} <span>Barcha O'zgarishlarni Saqlash</span>
             </button>
           </div>
         </div>
@@ -1474,18 +1486,18 @@ const ATLAS = {
         const badge = document.getElementById('survey-save-status');
         if (!badge) return;
         if (type === 'saving') {
-          badge.innerHTML = `🟡 Saqlanmoqda...`;
+          badge.innerHTML = `<span>Saqlanmoqda...</span>`;
           badge.style.color = '#fbbf24';
           badge.style.background = 'rgba(251,191,36,0.15)';
           badge.style.borderColor = 'rgba(251,191,36,0.3)';
         } else if (type === 'error') {
-          badge.innerHTML = `🔴 Xatolik (qayta saqlanadi)`;
+          badge.innerHTML = `<span>Xatolik (qayta saqlanadi)</span>`;
           badge.style.color = '#f87171';
           badge.style.background = 'rgba(239,68,68,0.15)';
           badge.style.borderColor = 'rgba(239,68,68,0.3)';
         } else {
           const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          badge.innerHTML = `🟢 Saqlandi (${timeStr})`;
+          badge.innerHTML = `${this.icons.check} <span>Saqlandi (${timeStr})</span>`;
           badge.style.color = '#34d399';
           badge.style.background = 'rgba(16,185,129,0.12)';
           badge.style.borderColor = 'rgba(52,211,153,0.25)';
@@ -1514,39 +1526,87 @@ const ATLAS = {
         }, debounceMs);
       };
 
-      // Render Table Rows
+      // Helper to sort students naturally by group and then by FIO
+      const getSortedStudentsWithIndices = () => {
+        const list = surveyStudents.map((st, i) => ({ st, origIdx: i }));
+        list.sort((a, b) => {
+          const gA = (a.st.guruhi || '').toString().trim();
+          const gB = (b.st.guruhi || '').toString().trim();
+          const numA = parseInt(gA.replace(/\D/g, '')) || 0;
+          const numB = parseInt(gB.replace(/\D/g, '')) || 0;
+          if (numA !== numB) return numA - numB;
+          if (gA !== gB) return gA.localeCompare(gB);
+          return (a.st.fio || '').localeCompare(b.st.fio || '');
+        });
+        return list;
+      };
+
+      // Render Table Rows (Organized Group by Group)
       const updateSurveyTable = () => {
         const tbody = document.getElementById('survey-tbody');
         const badge = document.getElementById('survey-total-badge');
         if (!tbody) return;
         badge.innerText = surveyStudents.length;
 
-        tbody.innerHTML = surveyStudents.map((st, i) => `
-          <tr>
-            <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${i + 1}.</td>
-            <td>
-              <input type="text" class="survey-input-cell st-input-grp" data-idx="${i}" value="${st.guruhi || ''}" placeholder="201">
-            </td>
-            <td>
-              <input type="text" class="survey-input-cell st-input-fio" data-idx="${i}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
-            </td>
-            <td>
-              <select class="survey-input-cell st-input-tum" data-idx="${i}">
-                ${standardDistricts.map(d => `<option value="${d}" ${st.tumani === d ? 'selected' : ''}>${d}</option>`).join('')}
-                ${!standardDistricts.includes(st.tumani) && st.tumani ? `<option value="${st.tumani}" selected>${st.tumani}</option>` : ''}
-              </select>
-            </td>
-            <td>
-              <input type="text" class="survey-input-cell st-input-start" data-idx="${i}" value="${st.start_date || '08.06.2026'}">
-            </td>
-            <td>
-              <input type="text" class="survey-input-cell st-input-end" data-idx="${i}" value="${st.end_date || '06.07.2026'}">
-            </td>
-            <td style="text-align:center;">
-              <button type="button" class="tab-btn-mini danger btn-del-survey-row" data-idx="${i}" title="Qatorni o'chirish">🗑️</button>
-            </td>
-          </tr>
-        `).join('');
+        if (surveyStudents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(94,234,212,0.6);font-style:italic;">Talabalar so'rovnomasi hali kiritilmagan. Excel fayl yuklang yoki qatorlar qo'shing.</td></tr>`;
+          return;
+        }
+
+        const sorted = getSortedStudentsWithIndices();
+        const groupCounts = {};
+        surveyStudents.forEach(s => {
+          const g = (s.guruhi || '').trim() || "Guruhsiz";
+          groupCounts[g] = (groupCounts[g] || 0) + 1;
+        });
+
+        let rowsHtml = '';
+        let lastGroup = null;
+
+        sorted.forEach((item, globalIdx) => {
+          const st = item.st;
+          const origIdx = item.origIdx;
+          const currentGroup = (st.guruhi || '').trim() || "Guruhsiz";
+
+          if (currentGroup !== lastGroup) {
+            lastGroup = currentGroup;
+            const cnt = groupCounts[currentGroup] || 1;
+            rowsHtml += `
+              <tr class="group-section-header" style="background:rgba(0,203,169,0.08);border-top:1px solid rgba(0,203,169,0.25);border-bottom:1px solid rgba(0,203,169,0.25);">
+                <td colspan="5" style="padding:8px 14px;font-weight:700;color:var(--accent-glow);font-size:12.5px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="color:var(--accent-glow);">${this.icons.groups}</span>
+                    <span>${currentGroup === 'Guruhsiz' ? 'Guruhsiz talabalar' : currentGroup + '-guruh'}</span>
+                    <span style="font-weight:normal;font-size:11px;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:10px;">${cnt} ta talaba</span>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }
+
+          rowsHtml += `
+            <tr>
+              <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${globalIdx + 1}.</td>
+              <td>
+                <input type="text" class="survey-input-cell st-input-grp" data-idx="${origIdx}" value="${st.guruhi || ''}" placeholder="201">
+              </td>
+              <td>
+                <input type="text" class="survey-input-cell st-input-fio" data-idx="${origIdx}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
+              </td>
+              <td>
+                <select class="survey-input-cell st-input-tum" data-idx="${origIdx}">
+                  ${standardDistricts.map(d => `<option value="${d}" ${st.tumani === d ? 'selected' : ''}>${d}</option>`).join('')}
+                  ${!standardDistricts.includes(st.tumani) && st.tumani ? `<option value="${st.tumani}" selected>${st.tumani}</option>` : ''}
+                </select>
+              </td>
+              <td style="text-align:center;">
+                <button type="button" class="tab-btn-mini danger btn-del-survey-row" data-idx="${origIdx}" title="Qatorni o'chirish">${this.icons.trash}</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.innerHTML = rowsHtml;
 
         // Cell listeners with live auto-save
         tbody.querySelectorAll('.st-input-grp').forEach(el => {
@@ -1554,7 +1614,10 @@ const ATLAS = {
             surveyStudents[parseInt(e.target.dataset.idx)].guruhi = e.target.value.trim();
             triggerAutoSave(1200);
           });
-          el.addEventListener('blur', () => triggerAutoSave(0));
+          el.addEventListener('blur', () => {
+            updateSurveyTable();
+            triggerAutoSave(0);
+          });
         });
 
         tbody.querySelectorAll('.st-input-fio').forEach(el => {
@@ -1572,25 +1635,9 @@ const ATLAS = {
           });
         });
 
-        tbody.querySelectorAll('.st-input-start').forEach(el => {
-          el.addEventListener('input', e => {
-            surveyStudents[parseInt(e.target.dataset.idx)].start_date = e.target.value.trim();
-            triggerAutoSave(1200);
-          });
-          el.addEventListener('blur', () => triggerAutoSave(0));
-        });
-
-        tbody.querySelectorAll('.st-input-end').forEach(el => {
-          el.addEventListener('input', e => {
-            surveyStudents[parseInt(e.target.dataset.idx)].end_date = e.target.value.trim();
-            triggerAutoSave(1200);
-          });
-          el.addEventListener('blur', () => triggerAutoSave(0));
-        });
-
         tbody.querySelectorAll('.btn-del-survey-row').forEach(b => {
           b.addEventListener('click', e => {
-            const idx = parseInt(e.target.dataset.idx);
+            const idx = parseInt(b.dataset.idx);
             surveyStudents.splice(idx, 1);
             updateSurveyTable();
             triggerAutoSave(0);
@@ -1669,7 +1716,7 @@ const ATLAS = {
 
       // Paste Bulk Text Modal
       document.getElementById('btn-paste-bulk-survey').addEventListener('click', () => {
-        this.openModal("📋 Talabalar Ro'yxatini Ommaviy Nusxalash", `
+        this.openModal("Talabalar Ro'yxatini Ommaviy Nusxalash", `
           <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:10px;line-height:1.5;">
             Har bir qatorga <b>Guruh # F.I.SH # Tuman</b> ko'rinishida yoki to'g'ridan-to'g'ri <b>Exceldan nusxalab</b> qo'ying:
             <div style="background:rgba(0,0,0,0.35);padding:8px 12px;border-radius:6px;color:#34d399;font-family:monospace;margin-top:6px;font-size:12px;border:1px solid rgba(52,211,153,0.2);">
@@ -1706,7 +1753,7 @@ const ATLAS = {
                 }
               } else if (p.length === 3) {
                 if (/^\d{1,3}$/.test(p[0]) && /^\d{2,4}/.test(p[1])) {
-                  g = p[1]; f = p[2];
+                  g = p[1]; f = p[2]; tum = p[3];
                 } else {
                   g = p[0]; f = p[1]; tum = p[2];
                 }
@@ -1775,8 +1822,9 @@ const ATLAS = {
         <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:20px;align-items:start;">
           <!-- LEFT FORM -->
           <div class="glass-card" style="padding:22px;">
-            <div style="font-size:16px;font-weight:700;color:#ffffff;margin-bottom:4px;">
-              ➕ Tuman Bo'yicha Yakka Buyruq Generatori
+            <div style="font-size:16px;font-weight:700;color:#ffffff;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--accent-glow);">${this.icons.plus}</span>
+              <span>Tuman Bo'yicha Yakka Buyruq Generatori</span>
             </div>
             <div style="font-size:12.5px;color:rgba(94,234,212,0.75);margin-bottom:16px;">
               Tumanni tanlang. So'rovnomadagi o'sha tumanga biriktirilgan barcha talabalar avtomatik yuklanadi.
@@ -1792,7 +1840,7 @@ const ATLAS = {
                       const cnt = districtStats[d] || 0;
                       return `<option value="${d}">${d} (${cnt} ta talaba)</option>`;
                     }).join('')}
-                    <option value="__custom__">✨ + Boshqa tuman...</option>
+                    <option value="__custom__">+ Boshqa tuman...</option>
                   </select>
                   <input type="text" id="single-custom-tumani" class="input-control" placeholder="Tuman nomini kiriting..." style="display:none;margin-top:6px;">
                 </div>
@@ -1851,8 +1899,8 @@ const ATLAS = {
 
               <!-- Filtered Students Section -->
               <div style="margin-top:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-size:13.5px;font-weight:700;color:var(--accent-glow);">
-                  👨‍🎓 Ushbu Tumanga Biriktirilgan Talabalar (<span id="single-students-count">0</span> ta)
+                <div style="font-size:13.5px;font-weight:700;color:var(--accent-glow);display:inline-flex;align-items:center;gap:6px;">
+                  ${this.icons.users} <span>Ushbu Tumanga Biriktirilgan Talabalar (<span id="single-students-count">0</span> ta)</span>
                 </div>
               </div>
 
@@ -1860,11 +1908,9 @@ const ATLAS = {
                 <table class="students-data-table" id="single-district-students-table">
                   <thead>
                     <tr>
-                      <th style="width:36px;">T/r</th>
-                      <th style="width:90px;">Guruhi</th>
+                      <th style="width:40px;text-align:center;">T/r</th>
+                      <th style="width:100px;">Guruhi</th>
                       <th>Talabaning F.I.SH</th>
-                      <th style="width:105px;">Boshlanishi</th>
-                      <th style="width:105px;">Tugashi</th>
                     </tr>
                   </thead>
                   <tbody id="single-district-students-tbody"></tbody>
@@ -1872,7 +1918,7 @@ const ATLAS = {
               </div>
 
               <div style="margin-top:20px;">
-                <button type="submit" class="btn-primary btn-block" id="btn-generate-single-order">
+                <button type="submit" class="btn-primary btn-block" id="btn-generate-single-order" style="display:flex;align-items:center;justify-content:center;gap:8px;">
                   ${this.icons.documents} <span>Ushbu Tuman Buyrug'ini Shakllantirish va Word Yuklab Olish</span>
                 </button>
               </div>
@@ -1882,7 +1928,7 @@ const ATLAS = {
           <!-- RIGHT PREVIEW -->
           <div class="glass-card" style="padding:22px;min-height:480px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
             <div id="single-order-result-box" style="width:100%;">
-              <div style="font-size:42px;color:rgba(0,203,169,0.4);margin-bottom:12px;">🩺</div>
+              <div style="font-size:42px;color:rgba(0,203,169,0.4);margin-bottom:12px;display:flex;justify-content:center;">${this.icons.activity}</div>
               <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">Amaliyot Buyrug'i Natijasi</div>
               <div style="font-size:12.5px;color:rgba(94,234,212,0.7);max-width:280px;margin:0 auto;">
                 Tumanni tanlang va generatsiya tugmasini bosing. Rasmiy Word (.docx) fayli shu yerda paydo bo'ladi.
@@ -1915,15 +1961,13 @@ const ATLAS = {
         countEl.innerText = currentDistrictStudents.length;
 
         if (currentDistrictStudents.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:rgba(255,255,255,0.5);">Ushbu tumanga so'rovnomada biriktirilgan talaba topilmadi.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:16px;color:rgba(255,255,255,0.5);">Ushbu tumanga so'rovnomada biriktirilgan talaba topilmadi.</td></tr>`;
         } else {
           tbody.innerHTML = currentDistrictStudents.map((st, i) => `
             <tr>
               <td style="text-align:center;">${i + 1}.</td>
               <td>${st.guruhi || '201'}</td>
               <td style="text-align:left;font-weight:600;">${st.fio}</td>
-              <td>${st.start_date || '08.06.2026'}</td>
-              <td>${st.end_date || '06.07.2026'}</td>
             </tr>
           `).join('');
         }
@@ -1967,14 +2011,14 @@ const ATLAS = {
             resultBox.innerHTML = `
               <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:20px;text-align:left;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                  <div style="font-size:26px;">✅</div>
+                  <div style="color:#34d399;font-size:24px;">${this.icons.check}</div>
                   <div>
                     <div style="font-size:15px;font-weight:700;color:#ffffff;">${finalTumani} Buyrug'i Tayyor!</div>
                     <div style="font-size:12px;color:rgba(94,234,212,0.8);">${payload.students.length} ta talaba bilan Word hujjati shakllantirildi</div>
                   </div>
                 </div>
-                <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;margin-top:12px;" download="${fname}">
-                  📥 Word (.docx) Hujjatini Yuklab Olish
+                <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;" download="${fname}">
+                  ${this.icons.download} <span>Word (.docx) Hujjatini Yuklab Olish</span>
                 </a>
               </div>
             `;
@@ -2000,7 +2044,7 @@ const ATLAS = {
         <div style="max-width:800px;margin:0 auto;">
           <div class="glass-card" style="padding:28px;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-              <div style="font-size:32px;">⚡</div>
+              <div style="color:var(--accent-glow);">${this.icons.zap}</div>
               <div>
                 <div style="font-size:18px;font-weight:800;color:#ffffff;">Barcha Tumanlar Buyruqlarini Bitta Bosishda Shakllantirish</div>
                 <div style="font-size:12.5px;color:rgba(94,234,212,0.85);">
@@ -2011,8 +2055,9 @@ const ATLAS = {
 
             <!-- Detected Districts Summary -->
             <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:20px;">
-              <div style="font-size:13px;font-weight:700;color:#ffffff;margin-bottom:10px;">
-                📊 Aniqlangan Tumanlar Ro'yxati (${totalDistrictsCount} ta tuman):
+              <div style="font-size:13px;font-weight:700;color:#ffffff;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                <span style="color:var(--accent-glow);">${this.icons.analytics}</span>
+                <span>Aniqlangan Tumanlar Ro'yxati (${totalDistrictsCount} ta tuman):</span>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;">
                 ${Object.entries(districtStats).map(([tum, cnt]) => `
@@ -2053,8 +2098,8 @@ const ATLAS = {
               </div>
 
               <div style="margin-top:20px;">
-                <button type="submit" class="btn-primary btn-block" id="btn-run-batch-generate" ${surveyStudents.length === 0 ? 'disabled' : ''} style="height:46px;font-size:14.5px;">
-                  ⚡ Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish
+                <button type="submit" class="btn-primary btn-block" id="btn-run-batch-generate" ${surveyStudents.length === 0 ? 'disabled' : ''} style="height:46px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                  ${this.icons.zap} <span>Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish</span>
                 </button>
               </div>
             </form>
@@ -2069,7 +2114,7 @@ const ATLAS = {
         const btn = document.getElementById('btn-run-batch-generate');
         const resBox = document.getElementById('batch-generate-result');
         btn.disabled = true;
-        btn.innerHTML = `<span>⚡ Barcha tumanlar buyruqlari shakllantirilmoqda...</span>`;
+        btn.innerHTML = `<span>Barcha tumanlar buyruqlari shakllantirilmoqda...</span>`;
 
         const payload = {
           buyruq_raqami: document.getElementById('batch-buyruq-num').value.trim(),
@@ -2082,14 +2127,14 @@ const ATLAS = {
         try {
           const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/generate-all`, 'POST', payload);
           btn.disabled = false;
-          btn.innerHTML = `⚡ Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish`;
+          btn.innerHTML = `${this.icons.zap} <span>Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish</span>`;
 
           if (res?.success) {
             this.toast("Barcha tumanlar buyruqlari muvaffaqiyatli tayyorlandi!", "success");
             resBox.innerHTML = `
               <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:22px;text-align:left;">
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-                  <div style="font-size:28px;">📦</div>
+                  <div style="color:var(--accent-glow);font-size:28px;">${this.icons.package}</div>
                   <div>
                     <div style="font-size:16px;font-weight:700;color:#ffffff;">ZIP Paket Tayyor!</div>
                     <div style="font-size:12.5px;color:rgba(94,234,212,0.85);">
@@ -2099,8 +2144,8 @@ const ATLAS = {
                 </div>
 
                 <div style="margin-bottom:16px;">
-                  <a href="${res.download_zip_url}" class="btn-primary btn-block" style="text-decoration:none;font-size:14.5px;font-weight:700;height:44px;display:flex;align-items:center;justify-content:center;" download="${res.zip_filename}">
-                    📥 Barcha Word Buyruqlarini (ZIP) Yuklab Olish
+                  <a href="${res.download_zip_url}" class="btn-primary btn-block" style="text-decoration:none;font-size:14.5px;font-weight:700;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;" download="${res.zip_filename}">
+                    ${this.icons.download} <span>Barcha Word Buyruqlarini (ZIP) Yuklab Olish</span>
                   </a>
                 </div>
 
@@ -2108,7 +2153,7 @@ const ATLAS = {
                 <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
                   ${res.files.map(f => `
                     <div style="display:flex;justify-content:space-between;background:rgba(0,0,0,0.3);padding:6px 10px;border-radius:6px;font-size:12px;">
-                      <span style="color:#ffffff;">📄 <b>${f.tumani}</b> (${f.guruhlar})</span>
+                      <span style="color:#ffffff;display:inline-flex;align-items:center;gap:6px;">${this.icons.fileText} <b>${f.tumani}</b> (${f.guruhlar})</span>
                       <span style="color:#34d399;font-weight:700;">${f.students_count} ta talaba</span>
                     </div>
                   `).join('')}
@@ -2120,7 +2165,7 @@ const ATLAS = {
           }
         } catch (err) {
           btn.disabled = false;
-          btn.innerHTML = `⚡ Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish`;
+          btn.innerHTML = `${this.icons.zap} <span>Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish</span>`;
           alert("Server bilan aloqada xatolik: " + err.message);
         }
       });
@@ -2133,13 +2178,13 @@ const ATLAS = {
       if (!semesterOrders.length) {
         viewport.innerHTML = `
           <div class="glass-card" style="padding:40px;text-align:center;">
-            <div style="font-size:42px;color:rgba(0,203,169,0.3);margin-bottom:12px;">🗂</div>
+            <div style="color:rgba(0,203,169,0.3);margin-bottom:12px;display:flex;justify-content:center;">${this.icons.archive}</div>
             <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">Buyruqlar Arxivi Bo'sh</div>
             <div style="font-size:12.5px;color:rgba(94,234,212,0.7);max-width:320px;margin:0 auto 16px;">
               Ushbu semestr bo'yicha hali birorta ham tuman buyrug'i shakllantirilmagan.
             </div>
-            <button class="btn-primary btn-sm" id="btn-go-to-create-order">
-              ➕ Yangi Buyruq Shakllantirish
+            <button class="btn-primary btn-sm" id="btn-go-to-create-order" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.plus} <span>Yangi Buyruq Shakllantirish</span>
             </button>
           </div>
         `;
@@ -2153,8 +2198,9 @@ const ATLAS = {
       viewport.innerHTML = `
         <div class="glass-card" style="padding:22px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <div style="font-size:15px;font-weight:700;color:#ffffff;">
-              🗂 Ushbu Semestr Bo'yicha Shakllantirilgan Buyruqlar (${semesterOrders.length} ta)
+            <div style="font-size:15px;font-weight:700;color:#ffffff;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--accent-glow);">${this.icons.archive}</span>
+              <span>Ushbu Semestr Bo'yicha Shakllantirilgan Buyruqlar (${semesterOrders.length} ta)</span>
             </div>
           </div>
 
@@ -2165,8 +2211,11 @@ const ATLAS = {
                 <div style="background:rgba(6,26,28,0.75);border:1px solid rgba(0,203,169,0.25);border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;">
                   <div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                      <div style="font-size:15px;font-weight:700;color:#ffffff;">🏥 ${ord.tumani}</div>
-                      <button class="tab-btn-mini danger btn-delete-order" data-order-id="${ord.id}" title="Arxivdan o'chirish">🗑️</button>
+                      <div style="font-size:15px;font-weight:700;color:#ffffff;display:flex;align-items:center;gap:6px;">
+                        <span style="color:var(--accent-glow);">${this.icons.activity}</span>
+                        <span>${ord.tumani}</span>
+                      </div>
+                      <button class="tab-btn-mini danger btn-delete-order" data-order-id="${ord.id}" title="Arxivdan o'chirish">${this.icons.trash}</button>
                     </div>
                     <div style="font-size:12px;color:rgba(94,234,212,0.85);line-height:1.5;margin-bottom:12px;">
                       • <b>Shifokor:</b> ${ord.shu_tuman_shifokori || 'Bosh shifokor'}<br>
@@ -2177,7 +2226,7 @@ const ATLAS = {
                   </div>
                   <div>
                     <a href="/api/documents/download_docx/${ord.id}" class="btn-primary btn-block btn-sm" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" download="${fname}">
-                      📥 Word (.docx) Yuklab Olish
+                      ${this.icons.download} <span>Word (.docx) Yuklab Olish</span>
                     </a>
                   </div>
                 </div>
@@ -3112,21 +3161,21 @@ const ATLAS = {
           <!-- 1. ASOSIY BAZA DROPZONE -->
           <div class="file-dropzone ${this.contractState.bazaFile ? 'has-file' : ''}" id="dropzone-baza">
             <input type="file" id="file-input-baza" accept=".xlsx" style="display:none;">
-            <div class="dropzone-icon">📊</div>
+            <div class="dropzone-icon" style="color:var(--accent-glow);">${this.icons.analytics}</div>
             <div class="dropzone-title">1. Asosiy Baza Fayli (.xlsx)</div>
             <div class="dropzone-hint">Faylni bu yerga sudrab tashlang yoki tanlash uchun bosing</div>
             <div id="badge-baza">
               ${this.contractState.bazaFile ? `<div class="dropzone-file-badge">${this.icons.check} ${this.contractState.bazaFile.name} (${(this.contractState.bazaFile.size/1024).toFixed(1)} KB)</div>` : ''}
             </div>
             <div id="detected-date-container">
-              ${this.contractState.detectedDate ? `<div class="detected-date-pill">💡 Aniqlangan sana: <b>${this.contractState.detectedDate}</b> → Tavsiya: <b>${this.contractState.suggestedDate}</b></div>` : ''}
+              ${this.contractState.detectedDate ? `<div class="detected-date-pill" style="display:inline-flex;align-items:center;gap:6px;">${this.icons.info} Aniqlangan sana: <b>${this.contractState.detectedDate}</b> → Tavsiya: <b>${this.contractState.suggestedDate}</b></div>` : ''}
             </div>
           </div>
 
           <!-- 2. BANK DEBITORKASI DROPZONE -->
           <div class="file-dropzone ${this.contractState.debFile ? 'has-file' : ''}" id="dropzone-deb">
             <input type="file" id="file-input-deb" accept=".xlsx" style="display:none;">
-            <div class="dropzone-icon">🏦</div>
+            <div class="dropzone-icon" style="color:var(--accent-glow);">${this.icons.documents}</div>
             <div class="dropzone-title">2. Bank Debitorkasi (.xlsx)</div>
             <div class="dropzone-hint">Bankdan olingan debitorka faylini bu yerga sudrab tashlang</div>
             <div id="badge-deb">
@@ -3573,7 +3622,7 @@ const ATLAS = {
 
         <div class="file-dropzone ${this.contractState.ssBazaFile ? 'has-file' : ''}" id="dropzone-ss-baza" style="margin-bottom:20px;">
           <input type="file" id="file-input-ss-baza" accept=".xlsx" style="display:none;">
-          <div class="dropzone-icon">📸</div>
+          <div class="dropzone-icon" style="color:var(--accent-glow);">${this.icons.dashboard}</div>
           <div class="dropzone-title">Asosiy Baza Excel Faylini Kiriting (.xlsx)</div>
           <div class="dropzone-hint">Faylni bu yerga sudrab tashlang yoki tanlash uchun bosing</div>
           <div id="badge-ss-baza">
@@ -3858,7 +3907,7 @@ const ATLAS = {
     if (sessions.length === 0) {
       container.innerHTML = `
         <div class="card" style="text-align:center;padding:50px;">
-          <div style="font-size:3rem;margin-bottom:12px;">🗂️</div>
+          <div style="color:rgba(0,203,169,0.3);margin-bottom:12px;display:flex;justify-content:center;">${this.icons.archive}</div>
           <h3>Hozircha kontrakt yangilanishlari tarixi mavjud emas</h3>
           <p style="color:var(--color-text-muted);font-size:0.9rem;margin-top:6px;">Birinchi yangilanishni amalga oshirganingizdan so'ng bu yerda barcha sessiyalar arxivi saqlanadi.</p>
         </div>
