@@ -1247,11 +1247,133 @@ def reorder_amaliyot_tabs(tab_orders: list):
 
 
 # ============================================================
+# ============================================================
+# AMALIYOT SUPABASE CLOUD SYNCHRONIZATION ENGINE
+# ============================================================
+
+def _sync_amaliyot_store_to_supabase(entity_type: str = "all"):
+    """
+    Supabase Cloud `atlas_settings` jadvaliga Amaliyotning barcha ma'lumotlarini doimiy saqlash.
+    Vercel serveri qayta ishga tushganda yoki boshqa brauzerdan kirganda ham barchasi 100% tiklanadi.
+    """
+    try:
+        import requests
+        supa_url, supa_key = _get_supabase_credentials()
+        if not (supa_url and supa_key):
+            return
+        headers = {
+            "apikey": supa_key,
+            "Authorization": f"Bearer {supa_key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates"
+        }
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if entity_type in ("folders", "all"):
+            cursor.execute("SELECT * FROM amaliyot_folders ORDER BY id ASC")
+            all_f = [dict(r) for r in cursor.fetchall()]
+            requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json={
+                "key": "amaliyot_folders_store",
+                "value": json.dumps(all_f, ensure_ascii=False),
+                "category": "amaliyot",
+                "description": "Amaliyot papkalari to'liq arxivi"
+            }, timeout=5)
+
+        if entity_type in ("surveys", "all"):
+            cursor.execute("SELECT * FROM amaliyot_surveys ORDER BY id ASC")
+            all_s = [dict(r) for r in cursor.fetchall()]
+            requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json={
+                "key": "amaliyot_surveys_store",
+                "value": json.dumps(all_s, ensure_ascii=False),
+                "category": "amaliyot",
+                "description": "Amaliyot so'rovnomalari to'liq arxivi"
+            }, timeout=5)
+
+        if entity_type in ("orders", "all"):
+            cursor.execute("SELECT * FROM amaliyot_orders ORDER BY id ASC")
+            all_o = [dict(r) for r in cursor.fetchall()]
+            requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json={
+                "key": "amaliyot_orders_store",
+                "value": json.dumps(all_o, ensure_ascii=False),
+                "category": "amaliyot",
+                "description": "Amaliyot buyruqlari to'liq arxivi"
+            }, timeout=5)
+
+        conn.close()
+    except Exception as e:
+        print(f"Sync amaliyot store to supabase error: {e}")
+
+
+def _restore_amaliyot_from_supabase_store():
+    """
+    Supabase Cloud `atlas_settings` jadvalidan amaliyot papkalari, so'rovnomalar va buyruqlarni o'qib, SQLite ga yuklash.
+    """
+    try:
+        import requests
+        supa_url, supa_key = _get_supabase_credentials()
+        if not (supa_url and supa_key):
+            return False
+        headers = {
+            "apikey": supa_key,
+            "Authorization": f"Bearer {supa_key}"
+        }
+        resp = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=in.(amaliyot_folders_store,amaliyot_surveys_store,amaliyot_orders_store)&select=key,value", headers=headers, timeout=5)
+        if resp.status_code != 200:
+            return False
+        
+        items = resp.json() or []
+        if not items:
+            return False
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        for item in items:
+            k = item.get("key")
+            val = item.get("value")
+            if not val:
+                continue
+            try:
+                data = json.loads(val)
+            except Exception:
+                continue
+
+            if k == "amaliyot_folders_store" and isinstance(data, list):
+                for f in data:
+                    cursor.execute("""
+                    INSERT OR REPLACE INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                    """, (f.get("id"), f.get("parent_id"), f.get("folder_type"), f.get("name"), f.get("extra_data", "{}"), f.get("order_num", 0), f.get("created_at")))
+
+            elif k == "amaliyot_surveys_store" and isinstance(data, list):
+                for s in data:
+                    cursor.execute("""
+                    INSERT OR REPLACE INTO amaliyot_surveys (id, folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                    """, (s.get("id"), s.get("folder_id"), s.get("guruhi"), s.get("fio"), s.get("tumani"), s.get("start_date"), s.get("end_date"), s.get("phone"), s.get("organization"), s.get("notes"), s.get("created_at")))
+
+            elif k == "amaliyot_orders_store" and isinstance(data, list):
+                for o in data:
+                    cursor.execute("""
+                    INSERT OR REPLACE INTO amaliyot_orders (id, folder_id, tumani, buyruq_raqami, buyruq_sanasi, shu_tuman_shifokori, oquv_yili, kursi, guruhlar, amaliyot_muddati, start_date, end_date, docx_path, students_count, students_json, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                    """, (o.get("id"), o.get("folder_id"), o.get("tumani"), o.get("buyruq_raqami"), o.get("buyruq_sanasi"), o.get("shu_tuman_shifokori"), o.get("oquv_yili"), o.get("kursi"), o.get("guruhlar"), o.get("amaliyot_muddati"), o.get("start_date"), o.get("end_date"), o.get("docx_path"), o.get("students_count", 0), o.get("students_json", "[]"), o.get("created_at")))
+
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Restore amaliyot from supabase error: {e}")
+        return False
+
+
+# ============================================================
 # AMALIYOT PAPKALAR IERARXIYASI (FOLDERS HIERARCHY)
 # ============================================================
 
 def get_amaliyot_folder_contents(parent_id=None):
-    """Berilgan parent_id ostidagi barcha papkalar ro'yxatini qaytaradi (SQLite + Supabase Cloud fallback)"""
+    """Berilgan parent_id ostidagi barcha papkalar ro'yxatini qaytaradi (SQLite + Supabase Cloud doimiy sinxron)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1263,42 +1385,14 @@ def get_amaliyot_folder_contents(parent_id=None):
 
         rows = cursor.fetchall()
         
-        # Agar SQLite bo'sh bo'lsa (Serverless restart), Supabase Cloud-dan o'qib kelish
+        # Agar SQLite bo'sh bo'lsa (Serverless restart), Supabase Cloud-dan to'liq tiklab olish
         if not rows:
-            try:
-                import requests
-                supa_url, supa_key = _get_supabase_credentials()
-                if supa_url and supa_key:
-                    headers = {
-                        "apikey": supa_key,
-                        "Authorization": f"Bearer {supa_key}"
-                    }
-                    p_query = "is.null" if (parent_id is None or parent_id == 0) else f"eq.{parent_id}"
-                    resp = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_folders?parent_id={p_query}&select=*&order=order_num.asc,id.asc", headers=headers, timeout=5)
-                    if resp.status_code == 200:
-                        cloud_folders = resp.json()
-                        if cloud_folders:
-                            for cf in cloud_folders:
-                                extra_str = json.dumps(cf.get("extra_data") or {}) if isinstance(cf.get("extra_data"), dict) else str(cf.get("extra_data") or "{}")
-                                cursor.execute("""
-                                INSERT OR REPLACE INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
-                                VALUES (?, ?, ?, ?, ?, ?)
-                                """, (
-                                    cf.get("id"),
-                                    cf.get("parent_id"),
-                                    cf.get("folder_type"),
-                                    cf.get("name"),
-                                    extra_str,
-                                    cf.get("order_num", 0)
-                                ))
-                            conn.commit()
-                            if parent_id is None or parent_id == 0:
-                                cursor.execute("SELECT * FROM amaliyot_folders WHERE parent_id IS NULL ORDER BY order_num ASC, id ASC")
-                            else:
-                                cursor.execute("SELECT * FROM amaliyot_folders WHERE parent_id = ? ORDER BY order_num ASC, id ASC", (parent_id,))
-                            rows = cursor.fetchall()
-            except Exception as se:
-                print(f"Supabase fetch amaliyot folders error: {se}")
+            _restore_amaliyot_from_supabase_store()
+            if parent_id is None or parent_id == 0:
+                cursor.execute("SELECT * FROM amaliyot_folders WHERE parent_id IS NULL ORDER BY order_num ASC, id ASC")
+            else:
+                cursor.execute("SELECT * FROM amaliyot_folders WHERE parent_id = ? ORDER BY order_num ASC, id ASC", (parent_id,))
+            rows = cursor.fetchall()
 
         folders = []
         for r in rows:
@@ -1336,6 +1430,10 @@ def get_amaliyot_folder_path(folder_id: int):
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        cursor.execute("SELECT COUNT(*) FROM amaliyot_folders")
+        if cursor.fetchone()[0] == 0:
+            _restore_amaliyot_from_supabase_store()
+
         path = []
         current_id = folder_id
 
@@ -1367,6 +1465,10 @@ def get_amaliyot_folder(folder_id: int):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM amaliyot_folders WHERE id = ?", (folder_id,))
         row = cursor.fetchone()
+        if not row:
+            _restore_amaliyot_from_supabase_store()
+            cursor.execute("SELECT * FROM amaliyot_folders WHERE id = ?", (folder_id,))
+            row = cursor.fetchone()
         conn.close()
 
         if row:
@@ -1383,7 +1485,7 @@ def get_amaliyot_folder(folder_id: int):
 
 
 def create_amaliyot_folder(parent_id, folder_type: str, name: str, extra_data: dict = None):
-    """Yangi papka yaratish (SQLite + Supabase Cloud)"""
+    """Yangi papka yaratish (SQLite + Supabase Cloud doimiy saqlash)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1407,7 +1509,8 @@ def create_amaliyot_folder(parent_id, folder_type: str, name: str, extra_data: d
         conn.commit()
         conn.close()
 
-        # Supabase Cloud ga saqlash
+        # Supabase Cloud ga to'liq sinxronlash
+        _sync_amaliyot_store_to_supabase("folders")
         _sync_supabase_async("atlas_amaliyot_folders", {
             "id": new_id,
             "parent_id": p_val,
@@ -1439,6 +1542,7 @@ def update_amaliyot_folder(folder_id: int, name: str, extra_data: dict = None):
         conn.close()
 
         # Supabase Cloud-da yangilash
+        _sync_amaliyot_store_to_supabase("folders")
         payload = {"name": name}
         if extra_data is not None:
             payload["extra_data"] = extra_data
@@ -1478,6 +1582,8 @@ def delete_amaliyot_folder(folder_id: int):
 
         conn.commit()
         conn.close()
+
+        _sync_amaliyot_store_to_supabase("all")
         return {"success": True, "deleted_count": len(to_delete_ids)}
     except Exception as e:
         print(f"Delete amaliyot folder error: {e}")
@@ -1489,7 +1595,7 @@ def delete_amaliyot_folder(folder_id: int):
 # ============================================================
 
 def get_amaliyot_surveys(folder_id: int):
-    """Semestr papkasi bo'yicha talabalar so'rovnomasi ro'yxatini olish (SQLite + Supabase Cloud fallback)"""
+    """Semestr papkasi bo'yicha talabalar so'rovnomasi ro'yxatini olish (SQLite + Supabase Cloud)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1502,39 +1608,9 @@ def get_amaliyot_surveys(folder_id: int):
 
         # Agar SQLite bo'sh bo'lsa, Supabase Cloud-dan o'qib kelish
         if not rows:
-            try:
-                import requests
-                supa_url, supa_key = _get_supabase_credentials()
-                if supa_url and supa_key:
-                    headers = {
-                        "apikey": supa_key,
-                        "Authorization": f"Bearer {supa_key}"
-                    }
-                    resp = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_surveys?folder_id=eq.{folder_id}&select=*&order=id.asc", headers=headers, timeout=5)
-                    if resp.status_code == 200:
-                        cloud_surveys = resp.json()
-                        if cloud_surveys:
-                            for cs in cloud_surveys:
-                                cursor.execute("""
-                                INSERT OR REPLACE INTO amaliyot_surveys (id, folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                """, (
-                                    cs.get("id"),
-                                    folder_id,
-                                    cs.get("guruhi", ""),
-                                    cs.get("fio", ""),
-                                    cs.get("tumani", ""),
-                                    cs.get("start_date", "08.06.2026"),
-                                    cs.get("end_date", "06.07.2026"),
-                                    cs.get("phone", ""),
-                                    cs.get("organization", ""),
-                                    cs.get("notes", "")
-                                ))
-                            conn.commit()
-                            cursor.execute("SELECT * FROM amaliyot_surveys WHERE folder_id = ? ORDER BY id ASC", (folder_id,))
-                            rows = [dict(r) for r in cursor.fetchall()]
-            except Exception as se:
-                print(f"Supabase fetch amaliyot surveys error: {se}")
+            _restore_amaliyot_from_supabase_store()
+            cursor.execute("SELECT * FROM amaliyot_surveys WHERE folder_id = ? ORDER BY id ASC", (folder_id,))
+            rows = [dict(r) for r in cursor.fetchall()]
 
         conn.close()
         return {"success": True, "surveys": rows}
@@ -1588,21 +1664,10 @@ def save_amaliyot_surveys(folder_id: int, students_list: list, replace_all: bool
         conn.commit()
         conn.close()
 
-        # Supabase Cloud ga fonda saqlash
+        # Supabase Cloud ga to'liq sinxronlash
+        _sync_amaliyot_store_to_supabase("surveys")
         if saved_students:
-            try:
-                import requests
-                supa_url, supa_key = _get_supabase_credentials()
-                if supa_url and supa_key:
-                    headers = {
-                        "apikey": supa_key,
-                        "Authorization": f"Bearer {supa_key}",
-                        "Content-Type": "application/json",
-                        "Prefer": "resolution=merge-duplicates"
-                    }
-                    requests.post(f"{supa_url}/rest/v1/atlas_amaliyot_surveys", headers=headers, json=saved_students, timeout=5)
-            except Exception as se:
-                print(f"Supabase bulk sync amaliyot surveys error: {se}")
+            _sync_supabase_async("atlas_amaliyot_surveys", saved_students, method="POST", params="?on_conflict=id")
 
         return {"success": True, "count": len(saved_students)}
     except Exception as e:
@@ -1633,6 +1698,7 @@ def add_amaliyot_survey_item(folder_id: int, st: dict):
         conn.commit()
         conn.close()
 
+        _sync_amaliyot_store_to_supabase("surveys")
         _sync_supabase_async("atlas_amaliyot_surveys", {
             "id": new_id,
             "folder_id": folder_id,
@@ -1658,6 +1724,7 @@ def delete_amaliyot_survey_item(survey_id: int):
         conn.commit()
         conn.close()
 
+        _sync_amaliyot_store_to_supabase("surveys")
         _sync_supabase_async("atlas_amaliyot_surveys", {}, method="DELETE", params=f"?id=eq.{survey_id}")
         return {"success": True}
     except Exception as e:
@@ -1670,7 +1737,7 @@ def delete_amaliyot_survey_item(survey_id: int):
 # ============================================================
 
 def get_amaliyot_orders(folder_id: int):
-    """Semestr papkasi bo'yicha shakllantirilgan buyruqlar ro'yxatini olish (SQLite + Supabase Cloud fallback)"""
+    """Semestr papkasi bo'yicha shakllantirilgan buyruqlar ro'yxatini olish (SQLite + Supabase Cloud)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1689,56 +1756,16 @@ def get_amaliyot_orders(folder_id: int):
             rows.append(item)
 
         if not rows:
-            try:
-                import requests
-                supa_url, supa_key = _get_supabase_credentials()
-                if supa_url and supa_key:
-                    headers = {
-                        "apikey": supa_key,
-                        "Authorization": f"Bearer {supa_key}"
-                    }
-                    resp = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_orders?folder_id=eq.{folder_id}&select=*&order=created_at.desc", headers=headers, timeout=5)
-                    if resp.status_code == 200:
-                        cloud_orders = resp.json()
-                        if cloud_orders:
-                            for co in cloud_orders:
-                                st_json = json.dumps(co.get("students") or []) if isinstance(co.get("students"), list) else str(co.get("students_json") or "[]")
-                                cursor.execute("""
-                                INSERT OR REPLACE INTO amaliyot_orders (
-                                    id, folder_id, tumani, buyruq_raqami, buyruq_sanasi, shu_tuman_shifokori,
-                                    oquv_yili, kursi, guruhlar, amaliyot_muddati, start_date, end_date,
-                                    docx_path, students_count, students_json
-                                )
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                """, (
-                                    co.get("id"),
-                                    folder_id,
-                                    co.get("tumani"),
-                                    co.get("buyruq_raqami"),
-                                    co.get("buyruq_sanasi"),
-                                    co.get("shu_tuman_shifokori"),
-                                    co.get("oquv_yili"),
-                                    co.get("kursi"),
-                                    co.get("guruhlar"),
-                                    co.get("amaliyot_muddati"),
-                                    co.get("start_date"),
-                                    co.get("end_date"),
-                                    co.get("docx_path"),
-                                    co.get("students_count", 0),
-                                    st_json
-                                ))
-                            conn.commit()
-                            cursor.execute("SELECT * FROM amaliyot_orders WHERE folder_id = ? ORDER BY created_at DESC, id DESC", (folder_id,))
-                            rows = []
-                            for r in cursor.fetchall():
-                                item = dict(r)
-                                try:
-                                    item["students"] = json.loads(item["students_json"]) if item.get("students_json") else []
-                                except Exception:
-                                    item["students"] = []
-                                rows.append(item)
-            except Exception as se:
-                print(f"Supabase fetch amaliyot orders error: {se}")
+            _restore_amaliyot_from_supabase_store()
+            cursor.execute("SELECT * FROM amaliyot_orders WHERE folder_id = ? ORDER BY created_at DESC, id DESC", (folder_id,))
+            rows = []
+            for r in cursor.fetchall():
+                item = dict(r)
+                try:
+                    item["students"] = json.loads(item["students_json"]) if item.get("students_json") else []
+                except Exception:
+                    item["students"] = []
+                rows.append(item)
 
         conn.close()
         return {"success": True, "orders": rows}
@@ -1785,7 +1812,8 @@ def save_amaliyot_order_record(folder_id: int, data: dict):
         conn.commit()
         conn.close()
 
-        # Supabase Cloud ga saqlash
+        # Supabase Cloud ga to'liq sinxronlash
+        _sync_amaliyot_store_to_supabase("orders")
         _sync_supabase_async("atlas_amaliyot_orders", {
             "id": new_id,
             "folder_id": folder_id,
@@ -1819,6 +1847,7 @@ def delete_amaliyot_order_record(order_id: int):
         conn.commit()
         conn.close()
 
+        _sync_amaliyot_store_to_supabase("orders")
         _sync_supabase_async("atlas_amaliyot_orders", {}, method="DELETE", params=f"?id=eq.{order_id}")
         return {"success": True}
     except Exception as e:
