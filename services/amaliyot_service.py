@@ -486,7 +486,11 @@ def parse_survey_excel(file_bytes_or_path, default_start="08.06.2026", default_e
         if not fio_val or fio_val.lower() in ["none", "null", "f.i.sh", "talabaning f.i.sh"]:
             continue
 
-        guruh_val = str(ws.cell(row=r_idx, column=col_map["guruhi"]).value or "").strip() if col_map["guruhi"] else ""
+        raw_g = ws.cell(row=r_idx, column=col_map["guruhi"]).value if col_map["guruhi"] else ""
+        if isinstance(raw_g, datetime):
+            guruh_val = raw_g.strftime("%d-%m") if (raw_g.day and raw_g.month) else str(raw_g)
+        else:
+            guruh_val = str(raw_g or "").strip()
         if guruh_val.lower() in ["none", "null"]:
             guruh_val = ""
         if guruh_val.endswith(".0"):

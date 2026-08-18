@@ -1532,10 +1532,8 @@ const ATLAS = {
         list.sort((a, b) => {
           const gA = (a.st.guruhi || '').toString().trim();
           const gB = (b.st.guruhi || '').toString().trim();
-          const numA = parseInt(gA.replace(/\D/g, '')) || 0;
-          const numB = parseInt(gB.replace(/\D/g, '')) || 0;
-          if (numA !== numB) return numA - numB;
-          if (gA !== gB) return gA.localeCompare(gB);
+          const comp = gA.localeCompare(gB, undefined, { numeric: true, sensitivity: 'base' });
+          if (comp !== 0) return comp;
           return (a.st.fio || '').localeCompare(b.st.fio || '');
         });
         return list;
@@ -1588,7 +1586,7 @@ const ATLAS = {
             <tr>
               <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${globalIdx + 1}.</td>
               <td>
-                <input type="text" class="survey-input-cell st-input-grp" data-idx="${origIdx}" value="${st.guruhi || ''}" placeholder="201">
+                <input type="text" class="survey-input-cell st-input-grp" data-idx="${origIdx}" value="${st.guruhi || ''}" placeholder="25-16">
               </td>
               <td>
                 <input type="text" class="survey-input-cell st-input-fio" data-idx="${origIdx}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
@@ -1668,9 +1666,10 @@ const ATLAS = {
           if (json?.success) {
             this.toast(json.message || "Excel ma'lumotlari muvaffaqiyatli yuklandi!", "success");
             surveyStudents = json.students || [];
-            renderSemesterDashboard();
+            updateSurveyTable();
+            setSaveStatus("Saqlandi", 'success');
           } else {
-            alert(json?.error || "Excel yuklashda xatolik yuz berdi.");
+            alert("Xatolik: " + (json?.error || "Faylni o'qishda xatolik"));
           }
         } catch (err) {
           alert("Server bilan aloqada xatolik: " + err.message);
@@ -1680,8 +1679,13 @@ const ATLAS = {
 
       // Add Row
       document.getElementById('btn-add-survey-row').addEventListener('click', () => {
+        let defG = '25-16';
+        if (folderPath[2]?.name) {
+          const m = folderPath[2].name.match(/(\d{1,4}[-\/\_]\d{1,4}|\d{2,4}[a-zA-Z]?)/);
+          if (m) defG = m[1];
+        }
         surveyStudents.push({
-          guruhi: folderPath[2]?.name ? folderPath[2].name.split('-')[0].replace(/\D/g, '') : '201',
+          guruhi: defG,
           fio: '',
           tumani: standardDistricts[0],
           start_date: '08.06.2026',
@@ -1720,12 +1724,12 @@ const ATLAS = {
           <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:10px;line-height:1.5;">
             Har bir qatorga <b>Guruh # F.I.SH # Tuman</b> ko'rinishida yoki to'g'ridan-to'g'ri <b>Exceldan nusxalab</b> qo'ying:
             <div style="background:rgba(0,0,0,0.35);padding:8px 12px;border-radius:6px;color:#34d399;font-family:monospace;margin-top:6px;font-size:12px;border:1px solid rgba(52,211,153,0.2);">
-              201 # Rahmatova Shaxnoza # Shahrisabz shahar<br>
-              202 # Asraliyev Asilbek # Kitob tuman<br>
-              203 # Nazarova Dilnoza # Yakkabog' tuman
+              25-16 # Rahmatova Shaxnoza # Shahrisabz shahar<br>
+              25-17 # Asraliyev Asilbek # Kitob tuman<br>
+              25-18 # Nazarova Dilnoza # Yakkabog' tuman
             </div>
           </div>
-          <textarea id="modal-bulk-text" class="textarea-control" style="height:190px;font-family:monospace;font-size:12.5px;width:100%;resize:vertical;" placeholder="201 # Rahmatova Shaxnoza # Shahrisabz shahar&#10;202 # Asraliyev Asilbek # Kitob tuman"></textarea>
+          <textarea id="modal-bulk-text" class="textarea-control" style="height:190px;font-family:monospace;font-size:12.5px;width:100%;resize:vertical;" placeholder="25-16 # Rahmatova Shaxnoza # Shahrisabz shahar&#10;25-17 # Asraliyev Asilbek # Kitob tuman"></textarea>
           <div class="modal-footer" style="margin-top:16px;">
             <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
             <button class="btn-primary" id="btn-apply-bulk-text">Jadvalga Joylash</button>
@@ -1738,46 +1742,58 @@ const ATLAS = {
           const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
           const parsed = [];
 
+          let folderDefaultG = '25-16';
+          if (folderPath[2]?.name) {
+            const m = folderPath[2].name.match(/(\d{1,4}[-\/\_]\d{1,4}|\d{2,4}[a-zA-Z]?)/);
+            if (m) folderDefaultG = m[1];
+          }
+
+          const isGroupToken = (val) => /^(\d{1,4}[-\/\_]\d{1,4}|\d{2,4}[a-zA-Z]?(-guruh)?|[A-Za-z0-9\-_]{2,10})$/i.test(val.trim());
+          const isRowNumber = (val) => /^\d{1,4}[\.\)]?$/.test(val.trim());
+
           lines.forEach(line => {
             if (!line) return;
-            let g = '201', f = '', tum = 'Shahrisabz shahar';
+            let g = folderDefaultG, f = '', tum = 'Shahrisabz shahar';
 
             if (line.includes('\t')) {
               // Exceldan to'g'ridan-to'g'ri nusxalangan qatorlar (Tab separated)
               const p = line.split('\t').map(x => x.trim()).filter(x => x);
               if (p.length >= 4) {
-                if (/^\d{1,3}$/.test(p[0]) && /^\d{2,4}/.test(p[1])) {
+                if (isRowNumber(p[0]) && isGroupToken(p[1])) {
                   g = p[1]; f = p[2]; tum = p[3];
-                } else {
+                } else if (isGroupToken(p[0])) {
                   g = p[0]; f = p[1]; tum = p[2];
+                } else {
+                  f = p[1]; tum = p[2];
                 }
               } else if (p.length === 3) {
-                if (/^\d{1,3}$/.test(p[0]) && /^\d{2,4}/.test(p[1])) {
-                  g = p[1]; f = p[2]; tum = p[3];
-                } else {
+                if (isRowNumber(p[0]) && isGroupToken(p[1])) {
+                  g = p[1]; f = p[2];
+                } else if (isGroupToken(p[0])) {
                   g = p[0]; f = p[1]; tum = p[2];
+                } else if (isRowNumber(p[0])) {
+                  f = p[1]; tum = p[2];
+                } else {
+                  f = p[0]; tum = p[1];
                 }
               } else if (p.length === 2) {
-                if (/^\d{2,4}/.test(p[0])) { g = p[0]; f = p[1]; }
+                if (isGroupToken(p[0])) { g = p[0]; f = p[1]; }
+                else if (isRowNumber(p[0])) { f = p[1]; }
                 else { f = p[0]; tum = p[1]; }
               } else {
                 f = p[0];
               }
-            } else if (line.includes('#')) {
-              const cleanLine = line.replace(/^\d+[\.\)\-]\s*/, '').trim();
-              const p = cleanLine.split('#').map(x => x.trim()).filter(x => x);
+            } else if (line.includes('#') || line.includes(';')) {
+              const cleanLine = line.replace(/^\d+\s*[\.\)]\s+/, '').trim();
+              const p = cleanLine.split(/[#;]/).map(x => x.trim()).filter(x => x);
               if (p.length >= 3) { g = p[0]; f = p[1]; tum = p[2]; }
-              else if (p.length === 2) { g = p[0]; f = p[1]; }
-              else { f = p[0]; }
-            } else if (line.includes(';')) {
-              const cleanLine = line.replace(/^\d+[\.\)\-]\s*/, '').trim();
-              const p = cleanLine.split(';').map(x => x.trim()).filter(x => x);
-              if (p.length >= 3) { g = p[0]; f = p[1]; tum = p[2]; }
-              else if (p.length === 2) { g = p[0]; f = p[1]; }
-              else { f = p[0]; }
+              else if (p.length === 2) {
+                if (isGroupToken(p[0])) { g = p[0]; f = p[1]; }
+                else { f = p[0]; tum = p[1]; }
+              } else { f = p[0]; }
             } else {
-              const cleanLine = line.replace(/^\d+[\.\)\-]\s*/, '').trim();
-              const m = cleanLine.match(/^(\d{2,4})\s+(.+)$/);
+              const cleanLine = line.replace(/^\d+\s*[\.\)]\s+/, '').trim();
+              const m = cleanLine.match(/^(\d{1,4}[-\/\_]\d{1,4}|\d{2,4}[a-zA-Z]?)\s+(.+)$/);
               if (m) {
                 g = m[1];
                 f = m[2];
