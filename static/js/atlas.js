@@ -1453,13 +1453,11 @@ const ATLAS = {
               <thead>
                 <tr>
                   <th style="width:36px;text-align:center;">T/r</th>
-                  <th style="width:90px;">Guruhi</th>
+                  <th style="width:100px;">Guruhi</th>
                   <th>Talabaning F.I.SH</th>
-                  <th style="width:170px;">Amaliyot Tumani</th>
-                  <th style="width:110px;">Boshlanishi</th>
-                  <th style="width:110px;">Tugashi</th>
-                  <th style="width:130px;">Telefon</th>
-                  <th style="width:180px;">Muassasa / Shifoxona</th>
+                  <th style="width:200px;">Amaliyot Tumani</th>
+                  <th style="width:130px;">Boshlanishi</th>
+                  <th style="width:130px;">Tugashi</th>
                   <th style="width:40px;text-align:center;"></th>
                 </tr>
               </thead>
@@ -1506,12 +1504,6 @@ const ATLAS = {
             <td>
               <input type="text" class="survey-input-cell st-input-end" data-idx="${i}" value="${st.end_date || '06.07.2026'}">
             </td>
-            <td>
-              <input type="text" class="survey-input-cell st-input-phone" data-idx="${i}" value="${st.phone || ''}" placeholder="+99890...">
-            </td>
-            <td>
-              <input type="text" class="survey-input-cell st-input-org" data-idx="${i}" value="${st.organization || ''}" placeholder="Tuman TTB Markaziy Shifoxonasi">
-            </td>
             <td style="text-align:center;">
               <button type="button" class="tab-btn-mini danger btn-del-survey-row" data-idx="${i}" title="Qatorni o'chirish">🗑️</button>
             </td>
@@ -1524,8 +1516,6 @@ const ATLAS = {
         tbody.querySelectorAll('.st-input-tum').forEach(el => el.addEventListener('change', e => surveyStudents[parseInt(e.target.dataset.idx)].tumani = e.target.value));
         tbody.querySelectorAll('.st-input-start').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].start_date = e.target.value.trim()));
         tbody.querySelectorAll('.st-input-end').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].end_date = e.target.value.trim()));
-        tbody.querySelectorAll('.st-input-phone').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].phone = e.target.value.trim()));
-        tbody.querySelectorAll('.st-input-org').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].organization = e.target.value));
 
         tbody.querySelectorAll('.btn-del-survey-row').forEach(b => {
           b.addEventListener('click', e => {

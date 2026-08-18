@@ -290,7 +290,7 @@ def generate_sample_survey_excel(output_path: str = None) -> bytes:
     title_cell.alignment = Alignment(horizontal="center", vertical="center")
     ws.row_dimensions[1].height = 26
 
-    ws.merge_cells("A2:H2")
+    ws.merge_cells("A2:F2")
     note_cell = ws["A2"]
     note_cell.value = "Eslatma: 'Amaliyot Tumani' ustuniga tuman nomini aniq yozing (Shahrisabz shahar, Kitob tuman, Yakkabog' tuman, Chiroqchi tuman, Qamashi tuman, Shahrisabz tuman va h.k.)."
     note_cell.font = FONT_NOTE
@@ -303,9 +303,7 @@ def generate_sample_survey_excel(output_path: str = None) -> bytes:
         "Talabaning F.I.SH",
         "Amaliyot Tumani",
         "Boshlanish sanasi",
-        "Tugash sanasi",
-        "Telefon raqami",
-        "Amaliyot muassasasi / Shifoxona"
+        "Tugash sanasi"
     ]
 
     ws.row_dimensions[4].height = 28
@@ -318,15 +316,15 @@ def generate_sample_survey_excel(output_path: str = None) -> bytes:
         cell.border = HEADER_BORDER
 
     sample_rows = [
-        (1, "201", "Rahmatova Shaxnoza Sherzod qizi", "Shahrisabz shahar", "08.06.2026", "06.07.2026", "+998901234567", "Shahrisabz ShTTB Markaziy Shifoxonasi"),
-        (2, "201", "Botirova Gulbahor Olimovna", "Shahrisabz shahar", "08.06.2026", "06.07.2026", "+998912345678", "Shahrisabz ShTTB 1-sonli Poliklinika"),
-        (3, "202", "Asraliyev Asilbek Bekmurod o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026", "+998933456789", "Kitob TTB Markaziy Shifoxonasi"),
-        (4, "202", "Meyliyev Ruslan Rustam o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026", "+998974567890", "Kitob TTB Shoshilinch Bo'limi"),
-        (5, "203", "Nazarova Dilnoza Farxod qizi", "Yakkabog' tuman", "08.06.2026", "06.07.2026", "+998995678901", "Yakkabog' TTB Markaziy Poliklinikasi"),
-        (6, "203", "Qodirov Jasur Anvar o'g'li", "Yakkabog' tuman", "08.06.2026", "06.07.2026", "+998906789012", "Yakkabog' TTB 2-sonli Shifoxonasi"),
-        (7, "204", "Eshmurodov Bobur Shavkat o'g'li", "Chiroqchi tuman", "08.06.2026", "06.07.2026", "+998917890123", "Chiroqchi TTB Markaziy Shifoxonasi"),
-        (8, "204", "Xoliqova Madina Zafar qizi", "Qamashi tuman", "08.06.2026", "06.07.2026", "+998988901234", "Qamashi TTB Markaziy Shifoxonasi"),
-        (9, "204", "Jumanov Sardor Bahodir o'g'li", "Shahrisabz tuman", "08.06.2026", "06.07.2026", "+998909012345", "Shahrisabz Tuman TTB Shifoxonasi")
+        (1, "201", "Rahmatova Shaxnoza Sherzod qizi", "Shahrisabz shahar", "08.06.2026", "06.07.2026"),
+        (2, "201", "Botirova Gulbahor Olimovna", "Shahrisabz shahar", "08.06.2026", "06.07.2026"),
+        (3, "202", "Asraliyev Asilbek Bekmurod o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026"),
+        (4, "202", "Meyliyev Ruslan Rustam o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026"),
+        (5, "203", "Nazarova Dilnoza Farxod qizi", "Yakkabog' tuman", "08.06.2026", "06.07.2026"),
+        (6, "203", "Qodirov Jasur Anvar o'g'li", "Yakkabog' tuman", "08.06.2026", "06.07.2026"),
+        (7, "204", "Eshmurodov Bobur Shavkat o'g'li", "Chiroqchi tuman", "08.06.2026", "06.07.2026"),
+        (8, "204", "Xoliqova Madina Zafar qizi", "Qamashi tuman", "08.06.2026", "06.07.2026"),
+        (9, "204", "Jumanov Sardor Bahodir o'g'li", "Shahrisabz tuman", "08.06.2026", "06.07.2026")
     ]
 
     for r_idx, row_data in enumerate(sample_rows, 5):
@@ -342,7 +340,7 @@ def generate_sample_survey_excel(output_path: str = None) -> bytes:
                 cell.fill = row_fill
             cell.border = THIN_BORDER
 
-            if c_idx in [1, 2, 5, 6, 7]:
+            if c_idx in [1, 2, 5, 6]:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
             elif c_idx == 4:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -353,11 +351,9 @@ def generate_sample_survey_excel(output_path: str = None) -> bytes:
         "A": 7,
         "B": 12,
         "C": 36,
-        "D": 22,
+        "D": 24,
         "E": 18,
-        "F": 18,
-        "G": 18,
-        "H": 36
+        "F": 18
     }
     for col_letter, width in col_widths.items():
         ws.column_dimensions[col_letter].width = width
