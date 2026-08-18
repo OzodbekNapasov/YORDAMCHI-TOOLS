@@ -1482,6 +1482,9 @@ const ATLAS = {
 
       // Auto-save logic
       let autoSaveTimer = null;
+      let isSaving = false;
+      let pendingSave = false;
+
       const setSaveStatus = (text, type = 'success') => {
         const badge = document.getElementById('survey-save-status');
         if (!badge) return;
@@ -1509,6 +1512,11 @@ const ATLAS = {
         setSaveStatus("Saqlanmoqda...", 'saving');
         
         autoSaveTimer = setTimeout(async () => {
+          if (isSaving) {
+            pendingSave = true;
+            return;
+          }
+          isSaving = true;
           try {
             const valid = surveyStudents.filter(s => s.fio && s.fio.trim());
             const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/survey`, 'POST', {
@@ -1522,6 +1530,12 @@ const ATLAS = {
             }
           } catch (e) {
             setSaveStatus("Xatolik", 'error');
+          } finally {
+            isSaving = false;
+            if (pendingSave) {
+              pendingSave = false;
+              triggerAutoSave(400);
+            }
           }
         }, debounceMs);
       };

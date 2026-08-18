@@ -18,14 +18,20 @@ else:
 
 
 def get_db_connection():
-    """Ma'lumotlar bazasiga ulanish (dictionary cursor bilan)"""
+    """Ma'lumotlar bazasiga ulanish (dictionary cursor va WAL rejimida)"""
     if is_serverless and not os.path.exists(DB_PATH):
         try:
             init_db()
         except Exception:
             pass
-    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=60000;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+    except Exception:
+        pass
     return conn
 
 
@@ -1261,46 +1267,60 @@ def _sync_amaliyot_store_to_supabase(entity_type: str = "all"):
         supa_url, supa_key = _get_supabase_credentials()
         if not (supa_url and supa_key):
             return
+
+        all_f = None
+        all_s = None
+        all_o = None
+
+        # SQLite operatsiyasini tez bajarib, darhol ulanishni yopish (database lock bo'lmasligi uchun)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            if entity_type in ("folders", "all"):
+                cursor.execute("SELECT * FROM amaliyot_folders ORDER BY id ASC")
+                all_f = [dict(r) for r in cursor.fetchall()]
+
+            if entity_type in ("surveys", "all"):
+                cursor.execute("SELECT * FROM amaliyot_surveys ORDER BY id ASC")
+                all_s = [dict(r) for r in cursor.fetchall()]
+
+            if entity_type in ("orders", "all"):
+                cursor.execute("SELECT * FROM amaliyot_orders ORDER BY id ASC")
+                all_o = [dict(r) for r in cursor.fetchall()]
+        finally:
+            conn.close()
+
         headers = {
             "apikey": supa_key,
             "Authorization": f"Bearer {supa_key}",
             "Content-Type": "application/json",
             "Prefer": "resolution=merge-duplicates"
         }
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        if entity_type in ("folders", "all"):
-            cursor.execute("SELECT * FROM amaliyot_folders ORDER BY id ASC")
-            all_f = [dict(r) for r in cursor.fetchall()]
+        if all_f is not None:
             requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json={
                 "key": "amaliyot_folders_store",
                 "value": json.dumps(all_f, ensure_ascii=False),
                 "category": "amaliyot",
                 "description": "Amaliyot papkalari to'liq arxivi"
-            }, timeout=5)
+            }, timeout=4)
 
-        if entity_type in ("surveys", "all"):
-            cursor.execute("SELECT * FROM amaliyot_surveys ORDER BY id ASC")
-            all_s = [dict(r) for r in cursor.fetchall()]
+        if all_s is not None:
             requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json={
                 "key": "amaliyot_surveys_store",
                 "value": json.dumps(all_s, ensure_ascii=False),
                 "category": "amaliyot",
                 "description": "Amaliyot so'rovnomalari to'liq arxivi"
-            }, timeout=5)
+            }, timeout=4)
 
-        if entity_type in ("orders", "all"):
-            cursor.execute("SELECT * FROM amaliyot_orders ORDER BY id ASC")
-            all_o = [dict(r) for r in cursor.fetchall()]
+        if all_o is not None:
             requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json={
                 "key": "amaliyot_orders_store",
                 "value": json.dumps(all_o, ensure_ascii=False),
                 "category": "amaliyot",
                 "description": "Amaliyot buyruqlari to'liq arxivi"
-            }, timeout=5)
+            }, timeout=4)
 
-        conn.close()
     except Exception as e:
         print(f"Sync amaliyot store to supabase error: {e}")
 
@@ -1616,13 +1636,14 @@ def delete_amaliyot_folder(folder_id: int):
             cursor.execute("DELETE FROM amaliyot_orders WHERE folder_id = ?", (fid,))
             cursor.execute("DELETE FROM amaliyot_folders WHERE id = ?", (fid,))
 
-            # Supabase Cloud-dan o'chirish
+        conn.commit()
+        conn.close()
+
+        # Supabase Cloud-dan o'chirish (Endi SQLite yopilgan)
+        for fid in to_delete_ids:
             _sync_supabase_async("atlas_amaliyot_surveys", {}, method="DELETE", params=f"?folder_id=eq.{fid}")
             _sync_supabase_async("atlas_amaliyot_orders", {}, method="DELETE", params=f"?folder_id=eq.{fid}")
             _sync_supabase_async("atlas_amaliyot_folders", {}, method="DELETE", params=f"?id=eq.{fid}")
-
-        conn.commit()
-        conn.close()
 
         _sync_amaliyot_store_to_supabase("all")
         return {"success": True, "deleted_count": len(to_delete_ids)}
@@ -1668,7 +1689,6 @@ def save_amaliyot_surveys(folder_id: int, students_list: list, replace_all: bool
 
         if replace_all:
             cursor.execute("DELETE FROM amaliyot_surveys WHERE folder_id = ?", (folder_id,))
-            _sync_supabase_async("atlas_amaliyot_surveys", {}, method="DELETE", params=f"?folder_id=eq.{folder_id}")
 
         saved_students = []
         for st in students_list:
@@ -1690,7 +1710,6 @@ def save_amaliyot_surveys(folder_id: int, students_list: list, replace_all: bool
             new_id = cursor.lastrowid
             
             saved_students.append({
-                "id": new_id,
                 "folder_id": folder_id,
                 "guruhi": guruhi,
                 "fio": fio,
@@ -1705,10 +1724,14 @@ def save_amaliyot_surveys(folder_id: int, students_list: list, replace_all: bool
         conn.commit()
         conn.close()
 
-        # Supabase Cloud ga to'liq sinxronlash
-        _sync_amaliyot_store_to_supabase("surveys")
+        # Supabase Cloud ga to'liq sinxronlash (Endi SQLite yopilgan, lock bo'lmaydi)
+        if replace_all:
+            _sync_supabase_async("atlas_amaliyot_surveys", {}, method="DELETE", params=f"?folder_id=eq.{folder_id}")
+
         if saved_students:
-            _sync_supabase_async("atlas_amaliyot_surveys", saved_students, method="POST", params="?on_conflict=id")
+            _sync_supabase_async("atlas_amaliyot_surveys", saved_students, method="POST")
+
+        _sync_amaliyot_store_to_supabase("surveys")
 
         return {"success": True, "count": len(saved_students)}
     except Exception as e:
