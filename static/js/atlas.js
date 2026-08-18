@@ -1409,7 +1409,10 @@ const ATLAS = {
                 📋 Matndan Nusxalash
               </button>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div id="survey-save-status" style="font-size:12px;color:rgba(52,211,153,0.95);display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(16,185,129,0.12);border-radius:6px;border:1px solid rgba(52,211,153,0.25);transition:all 0.3s ease;">
+                🟢 Barcha o'zgarishlar saqlangan
+              </div>
               <button type="button" class="btn-secondary btn-sm" id="btn-add-survey-row">
                 + Qator Qo'shish
               </button>
@@ -1465,6 +1468,52 @@ const ATLAS = {
         </div>
       `;
 
+      // Auto-save logic
+      let autoSaveTimer = null;
+      const setSaveStatus = (text, type = 'success') => {
+        const badge = document.getElementById('survey-save-status');
+        if (!badge) return;
+        if (type === 'saving') {
+          badge.innerHTML = `🟡 Saqlanmoqda...`;
+          badge.style.color = '#fbbf24';
+          badge.style.background = 'rgba(251,191,36,0.15)';
+          badge.style.borderColor = 'rgba(251,191,36,0.3)';
+        } else if (type === 'error') {
+          badge.innerHTML = `🔴 Xatolik (qayta saqlanadi)`;
+          badge.style.color = '#f87171';
+          badge.style.background = 'rgba(239,68,68,0.15)';
+          badge.style.borderColor = 'rgba(239,68,68,0.3)';
+        } else {
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          badge.innerHTML = `🟢 Saqlandi (${timeStr})`;
+          badge.style.color = '#34d399';
+          badge.style.background = 'rgba(16,185,129,0.12)';
+          badge.style.borderColor = 'rgba(52,211,153,0.25)';
+        }
+      };
+
+      const triggerAutoSave = (debounceMs = 1200) => {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        setSaveStatus("Saqlanmoqda...", 'saving');
+        
+        autoSaveTimer = setTimeout(async () => {
+          try {
+            const valid = surveyStudents.filter(s => s.fio && s.fio.trim());
+            const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/survey`, 'POST', {
+              students: valid,
+              replace_all: true
+            });
+            if (res?.success) {
+              setSaveStatus("Saqlandi", 'success');
+            } else {
+              setSaveStatus("Xatolik", 'error');
+            }
+          } catch (e) {
+            setSaveStatus("Xatolik", 'error');
+          }
+        }, debounceMs);
+      };
+
       // Render Table Rows
       const updateSurveyTable = () => {
         const tbody = document.getElementById('survey-tbody');
@@ -1499,18 +1548,52 @@ const ATLAS = {
           </tr>
         `).join('');
 
-        // Cell listeners
-        tbody.querySelectorAll('.st-input-grp').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].guruhi = e.target.value.trim()));
-        tbody.querySelectorAll('.st-input-fio').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].fio = e.target.value));
-        tbody.querySelectorAll('.st-input-tum').forEach(el => el.addEventListener('change', e => surveyStudents[parseInt(e.target.dataset.idx)].tumani = e.target.value));
-        tbody.querySelectorAll('.st-input-start').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].start_date = e.target.value.trim()));
-        tbody.querySelectorAll('.st-input-end').forEach(el => el.addEventListener('input', e => surveyStudents[parseInt(e.target.dataset.idx)].end_date = e.target.value.trim()));
+        // Cell listeners with live auto-save
+        tbody.querySelectorAll('.st-input-grp').forEach(el => {
+          el.addEventListener('input', e => {
+            surveyStudents[parseInt(e.target.dataset.idx)].guruhi = e.target.value.trim();
+            triggerAutoSave(1200);
+          });
+          el.addEventListener('blur', () => triggerAutoSave(0));
+        });
+
+        tbody.querySelectorAll('.st-input-fio').forEach(el => {
+          el.addEventListener('input', e => {
+            surveyStudents[parseInt(e.target.dataset.idx)].fio = e.target.value;
+            triggerAutoSave(1200);
+          });
+          el.addEventListener('blur', () => triggerAutoSave(0));
+        });
+
+        tbody.querySelectorAll('.st-input-tum').forEach(el => {
+          el.addEventListener('change', e => {
+            surveyStudents[parseInt(e.target.dataset.idx)].tumani = e.target.value;
+            triggerAutoSave(0);
+          });
+        });
+
+        tbody.querySelectorAll('.st-input-start').forEach(el => {
+          el.addEventListener('input', e => {
+            surveyStudents[parseInt(e.target.dataset.idx)].start_date = e.target.value.trim();
+            triggerAutoSave(1200);
+          });
+          el.addEventListener('blur', () => triggerAutoSave(0));
+        });
+
+        tbody.querySelectorAll('.st-input-end').forEach(el => {
+          el.addEventListener('input', e => {
+            surveyStudents[parseInt(e.target.dataset.idx)].end_date = e.target.value.trim();
+            triggerAutoSave(1200);
+          });
+          el.addEventListener('blur', () => triggerAutoSave(0));
+        });
 
         tbody.querySelectorAll('.btn-del-survey-row').forEach(b => {
           b.addEventListener('click', e => {
             const idx = parseInt(e.target.dataset.idx);
             surveyStudents.splice(idx, 1);
             updateSurveyTable();
+            triggerAutoSave(0);
           });
         });
       };
@@ -1560,19 +1643,23 @@ const ATLAS = {
           organization: ''
         });
         updateSurveyTable();
+        triggerAutoSave(0);
       });
 
-      // Save Survey
+      // Save Survey Manual
       const handleSaveSurvey = async () => {
+        setSaveStatus("Saqlanmoqda...", 'saving');
         const valid = surveyStudents.filter(s => s.fio && s.fio.trim());
         const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/survey`, 'POST', {
           students: valid,
           replace_all: true
         });
         if (res?.success) {
-          this.toast("So'rovnoma muvaffaqiyatli saqlandi!", "success");
+          setSaveStatus("Saqlandi", 'success');
+          this.toast("Barcha ma'lumotlar bazada muvaffaqiyatli saqlandi!", "success");
           renderSemesterDashboard();
         } else {
+          setSaveStatus("Xatolik", 'error');
           alert(res?.error || "Saqlashda xatolik yuz berdi");
         }
       };
@@ -1669,7 +1756,8 @@ const ATLAS = {
             surveyStudents = [...surveyStudents, ...parsed];
             updateSurveyTable();
             this.closeModal();
-            this.toast(`${parsed.length} ta talaba ro'yxatga qo'shildi!`, "success");
+            triggerAutoSave(0);
+            this.toast(`${parsed.length} ta talaba ro'yxatga qo'shildi va saqlandi!`, "success");
           }
         });
       });
