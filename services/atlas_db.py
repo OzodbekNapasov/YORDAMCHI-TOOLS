@@ -1327,7 +1327,7 @@ def _sync_amaliyot_store_to_supabase(entity_type: str = "all"):
 
 def _restore_amaliyot_from_supabase_store():
     """
-    Supabase Cloud `atlas_settings` va `atlas_amaliyot_*` jadvallaridan barcha ma'lumotlarni o'qib, SQLite ga yuklash.
+    Supabase Cloud `atlas_amaliyot_*` jadvallaridan barcha ma'lumotlarni o'qib, SQLite ga yuklash.
     """
     try:
         import requests
@@ -1342,84 +1342,95 @@ def _restore_amaliyot_from_supabase_store():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 1. To'g'ridan-to'g'ri atlas_amaliyot_folders jadvalidan o'qish
+        restored_folders = False
+        restored_surveys = False
+        restored_orders = False
+
+        # 1. Asosiy: atlas_amaliyot_folders jadvalidan o'qish
         try:
-            r_folders = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_folders?select=*&order=order_num.asc,id.asc", headers=headers, timeout=4)
+            r_folders = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_folders?select=*&order=order_num.asc,id.asc", headers=headers, timeout=5)
             if r_folders.status_code == 200:
                 cloud_folders = r_folders.json()
                 if cloud_folders:
+                    restored_folders = True
                     for cf in cloud_folders:
                         extra_str = json.dumps(cf.get("extra_data") or {}) if isinstance(cf.get("extra_data"), dict) else str(cf.get("extra_data") or "{}")
                         cursor.execute("""
                         INSERT OR REPLACE INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num, created_at)
                         VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
                         """, (cf.get("id"), cf.get("parent_id"), cf.get("folder_type"), cf.get("name"), extra_str, cf.get("order_num", 0), cf.get("created_at")))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Restore folders table error: {e}")
 
-        # 2. To'g'ridan-to'g'ri atlas_amaliyot_surveys jadvalidan o'qish
+        # 2. Asosiy: atlas_amaliyot_surveys jadvalidan o'qish
         try:
-            r_surveys = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_surveys?select=*&order=id.asc", headers=headers, timeout=4)
+            r_surveys = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_surveys?select=*&order=id.asc", headers=headers, timeout=5)
             if r_surveys.status_code == 200:
                 cloud_surveys = r_surveys.json()
                 if cloud_surveys:
+                    restored_surveys = True
                     for cs in cloud_surveys:
                         cursor.execute("""
                         INSERT OR REPLACE INTO amaliyot_surveys (id, folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes, created_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
                         """, (cs.get("id"), cs.get("folder_id"), cs.get("guruhi"), cs.get("fio"), cs.get("tumani"), cs.get("start_date"), cs.get("end_date"), cs.get("phone"), cs.get("organization"), cs.get("notes"), cs.get("created_at")))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Restore surveys table error: {e}")
 
-        # 3. To'g'ridan-to'g'ri atlas_amaliyot_orders jadvalidan o'qish
+        # 3. Asosiy: atlas_amaliyot_orders jadvalidan o'qish
         try:
-            r_orders = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_orders?select=*&order=id.desc", headers=headers, timeout=4)
+            r_orders = requests.get(f"{supa_url}/rest/v1/atlas_amaliyot_orders?select=*&order=id.desc", headers=headers, timeout=5)
             if r_orders.status_code == 200:
                 cloud_orders = r_orders.json()
                 if cloud_orders:
+                    restored_orders = True
                     for co in cloud_orders:
                         st_json = json.dumps(co.get("students") or []) if isinstance(co.get("students"), list) else str(co.get("students_json") or "[]")
                         cursor.execute("""
                         INSERT OR REPLACE INTO amaliyot_orders (id, folder_id, tumani, buyruq_raqami, buyruq_sanasi, shu_tuman_shifokori, oquv_yili, kursi, guruhlar, amaliyot_muddati, start_date, end_date, docx_path, students_count, students_json, created_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
                         """, (co.get("id"), co.get("folder_id"), co.get("tumani"), co.get("buyruq_raqami"), co.get("buyruq_sanasi"), co.get("shu_tuman_shifokori"), co.get("oquv_yili"), co.get("kursi"), co.get("guruhlar"), co.get("amaliyot_muddati"), co.get("start_date"), co.get("end_date"), co.get("docx_path"), co.get("students_count", 0), st_json, co.get("created_at")))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Restore orders table error: {e}")
 
-        # 4. atlas_settings store zaxirasidan ham tekshirish
-        resp = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=in.(amaliyot_folders_store,amaliyot_surveys_store,amaliyot_orders_store)&select=key,value", headers=headers, timeout=4)
-        if resp.status_code == 200:
-            items = resp.json() or []
-            for item in items:
-                k = item.get("key")
-                val = item.get("value")
-                if not val:
-                    continue
-                try:
-                    data = json.loads(val)
-                except Exception:
-                    continue
+        # 4. Faqat zaxira sifatida: agar maxsus jadvallarda ma'lumot topilmasa atlas_settings dan o'qish
+        if not (restored_folders and restored_surveys and restored_orders):
+            try:
+                resp = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=in.(amaliyot_folders_store,amaliyot_surveys_store,amaliyot_orders_store)&select=key,value", headers=headers, timeout=4)
+                if resp.status_code == 200:
+                    items = resp.json() or []
+                    for item in items:
+                        k = item.get("key")
+                        val = item.get("value")
+                        if not val:
+                            continue
+                        try:
+                            data = json.loads(val)
+                        except Exception:
+                            continue
 
-                if k == "amaliyot_folders_store" and isinstance(data, list):
-                    for f in data:
-                        cursor.execute("""
-                        INSERT OR REPLACE INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
-                        """, (f.get("id"), f.get("parent_id"), f.get("folder_type"), f.get("name"), f.get("extra_data", "{}"), f.get("order_num", 0), f.get("created_at")))
+                        if k == "amaliyot_folders_store" and not restored_folders and isinstance(data, list):
+                            for f in data:
+                                cursor.execute("""
+                                INSERT OR REPLACE INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num, created_at)
+                                VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                                """, (f.get("id"), f.get("parent_id"), f.get("folder_type"), f.get("name"), f.get("extra_data", "{}"), f.get("order_num", 0), f.get("created_at")))
 
-                elif k == "amaliyot_surveys_store" and isinstance(data, list):
-                    for s in data:
-                        cursor.execute("""
-                        INSERT OR REPLACE INTO amaliyot_surveys (id, folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
-                        """, (s.get("id"), s.get("folder_id"), s.get("guruhi"), s.get("fio"), s.get("tumani"), s.get("start_date"), s.get("end_date"), s.get("phone"), s.get("organization"), s.get("notes"), s.get("created_at")))
+                        elif k == "amaliyot_surveys_store" and not restored_surveys and isinstance(data, list):
+                            for s in data:
+                                cursor.execute("""
+                                INSERT OR REPLACE INTO amaliyot_surveys (id, folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization, notes, created_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                                """, (s.get("id"), s.get("folder_id"), s.get("guruhi"), s.get("fio"), s.get("tumani"), s.get("start_date"), s.get("end_date"), s.get("phone"), s.get("organization"), s.get("notes"), s.get("created_at")))
 
-                elif k == "amaliyot_orders_store" and isinstance(data, list):
-                    for o in data:
-                        cursor.execute("""
-                        INSERT OR REPLACE INTO amaliyot_orders (id, folder_id, tumani, buyruq_raqami, buyruq_sanasi, shu_tuman_shifokori, oquv_yili, kursi, guruhlar, amaliyot_muddati, start_date, end_date, docx_path, students_count, students_json, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
-                        """, (o.get("id"), o.get("folder_id"), o.get("tumani"), o.get("buyruq_raqami"), o.get("buyruq_sanasi"), o.get("shu_tuman_shifokori"), o.get("oquv_yili"), o.get("kursi"), o.get("guruhlar"), o.get("amaliyot_muddati"), o.get("start_date"), o.get("end_date"), o.get("docx_path"), o.get("students_count", 0), o.get("students_json", "[]"), o.get("created_at")))
+                        elif k == "amaliyot_orders_store" and not restored_orders and isinstance(data, list):
+                            for o in data:
+                                cursor.execute("""
+                                INSERT OR REPLACE INTO amaliyot_orders (id, folder_id, tumani, buyruq_raqami, buyruq_sanasi, shu_tuman_shifokori, oquv_yili, kursi, guruhlar, amaliyot_muddati, start_date, end_date, docx_path, students_count, students_json, created_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+                                """, (o.get("id"), o.get("folder_id"), o.get("tumani"), o.get("buyruq_raqami"), o.get("buyruq_sanasi"), o.get("shu_tuman_shifokori"), o.get("oquv_yili"), o.get("kursi"), o.get("guruhlar"), o.get("amaliyot_muddati"), o.get("start_date"), o.get("end_date"), o.get("docx_path"), o.get("students_count", 0), o.get("students_json", "[]"), o.get("created_at")))
+            except Exception as e:
+                print(f"Restore settings store error: {e}")
 
         conn.commit()
         conn.close()
