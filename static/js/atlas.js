@@ -38,6 +38,7 @@ const ATLAS = {
     eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
     eyeOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
     edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
     brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`
@@ -1150,49 +1151,43 @@ const ATLAS = {
         titleLabel = "Semestr Nomi";
       }
 
-      this.openModal(`
-        <div class="modal-header">
-          <h3>📁 Yangi ${getFolderTypeTitle(folderType)} Ochish</h3>
-          <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
+      this.openModal(`📁 Yangi ${getFolderTypeTitle(folderType)} Ochish`, `
+        <div class="form-group">
+          <label class="form-label">${titleLabel}</label>
+          <input type="text" id="modal-folder-name" class="input-control" placeholder="Masalan: ${defaultNamePlaceholder}">
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">${titleLabel}</label>
-            <input type="text" id="modal-folder-name" class="input-control" placeholder="Masalan: ${defaultNamePlaceholder}">
-          </div>
 
-          ${folderType === 'direction' ? `
+        ${folderType === 'direction' ? `
+          <div class="form-group">
+            <label class="form-label">Ta'lim Muddati</label>
+            <select id="modal-folder-duration" class="select-control">
+              <option value="3 yillik" selected>3 yillik</option>
+              <option value="2 yillik">2 yillik</option>
+            </select>
+          </div>
+        ` : ''}
+
+        ${folderType === 'semester' ? `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="form-group">
-              <label class="form-label">Ta'lim Muddati</label>
-              <select id="modal-folder-duration" class="select-control">
-                <option value="3 yillik" selected>3 yillik</option>
-                <option value="2 yillik">2 yillik</option>
+              <label class="form-label">Bosqich / Kursi</label>
+              <select id="modal-folder-kursi" class="select-control">
+                <option value="1" selected>1-kurs</option>
+                <option value="2">2-kurs</option>
+                <option value="3">3-kurs</option>
+                <option value="4">4-kurs</option>
               </select>
             </div>
-          ` : ''}
-
-          ${folderType === 'semester' ? `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div class="form-group">
-                <label class="form-label">Bosqich / Kursi</label>
-                <select id="modal-folder-kursi" class="select-control">
-                  <option value="1" selected>1-kurs</option>
-                  <option value="2">2-kurs</option>
-                  <option value="3">3-kurs</option>
-                  <option value="4">4-kurs</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Boshlanish Sanasi</label>
-                <input type="text" id="modal-folder-start" class="input-control" value="08.06.2026">
-              </div>
-            </div>
             <div class="form-group">
-              <label class="form-label">Tugash Sanasi</label>
-              <input type="text" id="modal-folder-end" class="input-control" value="06.07.2026">
+              <label class="form-label">Boshlanish Sanasi</label>
+              <input type="text" id="modal-folder-start" class="input-control" value="08.06.2026">
             </div>
-          ` : ''}
-        </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tugash Sanasi</label>
+            <input type="text" id="modal-folder-end" class="input-control" value="06.07.2026">
+          </div>
+        ` : ''}
         <div class="modal-footer">
           <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
           <button class="btn-primary" id="btn-save-modal-folder">Papkani Ochish</button>
@@ -1234,16 +1229,10 @@ const ATLAS = {
 
     // Modal: Edit Folder
     const openEditFolderModal = (fObj) => {
-      this.openModal(`
-        <div class="modal-header">
-          <h3>✏️ Papka Nomini Tahrirlash</h3>
-          <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">Papka Nomi</label>
-            <input type="text" id="modal-edit-folder-name" class="input-control" value="${fObj.name}">
-          </div>
+      this.openModal('✏️ Papka Nomini Tahrirlash', `
+        <div class="form-group">
+          <label class="form-label">Papka Nomi</label>
+          <input type="text" id="modal-edit-folder-name" class="input-control" value="${fObj.name}">
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
@@ -1593,23 +1582,17 @@ const ATLAS = {
 
       // Paste Bulk Text Modal
       document.getElementById('btn-paste-bulk-survey').addEventListener('click', () => {
-        this.openModal(`
-          <div class="modal-header">
-            <h3>📋 Talabalar Ro'yxatini Ommaviy Nusxalash</h3>
-            <button class="btn-icon" onclick="ATLAS.closeModal()">${this.icons.close}</button>
-          </div>
-          <div class="modal-body">
-            <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:8px;line-height:1.5;">
-              Har bir qatorga <b>Guruh # F.I.SH # Tuman</b> ko'rinishida nusxalab qo'ying:<br>
-              <span style="display:inline-block;background:rgba(0,0,0,0.4);padding:4px 8px;border-radius:4px;color:#34d399;font-family:monospace;margin-top:4px;">
-                201 # Rahmatova Shaxnoza # Shahrisabz shahar<br>
-                202 # Asraliyev Asilbek # Kitob tuman<br>
-                203 # Nazarova Dilnoza # Yakkabog' tuman
-              </span>
+        this.openModal("📋 Talabalar Ro'yxatini Ommaviy Nusxalash", `
+          <div style="font-size:12.5px;color:rgba(94,234,212,0.9);margin-bottom:10px;line-height:1.5;">
+            Har bir qatorga <b>Guruh # F.I.SH # Tuman</b> ko'rinishida yoki to'g'ridan-to'g'ri <b>Exceldan nusxalab</b> qo'ying:
+            <div style="background:rgba(0,0,0,0.35);padding:8px 12px;border-radius:6px;color:#34d399;font-family:monospace;margin-top:6px;font-size:12px;border:1px solid rgba(52,211,153,0.2);">
+              201 # Rahmatova Shaxnoza # Shahrisabz shahar<br>
+              202 # Asraliyev Asilbek # Kitob tuman<br>
+              203 # Nazarova Dilnoza # Yakkabog' tuman
             </div>
-            <textarea id="modal-bulk-text" class="textarea-control" style="height:200px;font-family:monospace;font-size:12.5px;" placeholder="201 # Rahmatova Shaxnoza # Shahrisabz shahar\n202 # Asraliyev Asilbek # Kitob tuman"></textarea>
           </div>
-          <div class="modal-footer">
+          <textarea id="modal-bulk-text" class="textarea-control" style="height:190px;font-family:monospace;font-size:12.5px;width:100%;resize:vertical;" placeholder="201 # Rahmatova Shaxnoza # Shahrisabz shahar&#10;202 # Asraliyev Asilbek # Kitob tuman"></textarea>
+          <div class="modal-footer" style="margin-top:16px;">
             <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
             <button class="btn-primary" id="btn-apply-bulk-text">Jadvalga Joylash</button>
           </div>
@@ -1622,22 +1605,51 @@ const ATLAS = {
           const parsed = [];
 
           lines.forEach(line => {
-            line = line.replace(/^\d+[\.\)\t\s]+/, '').trim();
             if (!line) return;
             let g = '201', f = '', tum = 'Shahrisabz shahar';
 
-            if (line.includes('#')) {
-              const p = line.split('#').map(x => x.trim()).filter(x => x);
+            if (line.includes('\t')) {
+              // Exceldan to'g'ridan-to'g'ri nusxalangan qatorlar (Tab separated)
+              const p = line.split('\t').map(x => x.trim()).filter(x => x);
+              if (p.length >= 4) {
+                if (/^\d{1,3}$/.test(p[0]) && /^\d{2,4}/.test(p[1])) {
+                  g = p[1]; f = p[2]; tum = p[3];
+                } else {
+                  g = p[0]; f = p[1]; tum = p[2];
+                }
+              } else if (p.length === 3) {
+                if (/^\d{1,3}$/.test(p[0]) && /^\d{2,4}/.test(p[1])) {
+                  g = p[1]; f = p[2];
+                } else {
+                  g = p[0]; f = p[1]; tum = p[2];
+                }
+              } else if (p.length === 2) {
+                if (/^\d{2,4}/.test(p[0])) { g = p[0]; f = p[1]; }
+                else { f = p[0]; tum = p[1]; }
+              } else {
+                f = p[0];
+              }
+            } else if (line.includes('#')) {
+              const cleanLine = line.replace(/^\d+[\.\)\-]\s*/, '').trim();
+              const p = cleanLine.split('#').map(x => x.trim()).filter(x => x);
               if (p.length >= 3) { g = p[0]; f = p[1]; tum = p[2]; }
               else if (p.length === 2) { g = p[0]; f = p[1]; }
               else { f = p[0]; }
-            } else if (line.includes('\t')) {
-              const p = line.split('\t').map(x => x.trim()).filter(x => x);
+            } else if (line.includes(';')) {
+              const cleanLine = line.replace(/^\d+[\.\)\-]\s*/, '').trim();
+              const p = cleanLine.split(';').map(x => x.trim()).filter(x => x);
               if (p.length >= 3) { g = p[0]; f = p[1]; tum = p[2]; }
               else if (p.length === 2) { g = p[0]; f = p[1]; }
               else { f = p[0]; }
             } else {
-              f = line;
+              const cleanLine = line.replace(/^\d+[\.\)\-]\s*/, '').trim();
+              const m = cleanLine.match(/^(\d{2,4})\s+(.+)$/);
+              if (m) {
+                g = m[1];
+                f = m[2];
+              } else {
+                f = cleanLine;
+              }
             }
 
             if (f) {
@@ -4501,29 +4513,53 @@ const ATLAS = {
 
   openModal(title, contentHtml) {
     const el = document.getElementById('modal-container');
-    el.innerHTML = `
-      <div class="modal-box">
-        <div class="modal-header">
-          <div class="card-title">${title}</div>
-          <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+    if (contentHtml === undefined) {
+      el.innerHTML = `
+        <div class="modal-box">
+          <div class="modal-header">
+            <div class="card-title"></div>
+            <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">${title || ''}</div>
         </div>
-        <div class="modal-body">${contentHtml}</div>
-      </div>
-    `;
+      `;
+    } else {
+      el.innerHTML = `
+        <div class="modal-box">
+          <div class="modal-header">
+            <div class="card-title">${title}</div>
+            <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">${contentHtml || ''}</div>
+        </div>
+      `;
+    }
     el.classList.add('active');
   },
 
   openModalLarge(title, contentHtml) {
     const el = document.getElementById('modal-container');
-    el.innerHTML = `
-      <div class="modal-box modal-box-large">
-        <div class="modal-header">
-          <div class="card-title">${title}</div>
-          <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+    if (contentHtml === undefined) {
+      el.innerHTML = `
+        <div class="modal-box modal-box-large">
+          <div class="modal-header">
+            <div class="card-title"></div>
+            <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">${title || ''}</div>
         </div>
-        <div class="modal-body">${contentHtml}</div>
-      </div>
-    `;
+      `;
+    } else {
+      el.innerHTML = `
+        <div class="modal-box modal-box-large">
+          <div class="modal-header">
+            <div class="card-title">${title}</div>
+            <button class="btn-icon" onclick="ATLAS.closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">${contentHtml || ''}</div>
+        </div>
+      `;
+    }
     el.classList.add('active');
   },
 
