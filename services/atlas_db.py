@@ -319,24 +319,27 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_amaliyot_orders_folder ON amaliyot_orders(folder_id)")
 
-    # Boshlang'ich Namunaviy Papkalar Ierarxiyasini tekshirish va yaratish
+    # Boshlang'ich Papkalar va So'rovnomalarni Supabase Cloud'dan tiklash
+    try:
+        _restore_amaliyot_from_supabase_store()
+    except Exception:
+        pass
+
     cursor.execute("SELECT COUNT(*) as cnt FROM amaliyot_folders")
     f_cnt_row = cursor.fetchone()
     if f_cnt_row and f_cnt_row["cnt"] == 0:
-        # Level 1: O'quv yili
+        # Faqat Supabase bo'sh bo'lsa (birinchi marta ochilganda) papkalar skeletini ochish, hech qanday soxta talaba kiritilmaydi
         cursor.execute("""
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
         VALUES (1, NULL, 'year', '2025/2026', '{}', 1)
         """)
-        # Level 2: Yo'nalish
         cursor.execute("""
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
         VALUES (2, 1, 'direction', 'Hamshiralik ishi (3 yillik)', '{"duration":"3 yillik"}', 1)
         """)
-        # Level 3: Guruhlar to'plami
         cursor.execute("""
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
-        VALUES (3, 2, 'groups', '201-204 guruhlar', '{"groups":["201","202","203","204"]}', 1)
+        VALUES (3, 2, 'groups', '25-16; 25-17; 25-18 guruhlar', '{"groups":["25-16","25-17","25-18"]}', 1)
         """)
         cursor.execute("""
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
@@ -346,7 +349,6 @@ def init_db():
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
         VALUES (5, 2, 'groups', '206-guruh', '{"groups":["206"]}', 3)
         """)
-        # Level 4: Semestrlar (201-204 ichida)
         cursor.execute("""
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
         VALUES (6, 3, 'semester', '2-semestr', '{"template_file":"Amaliyot/Hamshiralik ishi - 3 - yillik - 2-semestr/3 yillik 2-semestr.docx","start_date":"08.06.2026","end_date":"06.07.2026","amaliyot_muddati":"2026-yil 08-iyunidan  2026-yil 06-iyuligacha","kursi":"1"}', 1)
@@ -359,24 +361,6 @@ def init_db():
         INSERT INTO amaliyot_folders (id, parent_id, folder_type, name, extra_data, order_num)
         VALUES (8, 3, 'semester', '4-semestr', '{"kursi":"2"}', 3)
         """)
-
-        # 2-semestr uchun namunaviy talabalar so'rovnomasi (folder_id = 6)
-        demo_survey = [
-            ("201", "Rahmatova Shaxnoza Sherzod qizi", "Shahrisabz shahar", "08.06.2026", "06.07.2026", "+998901234567", "Shahrisabz ShTTB Markaziy Shifoxonasi"),
-            ("201", "Botirova Gulbahor Olimovna", "Shahrisabz shahar", "08.06.2026", "06.07.2026", "+998912345678", "Shahrisabz ShTTB 1-sonli Poliklinika"),
-            ("202", "Asraliyev Asilbek Bekmurod o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026", "+998933456789", "Kitob TTB Markaziy Shifoxonasi"),
-            ("202", "Meyliyev Ruslan Rustam o'g'li", "Kitob tuman", "08.06.2026", "06.07.2026", "+998974567890", "Kitob TTB Shoshilinch Bo'limi"),
-            ("203", "Nazarova Dilnoza Farxod qizi", "Yakkabog' tuman", "08.06.2026", "06.07.2026", "+998995678901", "Yakkabog' TTB Markaziy Poliklinikasi"),
-            ("203", "Qodirov Jasur Anvar o'g'li", "Yakkabog' tuman", "08.06.2026", "06.07.2026", "+998906789012", "Yakkabog' TTB 2-sonli Shifoxonasi"),
-            ("204", "Eshmurodov Bobur Shavkat o'g'li", "Chiroqchi tuman", "08.06.2026", "06.07.2026", "+998917890123", "Chiroqchi TTB Markaziy Shifoxonasi"),
-            ("204", "Xoliqova Madina Zafar qizi", "Qamashi tuman", "08.06.2026", "06.07.2026", "+998988901234", "Qamashi TTB Markaziy Shifoxonasi"),
-            ("204", "Jumanov Sardor Bahodir o'g'li", "Shahrisabz tuman", "08.06.2026", "06.07.2026", "+998909012345", "Shahrisabz Tuman TTB Shifoxonasi")
-        ]
-        for s_grp, s_fio, s_tum, s_st, s_en, s_ph, s_org in demo_survey:
-            cursor.execute("""
-            INSERT INTO amaliyot_surveys (folder_id, guruhi, fio, tumani, start_date, end_date, phone, organization)
-            VALUES (6, ?, ?, ?, ?, ?, ?, ?)
-            """, (s_grp, s_fio, s_tum, s_st, s_en, s_ph, s_org))
 
     # Boshlang'ich tizim sozlamalari
     default_settings = [
