@@ -439,29 +439,52 @@ def parse_survey_excel(file_bytes_or_path, default_start="08.06.2026", default_e
                 col_map[k] = val
 
     if best_row_idx is None:
-        header_row_idx = 1
-        col_map = {
-            "tr": 1,
-            "guruhi": 2,
-            "fio": 3,
-            "tumani": 4,
-            "start_date": 5,
-            "end_date": 6,
-            "phone": 7,
-            "organization": 8
-        }
+        # Sarlavha topilmadi — ustunlar soniga qarab avtomatik moslash
+        max_c = min(ws.max_column, 8)
+        if max_c <= 2:
+            col_map = {
+                "tr": None,
+                "guruhi": 1,
+                "fio": 2,
+                "tumani": None,
+                "start_date": None,
+                "end_date": None,
+                "phone": None,
+                "organization": None
+            }
+        elif max_c == 3:
+            # 1-ustun raqam (T/r) bo'lsa: 1=tr, 2=guruhi, 3=fio
+            first_val = str(ws.cell(row=1, column=1).value or "").strip()
+            if first_val.isdigit() and len(first_val) <= 4:
+                col_map = {"tr": 1, "guruhi": 2, "fio": 3, "tumani": None, "start_date": None, "end_date": None, "phone": None, "organization": None}
+            else:
+                col_map = {"tr": None, "guruhi": 1, "fio": 2, "tumani": 3, "start_date": None, "end_date": None, "phone": None, "organization": None}
+        else:
+            col_map = {
+                "tr": 1,
+                "guruhi": 2,
+                "fio": 3,
+                "tumani": 4,
+                "start_date": 5,
+                "end_date": 6,
+                "phone": 7,
+                "organization": 8
+            }
+
+        # 1-qator sarlavhami yoki ma'lumot ekanini tekshirish
+        r1_c1 = str(ws.cell(row=1, column=1).value or "").strip().lower()
+        r1_c2 = str(ws.cell(row=1, column=2).value or "").strip().lower()
+        is_r1_header = any(k in r1_c1 or k in r1_c2 for k in ["guruh", "fio", "f.i.sh", "ism", "familiya", "t/r", "№", "name"])
+        start_reading_row = 2 if is_r1_header else 1
     else:
         header_row_idx = best_row_idx
         if not col_map["fio"]:
-            col_map["fio"] = 3
-        if not col_map["tumani"]:
-            col_map["tumani"] = 4
+            col_map["fio"] = 2 if ws.max_column <= 2 else 3
         if not col_map["guruhi"]:
-            col_map["guruhi"] = 2
+            col_map["guruhi"] = 1 if ws.max_column <= 2 else 2
+        start_reading_row = header_row_idx + 1
 
     records = []
-    start_reading_row = header_row_idx + 1
-
     for r_idx in range(start_reading_row, ws.max_row + 1):
         fio_val = str(ws.cell(row=r_idx, column=col_map["fio"]).value or "").strip() if col_map["fio"] else ""
         if not fio_val or fio_val.lower() in ["none", "null", "f.i.sh", "talabaning f.i.sh"]:
