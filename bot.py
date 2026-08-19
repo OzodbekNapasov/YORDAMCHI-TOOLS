@@ -33,8 +33,10 @@ def get_main_keyboard():
     btn_amaliyot = telebot.types.KeyboardButton("🏥 Malakaviy Amaliyot")
     btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar")
     btn_buyruq = telebot.types.KeyboardButton("📁 Buyruqlar")
+    btn_stats = telebot.types.KeyboardButton("📊 Tizim Statistikasi")
     markup.add(btn_kontrakt, btn_amaliyot)
     markup.add(btn_docs, btn_buyruq)
+    markup.add(btn_stats)
     return markup
 
 def get_kontrakt_folder_keyboard(suggested_date=None):
@@ -52,12 +54,15 @@ def get_kontrakt_folder_keyboard(suggested_date=None):
 
 def get_amaliyot_folder_keyboard():
     """2-DARAJALI PAPKA: Malakaviy Amaliyot bo'limi"""
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    btn1 = telebot.types.KeyboardButton("📋 Yo'nalishlar va Guruhlar Ro'yxati")
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn1 = telebot.types.KeyboardButton("📁 Yo'nalishlar & Buyruq Yaratish")
     btn2 = telebot.types.KeyboardButton("📥 Oxirgi Buyruqlar Arxivini Ko'rish")
-    btn3 = telebot.types.KeyboardButton("🌐 ATLAS Web Platformasi Linki")
+    btn3 = telebot.types.KeyboardButton("📑 Namunaviy So'rovnoma Excel")
+    btn4 = telebot.types.KeyboardButton("🌐 ATLAS Web Platformasi Linki")
     btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
-    markup.add(btn1, btn2, btn3, btn_back)
+    markup.add(btn1, btn2)
+    markup.add(btn3, btn4)
+    markup.add(btn_back)
     return markup
 
 def get_docs_folder_keyboard():
@@ -915,17 +920,55 @@ def handle_text_messages(message):
         send_safe_message(chat_id, "📁 <b>RASMIY BUYRUQLAR BO'LIMI</b>\n\nQaysi buyruq turini shakllantirmoqchisiz?", reply_markup=get_buyruqlar_folder_keyboard())
         return
 
-    if user_text == "🏥 Malakaviy Amaliyot":
-        user_data[chat_id] = {}
-        msg_text = (
-            "🏥 <b>MALAKAVIY AMALIYOT BUYRUQLARI VA REJALARI</b>\n\n"
-            "✨ Ushbu bo'lim orqali barcha ta'lim yo'nalishlari, semestrlar va talabalar amaliyot buyruqlarini kuzatishingiz mumkin.\n\n"
-            "Kerakli xizmatni tanlang:"
-        )
-        send_safe_message(chat_id, msg_text, reply_markup=get_amaliyot_folder_keyboard())
+    if user_text == "📊 Tizim Statistikasi":
+        from services.atlas_db import get_dashboard_summary_data
+        try:
+            summary = get_dashboard_summary_data()
+            k_stat = summary.get("kontrakt_stats", {})
+            d_stat = summary.get("documents_stats", {})
+            a_stat = summary.get("amaliyot_stats", {})
+
+            stats_msg = (
+                "📊 <b>ATLAS PLATFORMASI VA BOT STATISTIKASI</b>\n\n"
+                "💰 <b>KONTRAKTLAR VA MOLIYA:</b>\n"
+                f"• Jami talabalar: <b>{k_stat.get('total_students', 0)} nafar</b>\n"
+                f"• Shartnoma summasi: <b>{k_stat.get('total_contract_sum', 0):,.0f} so'm</b>\n"
+                f"• To'langan summa: <b>{k_stat.get('total_paid_sum', 0):,.0f} so'm</b>\n"
+                f"• Qolgan qarzdorlik: <b>{k_stat.get('total_debt_sum', 0):,.0f} so'm</b>\n\n"
+                "📄 <b>HUJJATLAR VA BUYRUQLAR:</b>\n"
+                f"• Jami shakllantirilgan: <b>{d_stat.get('total_docs', 0)} ta</b>\n"
+                f"• Oxirgi 7 kundagi hujjatlar: <b>{d_stat.get('recent_docs_count', 0)} ta</b>\n\n"
+                "🏥 <b>MALAKAVIY AMALIYOT:</b>\n"
+                f"• Jami yo'nalishlar: <b>{a_stat.get('total_directions', 0)} ta</b>\n"
+                f"• So'rovnomadagi talabalar: <b>{a_stat.get('total_survey_students', 0)} nafar</b>\n"
+                f"• Yaratilgan amaliyot buyruqlari: <b>{a_stat.get('total_orders', 0)} ta</b>\n\n"
+                f"📅 <i>Ma'lumotlar yangilangan vaqti: {datetime.now().strftime('%d.%m.%Y %H:%M')}</i>"
+            )
+            send_safe_message(chat_id, stats_msg, reply_markup=get_main_keyboard())
+        except Exception as e:
+            send_safe_message(chat_id, f"❌ Statistika olishda xatolik: {str(e)}", reply_markup=get_main_keyboard())
         return
 
-    if user_text == "📋 Yo'nalishlar va Guruhlar Ro'yxati":
+    if user_text == "📑 Namunaviy So'rovnoma Excel":
+        from services.amaliyot_service import generate_sample_survey_excel
+        try:
+            excel_bytes = generate_sample_survey_excel()
+            temp_sample = os.path.join(tempfile.gettempdir(), "Amaliyot So'rovnoma Namuna.xlsx")
+            with open(temp_sample, "wb") as f_s:
+                f_s.write(excel_bytes)
+
+            caption = (
+                "📑 <b>Namunaviy So'rovnoma Excel Fayli</b>\n\n"
+                "Ushbu faylga talabalar guruhi, F.I.SH va amaliyot tumanlarini kiritib, botga yoki platformaga import qilishingiz mumkin."
+            )
+            with open(temp_sample, "rb") as f_s:
+                bot.send_document(chat_id, document=f_s, caption=caption, parse_mode="HTML")
+            if os.path.exists(temp_sample): os.remove(temp_sample)
+        except Exception as e:
+            send_safe_message(chat_id, f"❌ Namuna yaratishda xatolik: {str(e)}")
+        return
+
+    if user_text in ["📁 Yo'nalishlar & Buyruq Yaratish", "📋 Yo'nalishlar va Guruhlar Ro'yxati"]:
         from services.atlas_db import get_amaliyot_folders_hierarchy
         res = get_amaliyot_folders_hierarchy()
         folders = res.get("folders", [])
@@ -933,21 +976,29 @@ def handle_text_messages(message):
             send_safe_message(chat_id, "ℹ️ Hozircha bazada amaliyot papkalari mavjud emas.", reply_markup=get_amaliyot_folder_keyboard())
             return
 
-        lines = ["🏥 <b>ATLAS: AMALIYOT YO'NALISHLARI VA GURUHLARI:</b>\n"]
+        markup = telebot.types.InlineKeyboardMarkup(row_width=1)
         for y_item in folders:
-            lines.append(f"📅 <b>O'quv yili: {y_item.get('name')}</b>")
             for dir_item in y_item.get("children", []):
                 dur = dir_item.get("extra_data", {}).get("duration", "")
-                dur_txt = f" <i>({dur})</i>" if dur else ""
-                lines.append(f"  ├ 📚 <b>{dir_item.get('name')}</b>{dur_txt}")
-                for grp_item in dir_item.get("children", []):
-                    lines.append(f"  │   ├ 👥 {grp_item.get('name')}")
-                    for sem_item in grp_item.get("children", []):
-                        lines.append(f"  │   │   └ 🔖 {sem_item.get('name')} (Talabalar: {sem_item.get('survey_count', 0)} ta)")
-            lines.append("")
+                dur_txt = f" ({dur})" if dur else ""
+                markup.add(telebot.types.InlineKeyboardButton(f"📚 {dir_item['name']}{dur_txt}", callback_data=f"am_dir:{dir_item['id']}"))
 
-        lines.append("<i>💡 Yangi buyruq shakllantirish yoki talabalar so'rovnomasini yuklash uchun web platformadan foydalaning.</i>")
-        send_safe_message(chat_id, "\n".join(lines), reply_markup=get_amaliyot_folder_keyboard())
+        send_safe_message(
+            chat_id,
+            "🏥 <b>MALAKAVIY AMALIYOT: YO'NALISHNI TANLANG:</b>\n\n"
+            "Kerakli ta'lim yo'nalishini tanlang, so'ng semestr buyruqlarini yaratishingiz mumkin:",
+            reply_markup=markup
+        )
+        return
+
+    if user_text == "🏥 Malakaviy Amaliyot":
+        user_data[chat_id] = {}
+        msg_text = (
+            "🏥 <b>MALAKAVIY AMALIYOT BUYRUQLARI VA REJALARI</b>\n\n"
+            "✨ Ushbu bo'lim orqali barcha ta'lim yo'nalishlari, semestrlar va talabalar amaliyot buyruqlarini boshqarishingiz mumkin.\n\n"
+            "Kerakli xizmatni tanlang:"
+        )
+        send_safe_message(chat_id, msg_text, reply_markup=get_amaliyot_folder_keyboard())
         return
 
     if user_text == "📥 Oxirgi Buyruqlar Arxivini Ko'rish":
@@ -1050,6 +1101,274 @@ def handle_text_messages(message):
             markup = get_main_keyboard(suggested)
             send_safe_message(chat_id, "❌ Noto'g'ri sana formati. Nuqtalar bilan kiriting (Masalan: <code>27.06.2026</code>):", reply_markup=markup)
 
+# ============================================================
+# MALAKAVIY AMALIYOT CALLBACK QUERY HANDLER (INLINE BUTTONS)
+# ============================================================
+@bot.callback_query_handler(func=lambda call: call.data.startswith("am_"))
+def handle_amaliyot_callbacks(call):
+    chat_id = call.message.chat.id
+    if not is_user_allowed(call.message):
+        bot.answer_callback_query(call.id, "Ruxsat etilmagan!")
+        return
+
+    data = call.data
+
+    try:
+        from services.atlas_db import get_amaliyot_folder, get_amaliyot_surveys, get_amaliyot_folder_path, get_db_connection, save_amaliyot_surveys
+        from services.amaliyot_service import generate_all_district_orders, fill_amaliyot_template, find_matching_amaliyot_template, DISTRICT_DOCTORS
+
+        if data.startswith("am_dir:"):
+            dir_id = int(data.split(":")[1])
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM amaliyot_folders WHERE parent_id = ? ORDER BY order_num ASC, id ASC", (dir_id,))
+            groups = [dict(r) for r in cur.fetchall()]
+            conn.close()
+
+            dir_info = get_amaliyot_folder(dir_id) or {}
+            markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+            for g in groups:
+                markup.add(telebot.types.InlineKeyboardButton(f"👥 {g['name']}", callback_data=f"am_grp:{g['id']}"))
+            markup.add(telebot.types.InlineKeyboardButton("🔙 Yo'nalishlarga qaytish", callback_data="am_back_dirs"))
+
+            bot.edit_message_text(
+                f"📚 <b>{dir_info.get('name', 'Yo‘nalish')}</b>\n\nGuruhlar to'plamini tanlang:",
+                chat_id=chat_id,
+                message_id=call.message.message_id,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            bot.answer_callback_query(call.id)
+            return
+
+        elif data == "am_back_dirs":
+            from services.atlas_db import get_amaliyot_folders_hierarchy
+            res = get_amaliyot_folders_hierarchy()
+            folders = res.get("folders", [])
+            markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+            for y_item in folders:
+                for dir_item in y_item.get("children", []):
+                    dur = dir_item.get("extra_data", {}).get("duration", "")
+                    dur_txt = f" ({dur})" if dur else ""
+                    markup.add(telebot.types.InlineKeyboardButton(f"📚 {dir_item['name']}{dur_txt}", callback_data=f"am_dir:{dir_item['id']}"))
+
+            bot.edit_message_text(
+                "🏥 <b>MALAKAVIY AMALIYOT: YO'NALISHNI TANLANG:</b>\n\nKerakli ta'lim yo'nalishini tanlang:",
+                chat_id=chat_id,
+                message_id=call.message.message_id,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            bot.answer_callback_query(call.id)
+            return
+
+        elif data.startswith("am_grp:"):
+            grp_id = int(data.split(":")[1])
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM amaliyot_folders WHERE parent_id = ? ORDER BY order_num ASC, id ASC", (grp_id,))
+            semesters = [dict(r) for r in cur.fetchall()]
+            conn.close()
+
+            grp_info = get_amaliyot_folder(grp_id) or {}
+            markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+            for s in semesters:
+                markup.add(telebot.types.InlineKeyboardButton(f"🔖 {s['name']}", callback_data=f"am_sem:{s['id']}"))
+            markup.add(telebot.types.InlineKeyboardButton("🔙 Orqaga", callback_data=f"am_dir:{grp_info.get('parent_id', 1)}"))
+
+            bot.edit_message_text(
+                f"👥 <b>{grp_info.get('name', 'Guruhlar')}</b>\n\nSemestrni tanlang:",
+                chat_id=chat_id,
+                message_id=call.message.message_id,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            bot.answer_callback_query(call.id)
+            return
+
+        elif data.startswith("am_sem:"):
+            sem_id = int(data.split(":")[1])
+            sem_info = get_amaliyot_folder(sem_id) or {}
+            surveys_res = get_amaliyot_surveys(sem_id)
+            students = surveys_res.get("surveys", [])
+            extra = sem_info.get("extra_data", {})
+
+            dist_counts = {}
+            for st in students:
+                t = st.get("tumani", "").strip() or "Shahrisabz shahar"
+                dist_counts[t] = dist_counts.get(t, 0) + 1
+
+            text = (
+                f"🔖 <b>{sem_info.get('name')}</b>\n\n"
+                f"👥 <b>Talabalar soni:</b> {len(students)} nafar\n"
+                f"📅 <b>Muddat:</b> {extra.get('start_date', '08.06.2026')} — {extra.get('end_date', '06.07.2026')}\n"
+                f"🏛️ <b>Tumanlar:</b> {', '.join([f'{k} ({v})' for k, v in dist_counts.items()]) if dist_counts else 'Hali talabalar yuklanmagan'}\n\n"
+                f"Quyidagi amallardan birini tanlang:"
+            )
+
+            markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+            if students:
+                markup.add(telebot.types.InlineKeyboardButton("⚡ Barcha Tumanlar Buyruqlari (ZIP yuklab olish)", callback_data=f"am_gen_zip:{sem_id}"))
+                markup.add(telebot.types.InlineKeyboardButton("📄 Tumanlar Bo'yicha Alohida Word Olish", callback_data=f"am_dist_menu:{sem_id}"))
+            markup.add(telebot.types.InlineKeyboardButton("📤 So'rovnoma Excel Faylini Yuklash", callback_data=f"am_upload_excel:{sem_id}"))
+            markup.add(telebot.types.InlineKeyboardButton("🔙 Guruhlarga qaytish", callback_data=f"am_grp:{sem_info.get('parent_id', 1)}"))
+
+            bot.edit_message_text(
+                text,
+                chat_id=chat_id,
+                message_id=call.message.message_id,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            bot.answer_callback_query(call.id)
+            return
+
+        elif data.startswith("am_gen_zip:"):
+            sem_id = int(data.split(":")[1])
+            bot.answer_callback_query(call.id, "ZIP paket shakllantirilmoqda...")
+            
+            surveys_res = get_amaliyot_surveys(sem_id)
+            students = surveys_res.get("surveys", [])
+            if not students:
+                send_safe_message(chat_id, "❌ Ushbu semestrda talabalar topilmadi.")
+                return
+
+            sem_info = get_amaliyot_folder(sem_id) or {}
+            extra = sem_info.get("extra_data", {})
+            path_res = get_amaliyot_folder_path(sem_id)
+            folder_path = path_res.get("path", [])
+
+            direction_name = folder_path[1]["name"] if len(folder_path) > 1 else ""
+            duration = extra.get("duration") or (folder_path[1].get("extra_data", {}).get("duration", "") if len(folder_path) > 1 else "")
+            semester_name = sem_info.get("name", "")
+            custom_tpl = extra.get("template_file")
+
+            tpl_path = find_matching_amaliyot_template(direction_name, duration, semester_name, custom_tpl)
+
+            start_date = extra.get("start_date", "08.06.2026")
+            end_date = extra.get("end_date", "06.07.2026")
+            amaliyot_muddati = extra.get("amaliyot_muddati", "")
+
+            semester_data = {
+                "buyruq_raqami": "____",
+                "buyruq_sanasi": datetime.now().strftime("%d.%m.%Y"),
+                "oquv_yili": extra.get("oquv_yili", "2025/2026"),
+                "kursi": str(extra.get("kursi", "1")),
+                "amaliyot_muddati": amaliyot_muddati,
+                "start_date": start_date,
+                "end_date": end_date
+            }
+
+            output_dir = os.path.join(tempfile.gettempdir(), f"amaliyot_batch_{uuid.uuid4().hex[:8]}")
+            res = generate_all_district_orders(tpl_path, semester_data, students, output_dir)
+
+            caption = (
+                f"📦 <b>Malakaviy Amaliyot Buyruqlari (ZIP)</b>\n\n"
+                f"🔖 <b>Semestr:</b> {semester_name}\n"
+                f"👥 <b>Jami talabalar:</b> {res['total_students']} ta\n"
+                f"🏛️ <b>Jami tumanlar:</b> {res['total_districts']} ta"
+            )
+            with open(res["zip_path"], "rb") as z_f:
+                bot.send_document(chat_id, document=z_f, caption=caption, parse_mode="HTML")
+            return
+
+        elif data.startswith("am_dist_menu:"):
+            sem_id = int(data.split(":")[1])
+            surveys_res = get_amaliyot_surveys(sem_id)
+            students = surveys_res.get("surveys", [])
+            districts = sorted(list(set(s.get("tumani", "").strip() or "Shahrisabz shahar" for s in students)))
+
+            markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+            for d in districts:
+                d_cnt = len([s for s in students if (s.get("tumani", "").strip() or "Shahrisabz shahar") == d])
+                markup.add(telebot.types.InlineKeyboardButton(f"📄 {d} ({d_cnt} ta talaba)", callback_data=f"am_gen_dist:{sem_id}:{d}"))
+            markup.add(telebot.types.InlineKeyboardButton("🔙 Semestrga qaytish", callback_data=f"am_sem:{sem_id}"))
+
+            bot.edit_message_text(
+                "🏛️ <b>Qaysi tuman buyrug'ini yuklab olmoqchisiz?</b>",
+                chat_id=chat_id,
+                message_id=call.message.message_id,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            bot.answer_callback_query(call.id)
+            return
+
+        elif data.startswith("am_gen_dist:"):
+            parts = data.split(":", 2)
+            sem_id = int(parts[1])
+            tumani = parts[2]
+            bot.answer_callback_query(call.id, f"{tumani} buyrug'i tayyorlanmoqda...")
+
+            surveys_res = get_amaliyot_surveys(sem_id)
+            students = [s for s in surveys_res.get("surveys", []) if (s.get("tumani", "").strip() or "Shahrisabz shahar") == tumani]
+
+            sem_info = get_amaliyot_folder(sem_id) or {}
+            extra = sem_info.get("extra_data", {})
+            path_res = get_amaliyot_folder_path(sem_id)
+            folder_path = path_res.get("path", [])
+
+            direction_name = folder_path[1]["name"] if len(folder_path) > 1 else ""
+            duration = extra.get("duration") or (folder_path[1].get("extra_data", {}).get("duration", "") if len(folder_path) > 1 else "")
+            semester_name = sem_info.get("name", "")
+            custom_tpl = extra.get("template_file")
+
+            tpl_path = find_matching_amaliyot_template(direction_name, duration, semester_name, custom_tpl)
+
+            start_date = extra.get("start_date", "08.06.2026")
+            end_date = extra.get("end_date", "06.07.2026")
+            dist_groups = sorted(list(set(s.get("guruhi", "").strip() for s in students if s.get("guruhi", "").strip())))
+
+            order_data = {
+                "buyruq_raqami": "____",
+                "buyruq_sanasi": datetime.now().strftime("%d.%m.%Y"),
+                "tumani": tumani,
+                "shu_tuman_shifokori": DISTRICT_DOCTORS.get(tumani, "Bosh shifokor"),
+                "oquv_yili": extra.get("oquv_yili", "2025/2026"),
+                "kursi": str(extra.get("kursi", "1")),
+                "guruhlar": dist_groups,
+                "amaliyot_muddati": extra.get("amaliyot_muddati", ""),
+                "start_date": start_date,
+                "end_date": end_date,
+                "students": students
+            }
+
+            clean_tumani = re.sub(r'[\\/*?:"<>|]', "", tumani).strip()
+            clean_grp = re.sub(r'[\\/*?:"<>|]', "", ", ".join(dist_groups) if dist_groups else "Guruh").strip()
+            docx_filename = f"{clean_tumani} — {clean_grp} — {len(students)} ta talaba.docx"
+            temp_docx = os.path.join(tempfile.gettempdir(), docx_filename)
+            fill_amaliyot_template(tpl_path, order_data, temp_docx)
+
+            caption = (
+                f"📄 <b>Amaliyot Buyrug'i: {tumani}</b>\n\n"
+                f"🔖 <b>Semestr:</b> {semester_name}\n"
+                f"👥 <b>Talabalar:</b> {len(students)} nafar\n"
+                f"📅 <b>Muddat:</b> {start_date} — {end_date}"
+            )
+            with open(temp_docx, "rb") as d_f:
+                bot.send_document(chat_id, document=d_f, caption=caption, parse_mode="HTML")
+            if os.path.exists(temp_docx): os.remove(temp_docx)
+            return
+
+        elif data.startswith("am_upload_excel:"):
+            sem_id = int(data.split(":")[1])
+            user_data[chat_id] = {
+                "holat": "amaliyot_excel_kutish",
+                "folder_id": sem_id
+            }
+            bot.answer_callback_query(call.id)
+            send_safe_message(
+                chat_id,
+                "📤 <b>SO'ROVNOMA EXCEL FAYLINI YUBORING:</b>\n\n"
+                "Talabalar ro'yxati yozilgan `.xlsx` faylni botga yuboring. Tizim uni avtomatik o'qib, ushbu semestrga saqlaydi."
+            )
+            return
+
+    except Exception as e:
+        bot.answer_callback_query(call.id, f"Xatolik: {str(e)}")
+        send_safe_message(chat_id, f"❌ Xatolik yuz berdi: {str(e)}")
+
+
 # Fayl yuklanganda ishlovchi handler
 @bot.message_handler(content_types=['document'])
 def handle_docs(message):
@@ -1063,6 +1382,38 @@ def handle_docs(message):
     if not holat:
         send_safe_message(chat_id, "Iltimos, avval menyudan kerakli tugmani tanlang:")
         return
+
+    # AMALIYOT SO'ROVNOMA EXCEL YUKLASH
+    if holat == "amaliyot_excel_kutish":
+        folder_id = user_data[chat_id].get("folder_id")
+        try:
+            file_info = bot.get_file(message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+
+            from services.amaliyot_service import parse_survey_excel
+            from services.atlas_db import save_amaliyot_surveys, get_amaliyot_folder
+
+            parsed_students = parse_survey_excel(downloaded_file)
+            if not parsed_students:
+                send_safe_message(chat_id, "❌ Excel faylidan talabalar topilmadi. Fayl ustunlarini tekshiring.")
+                user_data[chat_id] = {}
+                return
+
+            res = save_amaliyot_surveys(folder_id, parsed_students, replace_all=True)
+            sem_info = get_amaliyot_folder(folder_id) or {}
+
+            send_safe_message(
+                chat_id,
+                f"✅ <b>{sem_info.get('name', 'Semestr')}</b> uchun <b>{len(parsed_students)} ta talaba</b> muvaffaqiyatli qabul qilindi va Supabase bazasiga saqlandi!\n\n"
+                f"Endi bemalol <b>«📁 Yo'nalishlar & Buyruq Yaratish»</b> orqali buyruqlarni yuklab olishingiz mumkin.",
+                reply_markup=get_amaliyot_folder_keyboard()
+            )
+            user_data[chat_id] = {}
+            return
+        except Exception as e:
+            send_safe_message(chat_id, f"❌ Excel faylni o'qishda xatolik: {str(e)}")
+            user_data[chat_id] = {}
+            return
 
     # GURUH SCREENSHOTLARINI OLISH
     if holat == "guruh_fayl_kutish":
