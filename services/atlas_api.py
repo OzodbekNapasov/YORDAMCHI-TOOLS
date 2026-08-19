@@ -1291,12 +1291,8 @@ def api_generate_single_amaliyot_order(folder_id):
         shu_tuman_shifokori = data.get("shu_tuman_shifokori", "").strip() or DISTRICT_DOCTORS.get(tumani, "Bosh shifokor")
         
         buyruq_raqami = data.get("buyruq_raqami", "").strip() or "____"
-        buyruq_sanasi = data.get("buyruq_sanasi", "").strip() or datetime.now().strftime("%d.%m.%Y")
-        oquv_yili = data.get("oquv_yili", "2025/2026").strip()
-        kursi = str(data.get("kursi", "1")).strip()
-        amaliyot_muddati = data.get("amaliyot_muddati", "").strip()
-        start_date = data.get("start_date", "08.06.2026").strip()
-        end_date = data.get("end_date", "06.07.2026").strip()
+        if not data.get("shu_tuman_shifokori"):
+            data["shu_tuman_shifokori"] = DISTRICT_DOCTORS.get(tumani, "Bosh shifokor")
         
         students = data.get("students", [])
         guruhlar = data.get("guruhlar", [])
@@ -1304,16 +1300,22 @@ def api_generate_single_amaliyot_order(folder_id):
             guruhlar = sorted(list(set(str(s.get("guruhi", "")).strip() for s in students if str(s.get("guruhi", "")).strip())))
             data["guruhlar"] = guruhlar
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         saved_dir = os.path.join(tempfile.gettempdir(), "saved_documents")
         os.makedirs(saved_dir, exist_ok=True)
 
-        tpl_path = os.path.join(base_dir, "templates", "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
-        if not os.path.exists(tpl_path):
-            tpl_path = find_template_file("3 yillik 2-semestr.docx")
+        folder_info = get_amaliyot_folder(folder_id) or {}
+        extra = folder_info.get("extra_data", {})
+        path_res = get_amaliyot_folder_path(folder_id)
+        folder_path = path_res.get("path", [])
 
+        direction_name = folder_path[1]["name"] if len(folder_path) > 1 else ""
+        duration = extra.get("duration") or (folder_path[1].get("extra_data", {}).get("duration", "") if len(folder_path) > 1 else "")
+        semester_name = folder_info.get("name", "")
+        custom_tpl = extra.get("template_file")
+
+        tpl_path = find_matching_amaliyot_template(direction_name, duration, semester_name, custom_tpl)
         if not tpl_path or not os.path.exists(tpl_path):
-            return jsonify({"success": False, "error": "Amaliyot Word shabloni (3 yillik 2-semestr.docx) serverdan topilmadi."}), 404
+            return jsonify({"success": False, "error": f"Amaliyot Word shabloni topilmadi ({custom_tpl or semester_name})."}), 404
 
         session_uid = uuid.uuid4().hex[:8]
         temp_docx = os.path.join(tempfile.gettempdir(), f"amaliyot_{session_uid}.docx")
@@ -1325,7 +1327,6 @@ def api_generate_single_amaliyot_order(folder_id):
         shutil.copy2(temp_docx, permanent_docx_path)
 
         fio = students[0].get("fio") if students else f"Amaliyot buyrug'i ({tumani})"
-        from services.atlas_db import save_generated_document_to_cloud, save_amaliyot_order_record
         tpl_display_name = f"Amaliyot Buyrug'i: {tumani}"
         doc_id = save_generated_document_to_cloud(
             template_id=f"amaliyot_{folder_id}",
@@ -1355,8 +1356,8 @@ def api_generate_single_amaliyot_order(folder_id):
 def api_generate_all_amaliyot_orders(folder_id):
     """So'rovnomadagi barcha tumanlar uchun alohida Word (.docx) buyruqlarini yaratib, ZIP paket qiladi"""
     try:
-        from services.atlas_db import get_amaliyot_surveys, get_amaliyot_folder, save_amaliyot_order_record, save_generated_document_to_cloud
-        from services.amaliyot_service import generate_all_district_orders, DISTRICT_DOCTORS
+        from services.atlas_db import get_amaliyot_surveys, get_amaliyot_folder, get_amaliyot_folder_path, save_amaliyot_order_record, save_generated_document_to_cloud
+        from services.amaliyot_service import generate_all_district_orders, find_matching_amaliyot_template, DISTRICT_DOCTORS
 
         surveys_res = get_amaliyot_surveys(folder_id)
         students = surveys_res.get("surveys", [])
@@ -1365,6 +1366,17 @@ def api_generate_all_amaliyot_orders(folder_id):
 
         folder_info = get_amaliyot_folder(folder_id) or {}
         extra = folder_info.get("extra_data", {})
+        path_res = get_amaliyot_folder_path(folder_id)
+        folder_path = path_res.get("path", [])
+
+        direction_name = folder_path[1]["name"] if len(folder_path) > 1 else ""
+        duration = extra.get("duration") or (folder_path[1].get("extra_data", {}).get("duration", "") if len(folder_path) > 1 else "")
+        semester_name = folder_info.get("name", "")
+        custom_tpl = extra.get("template_file")
+
+        tpl_path = find_matching_amaliyot_template(direction_name, duration, semester_name, custom_tpl)
+        if not tpl_path or not os.path.exists(tpl_path):
+            return jsonify({"success": False, "error": f"Amaliyot Word shabloni topilmadi ({custom_tpl or semester_name})."}), 404
 
         data = request.get_json() or {}
         semester_data = {
@@ -1377,19 +1389,10 @@ def api_generate_all_amaliyot_orders(folder_id):
             "end_date": data.get("end_date") or extra.get("end_date", "06.07.2026")
         }
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        tpl_path = os.path.join(base_dir, "templates", "Amaliyot", "Hamshiralik ishi - 3 - yillik - 2-semestr", "3 yillik 2-semestr.docx")
-        if not os.path.exists(tpl_path):
-            tpl_path = find_template_file("3 yillik 2-semestr.docx")
-
-        if not tpl_path or not os.path.exists(tpl_path):
-            return jsonify({"success": False, "error": "Amaliyot Word shabloni (3 yillik 2-semestr.docx) topilmadi."}), 404
-
         output_dir = os.path.join(tempfile.gettempdir(), f"amaliyot_batch_{uuid.uuid4().hex[:8]}")
         res = generate_all_district_orders(tpl_path, semester_data, students, output_dir)
 
         # Har bir yaratilgan faylni buyruqlar arxiviga kiritish
-        saved_orders = []
         for file_info in res.get("files", []):
             order_rec = {
                 "tumani": file_info["tumani"],

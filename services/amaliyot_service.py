@@ -89,6 +89,113 @@ def set_cell_formatted(cell, text, font_name="Times New Roman", font_size=11, bo
         cell.width = width
 
 
+def get_available_amaliyot_templates() -> list:
+    """
+    templates/Amaliyot papkasidagi barcha mavjud Word (.docx) shablonlarini skaner qilib qaytaradi.
+    """
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "Amaliyot")
+    if not os.path.exists(base_dir):
+        base_dir = os.path.join(os.getcwd(), "templates", "Amaliyot")
+
+    templates_list = []
+    if os.path.exists(base_dir):
+        for root, dirs, files in os.walk(base_dir):
+            for f in sorted(files):
+                if f.endswith(".docx") and not f.startswith("~$"):
+                    full_p = os.path.join(root, f)
+                    rel_p = os.path.relpath(full_p, os.path.join(base_dir, "..")).replace("\\", "/")
+                    
+                    dir_name = "Hamshiralik ishi"
+                    duration = "3 yillik"
+                    semester = "2-semestr"
+
+                    low_p = full_p.lower().replace("\\", "/")
+                    if "2 yillik" in low_p or "2yillik" in low_p:
+                        duration = "2 yillik"
+                    elif "3 yillik" in low_p or "3yillik" in low_p:
+                        duration = "3 yillik"
+
+                    if "4-semestr" in low_p or "3yillik - 4" in low_p or "2yillik - 4" in low_p:
+                        semester = "4-semestr"
+                    elif "3-semestr" in low_p or "3yillik - 3" in low_p or "2yillik - 3" in low_p:
+                        semester = "3-semestr"
+                    elif "2-semestr" in low_p or "3yillik - 2" in low_p or "2yillik - 2" in low_p:
+                        semester = "2-semestr"
+
+                    if "hamshiralik" in low_p or "h.ishi" in low_p:
+                        dir_name = "Hamshiralik ishi"
+                    elif "davolash" in low_p or "feldsher" in low_p:
+                        dir_name = "Davolash ishi (Feldsherlik)"
+                    elif "farmatsiya" in low_p:
+                        dir_name = "Farmatsiya"
+                    elif "stomatologiya" in low_p:
+                        dir_name = "Stomatologiya ishi"
+                    elif "laboratoriya" in low_p:
+                        dir_name = "Laboratoriya ishi"
+
+                    templates_list.append({
+                        "id": rel_p,
+                        "filename": f,
+                        "rel_path": rel_p,
+                        "full_path": full_p,
+                        "display_name": f"{dir_name} ({duration}) — {semester}",
+                        "direction": dir_name,
+                        "duration": duration,
+                        "semester": semester
+                    })
+
+    return templates_list
+
+
+def find_matching_amaliyot_template(direction_name: str = "", duration: str = "", semester_name: str = "", custom_template_file: str = None) -> str:
+    """
+    Berilgan yo'nalish, muddat va semestr nomiga mos Word (.docx) shablon faylini aniqlaydi.
+    """
+    templates = get_available_amaliyot_templates()
+    if not templates:
+        return find_template_file("3 yillik 2-semestr.docx")
+
+    if custom_template_file:
+        for t in templates:
+            if t["rel_path"] == custom_template_file or t["filename"] == custom_template_file or custom_template_file in t["full_path"]:
+                if os.path.exists(t["full_path"]):
+                    return t["full_path"]
+        
+        cand = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", custom_template_file)
+        if os.path.exists(cand):
+            return cand
+
+    dir_clean = (direction_name or "").lower()
+    dur_clean = (duration or "").lower()
+    sem_clean = (semester_name or "").lower()
+
+    sem_num = None
+    m_sem = re.search(r'([1-6])-?semestr', sem_clean)
+    if m_sem:
+        sem_num = f"{m_sem.group(1)}-semestr"
+
+    is_2_yillik = "2" in dur_clean or "2 yillik" in dir_clean
+    target_duration = "2 yillik" if is_2_yillik else "3 yillik"
+
+    best_match = None
+    for t in templates:
+        score = 0
+        if sem_num and t["semester"] == sem_num:
+            score += 4
+        if t["duration"] == target_duration:
+            score += 2
+        if "hamshiralik" in dir_clean and "hamshiralik" in t["direction"].lower():
+            score += 1
+
+        if not best_match or score > best_match[0]:
+            best_match = (score, t["full_path"])
+
+    if best_match and best_match[1] and os.path.exists(best_match[1]):
+        return best_match[1]
+
+    return templates[0]["full_path"]
+
+
 def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
     """
     Amaliyot shabloni (.docx) ni to'liq to'ldirib, talabalar jadvalini dinamik kengaytiradi.
@@ -150,6 +257,20 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
             if k in full_text:
                 full_text = full_text.replace(k, v)
                 has_match = True
+
+        # Regex bilan har qanday {{amaliyot_muddati...}} placeholderini to'liq almashtirish
+        if "{{amaliyot_muddati" in full_text:
+            full_text = re.sub(r'\{\{amaliyot_muddati.*?\}\}', amaliyot_muddati, full_text)
+            has_match = True
+
+        if "{{guruh" in full_text:
+            full_text = re.sub(r'\{\{guruh_1\}\}\s*,\s*\{\{guruh_2\}\}\s*,\s*\{\{guruh_3\}\}', guruhlar_str, full_text)
+            full_text = re.sub(r'\{\{guruh_1\}\}', guruhlar[0] if len(guruhlar) > 0 else "", full_text)
+            full_text = re.sub(r'\{\{guruh_2\}\}', guruhlar[1] if len(guruhlar) > 1 else "", full_text)
+            full_text = re.sub(r'\{\{guruh_3\}\}', guruhlar[2] if len(guruhlar) > 2 else "", full_text)
+            full_text = re.sub(r'\{\{guruhlar\}\}', guruhlar_str, full_text)
+            has_match = True
+
         if has_match:
             if p.runs:
                 p.runs[0].text = full_text

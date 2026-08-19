@@ -1157,7 +1157,17 @@ const ATLAS = {
     // ============================================================
     // MODAL: YANGI PAPKA YARATISH (CONTEXT-AWARE)
     // ============================================================
-    const openAddFolderModal = (parentId, folderType) => {
+    let cachedAmaliyotTemplates = [];
+    const fetchTemplatesList = async () => {
+      if (cachedAmaliyotTemplates.length === 0) {
+        const res = await this.api('/api/amaliyot/templates', 'GET');
+        if (res?.success && res.templates) cachedAmaliyotTemplates = res.templates;
+      }
+      return cachedAmaliyotTemplates;
+    };
+
+    const openAddFolderModal = async (parentId, folderType) => {
+      const templates = await fetchTemplatesList();
       let defaultNamePlaceholder = "2025/2026";
       let titleLabel = "O'quv Yili Nomi";
       if (folderType === 'direction') {
@@ -1188,6 +1198,13 @@ const ATLAS = {
         ` : ''}
 
         ${folderType === 'semester' ? `
+          <div class="form-group">
+            <label class="form-label">Amaliyot Word Shabloni (.docx)</label>
+            <select id="modal-folder-template" class="select-control">
+              <option value="">⚡ Avtomatik moslash (Yo'nalish va semestrga qarab)</option>
+              ${templates.map(t => `<option value="${t.rel_path}">${t.display_name} (${t.filename})</option>`).join('')}
+            </select>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="form-group">
               <label class="form-label">Bosqich / Kursi</label>
@@ -1228,6 +1245,8 @@ const ATLAS = {
           extra.kursi = document.getElementById('modal-folder-kursi').value;
           extra.start_date = document.getElementById('modal-folder-start').value.trim();
           extra.end_date = document.getElementById('modal-folder-end').value.trim();
+          const tplVal = document.getElementById('modal-folder-template').value;
+          if (tplVal) extra.template_file = tplVal;
         }
 
         const res = await this.api('/api/amaliyot/folders', 'POST', {
@@ -1248,12 +1267,55 @@ const ATLAS = {
     };
 
     // Modal: Edit Folder
-    const openEditFolderModal = (fObj) => {
+    const openEditFolderModal = async (fObj) => {
+      const templates = await fetchTemplatesList();
+      const extra = fObj.extra_data || {};
+
       this.openModal('Papka Nomini Tahrirlash', `
         <div class="form-group">
           <label class="form-label">Papka Nomi</label>
           <input type="text" id="modal-edit-folder-name" class="input-control" value="${fObj.name}">
         </div>
+
+        ${fObj.folder_type === 'direction' ? `
+          <div class="form-group">
+            <label class="form-label">Ta'lim Muddati</label>
+            <select id="modal-edit-folder-duration" class="select-control">
+              <option value="3 yillik" ${extra.duration === '3 yillik' ? 'selected' : ''}>3 yillik</option>
+              <option value="2 yillik" ${extra.duration === '2 yillik' ? 'selected' : ''}>2 yillik</option>
+            </select>
+          </div>
+        ` : ''}
+
+        ${fObj.folder_type === 'semester' ? `
+          <div class="form-group">
+            <label class="form-label">Amaliyot Word Shabloni (.docx)</label>
+            <select id="modal-edit-folder-template" class="select-control">
+              <option value="">⚡ Avtomatik moslash (Yo'nalish va semestrga qarab)</option>
+              ${templates.map(t => `<option value="${t.rel_path}" ${extra.template_file === t.rel_path ? 'selected' : ''}>${t.display_name} (${t.filename})</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Bosqich / Kursi</label>
+              <select id="modal-edit-folder-kursi" class="select-control">
+                <option value="1" ${extra.kursi === '1' ? 'selected' : ''}>1-kurs</option>
+                <option value="2" ${extra.kursi === '2' ? 'selected' : ''}>2-kurs</option>
+                <option value="3" ${extra.kursi === '3' ? 'selected' : ''}>3-kurs</option>
+                <option value="4" ${extra.kursi === '4' ? 'selected' : ''}>4-kurs</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Boshlanish Sanasi</label>
+              <input type="text" id="modal-edit-folder-start" class="input-control" value="${extra.start_date || '08.06.2026'}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tugash Sanasi</label>
+            <input type="text" id="modal-edit-folder-end" class="input-control" value="${extra.end_date || '06.07.2026'}">
+          </div>
+        ` : ''}
+
         <div class="modal-footer">
           <button class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
           <button class="btn-primary" id="btn-save-edit-folder">Saqlash</button>
@@ -1264,10 +1326,22 @@ const ATLAS = {
         const nameVal = document.getElementById('modal-edit-folder-name').value.trim();
         if (!nameVal) return;
 
-        const res = await this.api(`/api/amaliyot/folders/${fObj.id}`, 'PUT', { name: nameVal });
+        const updatedExtra = { ...extra };
+        if (fObj.folder_type === 'direction') {
+          updatedExtra.duration = document.getElementById('modal-edit-folder-duration').value;
+        } else if (fObj.folder_type === 'semester') {
+          updatedExtra.kursi = document.getElementById('modal-edit-folder-kursi').value;
+          updatedExtra.start_date = document.getElementById('modal-edit-folder-start').value.trim();
+          updatedExtra.end_date = document.getElementById('modal-edit-folder-end').value.trim();
+          const tplVal = document.getElementById('modal-edit-folder-template').value;
+          if (tplVal) updatedExtra.template_file = tplVal;
+          else delete updatedExtra.template_file;
+        }
+
+        const res = await this.api(`/api/amaliyot/folders/${fObj.id}`, 'PUT', { name: nameVal, extra_data: updatedExtra });
         if (res?.success) {
           this.closeModal();
-          this.toast("Papka nomi yangilandi!", "success");
+          this.toast("Papka ma'lumotlari muvaffaqiyatli yangilandi!", "success");
           loadFolderData(currentFolderId);
         } else {
           alert(res?.error || "Xatolik yuz berdi");
