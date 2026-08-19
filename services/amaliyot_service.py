@@ -332,7 +332,18 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
                     align=WD_ALIGN_PARAGRAPH.CENTER, width=col_widths[c_idx] if c_idx < len(col_widths) else None
                 )
 
-        # 2. Talabalar qatorlarini (Row 1..N) to'ldirish va barchasini qat'iy 11pt formatlash
+        # 2. Talabalarni guruh va F.I.SH bo'yicha saralash
+        students = sorted(
+            students,
+            key=lambda x: (
+                str(x.get("guruhi", "")).strip().lower(),
+                str(x.get("fio", "")).strip().lower()
+            )
+        )
+
+        # 3. Talabalar qatorlarini (Row 1..N) to'ldirish va har bir guruh uchun 1 dan qayta raqamlash
+        last_grp = None
+        grp_idx = 0
         for idx, st in enumerate(students):
             row = t.rows[idx + 1]
             st_fio = st.get("fio", "").strip()
@@ -340,8 +351,13 @@ def fill_amaliyot_template(template_path: str, data: dict, output_path: str):
             st_start = st.get("start_date", "").strip() or start_date
             st_end = st.get("end_date", "").strip() or end_date
 
+            if st_guruh != last_grp:
+                last_grp = st_guruh
+                grp_idx = 0
+            grp_idx += 1
+
             if len(row.cells) > 0:
-                set_cell_formatted(row.cells[0], f"{idx + 1}.", "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[0])
+                set_cell_formatted(row.cells[0], f"{grp_idx}.", "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[0])
             if len(row.cells) > 1:
                 set_cell_formatted(row.cells[1], st_guruh, "Times New Roman", 11, False, WD_ALIGN_PARAGRAPH.CENTER, col_widths[1])
             if len(row.cells) > 2:

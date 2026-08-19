@@ -1511,7 +1511,7 @@ const ATLAS = {
             <span style="color:var(--accent-glow);">${this.icons.mapPin}</span>
             <span>Tumanlar bo'yicha taqsimot statistikasi:</span>
           </div>
-          <div class="district-stats-row">
+          <div class="district-stats-row" id="district-stats-chips-container">
             ${Object.keys(districtStats).length > 0 ? Object.entries(districtStats).map(([dName, cnt]) => `
               <div class="district-stat-chip">
                 <span>${dName}:</span>
@@ -1522,6 +1522,17 @@ const ATLAS = {
                 Talabalar so'rovnomasi hali kiritilmagan. Excel fayl yuklang yoki qatorlar qo'shing.
               </div>
             `}
+          </div>
+
+          <!-- Group Stats Chips -->
+          <div style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:10px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span style="color:var(--accent-glow);">${this.icons.groups}</span>
+            <span>Guruhlar bo'yicha taqsimot statistikasi:</span>
+          </div>
+          <div class="district-stats-row" id="group-stats-chips-container">
+            <div style="font-size:12px;color:rgba(94,234,212,0.6);font-style:italic;">
+              Hisoblanmoqda...
+            </div>
           </div>
 
           <!-- Students Survey Table -->
@@ -1571,28 +1582,56 @@ const ATLAS = {
         if (!tbody) return;
         badge.innerText = surveyStudents.length;
 
+        const groupCounts = {};
+        const dynDistrictStats = {};
+        surveyStudents.forEach(s => {
+          const g = (s.guruhi || '').trim() || "Guruhsiz";
+          groupCounts[g] = (groupCounts[g] || 0) + 1;
+          const d = (s.tumani || '').trim() || "Shahrisabz shahar";
+          dynDistrictStats[d] = (dynDistrictStats[d] || 0) + 1;
+        });
+
+        // Dynamic update of district stats chips
+        const distBox = document.getElementById('district-stats-chips-container');
+        if (distBox) {
+          distBox.innerHTML = Object.keys(dynDistrictStats).length > 0 ? Object.entries(dynDistrictStats).map(([dName, cnt]) => `
+            <div class="district-stat-chip">
+              <span>${dName}:</span>
+              <span class="district-stat-count">${cnt} ta</span>
+            </div>
+          `).join('') : '<div style="font-size:12px;color:rgba(94,234,212,0.6);font-style:italic;">Talabalar so\'rovnomasi hali kiritilmagan.</div>';
+        }
+
+        // Dynamic update of group stats chips
+        const grpBox = document.getElementById('group-stats-chips-container');
+        if (grpBox) {
+          grpBox.innerHTML = Object.keys(groupCounts).length > 0 ? Object.entries(groupCounts).map(([gName, cnt]) => `
+            <div class="district-stat-chip" style="background:rgba(37,99,235,0.15);border-color:rgba(59,130,246,0.35);">
+              <span style="color:#93c5fd;">${gName === 'Guruhsiz' ? gName : gName + '-guruh'}:</span>
+              <span class="district-stat-count" style="background:#2563eb;color:#ffffff;">${cnt} ta</span>
+            </div>
+          `).join('') : '<div style="font-size:12px;color:rgba(94,234,212,0.6);font-style:italic;">Guruhlar hali kiritilmagan.</div>';
+        }
+
         if (surveyStudents.length === 0) {
           tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:rgba(94,234,212,0.6);font-style:italic;">Talabalar so'rovnomasi hali kiritilmagan. Excel fayl yuklang yoki qatorlar qo'shing.</td></tr>`;
           return;
         }
 
         const sorted = getSortedStudentsWithIndices();
-        const groupCounts = {};
-        surveyStudents.forEach(s => {
-          const g = (s.guruhi || '').trim() || "Guruhsiz";
-          groupCounts[g] = (groupCounts[g] || 0) + 1;
-        });
 
         let rowsHtml = '';
         let lastGroup = null;
+        let groupStudentIndex = 0;
 
-        sorted.forEach((item, globalIdx) => {
+        sorted.forEach((item) => {
           const st = item.st;
           const origIdx = item.origIdx;
           const currentGroup = (st.guruhi || '').trim() || "Guruhsiz";
 
           if (currentGroup !== lastGroup) {
             lastGroup = currentGroup;
+            groupStudentIndex = 0; // Har bir guruh uchun 1 dan boshidan boshlanadi
             const cnt = groupCounts[currentGroup] || 1;
             rowsHtml += `
               <tr class="group-section-header" style="background:rgba(0,203,169,0.08);border-top:1px solid rgba(0,203,169,0.25);border-bottom:1px solid rgba(0,203,169,0.25);">
@@ -1607,9 +1646,11 @@ const ATLAS = {
             `;
           }
 
+          groupStudentIndex++; // Guruh ichida 1, 2, 3...
+
           rowsHtml += `
             <tr>
-              <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${globalIdx + 1}.</td>
+              <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${groupStudentIndex}.</td>
               <td>
                 <input type="text" class="survey-input-cell st-input-grp" data-idx="${origIdx}" value="${st.guruhi || ''}" placeholder="25-16">
               </td>
@@ -2001,13 +2042,31 @@ const ATLAS = {
         if (currentDistrictStudents.length === 0) {
           tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:16px;color:rgba(255,255,255,0.5);">Ushbu tumanga so'rovnomada biriktirilgan talaba topilmadi.</td></tr>`;
         } else {
-          tbody.innerHTML = currentDistrictStudents.map((st, i) => `
-            <tr>
-              <td style="text-align:center;">${i + 1}.</td>
-              <td>${st.guruhi || '201'}</td>
-              <td style="text-align:left;font-weight:600;">${st.fio}</td>
-            </tr>
-          `).join('');
+          currentDistrictStudents.sort((a, b) => {
+            const gA = (a.guruhi || '').toString().trim();
+            const gB = (b.guruhi || '').toString().trim();
+            const comp = gA.localeCompare(gB, undefined, { numeric: true, sensitivity: 'base' });
+            if (comp !== 0) return comp;
+            return (a.fio || '').localeCompare(b.fio || '');
+          });
+
+          let distLastGrp = null;
+          let distGrpIdx = 0;
+          tbody.innerHTML = currentDistrictStudents.map((st) => {
+            const grp = (st.guruhi || '').trim() || "Guruh";
+            if (grp !== distLastGrp) {
+              distLastGrp = grp;
+              distGrpIdx = 0;
+            }
+            distGrpIdx++;
+            return `
+              <tr>
+                <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${distGrpIdx}.</td>
+                <td>${st.guruhi || '201'}</td>
+                <td style="text-align:left;font-weight:600;">${st.fio}</td>
+              </tr>
+            `;
+          }).join('');
         }
       };
 
