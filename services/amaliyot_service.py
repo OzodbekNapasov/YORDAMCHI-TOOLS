@@ -669,7 +669,7 @@ def generate_all_district_orders(template_path: str, semester_data: dict, survey
         district_groups[tum].append(st)
 
     generated_files = []
-    zip_filename = f"Amaliyot_Barcha_Tumanlar_Buyruqlari_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    zip_filename = f"Amaliyot Buyruqlari — Barcha Tumanlar ({datetime.now().strftime('%d.%m.%Y %H-%M')}).zip"
     zip_path = os.path.join(output_dir, zip_filename)
 
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -699,7 +699,7 @@ def generate_all_district_orders(template_path: str, semester_data: dict, survey
 
             clean_tumani = re.sub(r'[\\/*?:"<>|]', "", tumani).strip()
             clean_grp = re.sub(r'[\\/*?:"<>|]', "", dist_groups_str).strip()
-            docx_filename = f"{clean_tumani} - {clean_grp} - {len(students)} ta talaba.docx"
+            docx_filename = f"{clean_tumani} — {clean_grp} — {len(students)} ta talaba.docx"
             docx_file_path = os.path.join(output_dir, docx_filename)
 
             fill_amaliyot_template(template_path, order_data, docx_file_path)

@@ -916,14 +916,57 @@ def api_resend_document_telegram(doc_id):
 
     try:
         from bot import bot, PRIMARY_ADMIN_ID
-        with open(doc["file_path"], "rb") as pf:
-            bot.send_photo(
+        fpath = doc["file_path"]
+        fio = doc["recipient_fio"] or "Talaba"
+        tpl_name = doc["template_name"] or "Rasmiy Hujjat"
+        ext = os.path.splitext(fpath)[1].lower()
+
+        caption = f"📄 <b>{tpl_name}</b>\n👤 <b>Talaba / Qabul qiluvchi:</b> {fio}\n📅 <b>Vaqti:</b> {doc['created_at']}"
+        with open(fpath, "rb") as f_obj:
+            if ext in [".png", ".jpg", ".jpeg"]:
+                bot.send_photo(
+                    PRIMARY_ADMIN_ID,
+                    photo=f_obj,
+                    caption=caption,
+                    parse_mode="HTML"
+                )
+            else:
+                bot.send_document(
+                    PRIMARY_ADMIN_ID,
+                    document=f_obj,
+                    caption=caption,
+                    parse_mode="HTML"
+                )
+        return jsonify({"success": True, "message": "Hujjat Telegram botingizga muvaffaqiyatli yuborildi!"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Telegram xatosi: {str(e)}"}), 500
+
+
+@atlas_api.route("/amaliyot/send-zip-telegram", methods=["POST"])
+@admin_required
+def api_send_zip_telegram():
+    """Yaratilgan barcha tumanlar ZIP paketini Telegram botga yuborish"""
+    try:
+        data = request.get_json() or {}
+        zip_filename = data.get("zip_filename", "")
+        if not zip_filename:
+            return jsonify({"success": False, "error": "ZIP fayl nomi ko'rsatilmadi."}), 400
+
+        permanent_zip_dir = os.path.join(tempfile.gettempdir(), "saved_zips")
+        zip_path = os.path.join(permanent_zip_dir, zip_filename)
+        if not os.path.exists(zip_path):
+            return jsonify({"success": False, "error": "ZIP fayli topilmadi."}), 404
+
+        from bot import bot, PRIMARY_ADMIN_ID
+        caption = f"📦 <b>Malakaviy Amaliyot Buyruqlari (ZIP)</b>\n📁 <b>Fayl:</b> {zip_filename}\n📅 <b>Vaqti:</b> {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+        with open(zip_path, "rb") as f_obj:
+            bot.send_document(
                 PRIMARY_ADMIN_ID,
-                photo=pf,
-                caption=f"✅ <b>{doc['recipient_fio']}</b> uchun <b>{doc['template_name']}</b> (Arxivdan yuborildi)",
+                document=f_obj,
+                caption=caption,
                 parse_mode="HTML"
             )
-        return jsonify({"success": True, "message": "Hujjat Telegramingizga yuborildi!"})
+        return jsonify({"success": True, "message": "Barcha tumanlar ZIP arxivi Telegram botingizga yuborildi!"})
     except Exception as e:
         return jsonify({"success": False, "error": f"Telegram xatosi: {str(e)}"}), 500
 @atlas_api.route("/documents/<int:doc_id>", methods=["PUT"])

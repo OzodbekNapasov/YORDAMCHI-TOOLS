@@ -30,9 +30,10 @@ def get_main_keyboard():
     """1-DARAJALI BOSH MENYU (Kategoriyalar / Papkalar)"""
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     btn_kontrakt = telebot.types.KeyboardButton("📁 Kontraktlar va Hisobotlar")
+    btn_amaliyot = telebot.types.KeyboardButton("🏥 Malakaviy Amaliyot")
     btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar")
     btn_buyruq = telebot.types.KeyboardButton("📁 Buyruqlar")
-    markup.add(btn_kontrakt)
+    markup.add(btn_kontrakt, btn_amaliyot)
     markup.add(btn_docs, btn_buyruq)
     return markup
 
@@ -47,6 +48,16 @@ def get_kontrakt_folder_keyboard(suggested_date=None):
     btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
     markup.add(btn1, btn2)
     markup.add(btn_back)
+    return markup
+
+def get_amaliyot_folder_keyboard():
+    """2-DARAJALI PAPKA: Malakaviy Amaliyot bo'limi"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    btn1 = telebot.types.KeyboardButton("📋 Yo'nalishlar va Guruhlar Ro'yxati")
+    btn2 = telebot.types.KeyboardButton("📥 Oxirgi Buyruqlar Arxivini Ko'rish")
+    btn3 = telebot.types.KeyboardButton("🌐 ATLAS Web Platformasi Linki")
+    btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
+    markup.add(btn1, btn2, btn3, btn_back)
     return markup
 
 def get_docs_folder_keyboard():
@@ -902,6 +913,80 @@ def handle_text_messages(message):
     if user_text == "📁 Buyruqlar":
         user_data[chat_id] = {}
         send_safe_message(chat_id, "📁 <b>RASMIY BUYRUQLAR BO'LIMI</b>\n\nQaysi buyruq turini shakllantirmoqchisiz?", reply_markup=get_buyruqlar_folder_keyboard())
+        return
+
+    if user_text == "🏥 Malakaviy Amaliyot":
+        user_data[chat_id] = {}
+        msg_text = (
+            "🏥 <b>MALAKAVIY AMALIYOT BUYRUQLARI VA REJALARI</b>\n\n"
+            "✨ Ushbu bo'lim orqali barcha ta'lim yo'nalishlari, semestrlar va talabalar amaliyot buyruqlarini kuzatishingiz mumkin.\n\n"
+            "Kerakli xizmatni tanlang:"
+        )
+        send_safe_message(chat_id, msg_text, reply_markup=get_amaliyot_folder_keyboard())
+        return
+
+    if user_text == "📋 Yo'nalishlar va Guruhlar Ro'yxati":
+        from services.atlas_db import get_amaliyot_folders_hierarchy
+        res = get_amaliyot_folders_hierarchy()
+        folders = res.get("folders", [])
+        if not folders:
+            send_safe_message(chat_id, "ℹ️ Hozircha bazada amaliyot papkalari mavjud emas.", reply_markup=get_amaliyot_folder_keyboard())
+            return
+
+        lines = ["🏥 <b>ATLAS: AMALIYOT YO'NALISHLARI VA GURUHLARI:</b>\n"]
+        for y_item in folders:
+            lines.append(f"📅 <b>O'quv yili: {y_item.get('name')}</b>")
+            for dir_item in y_item.get("children", []):
+                dur = dir_item.get("extra_data", {}).get("duration", "")
+                dur_txt = f" <i>({dur})</i>" if dur else ""
+                lines.append(f"  ├ 📚 <b>{dir_item.get('name')}</b>{dur_txt}")
+                for grp_item in dir_item.get("children", []):
+                    lines.append(f"  │   ├ 👥 {grp_item.get('name')}")
+                    for sem_item in grp_item.get("children", []):
+                        lines.append(f"  │   │   └ 🔖 {sem_item.get('name')} (Talabalar: {sem_item.get('survey_count', 0)} ta)")
+            lines.append("")
+
+        lines.append("<i>💡 Yangi buyruq shakllantirish yoki talabalar so'rovnomasini yuklash uchun web platformadan foydalaning.</i>")
+        send_safe_message(chat_id, "\n".join(lines), reply_markup=get_amaliyot_folder_keyboard())
+        return
+
+    if user_text == "📥 Oxirgi Buyruqlar Arxivini Ko'rish":
+        from services.atlas_db import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM generated_docs ORDER BY id DESC LIMIT 5")
+        recent_docs = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+
+        if not recent_docs:
+            send_safe_message(chat_id, "ℹ️ Hozircha shakllantirilgan buyruqlar arxivi bo'sh.", reply_markup=get_amaliyot_folder_keyboard())
+            return
+
+        send_safe_message(chat_id, f"📥 <b>OXIRGI SHAKLLANTIRILGAN {len(recent_docs)} TA HUJJAT:</b>\n\nFayllar yuborilmoqda...")
+        for d in recent_docs:
+            fpath = d.get("file_path", "")
+            if fpath and os.path.exists(fpath):
+                fio = d.get("recipient_fio") or "Talaba"
+                tpl_name = d.get("template_name") or "Hujjat"
+                caption = f"📄 <b>{tpl_name}</b>\n👤 <b>Talaba / Qabul qiluvchi:</b> {fio}\n📅 <b>Vaqti:</b> {d.get('created_at', '')}"
+                with open(fpath, "rb") as f_obj:
+                    ext = os.path.splitext(fpath)[1].lower()
+                    if ext in [".png", ".jpg", ".jpeg"]:
+                        bot.send_photo(chat_id, photo=f_obj, caption=caption, parse_mode="HTML")
+                    else:
+                        bot.send_document(chat_id, document=f_obj, caption=caption, parse_mode="HTML")
+        return
+
+    if user_text == "🌐 ATLAS Web Platformasi Linki":
+        markup = telebot.types.InlineKeyboardMarkup()
+        btn_web = telebot.types.InlineKeyboardButton("🌐 ATLAS Web Platformasiga O'tish", url="https://atlas-my-tools.vercel.app")
+        markup.add(btn_web)
+        send_safe_message(
+            chat_id,
+            "🌐 <b>ATLAS Universal Platformasi:</b>\n\n"
+            "Kompyuter yoki telefon brauzeridan barcha amaliyot buyruqlari, kontraktlar, ma'lumotnomalar va tahlillarni boshqarish uchun pastdagi tugmani bosing:",
+            reply_markup=markup
+        )
         return
 
     if user_text == "🔙 Asosiy menyuga qaytish":

@@ -2038,13 +2038,12 @@ const ATLAS = {
         try {
           const res = await this.api(`/api/amaliyot/folders/${currentFolderId}/generate-single`, 'POST', payload);
           btn.innerHTML = `${this.icons.documents} <span>Ushbu Tuman Buyrug'ini Shakllantirish va Word Yuklab Olish</span>`;
-
           if (res?.success) {
             this.toast(res.message || "Buyruq shakllantirildi!", "success");
             const resultBox = document.getElementById('single-order-result-box');
             const userToken = localStorage.getItem('atlas_token') || this.token || '';
             const downloadUrlWithToken = `${res.download_docx_url}?token=${encodeURIComponent(userToken)}`;
-            const fname = `${finalTumani} - ${payload.students.length} ta talaba.docx`;
+            const fname = `${finalTumani} — ${payload.students.length} ta talaba.docx`;
 
             resultBox.innerHTML = `
               <div style="background:rgba(0,203,169,0.12);border:1px solid rgba(0,203,169,0.4);border-radius:12px;padding:20px;text-align:left;">
@@ -2055,11 +2054,33 @@ const ATLAS = {
                     <div style="font-size:12px;color:rgba(94,234,212,0.8);">${payload.students.length} ta talaba bilan Word hujjati shakllantirildi</div>
                   </div>
                 </div>
-                <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;" download="${fname}">
-                  ${this.icons.download} <span>Word (.docx) Hujjatini Yuklab Olish</span>
-                </a>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+                  <a href="${downloadUrlWithToken}" class="btn-primary btn-block" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;" download="${fname}">
+                    ${this.icons.download} <span>Word (.docx) Hujjatini Yuklab Olish</span>
+                  </a>
+                  <button type="button" class="btn-secondary btn-block" id="btn-send-single-tg" style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(37,99,235,0.2);border-color:#3b82f6;color:#60a5fa;">
+                    ${this.icons.send} <span>📱 Telegram Botga Yuborish</span>
+                  </button>
+                </div>
               </div>
             `;
+
+            const tgBtn = document.getElementById('btn-send-single-tg');
+            if (tgBtn && res.doc_id) {
+              tgBtn.addEventListener('click', async () => {
+                tgBtn.disabled = true;
+                tgBtn.innerHTML = `<span>Yuborilmoqda...</span>`;
+                const tgRes = await this.api(`/api/documents/resend/${res.doc_id}`, 'POST');
+                if (tgRes?.success) {
+                  this.toast("✅ Buyruq Telegram botingizga yuborildi!", "success");
+                  tgBtn.innerHTML = `<span>✅ Telegramga Yuborildi</span>`;
+                } else {
+                  alert(tgRes?.error || "Telegramga yuborishda xatolik");
+                  tgBtn.disabled = false;
+                  tgBtn.innerHTML = `${this.icons.send} <span>📱 Telegram Botga Yuborish</span>`;
+                }
+              });
+            }
           } else {
             alert(res?.error || "Xatolik yuz berdi");
           }
@@ -2073,90 +2094,126 @@ const ATLAS = {
     // ============================================================
     // SUB-VIEW 3: BARCHA TUMANLARNI BIR BOSISHDA SHAKLLANTIRISH (ZIP)
     // ============================================================
-    const renderGenerateAllTab = (viewport, districtStats) => {
-      const todayStr = new Date().toLocaleDateString('ru-RU');
-      const sampleMuddati = "2026-yil 08-iyunidan  2026-yil 06-iyuligacha";
+    const renderBatchOrdersTab = (viewport) => {
+      const extra = currentFolderInfo?.extra_data || {};
+      const sDate = extra.start_date || "08.06.2026";
+      const eDate = extra.end_date || "06.07.2026";
+      const defaultMuddati = extra.amaliyot_muddati || formatAmaliyotMuddatiText(sDate, eDate);
+
+      const districtStats = {};
+      surveyStudents.forEach(st => {
+        const d = st.tumani || "Shahrisabz shahar";
+        districtStats[d] = (districtStats[d] || 0) + 1;
+      });
+
       const totalDistrictsCount = Object.keys(districtStats).length;
 
       viewport.innerHTML = `
-        <div style="max-width:800px;margin:0 auto;">
-          <div class="glass-card" style="padding:28px;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-              <div style="color:var(--accent-glow);">${this.icons.zap}</div>
-              <div>
-                <div style="font-size:18px;font-weight:800;color:#ffffff;">Barcha Tumanlar Buyruqlarini Bitta Bosishda Shakllantirish</div>
-                <div style="font-size:12.5px;color:rgba(94,234,212,0.85);">
-                  Tizim so'rovnomadagi barcha ${surveyStudents.length} ta talabani tumanlar bo'yicha ajratadi va har bir tuman uchun alohida Word (.docx) faylini tayyorlab, ZIP paketga yig'adi.
-                </div>
-              </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <!-- LEFT FORM -->
+          <div class="glass-card" style="padding:22px;">
+            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--accent-glow);">${this.icons.package}</span>
+              <span>Barcha Tumanlar Buyruqlarini Yaratish (ZIP)</span>
+            </div>
+            <div style="font-size:12.5px;color:rgba(94,234,212,0.8);margin-bottom:18px;">
+              Bitta bosish orqali so'rovnomadagi ${totalDistrictsCount} ta tuman uchun alohida Word buyruqlarini generatsiya qilib, bitta ZIP paketga yig'adi.
             </div>
 
-            <!-- Detected Districts Summary -->
-            <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:20px;">
-              <div style="font-size:13px;font-weight:700;color:#ffffff;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-                <span style="color:var(--accent-glow);">${this.icons.analytics}</span>
-                <span>Aniqlangan Tumanlar Ro'yxati (${totalDistrictsCount} ta tuman):</span>
-              </div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                ${Object.entries(districtStats).map(([tum, cnt]) => `
-                  <div class="district-stat-chip">
-                    <span style="font-weight:600;">${tum}:</span>
-                    <span class="district-stat-count">${cnt} ta talaba</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-
-            <form id="batch-generate-form">
+            <form id="batch-amaliyot-form">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
-                  <label class="form-label">Umumiy Buyruq Raqami</label>
-                  <input type="text" id="batch-buyruq-num" class="input-control" placeholder="Masalan: 28-A" value="">
+                  <label class="form-label">Buyruq Raqami</label>
+                  <input type="text" id="batch-buyruq-raqami" class="input-control" placeholder="Masalan: 45">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Buyruq Sanasi</label>
-                  <input type="text" id="batch-buyruq-sana" class="input-control" value="${todayStr}" required>
+                  <input type="text" id="batch-buyruq-sanasi" class="input-control" value="${new Date().toLocaleDateString('ru-RU')}">
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label class="form-label">O'quv Yili</label>
+                  <input type="text" id="batch-oquv-yili" class="input-control" value="${extra.oquv_yili || '2025/2026'}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bosqich / Kursi</label>
+                  <select id="batch-kursi" class="select-control">
+                    <option value="1" ${extra.kursi === '1' ? 'selected' : ''}>1-kurs</option>
+                    <option value="2" ${extra.kursi === '2' ? 'selected' : ''}>2-kurs</option>
+                    <option value="3" ${extra.kursi === '3' ? 'selected' : ''}>3-kurs</option>
+                    <option value="4" ${extra.kursi === '4' ? 'selected' : ''}>4-kurs</option>
+                  </select>
                 </div>
               </div>
 
               <div class="form-group">
-                <label class="form-label">Amaliyot O'tash Muddati (Matn)</label>
-                <input type="text" id="batch-muddati-text" class="input-control" value="${sampleMuddati}">
+                <label class="form-label">Amaliyot Muddati (Matn ko'rinishida)</label>
+                <input type="text" id="batch-muddati-text" class="input-control" value="${defaultMuddati}">
               </div>
 
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
                   <label class="form-label">Boshlanish Sanasi</label>
-                  <input type="text" id="batch-start-date" class="input-control" value="08.06.2026">
+                  <input type="text" id="batch-start-date" class="input-control" value="${sDate}">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Tugash Sanasi</label>
-                  <input type="text" id="batch-end-date" class="input-control" value="06.07.2026">
+                  <input type="text" id="batch-end-date" class="input-control" value="${eDate}">
                 </div>
               </div>
 
-              <div style="margin-top:20px;">
-                <button type="submit" class="btn-primary btn-block" id="btn-run-batch-generate" ${surveyStudents.length === 0 ? 'disabled' : ''} style="height:46px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <div style="margin-top:22px;">
+                <button type="submit" class="btn-primary btn-block" id="btn-generate-batch-orders" style="display:flex;align-items:center;justify-content:center;gap:8px;">
                   ${this.icons.zap} <span>Barcha ${totalDistrictsCount} ta Tuman Buyruqlarini Shakllantirish va ZIP Yuklab Olish</span>
                 </button>
               </div>
             </form>
+          </div>
 
-            <div id="batch-generate-result" style="margin-top:20px;"></div>
+          <!-- RIGHT SUMMARY -->
+          <div class="glass-card" style="padding:22px;">
+            <div id="batch-order-result-box">
+              <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                <span style="color:var(--accent-glow);">${this.icons.pieChart}</span>
+                <span>Tumanlar Bo'yicha Taqsimot:</span>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;padding-right:6px;">
+                ${Object.entries(districtStats).map(([tum, cnt]) => `
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:8px;border:1px solid var(--border-glass);">
+                    <div>
+                      <div style="font-weight:700;color:#ffffff;font-size:13.5px;">${tum}</div>
+                      <div style="font-size:11.5px;color:rgba(94,234,212,0.7);">Bosh shifokor: ${districtDoctors[tum] || 'Bosh shifokor'}</div>
+                    </div>
+                    <span class="badge badge-accent" style="font-size:12px;padding:4px 10px;">${cnt} ta talaba</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
           </div>
         </div>
       `;
 
-      document.getElementById('batch-generate-form').addEventListener('submit', async (e) => {
+      document.getElementById('batch-amaliyot-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btn-run-batch-generate');
-        const resBox = document.getElementById('batch-generate-result');
+        const btn = document.getElementById('btn-generate-batch-orders');
+        const resBox = document.getElementById('batch-order-result-box');
+
+        if (surveyStudents.length === 0) {
+          alert("So'rovnomada talabalar topilmadi. Avval so'rovnomani yuklang.");
+          return;
+        }
+
         btn.disabled = true;
-        btn.innerHTML = `<span>Barcha tumanlar buyruqlari shakllantirilmoqda...</span>`;
+        btn.innerHTML = `<span>Barcha buyruqlar tayyorlanmoqda...</span>`;
 
         const payload = {
-          buyruq_raqami: document.getElementById('batch-buyruq-num').value.trim(),
-          buyruq_sanasi: document.getElementById('batch-buyruq-sana').value.trim(),
+          buyruq_raqami: document.getElementById('batch-buyruq-raqami').value.trim() || "____",
+          buyruq_sanasi: document.getElementById('batch-buyruq-sanasi').value.trim() || new Date().toLocaleDateString('ru-RU'),
+          oquv_yili: document.getElementById('batch-oquv-yili').value.trim(),
+          kursi: document.getElementById('batch-kursi').value,
           amaliyot_muddati: document.getElementById('batch-muddati-text').value.trim(),
           start_date: document.getElementById('batch-start-date').value.trim(),
           end_date: document.getElementById('batch-end-date').value.trim()
@@ -2181,10 +2238,13 @@ const ATLAS = {
                   </div>
                 </div>
 
-                <div style="margin-bottom:16px;">
-                  <a href="${res.download_zip_url}" class="btn-primary btn-block" style="text-decoration:none;font-size:14.5px;font-weight:700;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;" download="${res.zip_filename}">
-                    ${this.icons.download} <span>Barcha Word Buyruqlarini (ZIP) Yuklab Olish</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                  <a href="${res.download_zip_url}" class="btn-primary" style="text-decoration:none;font-size:13.5px;font-weight:700;height:42px;display:flex;align-items:center;justify-content:center;gap:6px;" download="${res.zip_filename}">
+                    ${this.icons.download} <span>ZIP Yuklab Olish</span>
                   </a>
+                  <button type="button" class="btn-secondary" id="btn-send-batch-zip-tg" style="height:42px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(37,99,235,0.2);border-color:#3b82f6;color:#60a5fa;">
+                    ${this.icons.send} <span>📱 Telegramga Yuborish</span>
+                  </button>
                 </div>
 
                 <div style="font-size:12.5px;font-weight:700;color:#ffffff;margin-bottom:8px;">Paket tarkibi:</div>
@@ -2198,6 +2258,23 @@ const ATLAS = {
                 </div>
               </div>
             `;
+
+            const tgZipBtn = document.getElementById('btn-send-batch-zip-tg');
+            if (tgZipBtn && res.zip_filename) {
+              tgZipBtn.addEventListener('click', async () => {
+                tgZipBtn.disabled = true;
+                tgZipBtn.innerHTML = `<span>Yuborilmoqda...</span>`;
+                const tgRes = await this.api('/api/amaliyot/send-zip-telegram', 'POST', { zip_filename: res.zip_filename });
+                if (tgRes?.success) {
+                  this.toast("✅ ZIP paket Telegram botingizga yuborildi!", "success");
+                  tgZipBtn.innerHTML = `<span>✅ Telegramga Yuborildi</span>`;
+                } else {
+                  alert(tgRes?.error || "Telegramga yuborishda xatolik");
+                  tgZipBtn.disabled = false;
+                  tgZipBtn.innerHTML = `${this.icons.send} <span>📱 Telegramga Yuborish</span>`;
+                }
+              });
+            }
           } else {
             alert(res?.error || "Generatsiya qilishda xatolik yuz berdi");
           }
