@@ -108,12 +108,16 @@ const ATLAS = {
   // Init Application
   init() {
     this.bindGlobalEvents();
+    const hash = (window.location.hash || '').replace('#', '').trim();
+    if (hash && ['contracts', 'orders', 'certificates', 'amaliyot', 'dashboard', 'analytics', 'logs', 'settings'].includes(hash)) {
+      this.currentRoute = hash;
+    }
     if (!this.token || !this.user) {
       this.renderLogin();
     } else {
       this.renderApp();
       this.startSystemStatusTimer();
-      this.navigate(this.currentRoute);
+      this.navigate(this.currentRoute, false);
     }
   },
 
@@ -159,6 +163,13 @@ const ATLAS = {
   },
 
   bindGlobalEvents() {
+    window.addEventListener('hashchange', () => {
+      const hash = (window.location.hash || '').replace('#', '').trim();
+      if (hash && hash !== this.currentRoute && this.token && this.user) {
+        this.navigate(hash, false);
+      }
+    });
+
     window.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -171,8 +182,12 @@ const ATLAS = {
   },
 
   // Router
-  navigate(route) {
+  navigate(route, updateHash = true) {
     this.currentRoute = route;
+
+    if (updateHash && window.location.hash !== '#' + route) {
+      window.location.hash = '#' + route;
+    }
 
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.route === route);
@@ -210,6 +225,9 @@ const ATLAS = {
 
     const viewport = document.getElementById('content-viewport');
     if (!viewport) return;
+
+    // Har bir bo'lim sahifasini toza va alohida yuklash
+    viewport.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:300px;"><div class="spinner"></div></div>';
 
     switch (route) {
       case 'contracts': this.loadContracts(viewport, 'update'); break;
@@ -326,20 +344,18 @@ const ATLAS = {
           </div>
 
           <nav class="sidebar-menu">
-            <div class="sidebar-group-title">Asosiy Bo'limlar</div>
-            
-            <!-- Expandable Accordion Menu -->
-            <div class="nav-group open" id="nav-group-main">
-              <div class="nav-group-header" id="nav-header-main">
-                ${this.icons.documents} <span>Hujjatlar & Kontrakt</span>
-                <span class="nav-arrow">${this.icons.chevronDown}</span>
-              </div>
-              <div class="nav-sub-menu">
-                <div class="nav-sub-item" data-route="contracts">KONTRAKT</div>
-                <div class="nav-sub-item" data-route="orders">BUYRUQLAR</div>
-                <div class="nav-sub-item" data-route="certificates">MA'LUMOTNOMALAR</div>
-                <div class="nav-sub-item" data-route="amaliyot">AMALIYOT</div>
-              </div>
+            <div class="sidebar-group-title">Hujjatlar & Amaliyot</div>
+            <div class="nav-item" data-route="contracts">
+              ${this.icons.creditCard || this.icons.documents} <span>Kontraktlar & Baza</span>
+            </div>
+            <div class="nav-item" data-route="amaliyot">
+              ${this.icons.activity} <span>Malakaviy Amaliyot</span>
+            </div>
+            <div class="nav-item" data-route="certificates">
+              ${this.icons.fileText} <span>Ma'lumotnomalar</span>
+            </div>
+            <div class="nav-item" data-route="orders">
+              ${this.icons.clipboard} <span>Rasmiy Buyruqlar</span>
             </div>
 
             <div class="sidebar-group-title">O'quv Bo'limi & Bot</div>
