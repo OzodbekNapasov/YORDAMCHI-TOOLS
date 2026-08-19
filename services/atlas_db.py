@@ -646,8 +646,13 @@ def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, of
             query += " AND (recipient_fio LIKE ? OR data_json LIKE ?)"
             params.extend([f"%{q}%", f"%{q}%"])
         if template_id:
-            query += " AND template_id = ?"
-            params.append(template_id)
+            if template_id in ["all_orders", "buyruq", "buyruqlar"]:
+                query += " AND template_id LIKE 'buyruq_%'"
+            elif template_id in ["all_certs", "malumotnoma", "malumotnomalar"]:
+                query += " AND template_id NOT LIKE 'buyruq_%'"
+            else:
+                query += " AND template_id = ?"
+                params.append(template_id)
         query += " ORDER BY id DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         cursor.execute(query, params)
@@ -674,7 +679,12 @@ def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, of
             }
             url = f"{supa_url}/rest/v1/atlas_generated_docs?select=*&order=id.desc&limit={limit}&offset={offset}"
             if template_id:
-                url += f"&template_id=eq.{template_id}"
+                if template_id in ["all_orders", "buyruq", "buyruqlar"]:
+                    url += "&template_id=like.buyruq_*"
+                elif template_id in ["all_certs", "malumotnoma", "malumotnomalar"]:
+                    url += "&template_id=not.like.buyruq_*"
+                else:
+                    url += f"&template_id=eq.{template_id}"
             if q:
                 url += f"&recipient_fio=ilike.*{q}*"
             resp = requests.get(url, headers=headers, timeout=5)

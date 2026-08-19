@@ -583,7 +583,7 @@ const ATLAS = {
         this.renderOrdersByGroup(contentBox);
       } else {
         // Render all orders in archive
-        this.renderDocumentArchive(contentBox, 'buyruq_akademik_tatil', false);
+        this.renderDocumentArchive(contentBox, 'all_orders', false);
       }
     };
 
@@ -2557,13 +2557,23 @@ const ATLAS = {
 
   renderDocumentGenerator(container, specificTplId = null) {
     const todayStr = new Date().toLocaleDateString('ru-RU');
+    const titlesMap = {
+      qabul_1_kurs: "1-Kursga Qabul Ma'lumotnomasi",
+      oqiyapti: "O'qiyotganligi Haqida Ma'lumotnoma",
+      buyruq_akademik_tatil: "Akademik Ta'til Berish Buyrug'i",
+      buyruq_qayta_tiklash: "Akademik Ta'tildan Qayta Tiklash Buyrug'i",
+      buyruq_guruhdan_guruhga: "Guruhdan Guruhga O'tkazish Buyrug'i",
+      buyruq_safidan_chiqarish: "Talabalar Safidan Chiqarish Buyrug'i"
+    };
+    const cardTitle = titlesMap[specificTplId] || "Rasmiy Hujjat & Buyruq Shakllantirish";
+
     container.innerHTML = `
       <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:24px;margin-bottom:24px;">
         <!-- Left: Input Form -->
         <div class="glass-card">
           <div class="card-header-flex">
             <div>
-              <div class="card-title">Rasmiy Hujjatlar & Buyruqlar Generatori</div>
+              <div class="card-title">${cardTitle}</div>
               <div class="card-subtitle">Ultra HD (300 DPI A4) rasm va asl Word (.docx) holida bir zumda shakllantirish</div>
             </div>
           </div>
@@ -2884,26 +2894,30 @@ const ATLAS = {
         answers['KURSI'] = document.getElementById('doc-kursi').value;
         answers['GURUHI'] = finalGuruh;
       } else if (tpl_id === 'buyruq_akademik_tatil') {
-        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value.trim();
         answers['kursi'] = document.getElementById('doc-kursi').value;
         answers['guruhi'] = finalGuruh;
+        answers['avvalgi_guruhi'] = finalGuruh;
       } else if (tpl_id === 'buyruq_qayta_tiklash') {
-        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
-        answers['avvalgi_buyruq_raqami'] = document.getElementById('doc-avv-raqam').value;
-        answers['avvalgi_buyruq_sanasi'] = document.getElementById('doc-avv-sana').value;
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value.trim();
+        answers['avvalgi_buyruq_raqami'] = document.getElementById('doc-avv-raqam').value.trim();
+        answers['avvalgi_buyruq_sanasi'] = document.getElementById('doc-avv-sana').value.trim();
         answers['kursi'] = document.getElementById('doc-kursi').value;
         answers['avvalgi_guruhi'] = finalGuruh;
+        answers['guruhi'] = finalGuruh;
         answers['yangi_guruhi'] = finalYangiGuruh;
       } else if (tpl_id === 'buyruq_guruhdan_guruhga') {
-        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value.trim();
         answers['yonalishi'] = document.getElementById('doc-yonalish').value;
         answers['avvalgi_guruhi'] = finalGuruh;
+        answers['guruhi'] = finalGuruh;
         answers['yangi_guruhi'] = finalYangiGuruh;
       } else if (tpl_id === 'buyruq_safidan_chiqarish') {
         answers['asos_turi'] = document.getElementById('doc-asos-turi').value;
-        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value;
+        answers['buyruq_raqami'] = document.getElementById('doc-buyruq-raqami').value.trim();
         answers['kursi'] = document.getElementById('doc-kursi').value;
         answers['avvalgi_guruhi'] = finalGuruh;
+        answers['guruhi'] = finalGuruh;
       }
 
       const res = await this.api('/api/documents/generate', 'POST', { template_id: tpl_id, answers });
