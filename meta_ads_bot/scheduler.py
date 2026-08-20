@@ -19,7 +19,10 @@ except ImportError:
     from facebook_api import MetaAdsManager
     from config import BASE_DIR, ALLOWED_USER_ID
 
-SETTINGS_FILE = BASE_DIR / "schedule_settings.json"
+import tempfile
+
+TEMP_SETTINGS_FILE = Path(tempfile.gettempdir()) / "schedule_settings.json"
+LOCAL_SETTINGS_FILE = BASE_DIR / "schedule_settings.json"
 
 DEFAULT_SETTINGS = {
     # Tungi rejim
@@ -41,26 +44,34 @@ DEFAULT_SETTINGS = {
     "last_known_account_status": 1     # 1: Active
 }
 
+_MEMORY_SETTINGS = DEFAULT_SETTINGS.copy()
+
 def load_settings():
-    if not SETTINGS_FILE.exists():
-        save_settings(DEFAULT_SETTINGS)
-        return DEFAULT_SETTINGS.copy()
-    try:
-        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for k, v in DEFAULT_SETTINGS.items():
-                if k not in data:
-                    data[k] = v
-            return data
-    except Exception:
-        return DEFAULT_SETTINGS.copy()
+    global _MEMORY_SETTINGS
+    for sfile in [TEMP_SETTINGS_FILE, LOCAL_SETTINGS_FILE]:
+        if sfile.exists():
+            try:
+                with open(sfile, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    for k, v in DEFAULT_SETTINGS.items():
+                        if k not in data:
+                            data[k] = v
+                    _MEMORY_SETTINGS = data
+                    return data
+            except Exception:
+                pass
+    return _MEMORY_SETTINGS.copy()
 
 def save_settings(settings):
-    try:
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(settings, f, indent=4, ensure_ascii=False)
-    except Exception as e:
-        print(f"[Save Settings Error]: {e}")
+    global _MEMORY_SETTINGS
+    _MEMORY_SETTINGS = settings.copy()
+    for sfile in [TEMP_SETTINGS_FILE, LOCAL_SETTINGS_FILE]:
+        try:
+            with open(sfile, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=4, ensure_ascii=False)
+            break
+        except Exception:
+            continue
 
 class BotScheduler:
     def __init__(self, bot_instance):

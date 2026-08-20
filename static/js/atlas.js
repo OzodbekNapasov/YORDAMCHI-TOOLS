@@ -5160,21 +5160,33 @@ const ATLAS = {
     if (funds.is_active_limit) {
       const rem = funds.remaining_funds;
       const isOver = rem <= 0;
+      const pct = Math.min(100, Math.max(0, (funds.spent_since_limit / funds.custom_budget_limit) * 100));
       fundsHtml = `
-        <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:4px;">
-            <span>Limit: $${funds.custom_budget_limit.toFixed(2)}</span>
-            <span>Sarflandi: $${funds.spent_since_limit.toFixed(2)}</span>
+        <div style="margin-top:4px;">
+          <div style="font-size:22px;font-weight:800;color:${isOver ? '#f87171' : '#34d399'};">
+            ${isOver ? `$0.00 (Qarz: $${Math.abs(funds.custom_budget_limit - funds.spent_since_limit).toFixed(2)})` : `$${rem.toFixed(2)}`}
           </div>
-          <div style="font-size:14px;font-weight:700;color:${isOver ? '#f87171' : '#34d399'};">
-            ${isOver ? `🔴 Qoldiq: $0.00 (Qarzda: $${Math.abs(funds.custom_budget_limit - funds.spent_since_limit).toFixed(2)})` : `🟢 Qoldiq: $${rem.toFixed(2)}`}
+          <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin:8px 0 6px 0;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${isOver ? '#f87171' : '#34d399'};border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,0.6);">
+            <span>Limit: <b>$${funds.custom_budget_limit.toFixed(2)}</b> (Sarf: $${funds.spent_since_limit.toFixed(2)})</span>
+            <button class="btn-icon btn-sm" id="meta-change-limit-link" style="color:var(--accent-glow);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;">O'zgartirish</button>
           </div>
         </div>
       `;
     } else {
       fundsHtml = `
-        <div style="margin-top:8px;font-size:12px;color:rgba(255,255,255,0.5);">
-          <i>Byudjet limiti belgilanmagan</i>
+        <div style="margin-top:4px;">
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px;">
+            Qoldiq pulni ko'rish uchun byudjet belgilang:
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="25" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">$25</button>
+            <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="50" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">$50</button>
+            <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="100" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">$100</button>
+            <button class="btn-sm btn-primary meta-quick-budget-btn" data-val="custom" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">+ Kiritish</button>
+          </div>
         </div>
       `;
     }
@@ -5216,7 +5228,7 @@ const ATLAS = {
           </div>
 
           <div class="card" style="padding:16px;">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Kiritilgan Mablag' (Funds)</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Kiritilgan Mablag' & Qoldiq Pul</div>
             ${fundsHtml}
           </div>
 
@@ -5600,6 +5612,32 @@ const ATLAS = {
           }
         });
       });
+    }
+
+    // Quick preset buttons
+    viewport.querySelectorAll('.meta-quick-budget-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const val = btn.dataset.val;
+        if (val === 'custom') {
+          if (setLimitBtn) setLimitBtn.click();
+        } else {
+          const numVal = parseFloat(val);
+          btn.disabled = true;
+          const res = await this.api('/api/meta-ads/settings', 'POST', { custom_budget_limit: numVal });
+          if (res && res.success) {
+            this.toast(`Byudjet limiti $${numVal.toFixed(2)} qilib belgilandi!`, 'success');
+            this.loadMetaAds(viewport);
+          } else {
+            this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+            btn.disabled = false;
+          }
+        }
+      });
+    });
+
+    const changeLimitLink = document.getElementById('meta-change-limit-link');
+    if (changeLimitLink && setLimitBtn) {
+      changeLimitLink.addEventListener('click', () => setLimitBtn.click());
     }
   }
 };
