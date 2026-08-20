@@ -56,7 +56,11 @@ const ATLAS = {
     mapPin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
     info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
     fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
-    package: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`
+    package: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+    target: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+    dollarSign: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    play: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
   },
 
   // API Wrapper
@@ -84,6 +88,58 @@ const ATLAS = {
     }
   },
 
+  // Universal Authenticated File Downloader
+  async downloadFile(url, fallbackFilename = 'hujjat') {
+    this.toast('Fayl tayyorlanmoqda va yuklab olinmoqda...', 'info');
+    try {
+      let fetchUrl = url;
+      if (this.token && !fetchUrl.includes('token=')) {
+        fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + `token=${encodeURIComponent(this.token)}`;
+      }
+      
+      const headers = {};
+      if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+
+      const res = await fetch(fetchUrl, { headers });
+      if (!res.ok) {
+        let errText = 'Faylni yuklab olishda xatolik yuz berdi.';
+        try {
+          const errJson = await res.json();
+          if (errJson && errJson.error) errText = errJson.error;
+        } catch (_) {}
+        this.toast(errText, 'error');
+        return;
+      }
+
+      const blob = await res.blob();
+      let filename = fallbackFilename;
+      const disposition = res.headers.get('Content-Disposition');
+      if (disposition && disposition.includes('filename=')) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '').trim();
+        }
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 500);
+
+      this.toast('Fayl muvaffaqiyatli yuklab olindi!', 'success');
+    } catch (err) {
+      console.error('Download error:', err);
+      this.toast('Yuklab olishda xatolik: ' + err.message, 'error');
+    }
+  },
+
   // Toast Notification System
   toast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -105,19 +161,59 @@ const ATLAS = {
     return this.toast(message, type);
   },
 
-  // Init Application
-  init() {
+  // Init Application with Strict Server Verification
+  async init() {
     this.bindGlobalEvents();
     const hash = (window.location.hash || '').replace('#', '').trim();
-    if (hash && ['contracts', 'orders', 'certificates', 'amaliyot', 'dashboard', 'analytics', 'logs', 'settings'].includes(hash)) {
+    if (hash && ['contracts', 'orders', 'certificates', 'amaliyot', 'dashboard', 'analytics', 'logs', 'settings', 'meta_ads'].includes(hash)) {
       this.currentRoute = hash;
     }
+
+    // 1. Agar token yoki user bo'lmasa, darhol Login oynasini ochish
     if (!this.token || !this.user) {
+      this.token = '';
+      this.user = null;
+      localStorage.removeItem('atlas_token');
+      localStorage.removeItem('atlas_user');
       this.renderLogin();
-    } else {
+      return;
+    }
+
+    // 2. Token mavjud bo'lsa, uni server orqali qat'iy tekshirish
+    const root = document.getElementById('app-root');
+    if (root) {
+      root.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0d1117;color:#fff;font-family:sans-serif;">
+          <div class="spinner" style="width:38px;height:38px;border-width:3px;margin-bottom:14px;"></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.6);letter-spacing:0.04em;">Xavfsizlik tekshirilmoqda...</div>
+        </div>
+      `;
+    }
+
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${this.token}` }
+      });
+
+      if (!res.ok) {
+        this.logout();
+        return;
+      }
+
+      const data = await res.json();
+      if (!data || !data.success || !data.user || data.user.username.toLowerCase() !== 'ozodbek') {
+        this.logout();
+        return;
+      }
+
+      this.user = data.user;
+      localStorage.setItem('atlas_user', JSON.stringify(data.user));
       this.renderApp();
       this.startSystemStatusTimer();
       this.navigate(this.currentRoute, false);
+    } catch (err) {
+      console.error('Auth check error:', err);
+      this.logout();
     }
   },
 
@@ -179,10 +275,34 @@ const ATLAS = {
         this.closeModal();
       }
     });
+
+    // Global interceptor for all platform download links
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return;
+      const href = link.getAttribute('href');
+      if (!href) return;
+
+      if (
+        href.startsWith('/api/documents/download') ||
+        href.startsWith('/api/contracts/download') ||
+        href.startsWith('/api/amaliyot/download') ||
+        href.startsWith('/api/amaliyot/survey/sample-excel')
+      ) {
+        e.preventDefault();
+        const downloadName = link.getAttribute('download') || link.getAttribute('title') || 'fayl';
+        this.downloadFile(href, downloadName);
+      }
+    });
   },
 
   // Router
   navigate(route, updateHash = true) {
+    if (!this.token || !this.user) {
+      this.renderLogin();
+      return;
+    }
+
     this.currentRoute = route;
 
     if (updateHash && window.location.hash !== '#' + route) {
@@ -208,6 +328,7 @@ const ATLAS = {
         orders: 'Rasmiy Buyruqlar Bolimi',
         certificates: "Rasmiy Ma'lumotnomalar Bolimi",
         amaliyot: "Malakaviy Amaliyot Buyruqlari & Rejalari",
+        meta_ads: 'Meta Ads Manager Boshqaruv Markazi',
         academic_groups: "O'quv Guruhlari Boshqaruvi",
         groups: 'Ulangan Telegram Guruhlar',
         dashboard: 'Boshqaruv Paneli',
@@ -234,6 +355,7 @@ const ATLAS = {
       case 'orders': this.loadOrders(viewport); break;
       case 'certificates': this.loadCertificates(viewport); break;
       case 'amaliyot': this.loadAmaliyot(viewport); break;
+      case 'meta_ads': this.loadMetaAds(viewport); break;
       case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
       case 'groups': this.loadGroups(viewport, 'telegram'); break;
       case 'dashboard': this.loadDashboard(viewport); break;
@@ -320,11 +442,15 @@ const ATLAS = {
   },
 
   logout() {
-    this.api('/api/auth/logout', 'POST');
+    try {
+      this.api('/api/auth/logout', 'POST');
+    } catch (_) {}
     this.token = '';
     this.user = null;
     localStorage.removeItem('atlas_token');
     localStorage.removeItem('atlas_user');
+    sessionStorage.clear();
+    document.cookie = "atlas_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     this.renderLogin();
   },
 
@@ -332,6 +458,11 @@ const ATLAS = {
   // APP SHELL
   // ============================================================
   renderApp() {
+    if (!this.token || !this.user) {
+      this.renderLogin();
+      return;
+    }
+
     const root = document.getElementById('app-root');
     root.innerHTML = `
       <div class="app-container">
@@ -356,6 +487,11 @@ const ATLAS = {
             </div>
             <div class="nav-item" data-route="orders">
               ${this.icons.clipboard} <span>Rasmiy Buyruqlar</span>
+            </div>
+
+            <div class="sidebar-group-title">Marketing & Reklama</div>
+            <div class="nav-item" data-route="meta_ads">
+              ${this.icons.target || this.icons.zap} <span>Meta Ads Manager</span>
             </div>
 
             <div class="sidebar-group-title">O'quv Bo'limi & Bot</div>
@@ -4976,6 +5112,495 @@ const ATLAS = {
   closeModal() {
     const el = document.getElementById('modal-container');
     if (el) el.classList.remove('active');
+  },
+
+  // ============================================================
+  // META ADS MANAGER VIEW
+  // ============================================================
+  async loadMetaAds(viewport) {
+    viewport.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:300px;">
+        <div class="spinner"></div>
+      </div>
+    `;
+
+    const [accData, campsData, insData, settData] = await Promise.all([
+      this.api('/api/meta-ads/account'),
+      this.api('/api/meta-ads/campaigns'),
+      this.api('/api/meta-ads/insights?period=today'),
+      this.api('/api/meta-ads/settings')
+    ]);
+
+    if (!accData || !accData.success) {
+      viewport.innerHTML = `
+        <div class="card" style="text-align:center;padding:40px 20px;">
+          <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+          <h3 style="margin-bottom:8px;color:#f87171;">Meta Ads API Ulanishida Xatolik</h3>
+          <p style="color:rgba(255,255,255,0.7);max-width:500px;margin:0 auto 20px auto;">
+            ${(accData && accData.error) || "Meta hisob ma'lumotlarini yuklab bo'lmadi. Token yoki Ad Account ID ni tekshiring."}
+          </p>
+          <button class="btn-primary" onclick="ATLAS.loadMetaAds(document.getElementById('content-viewport'))">
+            ${this.icons.refresh} Qayta urinib ko'rish
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    const acc = accData.account || {};
+    const funds = accData.funds || {};
+    const campaigns = (campsData && campsData.campaigns) || [];
+    const insights = (insData && insData.insights) || {};
+    const settings = (settData && settData.settings) || {};
+
+    const statusMap = { 1: "🟢 Faol (Active)", 2: "🔴 O'chirilgan (Disabled)", 3: "🟡 To'lov kutilmoqda (Unsettled)" };
+    const statusText = statusMap[acc.account_status] || "Noma'lum";
+
+    let fundsHtml = '';
+    if (funds.is_active_limit) {
+      const rem = funds.remaining_funds;
+      const isOver = rem <= 0;
+      fundsHtml = `
+        <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:4px;">
+            <span>Limit: $${funds.custom_budget_limit.toFixed(2)}</span>
+            <span>Sarflandi: $${funds.spent_since_limit.toFixed(2)}</span>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:${isOver ? '#f87171' : '#34d399'};">
+            ${isOver ? `🔴 Qoldiq: $0.00 (Qarzda: $${Math.abs(funds.custom_budget_limit - funds.spent_since_limit).toFixed(2)})` : `🟢 Qoldiq: $${rem.toFixed(2)}`}
+          </div>
+        </div>
+      `;
+    } else {
+      fundsHtml = `
+        <div style="margin-top:8px;font-size:12px;color:rgba(255,255,255,0.5);">
+          <i>Byudjet limiti belgilanmagan</i>
+        </div>
+      `;
+    }
+
+    viewport.innerHTML = `
+      <div class="meta-ads-container">
+        <!-- HEADER ACTIONS -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:20px;font-weight:700;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">
+              ${this.icons.target || ''} Meta Ads Manager Boshqaruv Markazi
+            </h2>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);">
+              Hisob: <b>${acc.account_name}</b> • Valyuta: <b>${acc.currency}</b> • Karta: <b>${acc.card}</b>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-secondary btn-sm" id="meta-set-limit-btn">
+              ${this.icons.dollarSign || ''} Byudjet Limitini O'rnatish ($)
+            </button>
+            <button class="btn-primary btn-sm" id="meta-refresh-btn">
+              ${this.icons.refresh} Yangilash
+            </button>
+          </div>
+        </div>
+
+        <!-- TOP METRICS GRID -->
+        <div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-bottom:24px;">
+          <div class="card" style="padding:16px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Reklama Hisobi</div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px;">${acc.account_name}</div>
+            <div style="font-size:12px;color:#34d399;">${statusText}</div>
+          </div>
+
+          <div class="card" style="padding:16px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Jami Hisob Xarajati</div>
+            <div style="font-size:22px;font-weight:800;color:#60a5fa;">$${acc.amount_spent.toFixed(2)}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">To'lov usuli: ${acc.card}</div>
+          </div>
+
+          <div class="card" style="padding:16px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Kiritilgan Mablag' (Funds)</div>
+            ${fundsHtml}
+          </div>
+
+          <div class="card" style="padding:16px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Bugungi Xarajat & Natijalar</div>
+            <div style="font-size:22px;font-weight:800;color:#34d399;">$${insights.spend || '0.00'}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;">
+              Lidlar: <b>${insights.leads || '0'} ta</b> (${insights.cpl || '—'}/lid)
+            </div>
+          </div>
+        </div>
+
+        <!-- TABS BAR -->
+        <div class="tab-bar" style="display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:20px;padding-bottom:10px;">
+          <button class="btn-sm btn-primary meta-tab-btn active" data-tab="campaigns" style="border-radius:var(--radius-sm);">
+            🎯 Kampaniyalar (${campaigns.length})
+          </button>
+          <button class="btn-sm btn-secondary meta-tab-btn" data-tab="insights" style="border-radius:var(--radius-sm);">
+            📈 Statistika & Hisobotlar
+          </button>
+          <button class="btn-sm btn-secondary meta-tab-btn" data-tab="automation" style="border-radius:var(--radius-sm);">
+            ⏰ Avtomatlashtirish & Tungi Rejim
+          </button>
+        </div>
+
+        <!-- TAB CONTENT CONTAINER -->
+        <div id="meta-tab-content"></div>
+      </div>
+    `;
+
+    const renderCampaignsTab = () => {
+      const contentEl = document.getElementById('meta-tab-content');
+      if (!contentEl) return;
+
+      if (!campaigns.length) {
+        contentEl.innerHTML = `<div class="card" style="text-align:center;padding:30px;">Hozircha hech qanday kampaniya mavjud emas.</div>`;
+        return;
+      }
+
+      let rowsHtml = campaigns.map(c => {
+        const isActive = c.status === 'ACTIVE';
+        const budgetDollars = c.daily_budget ? (parseFloat(c.daily_budget) / 100).toFixed(2) : '0.00';
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:600;font-size:14px;">${c.name}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);font-family:monospace;">ID: ${c.id}</div>
+            </td>
+            <td>
+              <span class="badge" style="font-size:11px;background:rgba(255,255,255,0.06);">${c.objective || "Noma'lum"}</span>
+            </td>
+            <td>
+              <span class="badge" style="background:${isActive ? 'rgba(52,211,153,0.15)' : 'rgba(239,68,68,0.15)'};color:${isActive ? '#34d399' : '#f87171'};font-weight:700;">
+                ${isActive ? '🟢 Faol (ACTIVE)' : '🔴 To\'xtatilgan (PAUSED)'}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-weight:700;font-size:13.5px;">$${budgetDollars}</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.5);">/kun</span>
+                <button class="btn-icon btn-sm meta-edit-budget-btn" data-id="${c.id}" data-name="${c.name}" data-budget="${budgetDollars}" title="Byudjetni o'zgartirish" style="margin-left:4px;">
+                  ${this.icons.edit}
+                </button>
+              </div>
+            </td>
+            <td style="text-align:right;">
+              <button class="btn-sm ${isActive ? 'btn-danger' : 'btn-primary'} meta-toggle-camp-btn" data-id="${c.id}" data-status="${isActive ? 'PAUSED' : 'ACTIVE'}" style="font-size:12px;padding:5px 12px;">
+                ${isActive ? '⏸ To\'xtatish' : '▶️ Yoqish'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      contentEl.innerHTML = `
+        <div class="card" style="padding:0;overflow:hidden;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Kampaniya Nomi</th>
+                <th>Maqsad (Objective)</th>
+                <th>Holat</th>
+                <th>Kunlik Byudjet</th>
+                <th style="text-align:right;">Boshqaruv</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+
+      // Event handlers for campaign actions
+      contentEl.querySelectorAll('.meta-toggle-camp-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const campId = btn.dataset.id;
+          const targetStatus = btn.dataset.status;
+          btn.disabled = true;
+          btn.innerHTML = '<div class="spinner-sm"></div>';
+          const res = await this.api(`/api/meta-ads/campaigns/${campId}/status`, 'POST', { status: targetStatus });
+          if (res && res.success) {
+            this.toast(`Kampaniya ${targetStatus === 'ACTIVE' ? 'yoqildi' : 'to\'xtatildi'}!`, 'success');
+            this.loadMetaAds(viewport);
+          } else {
+            this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+            btn.disabled = false;
+            btn.innerText = targetStatus === 'ACTIVE' ? '▶️ Yoqish' : '⏸ To\'xtatish';
+          }
+        });
+      });
+
+      contentEl.querySelectorAll('.meta-edit-budget-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const campId = btn.dataset.id;
+          const campName = btn.dataset.name;
+          const curBudget = btn.dataset.budget;
+
+          this.modal({
+            title: `💵 Byudjetni O'zgartirish`,
+            contentHtml: `
+              <form id="meta-budget-form">
+                <div style="margin-bottom:14px;font-size:13px;color:rgba(255,255,255,0.8);">
+                  Kampaniya: <b>${campName}</b>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Yangi Kunlik Byudjet ($ AQSH Dollari)</label>
+                  <div class="input-container">
+                    <span class="input-icon-left">${this.icons.dollarSign || '$'}</span>
+                    <input type="number" step="0.5" min="1" id="new-daily-budget-input" class="input-control" value="${curBudget}" required>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                  <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+                  <button type="submit" class="btn-sm btn-primary">Saqlash</button>
+                </div>
+              </form>
+            `
+          });
+
+          document.getElementById('meta-budget-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById('new-daily-budget-input').value);
+            if (isNaN(val) || val <= 0) {
+              this.toast('To\'g\'ri byudjet kiriting', 'error');
+              return;
+            }
+            const res = await this.api(`/api/meta-ads/campaigns/${campId}/budget`, 'POST', { daily_budget: val });
+            if (res && res.success) {
+              this.toast('Kunlik byudjet muvaffaqiyatli yangilandi!', 'success');
+              this.closeModal();
+              this.loadMetaAds(viewport);
+            } else {
+              this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+            }
+          });
+        });
+      });
+    };
+
+    const renderInsightsTab = async (period = 'today') => {
+      const contentEl = document.getElementById('meta-tab-content');
+      if (!contentEl) return;
+
+      contentEl.innerHTML = `<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>`;
+      const insRes = await this.api(`/api/meta-ads/insights?period=${period}`);
+      const data = (insRes && insRes.insights) || {};
+
+      contentEl.innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+          ${['today:Bugun', 'yesterday:Kecha', 'last_7d:Oxirgi 7 kun', 'this_month:Shu oy'].map(item => {
+            const [pKey, pLabel] = item.split(':');
+            const isActive = period === pKey;
+            return `
+              <button class="btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'} meta-period-btn" data-period="${pKey}">
+                ${pLabel}
+              </button>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;">
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Xarajat (Spend)</div>
+            <div style="font-size:22px;font-weight:800;color:#60a5fa;margin-top:4px;">$${data.spend || '0.00'}</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Lidlar Soni</div>
+            <div style="font-size:22px;font-weight:800;color:#34d399;margin-top:4px;">${data.leads || '0'} ta</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">1 ta Lid Narxi (CPL)</div>
+            <div style="font-size:22px;font-weight:800;color:#fbbf24;margin-top:4px;">${data.cpl || '—'}</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Ko'rishlar (Impressions)</div>
+            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.impressions || '0'}</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Kliklar (Clicks)</div>
+            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.clicks || '0'}</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">CTR (Ko'rish/Klik)</div>
+            <div style="font-size:22px;font-weight:800;color:#a78bfa;margin-top:4px;">${data.ctr || '0.00%'}</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">CPC (Klik Narxi)</div>
+            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.cpc || '$0.00'}</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">CPM (1000 Ko'rish)</div>
+            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.cpm || '$0.00'}</div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);text-align:right;">
+          Sana oralig'i: ${data.date_start || ''} — ${data.date_stop || ''}
+        </div>
+      `;
+
+      contentEl.querySelectorAll('.meta-period-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          renderInsightsTab(btn.dataset.period);
+        });
+      });
+    };
+
+    const renderAutomationTab = () => {
+      const contentEl = document.getElementById('meta-tab-content');
+      if (!contentEl) return;
+
+      contentEl.innerHTML = `
+        <div class="card" style="max-width:650px;padding:24px;">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            ${this.icons.automation || ''} Avtomatlashtirish & Xavfsizlik Sozlamalari
+          </h3>
+
+          <form id="meta-automation-form">
+            <!-- Tungi Rejim -->
+            <div style="margin-bottom:20px;padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div>
+                  <div style="font-weight:700;font-size:14px;">🌙 Tungi Rejim (Auto-Pause & Resume)</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">
+                    Belgilangan vaqtda reklamalarni avtomatik to'xtatadi va ertalab qayta yoqadi
+                  </div>
+                </div>
+                <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+                  <input type="checkbox" id="auto-schedule-toggle" ${settings.auto_schedule_enabled ? 'checked' : ''}>
+                  <span class="slider round" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#333;border-radius:24px;transition:.3s;"></span>
+                </label>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="font-size:11px;">⏸ O'chirish Vaqti (HH:MM)</label>
+                  <input type="time" id="pause-time-input" class="input-control" value="${settings.pause_time || '23:00'}">
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="font-size:11px;">▶️ Qayta Yoqish Vaqti (HH:MM)</label>
+                  <input type="time" id="resume-time-input" class="input-control" value="${settings.resume_time || '07:00'}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Kunlik Hisobot -->
+            <div style="margin-bottom:20px;padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div>
+                  <div style="font-weight:700;font-size:14px;">📊 Kunlik Avtomat Hisobot</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">
+                    Har kuni kechqurun sarflangan pul va lidlar bo'yicha Telegramga hisobot yuborish
+                  </div>
+                </div>
+                <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+                  <input type="checkbox" id="daily-report-toggle" ${settings.daily_report_enabled ? 'checked' : ''}>
+                  <span class="slider round" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#333;border-radius:24px;transition:.3s;"></span>
+                </label>
+              </div>
+
+              <div class="form-group" style="margin:0;max-width:200px;">
+                <label class="form-label" style="font-size:11px;">⏰ Yuborish Vaqti (HH:MM)</label>
+                <input type="time" id="daily-report-time-input" class="input-control" value="${settings.daily_report_time || '22:00'}">
+              </div>
+            </div>
+
+            <!-- 0$ Ogohlantirish Info -->
+            <div style="padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm);margin-bottom:20px;font-size:12px;color:#fcd34d;">
+              ℹ️ <b>Eslatma:</b> Byudjet $0 ga yetganda faqat Telegramga ogohlantirish yuboriladi, reklamalaringiz to'xtatilmaydi.
+            </div>
+
+            <button type="submit" class="btn-primary">
+              ${this.icons.save} Sozlamalarni Saqlash
+            </button>
+          </form>
+        </div>
+      `;
+
+      document.getElementById('meta-automation-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          auto_schedule_enabled: document.getElementById('auto-schedule-toggle').checked,
+          pause_time: document.getElementById('pause-time-input').value,
+          resume_time: document.getElementById('resume-time-input').value,
+          daily_report_enabled: document.getElementById('daily-report-toggle').checked,
+          daily_report_time: document.getElementById('daily-report-time-input').value
+        };
+
+        const res = await this.api('/api/meta-ads/settings', 'POST', payload);
+        if (res && res.success) {
+          this.toast('Avtomatlashtirish sozlamalari muvaffaqiyatli saqlandi!', 'success');
+        } else {
+          this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+        }
+      });
+    };
+
+    // Default tab
+    renderCampaignsTab();
+
+    // Tab buttons listener
+    viewport.querySelectorAll('.meta-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        viewport.querySelectorAll('.meta-tab-btn').forEach(b => {
+          b.classList.remove('active', 'btn-primary');
+          b.classList.add('btn-secondary');
+        });
+        btn.classList.add('active', 'btn-primary');
+        btn.classList.remove('btn-secondary');
+
+        const tab = btn.dataset.tab;
+        if (tab === 'campaigns') renderCampaignsTab();
+        else if (tab === 'insights') renderInsightsTab();
+        else if (tab === 'automation') renderAutomationTab();
+      });
+    });
+
+    // Refresh button
+    const refreshBtn = document.getElementById('meta-refresh-btn');
+    if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadMetaAds(viewport));
+
+    // Set Budget Limit Modal
+    const setLimitBtn = document.getElementById('meta-set-limit-btn');
+    if (setLimitBtn) {
+      setLimitBtn.addEventListener('click', () => {
+        this.modal({
+          title: `⚙️ Byudjet Limitini O'rnatish ($)`,
+          contentHtml: `
+            <form id="meta-limit-modal-form">
+              <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;">
+                Reklama uchun ajratgan summangizni kiriting. Ushbu summa sarflanib 0.00 $ bo'lganda Telegram orqali xabar olasiz.
+              </p>
+              <div class="form-group">
+                <label class="form-label">Ajratilgan Summa ($ AQSH Dollari)</label>
+                <div class="input-container">
+                  <span class="input-icon-left">${this.icons.dollarSign || '$'}</span>
+                  <input type="number" step="1" min="1" id="custom-limit-input" class="input-control" value="${funds.custom_budget_limit || ''}" placeholder="Masalan: 50 yoki 100" required>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+                <button type="submit" class="btn-sm btn-primary">Saqlash</button>
+              </div>
+            </form>
+          `
+        });
+
+        document.getElementById('meta-limit-modal-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const val = parseFloat(document.getElementById('custom-limit-input').value);
+          if (isNaN(val) || val <= 0) {
+            this.toast('To\'g\'ri summa kiriting', 'error');
+            return;
+          }
+          const res = await this.api('/api/meta-ads/settings', 'POST', { custom_budget_limit: val });
+          if (res && res.success) {
+            this.toast(`Byudjet limiti $${val.toFixed(2)} qilib belgilandi!`, 'success');
+            this.closeModal();
+            this.loadMetaAds(viewport);
+          } else {
+            this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+          }
+        });
+      });
+    }
   }
 };
 

@@ -21,6 +21,17 @@ from services.docx_filler import fill_template
 # ATLAS Platformasi modullari
 from services.atlas_db import init_db, track_user_activity, track_group_activity, log_audit, log_generated_document
 from services.atlas_api import atlas_api
+from services.lead_service import process_and_send_lead
+
+try:
+    from meta_ads_bot.facebook_api import MetaAdsManager
+    from meta_ads_bot.scheduler import BotScheduler, load_settings as load_meta_settings, save_settings as save_meta_settings
+    meta_api = MetaAdsManager()
+except Exception as _meta_e:
+    print(f"[Meta Ads Init Warn]: {_meta_e}")
+    meta_api = None
+    load_meta_settings = None
+    save_meta_settings = None
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
 BOT_VERSION = "2.1.0"
@@ -33,10 +44,35 @@ def get_main_keyboard():
     btn_amaliyot = telebot.types.KeyboardButton("🏥 Malakaviy Amaliyot")
     btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar")
     btn_buyruq = telebot.types.KeyboardButton("📁 Buyruqlar")
+    btn_meta = telebot.types.KeyboardButton("🎯 Meta Ads Manager")
     btn_stats = telebot.types.KeyboardButton("📊 Tizim Statistikasi")
     markup.add(btn_kontrakt, btn_amaliyot)
     markup.add(btn_docs, btn_buyruq)
-    markup.add(btn_stats)
+    markup.add(btn_meta, btn_stats)
+    return markup
+
+def get_meta_ads_keyboard():
+    """2-DARAJALI PAPKA: Meta Ads va Lidlar boshqaruvi"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn1 = telebot.types.KeyboardButton("💰 Hisob va Balans")
+    btn2 = telebot.types.KeyboardButton("🎯 Kampaniyalar")
+    btn3 = telebot.types.KeyboardButton("📈 Statistika (Hisobot)")
+    btn4 = telebot.types.KeyboardButton("⏰ Avtomatlashtirish")
+    btn5 = telebot.types.KeyboardButton("🔄 Meta Yangilash")
+    btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
+    markup.add(btn1, btn2)
+    markup.add(btn3, btn4)
+    markup.add(btn5, btn_back)
+    return markup
+
+def get_meta_insights_inline():
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        telebot.types.InlineKeyboardButton("📅 Bugun", callback_data="meta_ins_today"),
+        telebot.types.InlineKeyboardButton("📆 Kecha", callback_data="meta_ins_yesterday"),
+        telebot.types.InlineKeyboardButton("📊 Oxirgi 7 kun", callback_data="meta_ins_last_7d"),
+        telebot.types.InlineKeyboardButton("🗓 Shu oy", callback_data="meta_ins_this_month")
+    )
     return markup
 
 def get_kontrakt_folder_keyboard(suggested_date=None):
@@ -841,6 +877,32 @@ def webhook_info():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/lead", methods=['GET', 'POST', 'OPTIONS'])
+@app.route("/api/leads", methods=['GET', 'POST', 'OPTIONS'])
+def handle_lead_submission():
+    if request.method == 'OPTIONS':
+        resp = jsonify({"status": "ok"})
+        resp.headers.add("Access-Control-Allow-Origin", "*")
+        resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        return resp, 200
+
+    if request.method == 'GET':
+        resp = jsonify({"status": "active", "service": "Meta Ads & Website Lead Receiver"})
+        resp.headers.add("Access-Control-Allow-Origin", "*")
+        return resp, 200
+
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        res = process_and_send_lead(data)
+        resp = jsonify(res)
+        resp.headers.add("Access-Control-Allow-Origin", "*")
+        return resp, 200 if res.get("success") else 400
+    except Exception as e:
+        resp = jsonify({"success": False, "error": str(e)})
+        resp.headers.add("Access-Control-Allow-Origin", "*")
+        return resp, 500
+
 # Telegram Bot Handlerlari
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
@@ -905,6 +967,99 @@ def handle_text_messages(message):
     user_text = message.text.strip()
 
     # 1-Darajali Papkalar (Kategoriyalar) va Ortga qaytish
+    if user_text == "🎯 Meta Ads Manager":
+        user_data[chat_id] = {}
+        send_safe_message(
+            chat_id,
+            "🎯 <b>META ADS MANAGER BOSHQARUVI</b>\n\n"
+            "Reklamalarni yoqish/o'chirish, byudjetni o'zgartirish, hisob balansi va statistika hisobotlarini olish uchun quyidagi bo'limni tanlang:",
+            reply_markup=get_meta_ads_keyboard()
+        )
+        return
+
+    if user_text == "💰 Hisob va Balans":
+        handle_meta_account_info(chat_id)
+        return
+
+    if user_text == "🎯 Kampaniyalar":
+        handle_meta_campaigns_list(chat_id)
+        return
+
+    if user_text == "📈 Statistika (Hisobot)":
+        handle_meta_insights_menu(chat_id)
+        return
+
+    if user_text == "⏰ Avtomatlashtirish":
+        handle_meta_automation_menu(chat_id)
+        return
+
+    if user_text == "🔄 Meta Yangilash":
+        send_safe_message(chat_id, "🔄 Ma'lumotlar yangilandi!", reply_markup=get_meta_ads_keyboard())
+        handle_meta_account_info(chat_id)
+        return
+
+    # Meta Ads State Input tekshiruvi
+    user_id_val = message.from_user.id
+    if user_id_val in META_USER_STATE:
+        state_obj = META_USER_STATE.pop(user_id_val, None)
+        if state_obj:
+            action = state_obj.get("action")
+            if action == "set_custom_budget_limit":
+                text_clean = user_text.replace("$", "").replace(",", ".").strip()
+                try:
+                    val = float(text_clean)
+                    if val <= 0:
+                        bot.reply_to(message, "❌ Byudjet 0 dan katta bo‘lishi kerak.", parse_mode="HTML")
+                        return
+                    bal_info = meta_api.get_balance_details() if meta_api else {}
+                    current_spent = float(bal_info.get("amount_spent", 0))
+                    settings = load_meta_settings() if load_meta_settings else {}
+                    settings["custom_budget_limit"] = val
+                    settings["initial_spent_base"] = current_spent
+                    settings["alert_threshold_sent"] = False
+                    if save_meta_settings: save_meta_settings(settings)
+                    bot.reply_to(
+                        message,
+                        f"✅ <b>Byudjet limiti muvaffaqiyatli ${val:.2f} qilib belgilandi!</b>\n\n"
+                        f"📊 Hozirgi qoldiq: <b>${val:.2f}</b>\n"
+                        f"🚨 Ushbu byudjet sarflanib <b>0.00 $</b> ga yetganda, bot sizga darhol bildirishnoma yuboradi. <i>(Reklamalaringiz to‘xtatilmaydi, qarzga ishlashda davom etadi).</i>",
+                        reply_markup=get_meta_ads_keyboard(),
+                        parse_mode="HTML"
+                    )
+                except ValueError:
+                    bot.reply_to(message, "❌ Noto‘g‘ri raqam kiritildi. Iltimos, masalan: <code>50</code> yoki <code>100</code> deb yozing.", parse_mode="HTML")
+                return
+
+            elif action == "change_budget":
+                campaign_id = state_obj.get("campaign_id")
+                text_clean = user_text.replace("$", "").replace(",", ".").strip()
+                try:
+                    val = float(text_clean)
+                    if val <= 0:
+                        bot.reply_to(message, "❌ Byudjet 0 dan katta bo‘lishi kerak.", parse_mode="HTML")
+                        return
+                    res = meta_api.set_campaign_budget(campaign_id, val) if meta_api else {}
+                    if "error" in res:
+                        bot.reply_to(message, f"❌ Xatolik yuz berdi:\n{res['error'].get('message')}", parse_mode="HTML")
+                    else:
+                        bot.reply_to(message, f"✅ <b>Kampaniya kunlik byudjeti muvaffaqiyatli ${val:.2f} ga o‘zgartirildi!</b>", reply_markup=get_meta_ads_keyboard(), parse_mode="HTML")
+                except ValueError:
+                    bot.reply_to(message, "❌ Noto‘g‘ri raqam kiritildi. Iltimos, faqat raqam yuboring (masalan: <code>20</code>).", parse_mode="HTML")
+                return
+
+            elif action in ["set_pause_time", "set_resume_time"]:
+                val = user_text.strip()
+                if not re.match(r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$", val):
+                    bot.reply_to(message, "❌ Noto‘g‘ri vaqt formati. Iltimos, <code>23:00</code> yoki <code>07:00</code> kabi formatda yozing.", parse_mode="HTML")
+                    return
+                settings = load_meta_settings() if load_meta_settings else {}
+                key = "pause_time" if action == "set_pause_time" else "resume_time"
+                settings[key] = val
+                if save_meta_settings: save_meta_settings(settings)
+                label = "Tungi to‘xtatish" if key == "pause_time" else "Ertalabki yoqish"
+                bot.reply_to(message, f"✅ <b>{label} vaqti <code>{val}</code> ga o‘rnatildi!</b>", reply_markup=get_meta_ads_keyboard(), parse_mode="HTML")
+                return
+
     if user_text == "📁 Kontraktlar va Hisobotlar":
         user_data[chat_id] = {}
         send_safe_message(chat_id, "📁 <b>KONTRAKTLAR VA HISOBOTLAR BO'LIMI</b>\n\nKerakli xizmatni tanlang:", reply_markup=get_kontrakt_folder_keyboard())
@@ -1873,6 +2028,307 @@ def process_group_screenshots(chat_id, message):
         progress.error(f"❌ Xatolik yuz berdi:\n<code>{escape_html_text(str(e))}</code>")
         if os.path.exists(temp_excel): os.remove(temp_excel)
         user_data[chat_id] = {}
+
+# ==================== META ADS INTEGRATSIYASI FUNKSIYALARI ====================
+META_USER_STATE = {}
+
+def handle_meta_account_info(chat_id):
+    if not meta_api:
+        send_safe_message(chat_id, "❌ Meta Ads API moduli ulanmagan.", reply_markup=get_meta_ads_keyboard())
+        return
+    bot.send_chat_action(chat_id, "typing")
+    bal_info = meta_api.get_balance_details()
+    if "error" in bal_info:
+        err_msg = bal_info['error'].get('message', 'Nomaʼlum xatolik')
+        send_safe_message(chat_id, f"❌ <b>Xatolik yuz berdi:</b>\n{err_msg}", reply_markup=get_meta_ads_keyboard())
+        return
+
+    settings = load_meta_settings() if load_meta_settings else {}
+    custom_limit = float(settings.get("custom_budget_limit", 0))
+    base_spent = float(settings.get("initial_spent_base", 0))
+    current_spent = float(bal_info.get("amount_spent", 0))
+
+    if custom_limit > 0:
+        spent_since_limit = max(0.0, current_spent - base_spent)
+        remaining = custom_limit - spent_since_limit
+        if remaining > 0:
+            budget_text = (
+                f"💵 <b>Kiritilgan mablag‘ (Funds):</b> <code>${custom_limit:.2f}</code>\n"
+                f"💸 <b>Ushbu mablag‘dan sarflandi:</b> <code>${spent_since_limit:.2f}</code>\n"
+                f"🟢 <b>QOLGAN MABLAG' (Mavjud qoldiq):</b> <b>${remaining:.2f}</b>"
+            )
+        else:
+            budget_text = (
+                f"💵 <b>Kiritilgan mablag‘ (Funds):</b> <code>${custom_limit:.2f}</code>\n"
+                f"💸 <b>Ushbu mablag‘dan sarflandi:</b> <code>${spent_since_limit:.2f}</code>\n"
+                f"🔴 <b>QOLGAN MABLAG':</b> <b>$0.00 (Qarzda: ${abs(remaining):.2f})</b>"
+            )
+    else:
+        budget_text = "ℹ️ <i>Maxsus byudjet limiti belgilanmagan.\n(Qolgan pulni hisoblash uchun quyidagi '⚙️ Byudjet limitini o‘rnatish' tugmasini bosing)</i>"
+
+    status_map = {1: "🟢 Faol (Active)", 2: "🔴 O‘chirilgan (Disabled)", 3: "🟡 To‘lov kutilmoqda (Unsettled)"}
+    status_text = status_map.get(bal_info.get("account_status"), "Nomaʼlum")
+    card_info = bal_info.get("card", "Karta")
+
+    today_ins = meta_api.get_insights("today")
+    from meta_ads_bot.config import AD_ACCOUNT_ID
+
+    text = (
+        f"👤 <b>Reklama hisobi:</b> {bal_info.get('account_name')}\n"
+        f"🆔 <b>Ad Account ID:</b> <code>{AD_ACCOUNT_ID}</code>\n"
+        f"⚡️ <b>Holat:</b> {status_text}\n"
+        f"💳 <b>To‘lov usuli:</b> {card_info}\n"
+        f"────────────────────\n"
+        f"📊 <b>Bugun sarflandi:</b> ${today_ins.get('spend', '0.00')}\n"
+        f"🎯 <b>Bugungi lidlar:</b> {today_ins.get('leads', '0')} ta ({today_ins.get('cpl', '—')}/lid)\n"
+        f"💳 <b>Jami hisob xarajati:</b> ${current_spent:,.2f}\n"
+        f"────────────────────\n"
+        f"{budget_text}\n"
+    )
+
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        telebot.types.InlineKeyboardButton("⚙️ Byudjet limitini o‘rnatish ($)", callback_data="meta_set_budget_limit"),
+        telebot.types.InlineKeyboardButton("🎯 Kampaniyalarni ko‘rish", callback_data="meta_show_campaigns"),
+        telebot.types.InlineKeyboardButton("📈 To‘liq hisobot", callback_data="meta_ins_today")
+    )
+    bot.send_message(chat_id, text, reply_markup=markup, parse_mode="HTML")
+
+def handle_meta_campaigns_list(chat_id):
+    if not meta_api:
+        send_safe_message(chat_id, "❌ Meta Ads API moduli ulanmagan.", reply_markup=get_meta_ads_keyboard())
+        return
+    bot.send_chat_action(chat_id, "typing")
+    campaigns = meta_api.get_campaigns()
+    if not campaigns:
+        send_safe_message(chat_id, "📭 Hech qanday kampaniya topilmadi yoki xatolik yuz berdi.", reply_markup=get_meta_ads_keyboard())
+        return
+
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+    text = "📋 <b>Mavjud reklama kampaniyalari:</b>\n\nBatafsil ma'lumot yoki boshqarish uchun kampaniya ustiga bosing:\n"
+
+    for c in campaigns:
+        status_icon = "🟢" if c.get("status") == "ACTIVE" else "🔴"
+        budget = float(c.get("daily_budget", 0)) / 100 if c.get("daily_budget") else 0
+        budget_str = f" (${budget:.0f}/kun)" if budget > 0 else ""
+        btn_text = f"{status_icon} {c.get('name')}{budget_str}"
+        markup.add(telebot.types.InlineKeyboardButton(btn_text, callback_data=f"meta_camp_{c['id']}"))
+
+    bot.send_message(chat_id, text, reply_markup=markup, parse_mode="HTML")
+
+def handle_meta_insights_menu(chat_id):
+    bot.send_message(
+        chat_id,
+        "📈 <b>Qaysi davr uchun statistikani ko‘rmoqchisiz?</b>\nQuyidagi tugmalardan birini tanlang:",
+        reply_markup=get_meta_insights_inline(),
+        parse_mode="HTML"
+    )
+
+def handle_meta_automation_menu(chat_id):
+    settings = load_meta_settings() if load_meta_settings else {}
+    status_str = "🟢 Yoqilgan" if settings.get("auto_schedule_enabled") else "🔴 O‘chirilgan"
+    report_status = "🟢 Yoqilgan" if settings.get("daily_report_enabled") else "🔴 O‘chirilgan"
+
+    text = (
+        f"⏰ <b>Avtomatlashtirish va Xavfsizlik sozlamalari</b>\n\n"
+        f"🌙 <b>Tungi rejim (Auto-Pause):</b> {status_str}\n"
+        f"  └ ⏸ O‘chirish: <code>{settings.get('pause_time')}</code>\n"
+        f"  └ ▶️ Qayta yoqish: <code>{settings.get('resume_time')}</code>\n\n"
+        f"📊 <b>Kunlik avtomat hisobot:</b> {report_status}\n"
+        f"  └ ⏰ Yuborish vaqti: <code>{settings.get('daily_report_time')}</code>\n\n"
+        f"ℹ️ <i>Eslatma: Byudjet 0 ga tushganda faqat ogohlantirish xabari keladi, reklamalar to‘xtatilmaydi.</i>"
+    )
+
+    toggle_btn_text = "🔴 Tungi rejimni o‘chirish" if settings.get("auto_schedule_enabled") else "🟢 Tungi rejimni yoqish"
+    report_toggle_text = "🔴 Hisobotni o‘chirish" if settings.get("daily_report_enabled") else "🟢 Hisobotni yoqish"
+
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        telebot.types.InlineKeyboardButton(toggle_btn_text, callback_data="meta_toggle_auto_schedule"),
+        telebot.types.InlineKeyboardButton("⏱ Tungi o‘chirish vaqtini o‘zgartirish", callback_data="meta_set_pause_time"),
+        telebot.types.InlineKeyboardButton("⏱ Ertalabki yoqish vaqtini o‘zgartirish", callback_data="meta_set_resume_time"),
+        telebot.types.InlineKeyboardButton(report_toggle_text, callback_data="meta_toggle_daily_report")
+    )
+    bot.send_message(chat_id, text, reply_markup=markup, parse_mode="HTML")
+
+# Meta Ads Callback Handlers
+@bot.callback_query_handler(func=lambda call: call.data.startswith("meta_") or call.data.startswith("ins_") or call.data.startswith("camp_"))
+def handle_meta_callbacks(call):
+    if not is_user_allowed(call):
+        bot.answer_callback_query(call.id, "⛔️ Ruxsat berilmagan!", show_alert=True)
+        return
+
+    data = call.data
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+
+    if data in ["meta_set_budget_limit", "set_budget_limit"]:
+        META_USER_STATE[user_id] = {"action": "set_custom_budget_limit"}
+        bot.send_message(
+            chat_id,
+            "💰 <b>Reklama uchun ajratgan byudjetingizni ($ dollarda) yozing:</b>\n\n"
+            "Misol uchun: <code>50</code> yoki <code>100</code> yoki <code>250</code>\n\n"
+            "<i>(Bot hozirdan boshlab xarajatni hisoblaydi va ushbu summa tugab, 0 $ bo‘lganda sizga darhol bildirishnoma yuboradi. Reklamalar to‘xtatilmaydi).</i>",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+    elif data in ["meta_show_campaigns", "show_campaigns"]:
+        handle_meta_campaigns_list(chat_id)
+        bot.answer_callback_query(call.id)
+
+    elif data.startswith("meta_ins_") or data.startswith("ins_"):
+        period = data.replace("meta_ins_", "").replace("ins_", "")
+        period_names = {
+            "today": "Bugungi",
+            "yesterday": "Kechagi",
+            "last_7d": "Oxirgi 7 kunlik",
+            "this_month": "Shu oylik"
+        }
+        bot.answer_callback_query(call.id, "Statistika yuklanmoqda...")
+        bot.send_chat_action(chat_id, "typing")
+
+        ins = meta_api.get_insights(period) if meta_api else {}
+        acc = meta_api.get_account_info() if meta_api else {}
+
+        title = period_names.get(period, "Statistika")
+        text = (
+            f"📊 <b>{title} hisobot</b>\n"
+            f"👤 <b>Hisob:</b> {acc.get('name', 'Ads Account')}\n"
+            f"📅 <b>Sana:</b> {ins.get('date_start', '')} — {ins.get('date_stop', '')}\n"
+            f"────────────────────\n"
+            f"💵 <b>Xarajat (Spend):</b> ${ins.get('spend', '0')}\n"
+            f"🎯 <b>Lidlar soni (Leads):</b> {ins.get('leads', '0')} ta\n"
+            f"📉 <b>1 ta lid narxi (CPL):</b> {ins.get('cpl', '—')}\n"
+            f"👁 <b>Ko‘rishlar (Impressions):</b> {ins.get('impressions', '0')}\n"
+            f"🖱 <b>Kliklar (Clicks):</b> {ins.get('clicks', '0')}\n"
+            f"🎯 <b>CTR:</b> {ins.get('ctr', '0.00%')}\n"
+            f"⚡️ <b>CPC:</b> {ins.get('cpc', '$0.00')}\n"
+            f"📈 <b>CPM:</b> {ins.get('cpm', '$0.00')}\n"
+        )
+
+        markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+        markup.add(
+            telebot.types.InlineKeyboardButton("🔄 Yangilash", callback_data=f"meta_ins_{period}"),
+            telebot.types.InlineKeyboardButton("⬅️ Boshqa davr", callback_data="meta_back_to_insights")
+        )
+        try:
+            bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup, parse_mode="HTML")
+        except Exception:
+            bot.send_message(chat_id, text, reply_markup=markup, parse_mode="HTML")
+
+    elif data in ["meta_back_to_insights", "back_to_insights"]:
+        bot.edit_message_text(
+            "📈 <b>Qaysi davr uchun statistikani ko‘rmoqchisiz?</b>\nQuyidagi tugmalardan birini tanlang:",
+            chat_id,
+            call.message.message_id,
+            reply_markup=get_meta_insights_inline(),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+    elif data.startswith("meta_camp_") or data.startswith("camp_"):
+        campaign_id = data.replace("meta_camp_", "").replace("camp_", "")
+        bot.answer_callback_query(call.id, "Yuklanmoqda...")
+        bot.send_chat_action(chat_id, "typing")
+
+        c = meta_api.get_campaign(campaign_id) if meta_api else {}
+        if "error" in c:
+            bot.send_message(chat_id, f"❌ Xatolik: {c['error'].get('message')}", parse_mode="HTML")
+            return
+
+        ins = meta_api.get_insights("today", campaign_id=campaign_id) if meta_api else {}
+        status = c.get("status")
+        status_icon = "🟢 Faol (ACTIVE)" if status == "ACTIVE" else "🔴 To‘xtatilgan (PAUSED)"
+        budget = float(c.get("daily_budget", 0)) / 100 if c.get("daily_budget") else 0
+
+        text = (
+            f"🎯 <b>Kampaniya:</b> {c.get('name')}\n"
+            f"🆔 <b>ID:</b> <code>{c.get('id')}</code>\n"
+            f"⚡️ <b>Holat:</b> {status_icon}\n"
+            f"🎯 <b>Maqsad:</b> <code>{c.get('objective', 'Nomaʼlum')}</code>\n"
+            f"💰 <b>Kunlik byudjet:</b> ${budget:.2f}\n"
+            f"────────────────────\n"
+            f"📊 <b>Bugungi statistika:</b>\n"
+            f"  • Sarflandi: ${ins.get('spend', '0')}\n"
+            f"  • Lidlar: {ins.get('leads', '0')} ta\n"
+            f"  • Lid narxi: {ins.get('cpl', '—')}\n"
+            f"  • Kliklar: {ins.get('clicks', '0')} (CTR: {ins.get('ctr', '0')})\n"
+        )
+
+        markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+        if status == "ACTIVE":
+            markup.add(telebot.types.InlineKeyboardButton("⏸ To‘xtatish (Pause)", callback_data=f"meta_toggle_camp_{campaign_id}_PAUSED"))
+        else:
+            markup.add(telebot.types.InlineKeyboardButton("▶️ Yoqish (Active)", callback_data=f"meta_toggle_camp_{campaign_id}_ACTIVE"))
+
+        markup.add(
+            telebot.types.InlineKeyboardButton("💵 Byudjetni o‘zgartirish", callback_data=f"meta_set_budget_{campaign_id}"),
+            telebot.types.InlineKeyboardButton("⬅️ Barcha kampaniyalar", callback_data="meta_show_campaigns")
+        )
+
+        try:
+            bot.edit_message_text(text, chat_id, call.message.message_id, reply_markup=markup, parse_mode="HTML")
+        except Exception:
+            bot.send_message(chat_id, text, reply_markup=markup, parse_mode="HTML")
+
+    elif data.startswith("meta_toggle_camp_"):
+        parts = data.split("_")
+        target_status = parts[-1]
+        campaign_id = parts[3]
+
+        bot.answer_callback_query(call.id, "Holat o'zgartirilmoqda...")
+        res = meta_api.set_campaign_status(campaign_id, target_status) if meta_api else {}
+
+        if "error" in res:
+            bot.send_message(chat_id, f"❌ Xatolik yuz berdi: {res['error'].get('message')}", parse_mode="HTML")
+        else:
+            status_word = "yoqildi (ACTIVE)" if target_status == "ACTIVE" else "to‘xtatildi (PAUSED)"
+            bot.answer_callback_query(call.id, f"✅ Kampaniya {status_word}!", show_alert=True)
+            call.data = f"meta_camp_{campaign_id}"
+            handle_meta_callbacks(call)
+
+    elif data.startswith("meta_set_budget_"):
+        campaign_id = data.replace("meta_set_budget_", "")
+        META_USER_STATE[user_id] = {"action": "change_budget", "campaign_id": campaign_id}
+        bot.send_message(
+            chat_id,
+            "💵 <b>Yangi kunlik byudjet miqdorini dollarda yuboring:</b>\n\nMisol uchun: <code>15</code> yoki <code>25.5</code>",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+    elif data in ["meta_toggle_auto_schedule", "toggle_auto_schedule"]:
+        settings = load_meta_settings() if load_meta_settings else {}
+        settings["auto_schedule_enabled"] = not settings.get("auto_schedule_enabled", False)
+        if save_meta_settings: save_meta_settings(settings)
+
+        state_word = "faollashtirildi" if settings["auto_schedule_enabled"] else "o‘chirildi"
+        bot.answer_callback_query(call.id, f"✅ Tungi rejim {state_word}!", show_alert=True)
+        handle_meta_automation_menu(chat_id)
+
+    elif data in ["meta_toggle_daily_report", "toggle_daily_report"]:
+        settings = load_meta_settings() if load_meta_settings else {}
+        settings["daily_report_enabled"] = not settings.get("daily_report_enabled", True)
+        if save_meta_settings: save_meta_settings(settings)
+
+        state_word = "yoqildi" if settings["daily_report_enabled"] else "o‘chirildi"
+        bot.answer_callback_query(call.id, f"✅ Kunlik hisobot {state_word}!", show_alert=True)
+        handle_meta_automation_menu(chat_id)
+
+    elif data in ["meta_set_pause_time", "meta_set_resume_time", "set_pause_time", "set_resume_time"]:
+        action = data.replace("meta_", "")
+        META_USER_STATE[user_id] = {"action": action}
+        label = "o‘chirish" if "pause" in action else "qayta yoqish"
+        bot.send_message(
+            chat_id,
+            f"⏱ <b>Reklamalarni avtomatik {label} vaqtini yozing (HH:MM formatida):</b>\n\nMisol uchun: <code>23:00</code> yoki <code>07:30</code>",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
 
 if __name__ == "__main__":
     bot.remove_webhook()

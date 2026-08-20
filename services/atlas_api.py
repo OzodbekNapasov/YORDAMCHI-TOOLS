@@ -1266,6 +1266,7 @@ def api_delete_amaliyot_survey_item(survey_id):
 
 
 @atlas_api.route("/amaliyot/survey/sample-excel", methods=["GET"])
+@admin_required
 def api_download_sample_survey_excel():
     """Namunaviy So'rovnoma Excel (.xlsx) faylini generatsiya qilib yuklab beradi"""
     try:
@@ -1477,6 +1478,7 @@ def api_generate_all_amaliyot_orders(folder_id):
 
 
 @atlas_api.route("/amaliyot/download-zip/<filename>", methods=["GET"])
+@admin_required
 def api_download_amaliyot_zip(filename):
     """Generatsiya qilingan barcha tumanlar ZIP faylini yuklab beradi"""
     safe_filename = os.path.basename(filename)
@@ -1847,6 +1849,7 @@ def api_contracts_group_screenshots():
 
 
 @atlas_api.route("/contracts/download-excel/<session_id>", methods=["GET"])
+@admin_required
 def api_contracts_download_excel(session_id):
     """Yangilangan Excel faylini yuklab olish"""
     if os.path.exists(CONTRACT_STORAGE_DIR):
@@ -1864,13 +1867,15 @@ def api_contracts_download_excel(session_id):
 
 
 @atlas_api.route("/contracts/download-xulosa/<session_id>", methods=["GET"])
+@admin_required
 def api_contracts_download_xulosa(session_id):
-    """Xulosa rasmini yuklab olish"""
+    """Xulosa rasmini ko'rish yoki yuklab olish"""
+    is_attachment = request.args.get("as_attachment", "0") == "1" or request.args.get("download", "0") == "1"
     if os.path.exists(CONTRACT_STORAGE_DIR):
         for fname in os.listdir(CONTRACT_STORAGE_DIR):
             if session_id in fname and fname.endswith(".png") and "xulosa" in fname:
                 fpath = os.path.join(CONTRACT_STORAGE_DIR, fname)
-                return send_file(fpath, as_attachment=False, mimetype="image/png")
+                return send_file(fpath, as_attachment=is_attachment, mimetype="image/png", download_name=f"Xulosa_{session_id}.png")
 
     sess = get_contract_session_by_id(session_id)
     if sess and sess.get("xulosa_url"):
@@ -1880,8 +1885,10 @@ def api_contracts_download_xulosa(session_id):
 
 
 @atlas_api.route("/contracts/download-screenshot/<session_id>/<group_name>", methods=["GET"])
+@admin_required
 def api_contracts_download_screenshot(session_id, group_name):
-    """Bitta guruh yoki Xulosa screenshot rasmini yuklab olish"""
+    """Bitta guruh yoki Xulosa screenshot rasmini ko'rish yoki yuklab olish"""
+    is_attachment = request.args.get("as_attachment", "0") == "1" or request.args.get("download", "0") == "1"
     sdir = os.path.join(CONTRACT_STORAGE_DIR, f"screenshots_{session_id}")
     clean_gname = group_name.replace('/', '_').replace(' ', '_')
 
@@ -1889,19 +1896,20 @@ def api_contracts_download_screenshot(session_id, group_name):
     if "xulosa" in clean_gname.lower():
         xul_path = os.path.join(sdir, "00_XULOSA_Guruh_Rahbarlari.png")
         if os.path.exists(xul_path):
-            return send_file(xul_path, as_attachment=False, mimetype="image/png")
+            return send_file(xul_path, as_attachment=is_attachment, mimetype="image/png", download_name=f"Xulosa_{session_id}.png")
         for fname in os.listdir(CONTRACT_STORAGE_DIR) if os.path.exists(CONTRACT_STORAGE_DIR) else []:
             if session_id in fname and "xulosa" in fname and fname.endswith(".png"):
-                return send_file(os.path.join(CONTRACT_STORAGE_DIR, fname), as_attachment=False, mimetype="image/png")
+                return send_file(os.path.join(CONTRACT_STORAGE_DIR, fname), as_attachment=is_attachment, mimetype="image/png", download_name=f"Xulosa_{session_id}.png")
 
     # 2. Oddiy guruh screenshot
     fpath = os.path.join(sdir, f"screenshot_{clean_gname}.png")
     if os.path.exists(fpath):
-        return send_file(fpath, as_attachment=False, mimetype="image/png")
+        return send_file(fpath, as_attachment=is_attachment, mimetype="image/png", download_name=f"{clean_gname}.png")
     return jsonify({"success": False, "error": "Screenshot rasmi topilmadi."}), 404
 
 
 @atlas_api.route("/contracts/download-all-screenshots-zip/<session_id>", methods=["GET"])
+@admin_required
 def api_contracts_download_all_zip(session_id):
     """Barcha guruhlar screenshotlari jamlangan ZIP faylni yuklab olish"""
     zpath = os.path.join(CONTRACT_STORAGE_DIR, f"Guruhlar_Screenshotlari_{session_id}.zip")
@@ -2042,4 +2050,138 @@ def api_contracts_delete_session(session_id):
         )
         return jsonify({"success": True, "message": "Sessiya muvaffaqiyatli o'chirildi."})
     return jsonify({"success": False, "error": "Sessiyani o'chirishda xatolik yuz berdi."}), 400
+
+
+# ============================================================
+# 14. META ADS MANAGER ENDPOINTS
+# ============================================================
+
+@atlas_api.route("/meta-ads/account", methods=["GET"])
+@admin_required
+def api_meta_ads_account():
+    """Meta Ads hisob ma'lumotlari, balans va qoldiq pul"""
+    try:
+        from meta_ads_bot.facebook_api import MetaAdsManager
+        from meta_ads_bot.scheduler import load_settings
+        api = MetaAdsManager()
+        bal_info = api.get_balance_details()
+        if "error" in bal_info:
+            return jsonify({"success": False, "error": bal_info["error"].get("message", "Meta API xatolik")}), 400
+
+        settings = load_settings()
+        custom_limit = float(settings.get("custom_budget_limit", 0))
+        base_spent = float(settings.get("initial_spent_base", 0))
+        current_spent = float(bal_info.get("amount_spent", 0))
+
+        spent_since_limit = max(0.0, current_spent - base_spent) if custom_limit > 0 else current_spent
+        remaining_funds = max(0.0, custom_limit - spent_since_limit) if custom_limit > 0 else None
+
+        return jsonify({
+            "success": True,
+            "account": bal_info,
+            "funds": {
+                "custom_budget_limit": custom_limit,
+                "initial_spent_base": base_spent,
+                "spent_since_limit": spent_since_limit,
+                "remaining_funds": remaining_funds,
+                "is_active_limit": custom_limit > 0
+            }
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/meta-ads/campaigns", methods=["GET"])
+@admin_required
+def api_meta_ads_campaigns():
+    """Barcha reklama kampaniyalari ro'yxati"""
+    try:
+        from meta_ads_bot.facebook_api import MetaAdsManager
+        api = MetaAdsManager()
+        campaigns = api.get_campaigns()
+        return jsonify({"success": True, "campaigns": campaigns})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/meta-ads/campaigns/<campaign_id>/status", methods=["POST"])
+@admin_required
+def api_meta_ads_set_status(campaign_id):
+    """Kampaniya holatini ACTIVE yoki PAUSED ga o'zgartirish"""
+    try:
+        data = request.get_json(silent=True) or {}
+        status = str(data.get("status", "")).upper()
+        from meta_ads_bot.facebook_api import MetaAdsManager
+        api = MetaAdsManager()
+        res = api.set_campaign_status(campaign_id, status)
+        if "error" in res:
+            return jsonify({"success": False, "error": res["error"].get("message")}), 400
+        return jsonify({"success": True, "result": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/meta-ads/campaigns/<campaign_id>/budget", methods=["POST"])
+@admin_required
+def api_meta_ads_set_budget(campaign_id):
+    """Kampaniya kunlik byudjetini o'zgartirish ($ dollarda)"""
+    try:
+        data = request.get_json(silent=True) or {}
+        daily_budget = float(data.get("daily_budget", 0))
+        if daily_budget <= 0:
+            return jsonify({"success": False, "error": "Byudjet 0 dan katta bo'lishi kerak."}), 400
+        from meta_ads_bot.facebook_api import MetaAdsManager
+        api = MetaAdsManager()
+        res = api.set_campaign_budget(campaign_id, daily_budget)
+        if "error" in res:
+            return jsonify({"success": False, "error": res["error"].get("message")}), 400
+        return jsonify({"success": True, "result": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/meta-ads/insights", methods=["GET"])
+@admin_required
+def api_meta_ads_insights():
+    """Statistika va hisobotlar olish (today, yesterday, last_7d, this_month)"""
+    try:
+        period = request.args.get("period", "today")
+        campaign_id = request.args.get("campaign_id")
+        from meta_ads_bot.facebook_api import MetaAdsManager
+        api = MetaAdsManager()
+        ins = api.get_insights(date_preset=period, campaign_id=campaign_id)
+        return jsonify({"success": True, "insights": ins})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/meta-ads/settings", methods=["GET", "POST"])
+@admin_required
+def api_meta_ads_settings():
+    """Avtomatlashtirish va byudjet sozlamalarini olish/saqlash"""
+    try:
+        from meta_ads_bot.scheduler import load_settings, save_settings
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            settings = load_settings()
+            for k in ["auto_schedule_enabled", "pause_time", "resume_time", "daily_report_enabled", "daily_report_time", "budget_monitor_enabled", "custom_budget_limit"]:
+                if k in data:
+                    if k == "custom_budget_limit":
+                        val = float(data[k])
+                        if val > 0 and val != settings.get("custom_budget_limit"):
+                            from meta_ads_bot.facebook_api import MetaAdsManager
+                            api = MetaAdsManager()
+                            bal = api.get_balance_details()
+                            settings["initial_spent_base"] = float(bal.get("amount_spent", 0))
+                            settings["alert_threshold_sent"] = False
+                        settings["custom_budget_limit"] = val
+                    else:
+                        settings[k] = data[k]
+            save_settings(settings)
+            return jsonify({"success": True, "settings": settings})
+        else:
+            settings = load_settings()
+            return jsonify({"success": True, "settings": settings})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
