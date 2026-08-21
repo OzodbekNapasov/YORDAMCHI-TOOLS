@@ -5770,29 +5770,29 @@ const ATLAS = {
           <!-- HEADER WITH STATS & CONTROLS -->
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
             <div>
-              <div style="display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <h2 style="font-size:20px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;">
                   ${this.icons.instagram} Instagram Postlarini Sinxronlash
                 </h2>
-                <span class="badge" style="background:rgba(20,184,166,0.2);color:#2ee59d;border:1px solid rgba(46,229,157,0.3);font-family:'JetBrains Mono',monospace;">
+                <span class="badge" style="background:rgba(20,184,166,0.15);color:#2ee59d;border:1px solid rgba(46,229,157,0.3);font-family:'JetBrains Mono',monospace;">
                   @${currentUsername}
                 </span>
                 ${tgAuto ? `
-                  <span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
-                    🟢 TG Avto-yuborish (${settings.interval_minutes || 60} daq)
+                  <span class="badge" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.25);display:inline-flex;align-items:center;gap:6px;padding:4px 9px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 6px #34d399;"></span> TG: Faol (${settings.interval_minutes || 60} daq)
                   </span>
                 ` : `
-                  <span class="badge" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">
-                    ⚪️ TG Avto-yuborish Faol Emas
+                  <span class="badge" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;gap:6px;padding:4px 9px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.35);"></span> TG: Nofaol
                   </span>
                 `}
                 ${ytAuto ? `
-                  <span class="badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">
-                    🔴 YouTube Shorts Faol (${ytTimes.length} ta rek)
+                  <span class="badge" style="background:rgba(244,63,94,0.12);color:#fb7185;border:1px solid rgba(244,63,94,0.25);display:inline-flex;align-items:center;gap:6px;padding:4px 9px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#fb7185;box-shadow:0 0 6px #fb7185;"></span> YouTube Shorts: Faol (${ytTimes.length} ta vaqt)
                   </span>
                 ` : `
-                  <span class="badge" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">
-                    ⚪️ YouTube Shorts Faol Emas
+                  <span class="badge" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;gap:6px;padding:4px 9px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.35);"></span> YouTube Shorts: Nofaol
                   </span>
                 `}
               </div>
@@ -5805,7 +5805,7 @@ const ATLAS = {
               <button class="btn-sm btn-secondary" id="insta-refresh-btn" title="Yangilash">
                 ${this.icons.refresh} <span>Yangilash</span>
               </button>
-              <button class="btn-sm btn-secondary" id="btn-open-add-url-modal" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="Instagram post havolasi orqali navbatga qo'shish">
+              <button class="btn-sm btn-secondary" id="btn-open-add-url-modal" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="Instagram post havolasi orqali navbatga qo'shish">
                 ${this.icons.plus || '+'} <span>Havola Bilan Qo‘shish</span>
               </button>
               <button class="btn-sm btn-primary" id="btn-open-scan-modal">
@@ -5815,15 +5815,15 @@ const ATLAS = {
           </div>
 
           <!-- KPI METRIC CARDS -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:24px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:14px;margin-bottom:20px;">
             <div class="glass-card" style="padding:16px;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Jami Postlar</div>
-                  <div style="font-size:26px;font-weight:800;color:#ffffff;margin-top:4px;" id="stat-total-val">${stats.total || 0}</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Bazadagi barcha skanerlangan</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Jami Postlar</div>
+                  <div style="font-size:24px;font-weight:800;color:#ffffff;margin-top:4px;" id="stat-total-val">${stats.total || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Baza navbatida</div>
                 </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(20,184,166,0.15);display:flex;align-items:center;justify-content:center;color:#00cba9;">
+                <div style="width:36px;height:36px;border-radius:8px;background:rgba(20,184,166,0.12);display:flex;align-items:center;justify-content:center;color:#00cba9;">
                   ${this.icons.instagram}
                 </div>
               </div>
@@ -5832,11 +5832,11 @@ const ATLAS = {
             <div class="glass-card" style="padding:16px;border-left:3px solid #f59e0b;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Kutilayotgan Navbat</div>
-                  <div style="font-size:26px;font-weight:800;color:#fbbf24;margin-top:4px;" id="stat-pending-val">${stats.pending || 0}</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Yuborilishi kutilayotgan postlar</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Kutilayotgan Navbat</div>
+                  <div style="font-size:24px;font-weight:800;color:#fbbf24;margin-top:4px;" id="stat-pending-val">${stats.pending || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Chiqarilishi kutilmoqda</div>
                 </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;color:#fbbf24;">
+                <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;color:#fbbf24;">
                   ${this.icons.clock}
                 </div>
               </div>
@@ -5845,27 +5845,12 @@ const ATLAS = {
             <div class="glass-card" style="padding:16px;border-left:3px solid #10b981;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Telegramga Chiqdi</div>
-                  <div style="font-size:26px;font-weight:800;color:#34d399;margin-top:4px;" id="stat-sent-val">${stats.sent || 0}</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Muvaffaqiyatli yuborilgan</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Telegramga Chiqdi</div>
+                  <div style="font-size:24px;font-weight:800;color:#34d399;margin-top:4px;" id="stat-sent-val">${stats.sent || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Kanalga yuborilgan</div>
                 </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;color:#34d399;">
+                <div style="width:36px;height:36px;border-radius:8px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;color:#34d399;">
                   ${this.icons.send}
-                </div>
-              </div>
-            </div>
-
-            <div class="glass-card" style="padding:16px;border-left:3px solid #ef4444;">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                <div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Xatoliklar</div>
-                  <div style="font-size:26px;font-weight:800;color:#f87171;margin-top:4px;" id="stat-failed-val">${stats.failed || 0}</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">
-                    ${stats.failed > 0 ? `<a href="javascript:void(0)" id="quick-reset-failed-link" style="color:#f87171;text-decoration:underline;">Qayta tiklash</a>` : 'Xatoliklar yo\'q'}
-                  </div>
-                </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;color:#f87171;">
-                  ${this.icons.alert}
                 </div>
               </div>
             </div>
@@ -5873,69 +5858,108 @@ const ATLAS = {
             <div class="glass-card" style="padding:16px;border-left:3px solid #f43f5e;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">YouTube Shorts</div>
-                  <div style="font-size:26px;font-weight:800;color:#fb7185;margin-top:4px;" id="stat-yt-val">${stats.yt_uploaded || 0}</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Shorts sifatida joylandi</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">YouTube Shorts</div>
+                  <div style="font-size:24px;font-weight:800;color:#fb7185;margin-top:4px;" id="stat-yt-val">${stats.yt_uploaded || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Yuklangan videolar</div>
                 </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(244,63,94,0.15);display:flex;align-items:center;justify-content:center;color:#fb7185;">
+                <div style="width:36px;height:36px;border-radius:8px;background:rgba(244,63,94,0.12);display:flex;align-items:center;justify-content:center;color:#fb7185;">
                   ${this.icons.youtube}
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding:16px;border-left:3px solid #38bdf8;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Keyingi YouTube Shorts</div>
+                  <div style="font-size:18px;font-weight:800;color:#38bdf8;margin-top:6px;">${stats.next_yt_time_estimate || '18:30 da'}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Jadval vaqti bo‘yicha</div>
+                </div>
+                <div style="width:36px;height:36px;border-radius:8px;background:rgba(56,189,248,0.12);display:flex;align-items:center;justify-content:center;color:#38bdf8;">
+                  <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- HERO MASTER AUTO-POSTER CONTROL & NEXT SCHEDULE CARD -->
-          <div class="glass-card" style="margin-bottom:20px;border:1px solid ${tgAuto ? 'rgba(46,229,157,0.35)' : 'rgba(245,158,11,0.35)'};background:linear-gradient(135deg, rgba(255,255,255,0.03) 0%, ${tgAuto ? 'rgba(46,229,157,0.06)' : 'rgba(245,158,11,0.06)'} 100%);">
+          <div class="glass-card" style="margin-bottom:20px;border:1px solid ${tgAuto ? 'rgba(46,229,157,0.3)' : 'rgba(245,158,11,0.3)'};background:linear-gradient(135deg, rgba(255,255,255,0.02) 0%, ${tgAuto ? 'rgba(46,229,157,0.05)' : 'rgba(245,158,11,0.05)'} 100%);">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--border-glass);">
               <div style="display:flex;align-items:center;gap:12px;">
-                <div style="width:44px;height:44px;border-radius:12px;background:${tgAuto ? 'rgba(46,229,157,0.18)' : 'rgba(245,158,11,0.18)'};display:flex;align-items:center;justify-content:center;font-size:22px;">
-                  ${tgAuto ? '🟢' : '⏸'}
+                <div style="width:40px;height:40px;border-radius:10px;background:${tgAuto ? 'rgba(46,229,157,0.15)' : 'rgba(245,158,11,0.15)'};display:flex;align-items:center;justify-content:center;color:${tgAuto ? '#2ee59d' : '#fbbf24'};">
+                  ${tgAuto ? `
+                    <svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  ` : `
+                    <svg style="width:18px;height:18px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  `}
                 </div>
                 <div>
-                  <div style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">
+                  <div style="font-size:15px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">
                     ${tgAuto ? "AVTO-YUBORISH JARAYONI FAOL (ISHMOQDA)" : "AVTO-YUBORISH TO'XTATILGAN (PAUZA HOLATIDA)"}
                   </div>
                   <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px;">
-                    Telegram kanal: <b style="color:#ffffff;">${settings.target_chat_id || '-1004295470034'}</b> &bull; Oraliq: <b style="color:#ffffff;">Har ${settings.interval_minutes || 60} daqiqada</b> &bull; Tungi rejim: <b style="color:#818cf8;">🌙 00:00 — 07:00</b>
+                    Telegram: <b style="color:#ffffff;">${settings.target_chat_id || '-1004295470034'}</b> &bull; Oraliq: <b style="color:#ffffff;">Har soat boshida (:00 da)</b> &bull; Tungi rejim: <b style="color:#818cf8;">00:00 — 07:00</b>
                   </div>
                 </div>
               </div>
 
-              <!-- PROMINENT BIG START / PAUSE BUTTON -->
+              <!-- PROMINENT START / PAUSE BUTTON -->
               <div>
-                <button class="btn ${tgAuto ? 'btn-secondary' : 'btn-primary'}" id="btn-hero-toggle-schedule" style="padding:12px 26px;font-size:14px;font-weight:800;letter-spacing:0.5px;cursor:pointer;border-radius:var(--radius-sm);box-shadow:0 4px 16px ${tgAuto ? 'rgba(239,68,68,0.25)' : 'rgba(46,229,157,0.35)'};background:${tgAuto ? 'rgba(239,68,68,0.2)' : 'var(--accent-glow)'};border:1px solid ${tgAuto ? '#ef4444' : '#00cba9'};color:#ffffff;">
-                  ${tgAuto ? '⏸ TO‘XTATIB TURISH (PAUSE)' : '▶️ AVTO-YUBORISHNI BOSHLASH (START)'}
+                <button class="btn" id="btn-hero-toggle-schedule" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;font-size:13px;font-weight:700;border-radius:var(--radius-sm);cursor:pointer;background:${tgAuto ? 'rgba(239,68,68,0.15)' : '#00cba9'};border:1px solid ${tgAuto ? 'rgba(239,68,68,0.35)' : '#00cba9'};color:${tgAuto ? '#f87171' : '#051e18'};transition:all 0.2s ease;">
+                  ${tgAuto ? `
+                    <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    <span>To‘xtatib Turish (Pauza)</span>
+                  ` : `
+                    <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>Avto-yuborishni Boshlash (Start)</span>
+                  `}
                 </button>
               </div>
             </div>
 
             <!-- NEXT SCHEDULED POST DETAILS -->
-            <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;align-items:center;">
+            <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;align-items:center;">
               <div style="padding:12px 14px;background:rgba(0,0,0,0.25);border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.06);">
-                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;">Keyingi post chiqish vaqti:</div>
-                <div style="font-size:16px;font-weight:800;color:${tgAuto ? '#34d399' : '#fbbf24'};margin-top:4px;">
-                  ⏰ ${tgAuto ? (stats.next_time_estimate || 'Reja bo‘yicha') : 'Pauzada (Boshlash tugmasini bosing)'}
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:5px;">
+                  <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Keyingi Telegram Chiqishi:
                 </div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">
-                  Tartib: <b>Eng eskisidan yangisiga qarab</b> &bull; Qolgan joyidan davom etadi
+                <div style="font-size:15px;font-weight:800;color:${tgAuto ? '#34d399' : '#fbbf24'};margin-top:4px;font-family:'JetBrains Mono',monospace;">
+                  ${tgAuto ? (stats.next_time_estimate || 'Reja bo‘yicha') : 'Pauzada'}
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">
+                  Har soat boshida navbat bo‘yicha
                 </div>
               </div>
 
               <div style="padding:12px 14px;background:rgba(0,0,0,0.25);border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.06);">
-                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;">Navbatdagi 1-post:</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:5px;">
+                  <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> Keyingi YouTube Shorts Chiqishi:
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#fb7185;margin-top:4px;font-family:'JetBrains Mono',monospace;">
+                  ${stats.next_yt_time_estimate || '18:30 da'}
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">
+                  Belgilangan rek vaqtlari bo‘yicha
+                </div>
+              </div>
+
+              <div style="padding:12px 14px;background:rgba(0,0,0,0.25);border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:5px;">
+                  <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Navbatdagi 1-Post:
+                </div>
                 ${stats.next_post ? `
                   <div style="font-size:13px;color:#ffffff;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:8px;">
-                    <span>${stats.next_post.media_type === 'reel' ? '🎬 Reel Video' : '📸 Rasm'}</span>
-                    <a href="${stats.next_post.post_url}" target="_blank" style="color:#00cba9;text-decoration:underline;font-family:'JetBrains Mono',monospace;font-size:12px;">
+                    <span>${stats.next_post.media_type === 'reel' ? 'Reel Video' : 'Rasm'}</span>
+                    <a href="${stats.next_post.post_url}" target="_blank" style="color:#00cba9;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:12px;">
                       ${stats.next_post.shortcode} ↗
                     </a>
                   </div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px;">
-                    ${stats.next_post.caption ? stats.next_post.caption : 'Matn avtomatik tozalab yuboriladi'}
+                  <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px;">
+                    ${stats.next_post.caption ? stats.next_post.caption : 'Matnsiz'}
                   </div>
                 ` : `
-                  <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">
-                    🎉 Hozircha navbatda kutilayotgan post yo'q
+                  <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">
+                    Hozircha navbatda kutilayotgan post yo'q
                   </div>
                 `}
               </div>
@@ -6040,7 +6064,7 @@ const ATLAS = {
       else if (activeTab === 'settings') renderSettingsTab(tabBox);
     };
 
-    // TAB 1: POSTLAR NAVBATI
+    // TAB 1: POSTLAR NAVBATI (YAGONA RO'YXAT - SAHIFASIZ)
     const renderQueueTab = async (container) => {
       container.innerHTML = `
         <div class="glass-card">
@@ -6057,23 +6081,23 @@ const ATLAS = {
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <input type="text" id="insta-search-input" class="input-control" style="width:180px;height:34px;font-size:12px;" placeholder="Shortcode yoki matn..." value="${currentSearch}">
               
-              <button class="btn-sm btn-secondary" id="btn-toolbar-add-url" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="Havola (URL) orqali yangi post qo'shish">
-                ${this.icons.plus || '+'} <span>Havola Bilan Qo‘shish</span>
+              <button class="btn-sm btn-secondary" id="btn-toolbar-add-url" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);display:inline-flex;align-items:center;gap:4px;" title="Havola (URL) orqali yangi post qo'shish">
+                ${this.icons.plus || '+'} <span>Havola Qo‘shish</span>
               </button>
 
-              <button class="btn-sm btn-primary" id="btn-post-next-tg" title="Navbatdagi 1 ta postni darhol Telegramga yuborish">
-                ${this.icons.send} <span>1 ta TG ga yuborish</span>
+              <button class="btn-sm btn-primary" id="btn-post-next-tg" title="Navbatdagi 1 ta postni darhol Telegramga yuborish" style="display:inline-flex;align-items:center;gap:4px;">
+                ${this.icons.send} <span>1 ta TG ga</span>
               </button>
               
-              <button class="btn-sm btn-secondary" id="btn-post-next-yt" title="Navbatdagi 1 ta videoni darhol YouTube Shorts ga yuklash">
-                ${this.icons.youtube} <span>1 ta YT ga yuklash</span>
+              <button class="btn-sm btn-secondary" id="btn-post-next-yt" title="Navbatdagi 1 ta videoni darhol YouTube Shorts ga yuklash" style="display:inline-flex;align-items:center;gap:4px;background:rgba(244,63,94,0.12);color:#fb7185;border:1px solid rgba(244,63,94,0.25);">
+                ${this.icons.youtube} <span>1 ta YT ga</span>
               </button>
 
               <button class="btn-sm btn-secondary" id="btn-reset-queue" title="Xatolik bo'lgan postlarni qayta tiklash">
                 ${this.icons.refresh}
               </button>
 
-              <button class="btn-sm btn-danger" id="btn-clear-queue" title="Navbatni tozalash" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);">
+              <button class="btn-sm btn-danger" id="btn-clear-queue" title="Navbatni tozalash" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);">
                 ${this.icons.trash}
               </button>
             </div>
@@ -6110,7 +6134,6 @@ const ATLAS = {
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {
             currentSearch = e.target.value;
-            currentPage = 1;
             loadTableData();
           }, 350);
         });
@@ -6128,7 +6151,7 @@ const ATLAS = {
         } else {
           this.toast((res && res.error) || (res && res.message) || 'Post yuborishda xatolik', 'error');
           btn.disabled = false;
-          btn.innerHTML = `${this.icons.send} <span>1 ta TG ga yuborish</span>`;
+          btn.innerHTML = `${this.icons.send} <span>1 ta TG ga</span>`;
         }
       });
 
@@ -6143,7 +6166,7 @@ const ATLAS = {
         } else {
           this.toast((res && res.error) || (res && res.message) || 'YouTube yuklashda xatolik', 'error');
           btn.disabled = false;
-          btn.innerHTML = `${this.icons.youtube} <span>1 ta YT ga yuklash</span>`;
+          btn.innerHTML = `${this.icons.youtube} <span>1 ta YT ga</span>`;
         }
       });
 
@@ -6174,7 +6197,7 @@ const ATLAS = {
         });
       });
 
-      // Load table data
+      // Load table data without pagination (single page)
       const loadTableData = async () => {
         const tableBox = document.getElementById('insta-table-container');
         if (!tableBox) return;
@@ -6186,8 +6209,8 @@ const ATLAS = {
         `;
 
         const query = new URLSearchParams({
-          page: currentPage,
-          limit: 50,
+          page: 1,
+          limit: 1000,
           status: currentFilter === 'ALL' ? '' : currentFilter,
           search: currentSearch
         });
@@ -6199,15 +6222,15 @@ const ATLAS = {
         }
 
         const items = queueRes.items || [];
-        const total = queueRes.total || 0;
-        const totalPages = queueRes.total_pages || 1;
 
         if (items.length === 0) {
           tableBox.innerHTML = `
             <div style="text-align:center;padding:48px 20px;color:rgba(255,255,255,0.45);">
-              <div style="font-size:32px;margin-bottom:10px;">📭</div>
-              <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:4px;">Hech qanday post topilmadi</div>
-              <p style="font-size:13px;max-width:400px;margin:0 auto 16px auto;">
+              <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;margin:0 auto 12px auto;color:rgba(255,255,255,0.4);">
+                <svg style="width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:4px;">Hech qanday post topilmadi</div>
+              <p style="font-size:12px;max-width:400px;margin:0 auto 16px auto;">
                 ${currentSearch ? "Qidiruv bo'yicha mos keluvchi postlar mavjud emas." : "Instagramdan yangi postlarni skanerlab olish uchun yuqoridagi 'Instagramdan Skanerlash' tugmasini bosing."}
               </p>
               ${!currentSearch ? `
@@ -6225,13 +6248,13 @@ const ATLAS = {
             <table class="glass-table">
               <thead>
                 <tr>
-                  <th style="width:45px;text-align:center;">№</th>
-                  <th style="width:75px;text-align:center;">Instagram</th>
+                  <th style="width:40px;text-align:center;">№</th>
+                  <th style="width:70px;text-align:center;">Instagram</th>
                   <th>Post Matni (Caption)</th>
                   <th style="width:130px;text-align:center;">Telegram Holati</th>
                   <th style="width:130px;text-align:center;">YouTube Holati</th>
-                  <th style="width:170px;">Chiqarish Rejasi (Vaqt)</th>
-                  <th style="width:150px;text-align:right;">Amallar</th>
+                  <th style="width:165px;">Chiqarish Rejasi</th>
+                  <th style="width:145px;text-align:center;">Amallar</th>
                 </tr>
               </thead>
               <tbody>
@@ -6242,48 +6265,48 @@ const ATLAS = {
 
                   let tgBadge = '';
                   if (isTgSent) {
-                    tgBadge = `<span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);display:inline-flex;align-items:center;gap:4px;">
-                      <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> TG: Yuborildi
+                    tgBadge = `<span class="badge" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                      <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> TG: Yuborildi
                     </span>`;
                   } else if (isTgProcessing) {
-                    tgBadge = `<span class="badge" style="background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);display:inline-flex;align-items:center;gap:4px;">
-                      🔄 Yuborilmoqda...
+                    tgBadge = `<span class="badge" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                      <svg style="width:12px;height:12px;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> TG: Jarayonda
                     </span>`;
                   } else if (item.status === 'FAILED') {
-                    tgBadge = `<span class="badge" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);display:inline-flex;align-items:center;gap:4px;" title="${item.error_msg || ''}">
-                      ⚠️ TG: Xatolik
+                    tgBadge = `<span class="badge" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;" title="${item.error_msg || ''}">
+                      <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> TG: Xatolik
                     </span>`;
                   } else {
-                    tgBadge = `<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);display:inline-flex;align-items:center;gap:4px;">
-                      ⏳ TG: Kutilmoqda
+                    tgBadge = `<span class="badge" style="background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                      <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> TG: Kutilmoqda
                     </span>`;
                   }
 
                   let ytBadge = '';
                   if (isYtUploaded) {
-                    ytBadge = `<a href="${item.youtube_url || 'https://www.youtube.com'}" target="_blank" class="badge" style="background:rgba(244,63,94,0.2);color:#fb7185;border:1px solid rgba(244,63,94,0.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="YouTube Shorts da ko'rish">
-                      <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT: Yuklandi
+                    ytBadge = `<a href="${item.youtube_url || 'https://www.youtube.com'}" target="_blank" class="badge" style="background:rgba(244,63,94,0.12);color:#fb7185;border:1px solid rgba(244,63,94,0.25);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;" title="YouTube Shorts da ko'rish">
+                      <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> YT: Yuklandi
                     </a>`;
                   } else {
-                    ytBadge = `<span class="badge" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);display:inline-flex;align-items:center;gap:4px;">
+                    ytBadge = `<span class="badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT: Kutilmoqda
                     </span>`;
                   }
 
                   const validSched = (item.scheduled_time && item.scheduled_time !== '—' && !item.scheduled_time.includes('?')) ? item.scheduled_time : 'Hozir (Navbatda)';
                   const scheduleHtml = item.status === 'SENT' 
-                    ? `<div style="font-size:12px;color:#34d399;font-weight:700;">✅ ${item.sent_at}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">(TG ga yuborildi)</div>`
+                    ? `<div style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#34d399;font-weight:700;font-family:'JetBrains Mono',monospace;"><svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${item.sent_at}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">(Telegramga chiqdi)</div>`
                     : (item.status === 'FAILED'
-                       ? `<div style="color:#f87171;font-weight:700;font-size:11px;">⚠️ Xatolik</div>`
-                       : `<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.4);padding:4px 8px;border-radius:var(--radius-sm);color:#38bdf8;font-weight:800;font-size:12px;font-family:'JetBrains Mono',monospace;">⏰ ${validSched}</div><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">Asl joylangan: ${item.post_date || '—'}</div>`
+                       ? `<div style="display:inline-flex;align-items:center;gap:4px;color:#f87171;font-weight:700;font-size:11px;"><svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Xatolik</div>`
+                       : `<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);padding:3px 7px;border-radius:6px;color:#38bdf8;font-weight:700;font-size:11px;font-family:'JetBrains Mono',monospace;"><svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${validSched}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">Asl joylangan: ${item.post_date || '—'}</div>`
                     );
 
                   return `
                     <tr>
                       <td class="mono" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.45);">${idx + 1}</td>
                       <td style="text-align:center;">
-                        <a href="${item.post_url}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);color:#ffffff;box-shadow:0 2px 8px rgba(220,39,67,0.35);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Instagramda ko'rish (${item.shortcode})">
-                          <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        <a href="${item.post_url}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);color:#ffffff;box-shadow:0 2px 6px rgba(220,39,67,0.3);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Instagramda ko'rish (${item.shortcode})">
+                          <svg style="width:15px;height:15px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                         </a>
                       </td>
                       <td>
@@ -6298,30 +6321,30 @@ const ATLAS = {
                           ${scheduleHtml}
                         </div>
                       </td>
-                      <td style="text-align:right;">
-                        <div style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">
+                      <td style="text-align:center;">
+                        <div style="display:inline-flex;gap:6px;align-items:center;justify-content:center;">
                           ${isTgSent ? `
-                            <button class="btn-sm" style="padding:4px 8px;font-size:11px;opacity:0.55;cursor:not-allowed;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);" disabled title="Telegramga yuborilgan">
-                              ✅ <span>TG</span>
+                            <button class="btn-sm" style="padding:4px 8px;font-size:11px;opacity:0.6;cursor:not-allowed;background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.25);border-radius:6px;display:inline-flex;align-items:center;gap:3px;" disabled title="Telegramga yuborilgan">
+                              <svg style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span>TG</span>
                             </button>
                           ` : `
-                            <button class="btn-sm btn-primary btn-post-single-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" title="Telegram kanalga hozir chiqarish">
-                              ${this.icons.send} <span>TG</span>
+                            <button class="btn-sm btn-post-single-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:3px;background:rgba(20,184,166,0.15);color:#2ee59d;border:1px solid rgba(20,184,166,0.3);border-radius:6px;cursor:pointer;" title="Telegram kanalga hozir chiqarish">
+                              <svg style="width:11px;height:11px;fill:currentColor;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> <span>TG</span>
                             </button>
                           `}
 
                           ${isYtUploaded ? `
-                            <button class="btn-sm" style="padding:4px 8px;font-size:11px;opacity:0.55;cursor:not-allowed;background:rgba(244,63,94,0.15);color:#fb7185;border:1px solid rgba(244,63,94,0.3);" disabled title="YouTube Shorts ga yuklangan">
-                              ✅ <span>YT</span>
+                            <button class="btn-sm" style="padding:4px 8px;font-size:11px;opacity:0.6;cursor:not-allowed;background:rgba(244,63,94,0.1);color:#fb7185;border:1px solid rgba(244,63,94,0.25);border-radius:6px;display:inline-flex;align-items:center;gap:3px;" disabled title="YouTube Shorts ga yuklangan">
+                              <svg style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span>YT</span>
                             </button>
                           ` : `
-                            <button class="btn-sm btn-secondary btn-post-single-yt-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);" title="YouTube Shorts ga hozir yuklash">
-                              ${this.icons.youtube} <span>YT</span>
+                            <button class="btn-sm btn-post-single-yt-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:3px;background:rgba(244,63,94,0.15);color:#fb7185;border:1px solid rgba(244,63,94,0.3);border-radius:6px;cursor:pointer;" title="YouTube Shorts ga hozir yuklash">
+                              <svg style="width:11px;height:11px;fill:currentColor;" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> <span>YT</span>
                             </button>
                           `}
 
-                          <button class="btn-icon btn-sm btn-delete-single-action" data-id="${item.id}" title="Navbatdan o'chirish" style="color:#f87171;">
-                            ${this.icons.trash}
+                          <button class="btn-icon btn-sm btn-delete-single-action" data-id="${item.id}" title="Navbatdan o'chirish" style="color:rgba(239,68,68,0.85);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:6px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">
+                            <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
                         </div>
                       </td>
@@ -6332,18 +6355,14 @@ const ATLAS = {
             </table>
           </div>
 
-          <!-- PAGINATION -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border-glass);flex-wrap:wrap;gap:8px;">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);">
-              Jami: <b>${total}</b> ta post • Sahifa <b>${currentPage}</b> / <b>${totalPages}</b>
+          <!-- FOOTER SUMMARY (PAGINATIONSIZ) -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border-glass);flex-wrap:wrap;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);">
+            <div>
+              Navbatdagi jami postlar: <b style="color:#ffffff;">${items.length}</b> ta
             </div>
-            <div style="display:flex;gap:6px;">
-              <button class="btn-sm btn-secondary" id="insta-prev-page-btn" ${currentPage <= 1 ? 'disabled' : ''}>
-                ${this.icons.arrowLeft || '◀'} Oldingi
-              </button>
-              <button class="btn-sm btn-secondary" id="insta-next-page-btn" ${currentPage >= totalPages ? 'disabled' : ''}>
-                Keyingi ${this.icons.arrowRight || '▶'}
-              </button>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.45);">
+              <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Avto-yuborish har soat boshida (:00 da) amalga oshiriladi
             </div>
           </div>
         `;
@@ -6466,8 +6485,8 @@ const ATLAS = {
                       <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s;" class="hover-row">
                         <td style="padding:10px 14px;color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;">${idx + 1}</td>
                         <td style="padding:10px 14px;">
-                          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.35);padding:4px 10px;border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-weight:700;color:#ffffff;font-size:13px;">
-                            ⏰ ${timeStr}
+                          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.3);padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#ffffff;font-size:12px;">
+                            <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${timeStr}
                           </span>
                         </td>
                         <td style="padding:10px 14px;color:rgba(255,255,255,0.85);font-size:13px;">
@@ -6497,7 +6516,7 @@ const ATLAS = {
             </form>
 
             <div style="padding:12px;background:rgba(0,203,169,0.08);border:1px solid rgba(0,203,169,0.2);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;">
-              💡 <b>Standart tavsiya etilgan 5 ta vaqt:</b> <code>09:00</code> (Ertalab), <code>12:00</code> (Tushlik), <code>15:00</code> (Kunning 2-yarmi), <code>18:30</code> (Eng faol davr), <code>21:00</code> (Kechki auditoriya).
+              <b>Standart tavsiya etilgan 5 ta vaqt:</b> <code>09:00</code> (Ertalab), <code>12:00</code> (Tushlik), <code>15:00</code> (Kunning 2-yarmi), <code>18:30</code> (Eng faol davr), <code>21:00</code> (Kechki auditoriya).
             </div>
           </div>
 
@@ -6511,8 +6530,14 @@ const ATLAS = {
             </div>
 
             <div style="margin-bottom:20px;">
-              <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--radius-md);background:${ytReady ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'};border:1px solid ${ytReady ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
-                <div style="font-size:24px;">${ytReady ? '🟢' : '⚠️'}</div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--radius-md);background:${ytReady ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'};border:1px solid ${ytReady ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'};">
+                <div style="width:36px;height:36px;border-radius:8px;background:${ytReady ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};display:flex;align-items:center;justify-content:center;color:${ytReady ? '#34d399' : '#f87171'};">
+                  ${ytReady ? `
+                    <svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  ` : `
+                    <svg style="width:18px;height:18px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                  `}
+                </div>
                 <div>
                   <div style="font-weight:700;color:#ffffff;font-size:14px;">
                     ${ytReady ? 'YouTube API Muvaffaqiyatli Ulangan' : 'YouTube Avtorizatsiyasi Kutilmoqda'}
@@ -6681,13 +6706,15 @@ const ATLAS = {
 
             <!-- INSTAGRAM SESSION ID COOKIE FOR FULL 99+ POSTS SCAN -->
             <div class="form-group" style="margin-bottom:16px;padding:14px;background:rgba(236,72,153,0.06);border-radius:var(--radius-md);border:1px solid rgba(236,72,153,0.25);">
-              <label class="form-label" style="color:#f472b6;">🔑 Instagram Session ID (Cookie) — Barcha 99+ postlarni to'liq skanerlash uchun</label>
+              <label class="form-label" style="color:#f472b6;display:flex;align-items:center;gap:6px;">
+                <svg style="width:14px;height:14px;fill:none;stroke:#f472b6;stroke-width:2;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Instagram Session ID (Cookie) — Barcha postlarni to'liq skanerlash uchun
+              </label>
               <div class="input-container">
                 <span class="input-icon-left">${this.icons.lock}</span>
                 <input type="text" id="sett-insta-session-id" class="input-control font-mono" value="${settings.insta_session_id || ''}" placeholder="Masalan: 7654321%3ABz...">
               </div>
               <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:5px;">
-                Instagram anti-bot (429) cheklovini aylanib o'tib, profilning eng birinchi kunidagi barcha 99 ta postini to'liq tortib olish uchun ishlatiladi.
+                Instagram anti-bot (429) cheklovini aylanib o'tib, profilning barcha postlarini to'liq tortib olish uchun ishlatiladi.
               </div>
             </div>
 
@@ -6722,7 +6749,7 @@ const ATLAS = {
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <div>
                   <div style="font-size:14px;font-weight:700;color:#ffffff;display:flex;align-items:center;gap:6px;">
-                    🌙 Telegram Tungi Sokinlik Rejimi
+                    <svg style="width:14px;height:14px;fill:none;stroke:#818cf8;stroke-width:2;" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Telegram Tungi Sokinlik Rejimi
                   </div>
                   <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">
                     Tungi vaqtda obunachilarni bezovta qilmaslik uchun Telegramga post yuborishni to'xtatib turish
@@ -6792,7 +6819,7 @@ const ATLAS = {
   // Modal: Instagramdan Skanerlash yoki Havolalar Qo'shish
   renderScanModal(defaultUsername, viewport) {
     this.modal({
-      title: "📥 Instagram Postlarini Navbatga Qo'shish",
+      title: "Instagram Postlarini Navbatga Qo'shish",
       contentHtml: `
         <div style="display:flex;gap:10px;margin-bottom:16px;border-bottom:1px solid var(--border-glass);padding-bottom:10px;">
           <button type="button" class="btn-sm btn-primary" id="tab-btn-auto-scan" style="flex:1;">
@@ -6818,7 +6845,7 @@ const ATLAS = {
           </div>
 
           <div style="padding:10px 14px;background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:18px;">
-            ℹ️ Skanerlash jarayoni fonda boshlanadi. Agar Vercel bulutida bo'lsangiz, lokal kompyuteringizda yoki quyidagi <b>Havolalar Qo'shish</b> bo'limidan foydalanishingiz mumkin.
+            Skanerlash jarayoni fonda boshlanadi. Profil postlarini to‘g‘ridan-to‘g‘ri qo‘shish uchun <b>Havolalar Qo'shish</b> bo'limidan ham foydalanishingiz mumkin.
           </div>
 
           <div style="display:flex;justify-content:flex-end;gap:10px;">
@@ -6931,7 +6958,7 @@ const ATLAS = {
 
   renderAddUrlModal(viewport) {
     this.modal({
-      title: `🔗 Instagram Havolasi Bilan Navbatga Qo'shish`,
+      title: `Instagram Havolasi Bilan Navbatga Qo'shish`,
       maxWidth: '540px',
       contentHtml: `
         <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">

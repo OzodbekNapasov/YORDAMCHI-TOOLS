@@ -1897,6 +1897,15 @@ def get_queue_stats():
         else:
             next_top_hour = now.replace(minute=0, second=0, microsecond=0)
         next_time_str = f"{next_top_hour.strftime('%H:00')} da (Soat boshida)"
+        
+    yt_times = get_youtube_schedule_times()
+    next_yt_time_str = "—"
+    if yt_times:
+        upcoming_yt = [t for t in yt_times if t > now_hm]
+        if upcoming_yt:
+            next_yt_time_str = f"Bugun {upcoming_yt[0]} da"
+        else:
+            next_yt_time_str = f"Ertaga {yt_times[0]} da"
             
     return {
         "total": total,
@@ -1907,6 +1916,7 @@ def get_queue_stats():
         "next_post": next_post_dict,
         "last_sent": last_sent_dict,
         "next_time_estimate": next_time_str,
+        "next_yt_time_estimate": next_yt_time_str,
         "is_night_mode_active": is_night_now,
         "settings": settings
     }
@@ -1967,11 +1977,11 @@ def delete_queue_item(post_id):
         return False
 
 
-def get_queue_items(page=1, limit=50, status=None, search=None):
-    """Navbatdagi postlarni sahifalash, Toshkent vaqti bo'yicha aniq rejalashtirilgan vaqtlar va qidiruv bilan olish"""
+def get_queue_items(page=1, limit=500, status=None, search=None):
+    """Navbatdagi postlarni Toshkent vaqti bo'yicha aniq rejalashtirilgan vaqtlar va qidiruv bilan olish"""
     init_insta_tables()
     page = max(1, int(page))
-    limit = max(1, min(200, int(limit)))
+    limit = max(1, min(1000, int(limit)))
     offset = (page - 1) * limit
     
     conn = get_db_connection()
