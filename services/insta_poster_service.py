@@ -18,8 +18,24 @@ from datetime import datetime, timezone
 from services.atlas_db import get_db_connection
 
 DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
-DEFAULT_TARGET_CHAT_ID = "8135594558"
+DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
+
+# Boshlang'ich skanerlangan postlar (Seed)
+DEFAULT_SEEDED_POSTS = [
+    {"shortcode": "DbsKZ2qICdh", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DbsKZ2qICdh", "media_type": "reel"},
+    {"shortcode": "DbyU4H_oLZr", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DbyU4H_oLZr", "media_type": "reel"},
+    {"shortcode": "Db0U9ivIcwC", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/Db0U9ivIcwC", "media_type": "post"},
+    {"shortcode": "Db-ssJeIyZh", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/Db-ssJeIyZh", "media_type": "reel"},
+    {"shortcode": "DcBekL6Omao", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcBekL6Omao", "media_type": "reel"},
+    {"shortcode": "DcDX1cOoIoX", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcDX1cOoIoX", "media_type": "reel"},
+    {"shortcode": "DcIsWQ5IT8b", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcIsWQ5IT8b", "media_type": "reel"},
+    {"shortcode": "DcLj3zwqODC", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcLj3zwqODC", "media_type": "reel"},
+    {"shortcode": "DcLkGzAqbz9", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcLkGzAqbz9", "media_type": "reel"},
+    {"shortcode": "DTKlzm8CJ5N", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DTKlzm8CJ5N", "media_type": "post"},
+    {"shortcode": "DTKl2WlCFbP", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DTKl2WlCFbP", "media_type": "post"},
+    {"shortcode": "DTKl4neiIGi", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DTKl4neiIGi", "media_type": "post"}
+]
 
 # ------------------------------------------------------------
 # 1. Database Initialization & Settings
@@ -100,15 +116,28 @@ def init_insta_tables():
         "last_post_time": "",
         "is_scanning": "0",
         "last_scan_time": "",
-        "last_scan_count": "0",
+        "last_scan_count": "12",
+        "night_mode_enabled": "1",          # 0: O'chirilgan, 1: Yoqilgan (00:00 - 07:00)
+        "night_mode_start": "00:00",
+        "night_mode_end": "07:00",
         "youtube_auto_upload": "1",         # 0: O'chirilgan, 1: Yoqilgan
         "youtube_schedule_enabled": "1",    # YouTube jadvali faolmi?
-        "youtube_schedule_times": "09:00,13:00,19:30",  # YouTube Rek vaqtlari
+        "youtube_schedule_times": "09:00,12:00,15:00,18:30,21:00",  # 5 ta Rek vaqtlari
         "youtube_last_posted_slot": ""      # Oxirgi yuborilgan slot
     }
     
     for k, v in defaults.items():
         cursor.execute("INSERT OR IGNORE INTO insta_settings (key, value) VALUES (?, ?)", (k, v))
+
+    # 4. Agar navbat bo'sh bo'lsa, @shahrisabz_t_t_uz postlarini avtomatik urug'lantirish (Seed)
+    cursor.execute("SELECT COUNT(*) as cnt FROM insta_posts_queue")
+    queue_cnt = cursor.fetchone()["cnt"]
+    if queue_cnt == 0:
+        for p in DEFAULT_SEEDED_POSTS:
+            cursor.execute("""
+            INSERT OR IGNORE INTO insta_posts_queue (shortcode, post_url, media_type, status)
+            VALUES (?, ?, ?, 'PENDING')
+            """, (p["shortcode"], p["url"], p["media_type"]))
         
     conn.commit()
     conn.close()
@@ -858,14 +887,52 @@ def get_queue_stats():
     conn.close()
     settings = get_all_settings()
     
+    next_post_dict = dict(next_post) if next_post else None
+    last_sent_dict = dict(last_sent) if last_sent else None
+    
+    # Calculate next scheduled post time and status
+    interval_min = int(settings.get("interval_minutes") or 60)
+    last_post_str = settings.get("last_post_time", "")
+    
+    next_time_str = "Hozir (Navbatdagi siklda)"
+    is_night_now = False
+    
+    now = datetime.now()
+    now_hm = now.strftime("%H:%M")
+    
+    night_on = settings.get("night_mode_enabled", "1") == "1"
+    night_start = settings.get("night_mode_start", "00:00")
+    night_end = settings.get("night_mode_end", "07:00")
+    
+    if night_on:
+        if night_start <= night_end:
+            is_night_now = (night_start <= now_hm < night_end)
+        else:
+            is_night_now = (now_hm >= night_start or now_hm < night_end)
+            
+    if is_night_now:
+        next_time_str = f"Ertalab soat {night_end} da (Tungi rejim faol)"
+    elif last_post_str:
+        try:
+            last_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
+            target_dt = last_dt + timedelta(minutes=interval_min)
+            if target_dt > now:
+                next_time_str = target_dt.strftime("%H:%M")
+            else:
+                next_time_str = "Hozir (Navbatdagi siklda)"
+        except Exception:
+            next_time_str = "Hozir"
+            
     return {
         "total": total,
         "pending": pending,
         "sent": sent,
         "failed": failed,
         "yt_uploaded": yt_uploaded,
-        "next_post": dict(next_post) if next_post else None,
-        "last_sent": dict(last_sent) if last_sent else None,
+        "next_post": next_post_dict,
+        "last_sent": last_sent_dict,
+        "next_time_estimate": next_time_str,
+        "is_night_mode_active": is_night_now,
         "settings": settings
     }
 

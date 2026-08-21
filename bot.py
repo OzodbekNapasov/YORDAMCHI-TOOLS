@@ -2467,7 +2467,7 @@ def handle_insta_dashboard(chat_id):
     sched_str = f"🟢 Yoqilgan (Har {settings.get('interval_minutes', '60')} daqiqada)" if sched_enabled else "🔴 O‘chirilgan"
     yt_enabled = settings.get("youtube_auto_upload", "1") == "1"
     yt_str = "🟢 Yoqilgan (Shorts)" if yt_enabled else "🔴 O‘chirilgan"
-    target_chat = settings.get("target_chat_id", "8135594558")
+    target_chat = settings.get("target_chat_id", "-1004295470034")
     last_post = settings.get("last_post_time") or "Hali yuborilmadi"
     last_scan = settings.get("last_scan_time") or "Skanerlanmagan"
     
@@ -2575,7 +2575,7 @@ def handle_insta_settings_menu(chat_id):
     """Instagram AutoPoster sozlamalari"""
     settings = get_insta_settings()
     username = settings.get("insta_username", "shahrisabz_t_t_uz")
-    chat_target = settings.get("target_chat_id", "8135594558")
+    chat_target = settings.get("target_chat_id", "-1004295470034")
     interval = settings.get("interval_minutes", "60")
     yt_enabled = settings.get("youtube_auto_upload", "1") == "1"
     yt_btn_text = "🔴 YouTube Shorts yuklashni o‘chirish" if yt_enabled else "🟢 YouTube Shorts yuklashni yoqish"

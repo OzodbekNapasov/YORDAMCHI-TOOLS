@@ -5814,6 +5814,64 @@ const ATLAS = {
             </div>
           </div>
 
+          <!-- HERO MASTER AUTO-POSTER CONTROL & NEXT SCHEDULE CARD -->
+          <div class="glass-card" style="margin-bottom:20px;border:1px solid ${tgAuto ? 'rgba(46,229,157,0.35)' : 'rgba(245,158,11,0.35)'};background:linear-gradient(135deg, rgba(255,255,255,0.03) 0%, ${tgAuto ? 'rgba(46,229,157,0.06)' : 'rgba(245,158,11,0.06)'} 100%);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--border-glass);">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:${tgAuto ? 'rgba(46,229,157,0.18)' : 'rgba(245,158,11,0.18)'};display:flex;align-items:center;justify-content:center;font-size:22px;">
+                  ${tgAuto ? '🟢' : '⏸'}
+                </div>
+                <div>
+                  <div style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">
+                    ${tgAuto ? "AVTO-YUBORISH JARAYONI FAOL (ISHMOQDA)" : "AVTO-YUBORISH TO'XTATILGAN (PAUZA HOLATIDA)"}
+                  </div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px;">
+                    Telegram kanal: <b style="color:#ffffff;">${settings.target_chat_id || '-1004295470034'}</b> &bull; Oraliq: <b style="color:#ffffff;">Har ${settings.interval_minutes || 60} daqiqada</b> &bull; Tungi rejim: <b style="color:#818cf8;">🌙 00:00 — 07:00</b>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PROMINENT BIG START / PAUSE BUTTON -->
+              <div>
+                <button class="btn ${tgAuto ? 'btn-secondary' : 'btn-primary'}" id="btn-hero-toggle-schedule" style="padding:12px 26px;font-size:14px;font-weight:800;letter-spacing:0.5px;cursor:pointer;border-radius:var(--radius-sm);box-shadow:0 4px 16px ${tgAuto ? 'rgba(239,68,68,0.25)' : 'rgba(46,229,157,0.35)'};background:${tgAuto ? 'rgba(239,68,68,0.2)' : 'var(--accent-glow)'};border:1px solid ${tgAuto ? '#ef4444' : '#00cba9'};color:#ffffff;">
+                  ${tgAuto ? '⏸ TO‘XTATIB TURISH (PAUSE)' : '▶️ AVTO-YUBORISHNI BOSHLASH (START)'}
+                </button>
+              </div>
+            </div>
+
+            <!-- NEXT SCHEDULED POST DETAILS -->
+            <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;align-items:center;">
+              <div style="padding:12px 14px;background:rgba(0,0,0,0.25);border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;">Keyingi post chiqish vaqti:</div>
+                <div style="font-size:16px;font-weight:800;color:${tgAuto ? '#34d399' : '#fbbf24'};margin-top:4px;">
+                  ⏰ ${tgAuto ? (stats.next_time_estimate || 'Reja bo‘yicha') : 'Pauzada (Boshlash tugmasini bosing)'}
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">
+                  Tartib: <b>Eng eskisidan yangisiga qarab</b> &bull; Qolgan joyidan davom etadi
+                </div>
+              </div>
+
+              <div style="padding:12px 14px;background:rgba(0,0,0,0.25);border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:600;">Navbatdagi 1-post:</div>
+                ${stats.next_post ? `
+                  <div style="font-size:13px;color:#ffffff;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:8px;">
+                    <span>${stats.next_post.media_type === 'reel' ? '🎬 Reel Video' : '📸 Rasm'}</span>
+                    <a href="${stats.next_post.post_url}" target="_blank" style="color:#00cba9;text-decoration:underline;font-family:'JetBrains Mono',monospace;font-size:12px;">
+                      ${stats.next_post.shortcode} ↗
+                    </a>
+                  </div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px;">
+                    ${stats.next_post.caption ? stats.next_post.caption : 'Matn avtomatik tozalab yuboriladi'}
+                  </div>
+                ` : `
+                  <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">
+                    🎉 Hozircha navbatda kutilayotgan post yo'q
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+
           <!-- TAB BUTTONS -->
           <div class="tab-pills-row" style="margin-bottom:18px;">
             <button class="tab-pill-btn ${activeTab === 'queue' ? 'active' : ''}" id="tab-btn-insta-queue">
@@ -5834,11 +5892,23 @@ const ATLAS = {
 
       // Event Bindings
       document.getElementById('insta-refresh-btn').addEventListener('click', () => {
-        this.loadInstagram(viewport);
+        this.loadInstagram(viewport, activeTab);
       });
 
       document.getElementById('btn-open-scan-modal').addEventListener('click', () => {
         this.renderScanModal(currentUsername, viewport);
+      });
+
+      // Hero Start / Pause Schedule Toggle
+      document.getElementById('btn-hero-toggle-schedule')?.addEventListener('click', async () => {
+        const newVal = tgAuto ? '0' : '1';
+        const res = await this.api('/api/instagram/settings', 'POST', { auto_schedule_enabled: newVal });
+        if (res && res.success) {
+          this.toast(`Telegram avto-yuborish ${newVal === '1' ? 'boshlandi (START)' : 'to‘xtatildi (PAUSE)'}`, 'success');
+          this.loadInstagram(viewport, activeTab);
+        } else {
+          this.toast((res && res.error) || 'Xatolik', 'error');
+        }
       });
 
       const resetFailedLink = document.getElementById('quick-reset-failed-link');
