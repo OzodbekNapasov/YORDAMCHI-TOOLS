@@ -15,54 +15,94 @@ TOKEN_FILE = os.path.join(BASE_DIR, "youtube_token.json")
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
 
 
+import base64
+
+# Base64 encoded fallback credentials for cloud deployment
+_B64_FALLBACK_TOKEN = "eyJ0b2tlbiI6ICJ5YTI5LmEwQWRNRDZFZ2ozeFcxSm9wYmppMkd5cUFVTFRPNC1lM2xvcVVWV1NjMWQ3eVd3ZFpyeHZILUwtRHNveTBkdG1CWGxHbFZWMytoN2RaV1pDbkx1MDhnZml1MUYwN1RXWndKOE5Ecm9MVkJpay16SnhvSUxESjlFQ1F2NWk4WWwtQUxBZjJ2d1dHWjdMOEtlRVByTkVucFAwYzJmbFIydXB1cnJZeWJLd0tfZmdyZV9UR3cxM3pPRjZsTzNOQ3BSczdfQ1ZwYnBhTWFDZ1lLQVlNU0FSWVNGUUhHWDJNaVVXamNnLUpiVHJjUWN1cXBFRWl3bEEwMjA2IiwgInJlZnJlc2hfdG9rZW4iOiAiMS8vMGNHb1NfY3dhZjd3MENnWUlBUkFBR0F3U053Ri1MOUlyUWd2MlotXzhYRjQ2dkxhenhTa1U3dUhEUmhLcUZKV1Q2VDFfb292QUFXdWJ1VUpHRGhaemlja1R0MkVvdHQxLVU0cyIsICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLCAiY2xpZW50X2lkIjogIjY5NDMxNDI2Mjk2My1xY3ZhY3VlamYwMGpqNm41ZnVhZm9rb2xvZ21ldXFhNi5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsICJjbGllbnRfc2VjcmV0IjogIkdPQ1NQWC1LRFNhOExic0c0d1c1dFdNQ2ZPUVFtN1pDX0JHIiwgInNjb3BlcyI6IFsiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vYXV0aC95b3V0dWJlLnVwbG9hZCIsICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3lvdXR1YmUiXSwgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSJ9"
+
+def _get_raw_token_info():
+    """Token ma'lumotlarini fayl, baza yoki zaxiradan olish"""
+    # 1. DB dan tekshirish
+    try:
+        from services.insta_poster_service import get_setting
+        db_val = get_setting("youtube_token_json", "")
+        if db_val and db_val.strip().startswith("{"):
+            return json.loads(db_val.strip())
+    except Exception:
+        pass
+
+    # 2. Fayldan tekshirish
+    if os.path.exists(TOKEN_FILE):
+        try:
+            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+
+    # 3. Environment o'zgaruvchisidan tekshirish
+    env_token = os.getenv("YOUTUBE_TOKEN_JSON")
+    if env_token and env_token.strip().startswith("{"):
+        try:
+            return json.loads(env_token.strip())
+        except Exception:
+            pass
+
+    # 4. Base64 zaxira sozlama
+    try:
+        raw_json = base64.b64decode(_B64_FALLBACK_TOKEN.encode('utf-8')).decode('utf-8')
+        return json.loads(raw_json)
+    except Exception:
+        return None
+
+
 def is_youtube_ready():
     """YouTube ulanish va ruxsatnomasi mavjudligini tekshirish"""
-    if not os.path.exists(TOKEN_FILE):
-        return False
     try:
         from google.oauth2.credentials import Credentials
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-        if creds and (creds.valid or (creds.expired and creds.refresh_token)):
-            return True
+        info = _get_raw_token_info()
+        if not info or not info.get("refresh_token"):
+            return False
+        creds = Credentials.from_authorized_user_info(info, SCOPES)
+        return bool(creds and (creds.valid or creds.refresh_token))
     except Exception as e:
         print(f"[YouTube Check Info]: {e}")
-    return False
+        return False
 
 
 def get_youtube_credentials():
     """OAuth 2.0 orqali ruxsat olingan ma'lumotlarni yuklash yoki yangilash"""
     try:
         from google.oauth2.credentials import Credentials
-        from google_auth_oauthlib.flow import InstalledAppFlow
         from google.auth.transport.requests import Request
     except ImportError as e:
-        raise ImportError("Google API kutubxonalari o'rnatilmagan (google-api-python-client, google-auth-oauthlib)") from e
+        raise ImportError("Google API kutubxonalari o'rnatilmagan") from e
 
-    creds = None
-    if os.path.exists(TOKEN_FILE):
-        try:
-            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-        except Exception as e:
-            print(f"[YouTube Creds Load Err]: {e}")
+    info = _get_raw_token_info()
+    if not info:
+        raise FileNotFoundError("YouTube token ma'lumotlari topilmadi!")
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+    creds = Credentials.from_authorized_user_info(info, SCOPES)
+
+    if not creds.valid:
+        if creds.refresh_token:
             try:
                 creds.refresh(Request())
-                with open(TOKEN_FILE, 'w', encoding='utf-8') as token_f:
-                    token_f.write(creds.to_json())
+                updated_json = creds.to_json()
+                try:
+                    from services.insta_poster_service import set_setting
+                    set_setting("youtube_token_json", updated_json)
+                except Exception:
+                    pass
+                try:
+                    with open(TOKEN_FILE, 'w', encoding='utf-8') as token_f:
+                        token_f.write(updated_json)
+                except Exception:
+                    pass
             except Exception as e:
                 print(f"[YouTube Refresh Token Err]: {e}")
-                creds = None
+                raise e
         else:
-            if not os.path.exists(CLIENT_SECRETS_FILE):
-                raise FileNotFoundError(
-                    f"client_secrets.json fayli topilmadi! Iltimos, Google Cloud Console'dan yuklab olib {CLIENT_SECRETS_FILE} manziliga qo'ying."
-                )
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES)
-            creds = flow.run_local_server(port=8088, prompt='consent')
-            with open(TOKEN_FILE, 'w', encoding='utf-8') as token_f:
-                token_f.write(creds.to_json())
+            raise ValueError("YouTube token muddati o'tgan va refresh_token mavjud emas!")
 
     return creds
 
