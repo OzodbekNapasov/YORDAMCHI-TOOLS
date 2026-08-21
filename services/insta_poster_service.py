@@ -607,45 +607,67 @@ def _download_hd_video_ytdlp(post_url):
 
 
 async def _fetch_post_content_async(post_url):
-    """Playwright orqali postning to'liq ma'lumotlarini olish"""
-    from playwright.async_api import async_playwright
-    
-    parts = post_url.rstrip('/').split('/')
-    code = parts[-1]
-    is_reel = "/reel/" in post_url
-    
-    embed_url = f"https://www.instagram.com/{'reel' if is_reel else 'p'}/{code}/embed/captioned/"
-    
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-        )
-        page = await context.new_page()
+    """Postning to'liq ma'lumotlarini olish (yt-dlp orqali tezkor va xavfsiz)"""
+    # 1. yt-dlp orqali olish (Browser talab qilmaydi, Vercel va serverlarda 100% ishlaydi)
+    try:
+        import yt_dlp
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "socket_timeout": 15
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(post_url, download=False)
+            if info:
+                desc = info.get("description") or info.get("title") or ""
+                v_url = info.get("url")
+                t_url = info.get("thumbnail")
+                return {
+                    "caption": desc,
+                    "video_url": v_url,
+                    "img_url": t_url,
+                    "all_imgs": [t_url] if t_url else []
+                }
+    except Exception as yte:
+        print(f"[yt-dlp info error]: {yte}")
+
+    # 2. Agar Playwright mavjud bo'lsa (ixtiyoriy zaxira)
+    try:
+        from playwright.async_api import async_playwright
+        parts = post_url.rstrip('/').split('/')
+        code = parts[-1]
+        is_reel = "/reel/" in post_url
+        embed_url = f"https://www.instagram.com/{'reel' if is_reel else 'p'}/{code}/embed/captioned/"
         
-        await page.goto(embed_url, wait_until="domcontentloaded", timeout=25000)
-        await asyncio.sleep(2)
-        
-        data = await page.evaluate('''() => {
-            const captionEl = document.querySelector('.Caption') || document.querySelector('.CaptionComments');
-            let cap = captionEl ? captionEl.innerText : "";
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+            )
+            page = await context.new_page()
+            await page.goto(embed_url, wait_until="domcontentloaded", timeout=15000)
+            await asyncio.sleep(1)
             
-            const videoEl = document.querySelector('video');
-            const imgEl = document.querySelector('.EmbeddedMediaImage') || document.querySelector('img.EmbeddedMedia');
-            
-            let allImgs = Array.from(document.querySelectorAll('img')).map(i => i.src).filter(s => s && (s.includes('cdninstagram') || s.includes('fbcdn')));
-            
-            return {
-                caption: cap,
-                video_url: videoEl ? videoEl.src : null,
-                img_url: imgEl ? imgEl.src : (allImgs.length > 0 ? allImgs[0] : null),
-                all_imgs: allImgs
-            };
-        }''')
+            data = await page.evaluate('''() => {
+                const captionEl = document.querySelector('.Caption') || document.querySelector('.CaptionComments');
+                let cap = captionEl ? captionEl.innerText : "";
+                const videoEl = document.querySelector('video');
+                const imgEl = document.querySelector('.EmbeddedMediaImage') || document.querySelector('img.EmbeddedMedia');
+                let allImgs = Array.from(document.querySelectorAll('img')).map(i => i.src).filter(s => s && (s.includes('cdninstagram') || s.includes('fbcdn')));
+                return {
+                    caption: cap,
+                    video_url: videoEl ? videoEl.src : null,
+                    img_url: imgEl ? imgEl.src : (allImgs.length > 0 ? allImgs[0] : null),
+                    all_imgs: allImgs
+                };
+            }''')
+            await browser.close()
+            return data
+    except Exception as pe:
+        print(f"[Playwright skipped]: {pe}")
         
-        await browser.close()
-        
-    return data
+    return {"caption": "", "video_url": None, "img_url": None, "all_imgs": []}
 
 
 def post_next_queued_item(chat_id=None, bot_token=None):
@@ -686,12 +708,17 @@ def post_next_queued_item(chat_id=None, bot_token=None):
     try:
         username = get_setting("insta_username", DEFAULT_INSTA_USERNAME)
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        content = loop.run_until_complete(_fetch_post_content_async(post_url))
-        loop.close()
+        raw_caption = row["caption"] or ""
+        video_direct_url = None
         
-        raw_caption = content.get("caption") or ""
+        if not raw_caption:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            content = loop.run_until_complete(_fetch_post_content_async(post_url))
+            loop.close()
+            raw_caption = content.get("caption") or ""
+            video_direct_url = content.get("video_url")
+            
         clean_caption = clean_caption_text(raw_caption, username)
         
         if len(clean_caption) > 1000:
