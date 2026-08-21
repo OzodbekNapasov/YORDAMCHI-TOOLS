@@ -2565,7 +2565,7 @@ def api_instagram_yt_schedule_remove():
 @atlas_api.route("/instagram/youtube/schedule/reset", methods=["POST"])
 @admin_required
 def api_instagram_yt_schedule_reset():
-    """YouTube vaqtlarini standart holatga (09:00, 13:00, 19:30) qaytarish"""
+    """YouTube vaqtlarini standart holatga (09:00, 12:00, 15:00, 18:30, 21:00) qaytarish"""
     try:
         from services.insta_poster_service import reset_youtube_schedule_times, get_youtube_schedule_times
         reset_youtube_schedule_times()
@@ -2573,5 +2573,17 @@ def api_instagram_yt_schedule_reset():
         return jsonify({"success": True, "message": "YouTube vaqtlari standart holatga qaytarildi.", "times": times})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/cron_tick", methods=["GET", "POST"])
+def api_instagram_cron_tick():
+    """Avto-yuboruvchi jadvalini tekshirish (Vercel Cron yoki tashqi pingerlar uchun)"""
+    try:
+        from services.insta_scheduler import run_scheduler_tick
+        res = run_scheduler_tick()
+        return jsonify({"success": True, "result": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 

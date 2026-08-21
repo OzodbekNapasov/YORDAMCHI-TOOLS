@@ -5890,6 +5890,13 @@ const ATLAS = {
         </div>
       `;
 
+      // Background auto-trigger for active dashboard sessions
+      if (!this._instaTickInterval) {
+        this._instaTickInterval = setInterval(() => {
+          this.api('/api/instagram/cron_tick', 'GET').catch(() => {});
+        }, 30000);
+      }
+
       // Event Bindings
       document.getElementById('insta-refresh-btn').addEventListener('click', () => {
         this.loadInstagram(viewport, activeTab);
