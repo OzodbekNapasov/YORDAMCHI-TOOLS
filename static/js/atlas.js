@@ -8,10 +8,11 @@
 const ATLAS = {
   token: localStorage.getItem('atlas_token') || '',
   user: JSON.parse(localStorage.getItem('atlas_user') || 'null'),
-  currentRoute: (window.location.hash || '').replace(/^#\/?/, '').trim() || localStorage.getItem('atlas_last_route') || 'contracts',
+  currentRoute: (window.location.hash || '').replace(/^#\/?/, '').trim() || localStorage.getItem('atlas_last_route') || 'hub',
   activeDocTab: 'generate',  // 'generate' yoki 'archive'
   icons: {
     dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
+    grid: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
     documents: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
     archive: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`,
     users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
@@ -41,7 +42,7 @@ const ATLAS = {
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
-    brandLogo: `<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 15 L78 68 C82 75 76 85 68 85 L56 85 C51 85 47 81 49 76 L62 48 C63 45 61 42 58 42 L42 42 C39 42 37 45 38 48 L46 65 C48 70 44 75 39 75 L32 75 C25 75 20 67 24 60 Z"/></svg>`,
+    brandLogo: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="atlasA_grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38ef7d"/><stop offset="50%" stop-color="#00cba9"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient><linearGradient id="atlasA_cross" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38ef7d"/><stop offset="100%" stop-color="#00cba9"/></linearGradient></defs><path d="M50 12 L15 84 L32 84 L50 46 L68 84 L85 84 Z" fill="url(#atlasA_grad)"/><path d="M50 28 L27 75 L38 75 L50 51 L62 75 L73 75 Z" fill="#041416"/><path d="M34 57 L66 57 L61 47 L39 47 Z" fill="url(#atlasA_cross)"/><circle cx="50" cy="36" r="3.5" fill="#ffffff" opacity="0.95"/></svg>`,
     folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
     calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
     activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
@@ -68,6 +69,106 @@ const ATLAS = {
     videoCamera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
     externalLink: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`
   },
+
+  // SERVICES REGISTRY FOR DYNAMIC SERVICE HUB (MUNDARIJA)
+  SERVICES_REGISTRY: [
+    {
+      id: 'contracts',
+      title: 'Kontraktlar & Baza',
+      subtitle: 'Bank debitorkasi, 1C/Hemis sinxronlash va to\'lovlar monitoringi',
+      category: 'Hujjatlar & Moliya',
+      badge: 'Asosiy Baza',
+      badgeColor: '#00cba9',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(0,203,169,0.16) 0%, rgba(20,184,166,0.05) 100%)',
+      accentColor: '#00cba9',
+      glowColor: 'rgba(0, 203, 169, 0.25)'
+    },
+    {
+      id: 'amaliyot',
+      title: 'Malakaviy Amaliyot',
+      subtitle: 'Talabalar amaliyot buyruqlari, korxonalar bazasi va so\'rovnomalar',
+      category: 'O\'quv Bo\'limi',
+      badge: 'Avtomatlashgan',
+      badgeColor: '#38bdf8',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(56,189,248,0.16) 0%, rgba(14,165,233,0.05) 100%)',
+      accentColor: '#38bdf8',
+      glowColor: 'rgba(56, 189, 248, 0.25)'
+    },
+    {
+      id: 'certificates',
+      title: 'Ma\'lumotnomalar',
+      subtitle: 'QR-kodli rasmiy o\'qish ma\'lumotnomalari va buyruqlar generatori',
+      category: 'Hujjatlar',
+      badge: 'QR Generator',
+      badgeColor: '#818cf8',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(129,140,248,0.16) 0%, rgba(99,102,241,0.05) 100%)',
+      accentColor: '#818cf8',
+      glowColor: 'rgba(129, 140, 248, 0.25)'
+    },
+    {
+      id: 'orders',
+      title: 'Rasmiy Buyruqlar',
+      subtitle: 'Rektorat farmoyishlari, chetlashtirish va tiklash buyruqlari arxivi',
+      category: 'Hujjatlar',
+      badge: 'Kantselyariya',
+      badgeColor: '#a78bfa',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6M9 16h6"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(167,139,250,0.16) 0%, rgba(139,92,246,0.05) 100%)',
+      accentColor: '#a78bfa',
+      glowColor: 'rgba(167, 139, 250, 0.25)'
+    },
+    {
+      id: 'meta_ads',
+      title: 'Meta Ads Manager',
+      subtitle: 'Facebook va Instagram reklama hisoblari, lidlar tahlili va kampaniyalar',
+      category: 'Marketing',
+      badge: 'Meta API',
+      badgeColor: '#ec4899',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8a4 4 0 0 0-4 4c0 2 2 4 4 4s4-2 4-4a4 4 0 0 0-4-4z"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(236,72,153,0.16) 0%, rgba(219,39,119,0.05) 100%)',
+      accentColor: '#ec4899',
+      glowColor: 'rgba(236, 72, 153, 0.25)'
+    },
+    {
+      id: 'instagram',
+      title: 'Instagram & YT Poster',
+      subtitle: 'Reels va postlarni Telegram kanal va YouTube Shorts\'ga avtomatik joylash',
+      category: 'Avtomatizatsiya',
+      badge: 'Faol Cron',
+      badgeColor: '#f43f5e',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(244,63,94,0.16) 0%, rgba(225,29,72,0.05) 100%)',
+      accentColor: '#f43f5e',
+      glowColor: 'rgba(244, 63, 94, 0.25)'
+    },
+    {
+      id: 'dashboard',
+      title: 'Boshqaruv Paneli',
+      subtitle: 'Telegram bot faoliyati, foydalanuvchilar va guruhlar markaziy nazorati',
+      category: 'Boshqaruv',
+      badge: 'Bot Core',
+      badgeColor: '#2dd4bf',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(45,212,191,0.16) 0%, rgba(20,184,166,0.05) 100%)',
+      accentColor: '#2dd4bf',
+      glowColor: 'rgba(45, 212, 191, 0.25)'
+    },
+    {
+      id: 'analytics',
+      title: 'Statistika & Tahlil',
+      subtitle: 'Barcha xizmatlar bo\'yicha dinamik grafiklar, konversiya va audit hisobotlari',
+      category: 'Monitoring',
+      badge: 'Real-time',
+      badgeColor: '#fbbf24',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+      gradient: 'linear-gradient(135deg, rgba(251,191,36,0.16) 0%, rgba(245,158,11,0.05) 100%)',
+      accentColor: '#fbbf24',
+      glowColor: 'rgba(251, 191, 36, 0.25)'
+    }
+  ],
 
   // API Wrapper
   async api(endpoint, method = 'GET', body = null) {
@@ -227,9 +328,11 @@ const ATLAS = {
   // Init Application with Strict Server Verification
   async init() {
     this.bindGlobalEvents();
-    const hash = (window.location.hash || '').replace('#', '').trim();
-    if (hash && ['contracts', 'orders', 'certificates', 'amaliyot', 'dashboard', 'analytics', 'logs', 'settings', 'meta_ads'].includes(hash)) {
+    const hash = (window.location.hash || '').replace(/^#\/?/, '').trim();
+    if (hash && ['hub', 'contracts', 'orders', 'certificates', 'amaliyot', 'meta_ads', 'instagram', 'academic_groups', 'groups', 'dashboard', 'analytics', 'logs', 'settings'].includes(hash)) {
       this.currentRoute = hash;
+    } else {
+      this.currentRoute = 'hub';
     }
 
     // 1. Agar token yoki user bo'lmasa, darhol Login oynasini ochish
@@ -273,7 +376,7 @@ const ATLAS = {
       localStorage.setItem('atlas_user', JSON.stringify(data.user));
       this.renderApp();
       this.startSystemStatusTimer();
-      const savedRoute = (window.location.hash || '').replace(/^#\/?/, '').trim() || localStorage.getItem('atlas_last_route') || this.currentRoute || 'contracts';
+      const savedRoute = (window.location.hash || '').replace(/^#\/?/, '').trim() || localStorage.getItem('atlas_last_route') || 'hub';
       this.navigate(savedRoute, true);
     } catch (err) {
       console.error('Auth check error:', err);
@@ -367,7 +470,7 @@ const ATLAS = {
       return;
     }
 
-    route = String(route || '').replace(/^#\/?/, '').trim() || 'contracts';
+    route = String(route || '').replace(/^#\/?/, '').trim() || 'hub';
     this.currentRoute = route;
     try {
       localStorage.setItem('atlas_last_route', route);
@@ -375,6 +478,15 @@ const ATLAS = {
 
     if (updateHash && window.location.hash !== '#/' + route && window.location.hash !== '#' + route) {
       window.location.hash = '#/' + route;
+    }
+
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer) {
+      if (route === 'hub') {
+        appContainer.classList.add('hub-mode');
+      } else {
+        appContainer.classList.remove('hub-mode');
+      }
     }
 
     document.querySelectorAll('.nav-item').forEach(el => {
@@ -397,6 +509,7 @@ const ATLAS = {
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       const titles = {
+        hub: 'Mundarija — Barcha Xizmatlar',
         contracts: 'Kontraktlar & Bank Debitorkasi Yangilash',
         orders: 'Rasmiy Buyruqlar Bolimi',
         certificates: "Rasmiy Ma'lumotnomalar Bolimi",
@@ -421,6 +534,11 @@ const ATLAS = {
     const viewport = document.getElementById('content-viewport');
     if (!viewport) return;
 
+    if (route === 'hub') {
+      this.loadHub(viewport);
+      return;
+    }
+
     // Har bir bo'lim sahifasini toza va alohida yuklash
     viewport.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:300px;"><div class="spinner"></div></div>';
 
@@ -442,8 +560,99 @@ const ATLAS = {
       case 'logs': this.loadLogs(viewport); break;
       case 'settings': this.loadSettings(viewport); break;
       case 'modules': this.loadModules(viewport); break;
-      default: this.loadContracts(viewport, 'update');
+      default: this.loadHub(viewport);
     }
+  },
+
+  // ============================================================
+  // SERVICE HUB / MUNDARIJA VIEW
+  // ============================================================
+  loadHub(viewport) {
+    const services = this.SERVICES_REGISTRY;
+    viewport.innerHTML = `
+      <div class="hub-page-container">
+        <!-- HEADER -->
+        <header class="hub-header">
+          <div class="hub-brand-block">
+            <div class="hub-logo-symbol" title="ATLAS Universal Platform">
+              ${this.icons.brandLogo}
+            </div>
+            <div>
+              <div class="hub-title-text">
+                <span>ATLAS</span>
+                <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(46,229,157,0.15);color:#2ee59d;border:1px solid rgba(46,229,157,0.3);letter-spacing:0.5px;">MUNDARIJA</span>
+              </div>
+              <div class="hub-subtitle-text">
+                Barcha bot xizmatlari va avtomatlashtirish modullari katalogi
+              </div>
+            </div>
+          </div>
+
+          <div class="hub-header-actions">
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(255,255,255,0.8);">
+              <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;"></span>
+              <span>Admin: <b style="color:#ffffff;">${this.user?.full_name || 'Ozodbek'}</b></span>
+            </div>
+            <button class="btn-sm btn-secondary" id="hub-quick-logout" title="Tizimdan chiqish" style="background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+              ${this.icons.logout} <span>Chiqish</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- SERVICES GRID -->
+        <div class="hub-grid">
+          ${services.map(s => `
+            <div class="hub-card" data-route="${s.id}" style="--card-glow:${s.glowColor};--card-accent-gradient:${s.gradient};">
+              <div class="hub-card-top">
+                <div class="hub-card-icon-box" style="background:${s.gradient};color:${s.accentColor};border:1px solid ${s.accentColor}33;">
+                  ${s.icon}
+                </div>
+                <span class="hub-card-badge" style="background:${s.accentColor}18;color:${s.accentColor};border:1px solid ${s.accentColor}33;">
+                  ${s.badge}
+                </span>
+              </div>
+
+              <div class="hub-card-body">
+                <div class="hub-card-title">${s.title}</div>
+                <div class="hub-card-desc">${s.subtitle}</div>
+              </div>
+
+              <div class="hub-card-footer">
+                <span class="hub-card-category">${s.category}</span>
+                <span class="hub-card-cta" style="color:${s.accentColor};">
+                  <span>Kirish</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="hub-footer">
+          <div>
+            ATLAS Universal Engine &bull; Barcha xizmatlar xavfsiz Cloud OAuth2 bilan integratsiyalangan
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;">
+            Qisqa tugma: <span style="color:#ffffff;">Ctrl + K</span> (Qidiruv) &bull; Versiya: <span style="color:#2ee59d;">v2.5.2</span>
+          </div>
+        </footer>
+      </div>
+    `;
+
+    // Event listeners
+    viewport.querySelectorAll('.hub-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const route = card.dataset.route;
+        if (route) {
+          this.navigate(route);
+        }
+      });
+    });
+
+    document.getElementById('hub-quick-logout')?.addEventListener('click', () => {
+      this.logout();
+    });
   },
 
   // ============================================================
@@ -509,7 +718,7 @@ const ATLAS = {
         localStorage.setItem('atlas_user', JSON.stringify(res.user));
         this.toast('Muvaffaqiyatli kirdingiz', 'success');
         this.renderApp();
-        this.navigate('contracts');
+        this.navigate('hub');
       } else {
         this.toast(res ? res.error : 'Login xatosi', 'error');
       }
@@ -543,13 +752,17 @@ const ATLAS = {
       <div class="app-container">
         <!-- SIDEBAR -->
         <aside class="sidebar">
-          <div class="sidebar-header">
+          <div class="sidebar-header" id="btn-sidebar-logo-hub" style="cursor:pointer;" title="Mundarijaga qaytish">
             <div class="sidebar-logo-icon">${this.icons.brandLogo}</div>
             <div class="sidebar-brand-name">ATLAS</div>
             <div class="sidebar-brand-badge">PRO</div>
           </div>
 
           <nav class="sidebar-menu">
+            <div class="nav-item" data-route="hub" style="background:rgba(0,203,169,0.08);border:1px solid rgba(46,229,157,0.25);margin-bottom:12px;color:#2ee59d;font-weight:700;">
+              ${this.icons.grid} <span>Mundarija (Bosh Sahifa)</span>
+            </div>
+
             <div class="sidebar-group-title">Hujjatlar & Amaliyot</div>
             <div class="nav-item" data-route="contracts">
               ${this.icons.creditCard || this.icons.documents} <span>Kontraktlar & Baza</span>
@@ -621,6 +834,10 @@ const ATLAS = {
               <button class="header-btn mobile-menu-toggle" id="mobile-menu-btn" title="Menyu">
                 ${this.icons.menu}
               </button>
+              <button class="header-btn" id="btn-header-back-hub" title="Mundarija oynasiga qaytish" style="display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;font-weight:700;color:var(--accent-glow);background:rgba(0,203,169,0.1);border:1px solid rgba(46,229,157,0.3);border-radius:8px;cursor:pointer;">
+                <div style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;">${this.icons.brandLogo}</div>
+                <span>Mundarija</span>
+              </button>
               <h1 class="page-title" id="page-title">Ma'lumotnomalar & Hujjatlar Arxivi</h1>
               <div class="global-search-bar">
                 <span class="search-icon-fixed">${this.icons.search}</span>
@@ -655,6 +872,10 @@ const ATLAS = {
         document.getElementById('nav-group-main').classList.toggle('open');
       });
     }
+
+    // Logo & Header click to go back to Hub
+    document.getElementById('btn-sidebar-logo-hub')?.addEventListener('click', () => this.navigate('hub'));
+    document.getElementById('btn-header-back-hub')?.addEventListener('click', () => this.navigate('hub'));
 
     // Mobile Menu Toggle & Backdrop
     const mobileBtn = document.getElementById('mobile-menu-btn');
