@@ -1768,16 +1768,12 @@ def get_queue_stats():
             
     if is_night_now:
         next_time_str = f"Ertalab soat {night_end} da (Tungi rejim faol)"
-    elif last_post_str:
-        try:
-            last_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
-            target_dt = last_dt + timedelta(minutes=interval_min)
-            if target_dt > now:
-                next_time_str = target_dt.strftime("%H:%M")
-            else:
-                next_time_str = "Hozir (Navbatdagi siklda)"
-        except Exception:
-            next_time_str = "Hozir"
+    else:
+        if now.minute > 0 or now.second > 0:
+            next_top_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        else:
+            next_top_hour = now.replace(minute=0, second=0, microsecond=0)
+        next_time_str = f"{next_top_hour.strftime('%H:00')} da (Soat boshida)"
             
     return {
         "total": total,
@@ -1883,27 +1879,18 @@ def get_queue_items(page=1, limit=50, status=None, search=None):
     
     settings = get_all_settings()
     interval_min = int(settings.get("interval_minutes") or 60)
-    last_post_str = settings.get("last_post_time", "")
     night_on = settings.get("night_mode_enabled", "1") == "1"
     night_start_str = settings.get("night_mode_start", "00:00")
     night_end_str = settings.get("night_mode_end", "07:00")
     
     now = get_uzb_now()
     
-    start_dt = now
-    if last_post_str:
-        try:
-            last_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
-            cand = last_dt + timedelta(minutes=interval_min)
-            if cand > now:
-                start_dt = cand
-            else:
-                start_dt = now
-        except Exception:
-            start_dt = now
-            
-    # Har bir kutilayotgan postga Toshkent vaqti bo'yicha sana va soat belgilash
-    curr_time = start_dt
+    # Har bir kutilayotgan postga Toshkent vaqti bo'yicha aniq soat boshidagi sana va soat belgilash (:00 da)
+    if now.minute > 0 or now.second > 0:
+        curr_time = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    else:
+        curr_time = now.replace(minute=0, second=0, microsecond=0)
+        
     schedule_map = {}
     for pid in all_pending_ids:
         if night_on:

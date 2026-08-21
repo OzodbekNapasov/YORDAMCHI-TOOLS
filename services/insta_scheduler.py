@@ -32,7 +32,7 @@ def run_scheduler_tick():
         results = {"checked_at": now.strftime("%Y-%m-%d %H:%M:%S"), "tg_posted": False, "yt_posted": False}
         
         # ------------------------------------------------------------
-        # 1. Telegram Rejali Yuborish (Interval bo'yicha + Tungi rejim)
+        # 1. Telegram Rejali Yuborish (Har soat boshida :00 da + Tungi rejim)
         # ------------------------------------------------------------
         try:
             tg_enabled = get_setting("auto_schedule_enabled", "0") == "1"
@@ -49,22 +49,17 @@ def run_scheduler_tick():
                         is_night = (now_hm >= night_start or now_hm < night_end)
 
                 if not is_night:
-                    interval_min = int(get_setting("interval_minutes", "60"))
-                    last_post_str = get_setting("last_post_time", "")
+                    slot_key = f"{today_date}_{now.strftime('%H:00')}"
+                    last_slot = get_setting("tg_last_posted_slot", "")
                     
                     should_post_tg = False
-                    if not last_post_str:
+                    # Har soat boshida (:00 da yoki dastlabki 2 daqiqada) 1 marta chiqarish
+                    if now.minute <= 2 and last_slot != slot_key:
                         should_post_tg = True
-                    else:
-                        try:
-                            last_post_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
-                            if (now - last_post_dt).total_seconds() >= interval_min * 60:
-                                should_post_tg = True
-                        except Exception:
-                            should_post_tg = True
-                            
+                        
                     if should_post_tg:
-                        print(f"[Telegram Scheduler]: Rejali post yuborilmoqda ({interval_min} daqiqa oraliq)...")
+                        print(f"[Telegram Scheduler]: Soat boshi ({now.strftime('%H:00')}) keldi! Rejali post chiqarilmoqda...")
+                        set_setting("tg_last_posted_slot", slot_key)
                         set_setting("last_post_time", now.strftime("%Y-%m-%d %H:%M:%S"))
                         tg_res = post_next_queued_item()
                         results["tg_posted"] = True
