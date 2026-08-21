@@ -42,7 +42,7 @@ const ATLAS = {
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
-    brandLogo: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="atlasA_grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38ef7d"/><stop offset="50%" stop-color="#00cba9"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient><linearGradient id="atlasA_cross" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38ef7d"/><stop offset="100%" stop-color="#00cba9"/></linearGradient></defs><path d="M50 12 L15 84 L32 84 L50 46 L68 84 L85 84 Z" fill="url(#atlasA_grad)"/><path d="M50 28 L27 75 L38 75 L50 51 L62 75 L73 75 Z" fill="#041416"/><path d="M34 57 L66 57 L61 47 L39 47 Z" fill="url(#atlasA_cross)"/><circle cx="50" cy="36" r="3.5" fill="#ffffff" opacity="0.95"/></svg>`,
+    brandLogo: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="atlasA_g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FFA3"/><stop offset="50%" stop-color="#00D2B4"/><stop offset="100%" stop-color="#00B4D8"/></linearGradient><linearGradient id="atlasA_g2" x1="100%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#38EF7D"/><stop offset="100%" stop-color="#11998E"/></linearGradient><linearGradient id="atlasA_cr" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00FFA3"/><stop offset="100%" stop-color="#00D2B4"/></linearGradient></defs><path d="M50 10 L12 88 L30 88 L50 44 L50 10 Z" fill="url(#atlasA_g1)"/><path d="M50 10 L88 88 L70 88 L50 44 L50 10 Z" fill="url(#atlasA_g2)"/><path d="M29 63 L71 63 L63 50 L37 50 Z" fill="url(#atlasA_cr)"/><polygon points="50,26 56,36 50,46 44,36" fill="#FFFFFF" opacity="0.95"/></svg>`,
     folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
     calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
     activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
@@ -752,17 +752,13 @@ const ATLAS = {
       <div class="app-container">
         <!-- SIDEBAR -->
         <aside class="sidebar">
-          <div class="sidebar-header" id="btn-sidebar-logo-hub" style="cursor:pointer;" title="Mundarijaga qaytish">
+          <div class="sidebar-header" id="btn-sidebar-logo-hub" style="cursor:pointer;" title="Bosh Mundarijaga qaytish">
             <div class="sidebar-logo-icon">${this.icons.brandLogo}</div>
             <div class="sidebar-brand-name">ATLAS</div>
             <div class="sidebar-brand-badge">PRO</div>
           </div>
 
           <nav class="sidebar-menu">
-            <div class="nav-item" data-route="hub" style="background:rgba(0,203,169,0.08);border:1px solid rgba(46,229,157,0.25);margin-bottom:12px;color:#2ee59d;font-weight:700;">
-              ${this.icons.grid} <span>Mundarija (Bosh Sahifa)</span>
-            </div>
-
             <div class="sidebar-group-title">Hujjatlar & Amaliyot</div>
             <div class="nav-item" data-route="contracts">
               ${this.icons.creditCard || this.icons.documents} <span>Kontraktlar & Baza</span>
@@ -834,10 +830,6 @@ const ATLAS = {
               <button class="header-btn mobile-menu-toggle" id="mobile-menu-btn" title="Menyu">
                 ${this.icons.menu}
               </button>
-              <button class="header-btn" id="btn-header-back-hub" title="Mundarija oynasiga qaytish" style="display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;font-weight:700;color:var(--accent-glow);background:rgba(0,203,169,0.1);border:1px solid rgba(46,229,157,0.3);border-radius:8px;cursor:pointer;">
-                <div style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;">${this.icons.brandLogo}</div>
-                <span>Mundarija</span>
-              </button>
               <h1 class="page-title" id="page-title">Ma'lumotnomalar & Hujjatlar Arxivi</h1>
               <div class="global-search-bar">
                 <span class="search-icon-fixed">${this.icons.search}</span>
@@ -873,9 +865,8 @@ const ATLAS = {
       });
     }
 
-    // Logo & Header click to go back to Hub
+    // Logo click to go back to Hub
     document.getElementById('btn-sidebar-logo-hub')?.addEventListener('click', () => this.navigate('hub'));
-    document.getElementById('btn-header-back-hub')?.addEventListener('click', () => this.navigate('hub'));
 
     // Mobile Menu Toggle & Backdrop
     const mobileBtn = document.getElementById('mobile-menu-btn');
