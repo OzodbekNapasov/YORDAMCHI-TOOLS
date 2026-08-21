@@ -2487,6 +2487,7 @@ def api_instagram_settings():
                 "night_mode_enabled",
                 "night_mode_start",
                 "night_mode_end",
+                "insta_session_id",
                 "youtube_auto_upload",
                 "youtube_schedule_enabled",
                 "youtube_schedule_times"

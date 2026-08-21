@@ -6549,6 +6549,18 @@ const ATLAS = {
               </div>
             </div>
 
+            <!-- INSTAGRAM SESSION ID COOKIE FOR FULL 99+ POSTS SCAN -->
+            <div class="form-group" style="margin-bottom:16px;padding:14px;background:rgba(236,72,153,0.06);border-radius:var(--radius-md);border:1px solid rgba(236,72,153,0.25);">
+              <label class="form-label" style="color:#f472b6;">🔑 Instagram Session ID (Cookie) — Barcha 99+ postlarni to'liq skanerlash uchun</label>
+              <div class="input-container">
+                <span class="input-icon-left">${this.icons.lock}</span>
+                <input type="text" id="sett-insta-session-id" class="input-control font-mono" value="${settings.insta_session_id || ''}" placeholder="Masalan: 7654321%3ABz...">
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:5px;">
+                Instagram anti-bot (429) cheklovini aylanib o'tib, profilning eng birinchi kunidagi barcha 99 ta postini to'liq tortib olish uchun ishlatiladi.
+              </div>
+            </div>
+
             <!-- TELEGRAM INTERVAL & GENERAL TOGGLES -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:var(--radius-md);border:1px solid var(--border-glass);">
               <div>
@@ -6625,6 +6637,7 @@ const ATLAS = {
           insta_username: document.getElementById('sett-insta-username').value.trim(),
           target_chat_id: document.getElementById('sett-target-chat').value.trim(),
           bot_token: document.getElementById('sett-bot-token').value.trim(),
+          insta_session_id: document.getElementById('sett-insta-session-id') ? document.getElementById('sett-insta-session-id').value.trim() : '',
           interval_minutes: document.getElementById('sett-interval').value.trim(),
           auto_schedule_enabled: document.getElementById('sett-tg-auto-chk').checked ? '1' : '0',
           youtube_auto_upload: document.getElementById('sett-yt-auto-chk').checked ? '1' : '0',
