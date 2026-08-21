@@ -8,7 +8,7 @@
 const ATLAS = {
   token: localStorage.getItem('atlas_token') || '',
   user: JSON.parse(localStorage.getItem('atlas_user') || 'null'),
-  currentRoute: 'contracts', // Asosiy fokus: Kontraktlar & Hujjatlar
+  currentRoute: (window.location.hash || '').replace(/^#\/?/, '').trim() || localStorage.getItem('atlas_last_route') || 'contracts',
   activeDocTab: 'generate',  // 'generate' yoki 'archive'
   icons: {
     dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
@@ -216,7 +216,8 @@ const ATLAS = {
       localStorage.setItem('atlas_user', JSON.stringify(data.user));
       this.renderApp();
       this.startSystemStatusTimer();
-      this.navigate(this.currentRoute, false);
+      const savedRoute = (window.location.hash || '').replace(/^#\/?/, '').trim() || localStorage.getItem('atlas_last_route') || this.currentRoute || 'contracts';
+      this.navigate(savedRoute, true);
     } catch (err) {
       console.error('Auth check error:', err);
       this.logout();
@@ -266,7 +267,7 @@ const ATLAS = {
 
   bindGlobalEvents() {
     window.addEventListener('hashchange', () => {
-      const hash = (window.location.hash || '').replace('#', '').trim();
+      const hash = (window.location.hash || '').replace(/^#\/?/, '').trim();
       if (hash && hash !== this.currentRoute && this.token && this.user) {
         this.navigate(hash, false);
       }
@@ -309,10 +310,14 @@ const ATLAS = {
       return;
     }
 
+    route = String(route || '').replace(/^#\/?/, '').trim() || 'contracts';
     this.currentRoute = route;
+    try {
+      localStorage.setItem('atlas_last_route', route);
+    } catch (e) {}
 
-    if (updateHash && window.location.hash !== '#' + route) {
-      window.location.hash = '#' + route;
+    if (updateHash && window.location.hash !== '#/' + route && window.location.hash !== '#' + route) {
+      window.location.hash = '#/' + route;
     }
 
     document.querySelectorAll('.nav-item').forEach(el => {
@@ -323,8 +328,13 @@ const ATLAS = {
     });
 
     const mainGroupHeader = document.getElementById('nav-header-main');
+    const navGroupMain = document.getElementById('nav-group-main');
+    const isMainSubRoute = ['contracts', 'orders', 'certificates', 'amaliyot'].includes(route);
     if (mainGroupHeader) {
-      mainGroupHeader.classList.toggle('active', route === 'contracts' || route === 'orders' || route === 'certificates' || route === 'amaliyot');
+      mainGroupHeader.classList.toggle('active', isMainSubRoute);
+    }
+    if (navGroupMain && isMainSubRoute) {
+      navGroupMain.classList.add('open');
     }
 
     const pageTitle = document.getElementById('page-title');
@@ -5692,7 +5702,7 @@ const ATLAS = {
     const ytAuto = settings.youtube_auto_upload === '1';
     const currentUsername = settings.insta_username || 'shahrisabz_t_t_uz';
 
-    let activeTab = initialTab || 'queue'; // 'queue' | 'youtube' | 'settings'
+    let activeTab = initialTab || localStorage.getItem('atlas_insta_tab') || 'queue'; // 'queue' | 'youtube' | 'settings'
     let currentFilter = 'ALL';
     let currentPage = 1;
     let currentSearch = '';
@@ -5933,14 +5943,17 @@ const ATLAS = {
 
       document.getElementById('tab-btn-insta-queue').addEventListener('click', () => {
         activeTab = 'queue';
+        try { localStorage.setItem('atlas_insta_tab', 'queue'); } catch (e) {}
         renderTabContent();
       });
       document.getElementById('tab-btn-insta-youtube').addEventListener('click', () => {
         activeTab = 'youtube';
+        try { localStorage.setItem('atlas_insta_tab', 'youtube'); } catch (e) {}
         renderTabContent();
       });
       document.getElementById('tab-btn-insta-settings').addEventListener('click', () => {
         activeTab = 'settings';
+        try { localStorage.setItem('atlas_insta_tab', 'settings'); } catch (e) {}
         renderTabContent();
       });
 
