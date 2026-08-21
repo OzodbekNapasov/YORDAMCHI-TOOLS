@@ -10,3 +10,4 @@ requests
 python-dotenv
 supabase
 pg8000
+playwright

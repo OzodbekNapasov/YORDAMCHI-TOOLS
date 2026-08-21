@@ -18,7 +18,13 @@ Ushbu yagona platforma 2 ta katta loyihani bitta bot va bitta tizimga birlashtir
    - Shablonlar (`.docx`) asosida rasmiy ma'lumotnomalar (masalan: `🎓 1-kursga qabul ma'lumotnomasi`) va hujjatlarni savol-javob (FSM) orqali to'ldiradi.
    - Gotenberg + pypdfium2 yordamida asl logotip, pechat va imzolarni 100% saqlab, **300 DPI o'ta tiniq PNG rasm** hamda `.docx` hujjat shaklida yuboradi.
 
-3. **Yagona Admin Xavfsizligi (Single Admin Whitelist):**
+3. **Instagram to Telegram & YouTube Shorts AutoPoster Moduli:**
+   - Instagram profilidagi (`@shahrisabz_t_t_uz`) barcha postlar, reels va rasmlarni xronologik tartibda (eng eskisidan yangisiga) skanerlaydi.
+   - SQLite navbat tizimi (`atlas.db` -> `insta_posts_queue`) orqali Telegram kanal/botga HD sifatda (1080p/720p), tozalangan matn va jonli `[ ❤️ Like ]` / `[ 🔗 Instagramda ko'rish ]` tugmalari bilan yetkazadi.
+   - **YouTube Shorts Integratsiyasi (Google Data API v3):** Instagram Reels videolarini moslashtirilgan sarlavha va `#Shorts` teglari bilan YouTube kanalga avtomatik joylaydi.
+   - **Moslashuvchan Rek Vaqtlari Jadvali:** Admin bot orqali YouTube Shorts uchun kunlik eng qulay organik tarqalish ("Rek") vaqtlarini (masalan: `09:00`, `13:00`, `19:30`) o'zi erkin qo'shishi (`+`) yoki o'chirishi (`-`) mumkin.
+
+4. **Yagona Admin Xavfsizligi (Single Admin Whitelist):**
    - Platforma 100% faqat tayinlangan Bosh Buxgalter Telegram ID si (`8135594558`) orqali ishlaydi.
    - Begona foydalanuvchilar kirganda menyu tugmalarini yo'qotadi (`ReplyKeyboardRemove`).
 

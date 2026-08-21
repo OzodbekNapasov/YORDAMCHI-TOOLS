@@ -23,6 +23,29 @@ from services.atlas_db import init_db, track_user_activity, track_group_activity
 from services.atlas_api import atlas_api
 from services.lead_service import process_and_send_lead
 
+# Instagram AutoPoster modullari
+from services.insta_poster_service import (
+    init_insta_tables,
+    get_all_settings as get_insta_settings,
+    get_setting as get_insta_setting,
+    set_setting as set_insta_setting,
+    scan_in_background as scan_insta_background,
+    scan_and_enqueue_posts as scan_insta_posts,
+    post_next_queued_item as post_next_insta_item,
+    post_next_youtube_video,
+    get_youtube_schedule_times,
+    add_youtube_schedule_time,
+    remove_youtube_schedule_time,
+    reset_youtube_schedule_times,
+    get_queue_stats as get_insta_queue_stats,
+    reset_queue_status as reset_insta_queue,
+    clear_all_queue as clear_insta_queue,
+    toggle_post_like,
+    get_post_inline_keyboard
+)
+from services.insta_scheduler import start_insta_scheduler, stop_insta_scheduler
+from services.insta_bot_listener import start_insta_bot_listener, stop_insta_bot_listener
+
 try:
     from meta_ads_bot.facebook_api import MetaAdsManager
     from meta_ads_bot.scheduler import BotScheduler, load_settings as load_meta_settings, save_settings as save_meta_settings
@@ -34,7 +57,7 @@ except Exception as _meta_e:
     save_meta_settings = None
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "2.1.0"
+BOT_VERSION = "2.2.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
 
 def get_main_keyboard():
@@ -45,10 +68,26 @@ def get_main_keyboard():
     btn_docs = telebot.types.KeyboardButton("📁 Ma'lumotnomalar")
     btn_buyruq = telebot.types.KeyboardButton("📁 Buyruqlar")
     btn_meta = telebot.types.KeyboardButton("🎯 Meta Ads Manager")
+    btn_insta = telebot.types.KeyboardButton("📸 Instagram AutoPoster")
     btn_stats = telebot.types.KeyboardButton("📊 Tizim Statistikasi")
     markup.add(btn_kontrakt, btn_amaliyot)
     markup.add(btn_docs, btn_buyruq)
-    markup.add(btn_meta, btn_stats)
+    markup.add(btn_meta, btn_insta)
+    markup.add(btn_stats)
+    return markup
+
+def get_insta_poster_keyboard():
+    """2-DARAJALI PAPKA: Instagram AutoPoster boshqaruvi"""
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn1 = telebot.types.KeyboardButton("🚀 Hozir yuborish (Keyingi 1 ta)")
+    btn2 = telebot.types.KeyboardButton("📥 Instagramdan skanerlash")
+    btn3 = telebot.types.KeyboardButton("📊 Navbat va Statistika")
+    btn4 = telebot.types.KeyboardButton("⏰ Avto-jadval (Yoqish/O'chirish)")
+    btn5 = telebot.types.KeyboardButton("⚙️ Insta Sozlamalar")
+    btn_back = telebot.types.KeyboardButton("🔙 Asosiy menyuga qaytish")
+    markup.add(btn1, btn2)
+    markup.add(btn3, btn4)
+    markup.add(btn5, btn_back)
     return markup
 
 def get_meta_ads_keyboard():
@@ -193,6 +232,12 @@ if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHO
 bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Flask(__name__, static_folder="static", template_folder="templates")
 init_db()
+init_insta_tables()
+try:
+    start_insta_scheduler()
+    start_insta_bot_listener()
+except Exception as _sched_err:
+    print(f"[Insta Scheduler/Listener Startup Warn]: {_sched_err}")
 app.register_blueprint(atlas_api)
 user_data = {}
 
@@ -967,6 +1012,46 @@ def handle_text_messages(message):
     user_text = message.text.strip()
 
     # 1-Darajali Papkalar (Kategoriyalar) va Ortga qaytish
+    if user_text == "📸 Instagram AutoPoster":
+        user_data[chat_id] = {}
+        send_safe_message(
+            chat_id,
+            "📸 <b>INSTAGRAM AUTOPOSTER MENYUSI</b>\n\n"
+            "Instagram sahifasidagi postlarni xronologik tartibda kanalga/botga avtomatik joylab borish bo‘limi:",
+            reply_markup=get_insta_poster_keyboard()
+        )
+        handle_insta_dashboard(chat_id)
+        return
+
+    if user_text == "🚀 Hozir yuborish (Keyingi 1 ta)":
+        handle_insta_post_one(chat_id)
+        return
+
+    if user_text == "📥 Instagramdan skanerlash":
+        handle_insta_scan(chat_id)
+        return
+
+    if user_text == "📊 Navbat va Statistika":
+        handle_insta_dashboard(chat_id)
+        return
+
+    if user_text == "⏰ Avto-jadval (Yoqish/O'chirish)":
+        enabled = get_insta_setting("auto_schedule_enabled", "0") == "1"
+        new_val = "0" if enabled else "1"
+        set_insta_setting("auto_schedule_enabled", new_val)
+        status_word = "faollashtirildi (yoqildi)" if new_val == "1" else "to‘xtatildi (o‘chirildi)"
+        send_safe_message(
+            chat_id,
+            f"✅ <b>Avto-jadval {status_word}!</b>\n\n"
+            f"Endi bot har {get_insta_setting('interval_minutes', '60')} daqiqada navbatdagi 1 ta postni avtomatik yuboradi.",
+            reply_markup=get_insta_poster_keyboard()
+        )
+        return
+
+    if user_text == "⚙️ Insta Sozlamalar":
+        handle_insta_settings_menu(chat_id)
+        return
+
     if user_text == "🎯 Meta Ads Manager":
         user_data[chat_id] = {}
         send_safe_message(
@@ -997,6 +1082,45 @@ def handle_text_messages(message):
         send_safe_message(chat_id, "🔄 Ma'lumotlar yangilandi!", reply_markup=get_meta_ads_keyboard())
         handle_meta_account_info(chat_id)
         return
+
+    # Instagram State Input tekshiruvi
+    user_id_val = message.from_user.id
+    if user_id_val in INSTA_USER_STATE:
+        insta_state = INSTA_USER_STATE.pop(user_id_val, None)
+        if insta_state:
+            act = insta_state.get("action")
+            if act == "set_insta_user":
+                val = user_text.replace("@", "").strip()
+                set_insta_setting("insta_username", val)
+                bot.reply_to(message, f"✅ <b>Instagram profili <code>@{val}</code> ga o‘zgartirildi!</b>", reply_markup=get_insta_poster_keyboard(), parse_mode="HTML")
+                return
+            elif act == "set_insta_chat":
+                val = user_text.strip()
+                set_insta_setting("target_chat_id", val)
+                bot.reply_to(message, f"✅ <b>Target Chat / Kanal ID <code>{val}</code> ga o‘zgartirildi!</b>", reply_markup=get_insta_poster_keyboard(), parse_mode="HTML")
+                return
+            elif act == "set_insta_interval":
+                val = user_text.strip()
+                try:
+                    num = int(val)
+                    if num < 1:
+                        bot.reply_to(message, "❌ Oraliq vaqti kamida 1 daqiqa bo‘lishi kerak.", parse_mode="HTML")
+                        return
+                    set_insta_setting("interval_minutes", str(num))
+                    bot.reply_to(message, f"✅ <b>Yuborish oralig‘i har <code>{num}</code> daqiqa qilib belgilandi!</b>", reply_markup=get_insta_poster_keyboard(), parse_mode="HTML")
+                    return
+                except ValueError:
+                    bot.reply_to(message, "❌ Noto‘g‘ri son kiritildi. Masalan: <code>60</code> deb yozing.", parse_mode="HTML")
+                    return
+            elif act == "add_yt_time":
+                val = user_text.strip()
+                ok, res = add_youtube_schedule_time(val)
+                if ok:
+                    bot.reply_to(message, f"✅ <b>YouTube Shorts yuklash vaqti qo‘shildi: <code>{res}</code></b>", parse_mode="HTML")
+                else:
+                    bot.reply_to(message, f"❌ <b>Xatolik:</b> {res}", parse_mode="HTML")
+                handle_insta_youtube_schedule_menu(message.chat.id)
+                return
 
     # Meta Ads State Input tekshiruvi
     user_id_val = message.from_user.id
@@ -2325,6 +2449,364 @@ def handle_meta_callbacks(call):
         bot.send_message(
             chat_id,
             f"⏱ <b>Reklamalarni avtomatik {label} vaqtini yozing (HH:MM formatida):</b>\n\nMisol uchun: <code>23:00</code> yoki <code>07:30</code>",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+# ==================== INSTAGRAM AUTOPOSTER INTEGRATSIYASI FUNKSIYALARI ====================
+INSTA_USER_STATE = {}
+
+def handle_insta_dashboard(chat_id):
+    """Instagram AutoPoster asosiy ma'lumotlar paneli"""
+    stats = get_insta_queue_stats()
+    settings = stats.get("settings", {})
+    
+    username = settings.get("insta_username", "shahrisabz_t_t_uz")
+    sched_enabled = settings.get("auto_schedule_enabled") == "1"
+    sched_str = f"🟢 Yoqilgan (Har {settings.get('interval_minutes', '60')} daqiqada)" if sched_enabled else "🔴 O‘chirilgan"
+    yt_enabled = settings.get("youtube_auto_upload", "1") == "1"
+    yt_str = "🟢 Yoqilgan (Shorts)" if yt_enabled else "🔴 O‘chirilgan"
+    target_chat = settings.get("target_chat_id", "8135594558")
+    last_post = settings.get("last_post_time") or "Hali yuborilmadi"
+    last_scan = settings.get("last_scan_time") or "Skanerlanmagan"
+    
+    text = (
+        f"📸 <b>INSTAGRAM AUTOPOSTER BOSHQARUVI</b>\n\n"
+        f"👤 <b>Instagram Profil:</b> <code>@{username}</code>\n"
+        f"🎯 <b>Maqsadli Chat/Kanal ID:</b> <code>{target_chat}</code>\n"
+        f"⏰ <b>Avto-jadval holati:</b> {sched_str}\n"
+        f"📺 <b>YouTube Shorts yuklash:</b> {yt_str}\n"
+        f"🕒 <b>Oxirgi yuborilgan:</b> <code>{last_post}</code>\n"
+        f"🔍 <b>Oxirgi skanerlash:</b> <code>{last_scan}</code>\n"
+        f"────────────────────\n"
+        f"📊 <b>NAVBAT STATISTIKASI:</b>\n"
+        f"  • 📁 Jami postlar bazada: <b>{stats['total']} ta</b>\n"
+        f"  • ⏳ Yuborishga tayyor (Navbatda): <b>{stats['pending']} ta</b>\n"
+        f"  • ✅ Kanal/Botga yuborildi: <b>{stats['sent']} ta</b>\n"
+        f"  • ❌ Xatolik berganlar: <b>{stats['failed']} ta</b>\n"
+    )
+    
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        telebot.types.InlineKeyboardButton("🚀 Keyingi 1 tani yuborish", callback_data="insta_post_now"),
+        telebot.types.InlineKeyboardButton("📥 Qayta skanerlash", callback_data="insta_scan_now")
+    )
+    
+    sched_btn_text = "🔴 Jadvalni to‘xtatish" if sched_enabled else "🟢 Avto-jadvalni yoqish"
+    markup.add(
+        telebot.types.InlineKeyboardButton(sched_btn_text, callback_data="insta_toggle_sched"),
+        telebot.types.InlineKeyboardButton("🔄 Xatolarni qayta qo‘yish", callback_data="insta_reset_failed")
+    )
+    markup.add(
+        telebot.types.InlineKeyboardButton("⚙️ Sozlamalar", callback_data="insta_settings_menu"),
+        telebot.types.InlineKeyboardButton("🔄 Yangilash", callback_data="insta_refresh_dash")
+    )
+    
+    send_safe_message(chat_id, text, reply_markup=markup)
+
+
+def handle_insta_post_one(chat_id):
+    """Navbatdagi 1 ta postni yuborish"""
+    bot.send_chat_action(chat_id, "upload_video")
+    res = post_next_insta_item()
+    if res.get("success"):
+        stats = get_insta_queue_stats()
+        send_safe_message(
+            chat_id,
+            f"✅ <b>Post muvaffaqiyatli Telegramga yuborildi!</b>\n\n"
+            f"🔗 <b>Post:</b> <a href='{res.get('post_url')}'>{res.get('shortcode')}</a>\n"
+            f"📝 <b>Matn:</b> <i>{escape_html_text(res.get('caption', ''))}</i>\n\n"
+            f"⏳ <b>Navbatda qoldi:</b> {stats['pending']} ta post",
+            reply_markup=get_insta_poster_keyboard()
+        )
+    elif res.get("empty"):
+        send_safe_message(
+            chat_id,
+            "🎉 <b>Barcha postlar yuklab bo‘lingan!</b>\nNavbatda boshqa yuborilmagan post qolmadi. Yangi postlar uchun '📥 Instagramdan skanerlash' tugmasini bosing.",
+            reply_markup=get_insta_poster_keyboard()
+        )
+    else:
+        send_safe_message(
+            chat_id,
+            f"❌ <b>Postni yuborishda xatolik:</b>\n<code>{escape_html_text(res.get('error', 'Nomaʼlum'))}</code>",
+            reply_markup=get_insta_poster_keyboard()
+        )
+
+
+def handle_insta_scan(chat_id):
+    """Profilni fonda skanerlash"""
+    is_scanning = get_insta_setting("is_scanning", "0") == "1"
+    if is_scanning:
+        send_safe_message(chat_id, "⏳ <b>Skanerlash jarayoni hozir fonda davom etmoqda...</b>\nIltimos, biroz kuting.", reply_markup=get_insta_poster_keyboard())
+        return
+        
+    send_safe_message(
+        chat_id,
+        "🔍 <b>Instagram profil skanerlanishi boshlandi...</b>\n\n"
+        "Playwright fon rejimida barcha postlarni xronologik tartibda yig‘ib bazaga saqlaydi. "
+        "Tugagach sizga bildirishnoma yuboriladi.",
+        reply_markup=get_insta_poster_keyboard()
+    )
+    
+    def _on_finish(result):
+        if result.get("success"):
+            stats = get_insta_queue_stats()
+            bot.send_message(
+                chat_id,
+                f"✅ <b>Instagram skanerlash muvaffaqiyatli yakunlandi!</b>\n\n"
+                f"👤 <b>Profil:</b> @{result.get('username')}\n"
+                f"🔍 <b>Topilgan postlar:</b> {result.get('total_found')} ta\n"
+                f"📥 <b>Navbatga yangi qo‘shildi:</b> {result.get('new_added')} ta\n"
+                f"⏳ <b>Jami navbatda kutmoqda:</b> {stats['pending']} ta",
+                parse_mode="HTML"
+            )
+        else:
+            bot.send_message(
+                chat_id,
+                f"❌ <b>Skanerlashda xatolik:</b>\n<code>{escape_html_text(result.get('error', ''))}</code>",
+                parse_mode="HTML"
+            )
+            
+    scan_insta_background(callback_notify=_on_finish)
+
+
+def handle_insta_settings_menu(chat_id):
+    """Instagram AutoPoster sozlamalari"""
+    settings = get_insta_settings()
+    username = settings.get("insta_username", "shahrisabz_t_t_uz")
+    chat_target = settings.get("target_chat_id", "8135594558")
+    interval = settings.get("interval_minutes", "60")
+    yt_enabled = settings.get("youtube_auto_upload", "1") == "1"
+    yt_btn_text = "🔴 YouTube Shorts yuklashni o‘chirish" if yt_enabled else "🟢 YouTube Shorts yuklashni yoqish"
+    
+    text = (
+        f"⚙️ <b>INSTAGRAM AUTOPOSTER SOZLAMALARI</b>\n\n"
+        f"1️⃣ <b>Instagram Username:</b> <code>@{username}</code>\n"
+        f"2️⃣ <b>Yuborish manzili (Chat/Kanal ID):</b> <code>{chat_target}</code>\n"
+        f"3️⃣ <b>Avto-yuborish oralig‘i:</b> <code>{interval} daqiqa (har {int(interval)//60 if int(interval)>=60 else interval} soat)</code>\n"
+        f"4️⃣ <b>YouTube Shorts Auto-Upload:</b> {'🟢 Yoqilgan' if yt_enabled else '🔴 O‘chirilgan'}\n\n"
+        f"O‘zgartirmoqchi bo‘lgan parametrni tanlang:"
+    )
+    
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        telebot.types.InlineKeyboardButton("👤 Instagram profil nomini o‘zgartirish", callback_data="insta_set_user"),
+        telebot.types.InlineKeyboardButton("🎯 Target Chat / Kanal ID sini o‘zgartirish", callback_data="insta_set_chat"),
+        telebot.types.InlineKeyboardButton("⏱ Telegram oraliq vaqtini o‘zgartirish", callback_data="insta_set_interval_prompt"),
+        telebot.types.InlineKeyboardButton("⏰ YouTube Rek Vaqtlari Jadvali (+/-)", callback_data="insta_yt_sched_menu"),
+        telebot.types.InlineKeyboardButton(yt_btn_text, callback_data="insta_toggle_youtube"),
+        telebot.types.InlineKeyboardButton("⬅️ Boshqaruv paneliga qaytish", callback_data="insta_refresh_dash")
+    )
+    send_safe_message(chat_id, text, reply_markup=markup)
+
+
+def handle_insta_youtube_schedule_menu(chat_id):
+    """YouTube Shorts Rek Jadvali menyusi"""
+    times = get_youtube_schedule_times()
+    sched_enabled = get_insta_setting("youtube_schedule_enabled", "1") == "1"
+    yt_auto = get_insta_setting("youtube_auto_upload", "1") == "1"
+    
+    times_list = [f"  {idx+1}️⃣ 🕒 <b>{t}</b>" for idx, t in enumerate(times)]
+    times_str = "\n".join(times_list) if times else "  <i>Hozircha vaqtlar belgilanmagan</i>"
+    
+    status_str = "🟢 Faol (Yoqilgan)" if (sched_enabled and yt_auto) else "🔴 O‘chirilgan"
+    
+    text = (
+        f"📺 <b>YOUTUBE SHORTS REK VAQTLARI JADVALI</b>\n\n"
+        f"⚡️ Bot har kuni quyida belgilangan vaqtlarda Instagramdagi navbatdagi videoni avtomatik <b>YouTube Shorts</b> ga yuklab boradi:\n\n"
+        f"📋 <b>Joriy belgilangan vaqtlar:</b>\n{times_str}\n\n"
+        f"📊 <b>Jadval holati:</b> {status_str}\n\n"
+        f"Yangi vaqt qo‘shish (<code>+</code>) yoki o‘chirish (<code>-</code>) uchun tugmalardan foydalaning:"
+    )
+    
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        telebot.types.InlineKeyboardButton("➕ Yangi vaqt qo‘shish", callback_data="insta_yt_add_time"),
+        telebot.types.InlineKeyboardButton("🗑 Vaqtni o‘chirish", callback_data="insta_yt_del_menu")
+    )
+    sched_toggle_txt = "🔴 Jadvalni to‘xtatish" if sched_enabled else "🟢 Jadvalni yoqish"
+    markup.add(
+        telebot.types.InlineKeyboardButton(sched_toggle_txt, callback_data="insta_yt_toggle_sched"),
+        telebot.types.InlineKeyboardButton("🔄 Standart (3 ta vaqt)", callback_data="insta_yt_reset_times")
+    )
+    markup.add(
+        telebot.types.InlineKeyboardButton("🚀 Hozir YouTubega 1 ta yuklash", callback_data="insta_yt_post_now")
+    )
+    markup.add(
+        telebot.types.InlineKeyboardButton("⬅️ Sozlamalarga qaytish", callback_data="insta_settings_menu")
+    )
+    send_safe_message(chat_id, text, reply_markup=markup)
+
+
+def handle_insta_youtube_delete_menu(chat_id):
+    """YouTube jadvalidan vaqtni o'chirish tanlash menyusi"""
+    times = get_youtube_schedule_times()
+    if not times:
+        send_safe_message(chat_id, "Jadvalda o‘chirish uchun vaqtlar mavjud emas.")
+        handle_insta_youtube_schedule_menu(chat_id)
+        return
+        
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    for t in times:
+        markup.add(telebot.types.InlineKeyboardButton(f"🗑 {t} ni o‘chirish", callback_data=f"insta_yt_del_val_{t}"))
+    markup.add(telebot.types.InlineKeyboardButton("⬅️ Bekor qilish", callback_data="insta_yt_sched_menu"))
+    
+    send_safe_message(chat_id, "🗑 <b>O‘chirmoqchi bo‘lgan vaqtingizni tanlang:</b>", reply_markup=markup)
+
+
+# Instagram AutoPoster Callback Handlers
+@bot.callback_query_handler(func=lambda call: call.data.startswith("insta_"))
+def handle_insta_callbacks(call):
+    if not is_user_allowed(call):
+        bot.answer_callback_query(call.id, "⛔️ Ruxsat berilmagan!", show_alert=True)
+        return
+
+    data = call.data
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+
+    if data in ["insta_refresh_dash", "insta_dash"]:
+        bot.answer_callback_query(call.id, "Yangilanmoqda...")
+        handle_insta_dashboard(chat_id)
+
+    elif data == "insta_post_now":
+        bot.answer_callback_query(call.id, "Post yuborilmoqda...")
+        handle_insta_post_one(chat_id)
+
+    elif data == "insta_scan_now":
+        bot.answer_callback_query(call.id, "Skanerlash boshlandi...")
+        handle_insta_scan(chat_id)
+
+    elif data == "insta_toggle_sched":
+        enabled = get_insta_setting("auto_schedule_enabled", "0") == "1"
+        new_val = "0" if enabled else "1"
+        set_insta_setting("auto_schedule_enabled", new_val)
+        status_word = "yoqildi" if new_val == "1" else "to‘xtatildi"
+        bot.answer_callback_query(call.id, f"✅ Telegram avto-jadval {status_word}!", show_alert=True)
+        handle_insta_dashboard(chat_id)
+
+    elif data == "insta_reset_failed":
+        count = reset_insta_queue()
+        bot.answer_callback_query(call.id, f"✅ {count} ta xatolik bergan post qayta navbatga qo‘yildi!", show_alert=True)
+        handle_insta_dashboard(chat_id)
+
+    elif data == "insta_settings_menu":
+        bot.answer_callback_query(call.id)
+        handle_insta_settings_menu(chat_id)
+
+    elif data == "insta_toggle_youtube":
+        current = get_insta_setting("youtube_auto_upload", "1") == "1"
+        new_val = "0" if current else "1"
+        set_insta_setting("youtube_auto_upload", new_val)
+        status_word = "yoqildi" if new_val == "1" else "to‘xtatildi"
+        bot.answer_callback_query(call.id, f"✅ YouTube avto-yuklash {status_word}!", show_alert=True)
+        handle_insta_settings_menu(chat_id)
+
+    elif data == "insta_yt_sched_menu":
+        bot.answer_callback_query(call.id)
+        handle_insta_youtube_schedule_menu(chat_id)
+
+    elif data == "insta_yt_add_time":
+        INSTA_USER_STATE[user_id] = {"action": "add_yt_time"}
+        bot.send_message(
+            chat_id,
+            "⏰ <b>Yangi YouTube Shorts yuklash vaqtini kiriting:</b>\n\n"
+            "Format: <code>HH:MM</code> (Masalan: <code>15:30</code>, <code>20:00</code> yoki <code>11:45</code>)",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+    elif data == "insta_yt_del_menu":
+        bot.answer_callback_query(call.id)
+        handle_insta_youtube_delete_menu(chat_id)
+
+    elif data.startswith("insta_yt_del_val_"):
+        t_val = data.replace("insta_yt_del_val_", "")
+        remove_youtube_schedule_time(t_val)
+        bot.answer_callback_query(call.id, f"🗑 {t_val} vaqti jadvaldan o‘chirildi!", show_alert=True)
+        handle_insta_youtube_schedule_menu(chat_id)
+
+    elif data == "insta_yt_reset_times":
+        reset_youtube_schedule_times()
+        bot.answer_callback_query(call.id, "🔄 Standart 3 ta vaqtga qaytarildi (09:00, 13:00, 19:30)!", show_alert=True)
+        handle_insta_youtube_schedule_menu(chat_id)
+
+    elif data == "insta_yt_toggle_sched":
+        current = get_insta_setting("youtube_schedule_enabled", "1") == "1"
+        new_val = "0" if current else "1"
+        set_insta_setting("youtube_schedule_enabled", new_val)
+        status_word = "yoqildi" if new_val == "1" else "to‘xtatildi"
+        bot.answer_callback_query(call.id, f"✅ YouTube jadvali {status_word}!", show_alert=True)
+        handle_insta_youtube_schedule_menu(chat_id)
+
+    elif data == "insta_yt_post_now":
+        bot.answer_callback_query(call.id, "YouTubega yuklanmoqda...")
+        bot.send_message(chat_id, "⏳ <b>Navbatdagi video YouTube Shorts ga yuklanmoqda...</b>", parse_mode="HTML")
+        yt_res = post_next_youtube_video()
+        if yt_res.get("success"):
+            bot.send_message(
+                chat_id,
+                f"✅ <b>Video YouTube Shorts ga muvaffaqiyatli yuklandi!</b>\n\n"
+                f"🎬 <b>Sarlavha:</b> {escape_html_text(yt_res.get('title', ''))}\n"
+                f"🔗 <b>Havola:</b> {yt_res.get('url')}",
+                parse_mode="HTML"
+            )
+        elif yt_res.get("empty"):
+            bot.send_message(chat_id, "🎉 YouTubega yuklash uchun yangi videolar qolmadi.", parse_mode="HTML")
+        else:
+            bot.send_message(chat_id, f"❌ <b>Xatolik:</b> {escape_html_text(yt_res.get('error', 'Nomaʼlum'))}", parse_mode="HTML")
+
+    elif data == "insta_set_user":
+        INSTA_USER_STATE[user_id] = {"action": "set_insta_user"}
+        bot.send_message(
+            chat_id,
+            "👤 <b>Yangi Instagram sahifa nomini (username) yuboring:</b>\n\nMisol uchun: <code>shahrisabz_t_t_uz</code>",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+    elif data == "insta_set_chat":
+        INSTA_USER_STATE[user_id] = {"action": "set_insta_chat"}
+        bot.send_message(
+            chat_id,
+            "🎯 <b>Postlar yuboriladigan yangi Chat yoki Kanal ID sini yuboring:</b>\n\n"
+            "Misol uchun:\n"
+            "• Shaxsiy Telegram ID: <code>8135594558</code>\n"
+            "• Telegram Kanal ID: <code>-1001234567890</code> yoki <code>@kanal_nomi</code>",
+            reply_markup=telebot.types.ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+        bot.answer_callback_query(call.id)
+
+    elif data.startswith("insta_like_"):
+        post_id_str = data.replace("insta_like_", "")
+        try:
+            post_id = int(post_id_str)
+            res = toggle_post_like(post_id, user_id)
+            new_kb = get_post_inline_keyboard(post_id, res["post_url"], res["likes_count"])
+            try:
+                bot.edit_message_reply_markup(chat_id, call.message.message_id, reply_markup=new_kb)
+            except Exception:
+                pass
+            
+            status_text = f"❤️ Sizga yoqdi! ({res['likes_count']} ta)" if res["is_liked"] else f"💔 Like bekor qilindi ({res['likes_count']} ta)"
+            bot.answer_callback_query(call.id, status_text)
+        except Exception as e:
+            print(f"[Like Callback Error]: {e}")
+            bot.answer_callback_query(call.id, "Like qayd etildi!")
+
+    elif data == "insta_set_interval_prompt":
+        INSTA_USER_STATE[user_id] = {"action": "set_insta_interval"}
+        bot.send_message(
+            chat_id,
+            "⏱ <b>Avto-yuborish oralig‘ini daqiqalarda kiriting:</b>\n\n"
+            "Misol uchun:\n"
+            "• Har 30 daqiqada: <code>30</code>\n"
+            "• Har 1 soatda (60 daqiqa): <code>60</code>\n"
+            "• Har 2 soatda: <code>120</code>",
             reply_markup=telebot.types.ForceReply(selective=True),
             parse_mode="HTML"
         )

@@ -21,3 +21,13 @@ atlas.db
 saved_documents/*
 !saved_documents/.gitkeep
 
+# YouTube API Credentials & Tokens
+client_secrets.json
+youtube_token.json
+
+# Video & Media temp files
+*.mp4
+*.m4a
+*.webm
+*.mkv
+
