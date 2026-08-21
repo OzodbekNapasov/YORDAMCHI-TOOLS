@@ -2292,13 +2292,41 @@ def api_instagram_scan_status():
         is_scanning = get_setting("is_scanning", "0") == "1"
         last_scan_time = get_setting("last_scan_time", "")
         last_scan_count = int(get_setting("last_scan_count", "0"))
+        last_scan_error = get_setting("last_scan_error", "")
         
         return jsonify({
             "success": True,
             "is_scanning": is_scanning,
             "last_scan_time": last_scan_time,
-            "last_scan_count": last_scan_count
+            "last_scan_count": last_scan_count,
+            "last_scan_error": last_scan_error
         })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/queue/add_urls", methods=["POST"])
+@admin_required
+def api_instagram_add_urls():
+    """Post havolalari yoki kodlarini to'g'ridan-to'g'ri navbatga qo'shish"""
+    try:
+        from services.insta_poster_service import add_posts_by_urls
+        admin = get_current_admin()
+        req_data = request.get_json(silent=True) or {}
+        urls_text = req_data.get("urls", "")
+        
+        res = add_posts_by_urls(urls_text)
+        if res.get("success"):
+            log_audit(
+                admin["username"] if admin else "web_admin",
+                "instagram",
+                "add_urls",
+                "success",
+                {"parsed": res.get("total_parsed"), "added": res.get("new_added")},
+                request.remote_addr
+            )
+            return jsonify(res)
+        return jsonify(res), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

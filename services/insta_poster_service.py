@@ -279,60 +279,127 @@ def reset_youtube_schedule_times():
 
 async def _scrape_instagram_profile_async(username, max_posts=150):
     """Playwright orqali profil postlarini skanerlash"""
-    from playwright.async_api import async_playwright
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError as e:
+        raise ImportError("Playwright kutubxonasi o'rnatilmagan.") from e
     
     collected_links = []
     
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 900}
-        )
-        page = await context.new_page()
-        
-        url = f"https://www.instagram.com/{username}/"
-        print(f"[Insta Scraper]: Sahifa ochilmoqda: {url}")
-        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        await asyncio.sleep(3)
-        
-        seen_codes = set()
-        scroll_attempts = 0
-        max_scrolls = 25
-        stagnant_count = 0
-        
-        while scroll_attempts < max_scrolls and len(seen_codes) < max_posts:
-            links = await page.evaluate('''() => {
-                const anchors = Array.from(document.querySelectorAll('a'));
-                return anchors.map(a => a.href).filter(h => h.includes('/p/') || h.includes('/reel/'));
-            }''')
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 900}
+            )
+            page = await context.new_page()
             
-            initial_len = len(seen_codes)
-            for l in links:
-                parts = l.split('?')[0].rstrip('/')
-                code = parts.split('/')[-1]
-                if code and code not in seen_codes:
-                    seen_codes.add(code)
-                    collected_links.append({
-                        "shortcode": code,
-                        "url": parts,
-                        "is_reel": "/reel/" in parts
-                    })
-                    
-            if len(seen_codes) == initial_len:
-                stagnant_count += 1
-                if stagnant_count >= 4:
-                    break
-            else:
-                stagnant_count = 0
+            url = f"https://www.instagram.com/{username}/"
+            print(f"[Insta Scraper]: Sahifa ochilmoqda: {url}")
+            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(3)
+            
+            seen_codes = set()
+            scroll_attempts = 0
+            max_scrolls = 25
+            stagnant_count = 0
+            
+            while scroll_attempts < max_scrolls and len(seen_codes) < max_posts:
+                links = await page.evaluate('''() => {
+                    const anchors = Array.from(document.querySelectorAll('a'));
+                    return anchors.map(a => a.href).filter(h => h.includes('/p/') || h.includes('/reel/'));
+                }''')
                 
-            await page.evaluate("window.scrollBy(0, 1600)")
-            await asyncio.sleep(2)
-            scroll_attempts += 1
-            
-        await browser.close()
+                initial_len = len(seen_codes)
+                for l in links:
+                    parts = l.split('?')[0].rstrip('/')
+                    code = parts.split('/')[-1]
+                    if code and code not in seen_codes:
+                        seen_codes.add(code)
+                        collected_links.append({
+                            "shortcode": code,
+                            "url": parts,
+                            "is_reel": "/reel/" in parts
+                        })
+                        
+                if len(seen_codes) == initial_len:
+                    stagnant_count += 1
+                    if stagnant_count >= 4:
+                        break
+                else:
+                    stagnant_count = 0
+                    
+                await page.evaluate("window.scrollBy(0, 1600)")
+                await asyncio.sleep(2)
+                scroll_attempts += 1
+                
+            await browser.close()
+    except Exception as be:
+        print(f"[Playwright Launch/Scrape Error]: {be}")
+        raise be
         
     return collected_links
+
+
+def add_posts_by_urls(urls_text):
+    """Foydalanuvchi kiritgan Instagram havolalari yoki shortcode'larini navbatga qo'shish"""
+    init_insta_tables()
+    if not urls_text or not str(urls_text).strip():
+        return {"success": False, "error": "Havolalar kiritilmadi"}
+    
+    text = str(urls_text).strip()
+    codes = []
+    
+    # 1. URL pattern orqali topish (masalan: instagram.com/reel/CODE yoki instagram.com/p/CODE)
+    url_matches = re.findall(r'instagram\.com/(?:[a-zA-Z0-9_\.]+/)?(?:reel|p)/([A-Za-z0-9_-]+)', text, re.IGNORECASE)
+    for c in url_matches:
+        c = c.strip('/')
+        if c and c not in codes:
+            codes.append(c)
+            
+    # 2. Qatorlar bo'yicha ajratish
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        cleaned = line.split('?')[0].rstrip('/')
+        parts = cleaned.split('/')
+        last_part = parts[-1].strip()
+        if len(last_part) >= 9 and len(last_part) <= 15 and re.match(r'^[A-Za-z0-9_-]+$', last_part):
+            if last_part not in codes:
+                codes.append(last_part)
+                
+    if not codes:
+        return {"success": False, "error": "Birorta ham to'g'ri Instagram post/reel havolasi yoki kodi topilmadi"}
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    added_count = 0
+    for code in codes:
+        is_reel = True
+        post_url = f"https://www.instagram.com/reel/{code}"
+        try:
+            cursor.execute("""
+            INSERT OR IGNORE INTO insta_posts_queue (shortcode, post_url, media_type, status)
+            VALUES (?, ?, ?, 'PENDING')
+            """, (code, post_url, "reel" if is_reel else "post"))
+            if cursor.rowcount > 0:
+                added_count += 1
+        except Exception as e:
+            print(f"[Manual Add Error]: {e}")
+            
+    conn.commit()
+    conn.close()
+    
+    return {
+        "success": True,
+        "total_parsed": len(codes),
+        "new_added": added_count,
+        "codes": codes,
+        "message": f"{len(codes)} ta postdan {added_count} tasi navbatga muvaffaqiyatli qo'shildi."
+    }
 
 
 def scan_and_enqueue_posts(username=None, max_posts=150):
@@ -342,6 +409,7 @@ def scan_and_enqueue_posts(username=None, max_posts=150):
         username = get_setting("insta_username", DEFAULT_INSTA_USERNAME)
         
     set_setting("is_scanning", "1")
+    set_setting("last_scan_error", "")
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -380,11 +448,13 @@ def scan_and_enqueue_posts(username=None, max_posts=150):
             "username": username
         }
     except Exception as e:
+        err_msg = str(e)
         set_setting("is_scanning", "0")
+        set_setting("last_scan_error", err_msg)
         print(f"[Scan Instagram Error]: {e}")
         return {
             "success": False,
-            "error": str(e)
+            "error": err_msg
         }
 
 

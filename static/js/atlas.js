@@ -6484,14 +6484,24 @@ const ATLAS = {
     render();
   },
 
-  // Modal: Instagramdan Skanerlash
+  // Modal: Instagramdan Skanerlash yoki Havolalar Qo'shish
   renderScanModal(defaultUsername, viewport) {
     this.modal({
-      title: "📥 Instagram Profilidan Postlarni Skanerlash",
+      title: "📥 Instagram Postlarini Navbatga Qo'shish",
       contentHtml: `
+        <div style="display:flex;gap:10px;margin-bottom:16px;border-bottom:1px solid var(--border-glass);padding-bottom:10px;">
+          <button type="button" class="btn-sm btn-primary" id="tab-btn-auto-scan" style="flex:1;">
+            ${this.icons.download} <span>Avtomatik Skanerlash</span>
+          </button>
+          <button type="button" class="btn-sm btn-secondary" id="tab-btn-manual-links" style="flex:1;">
+            ${this.icons.plus} <span>Havolalar Qo'shish</span>
+          </button>
+        </div>
+
+        <!-- 1. Avtomatik Skanerlash Formasi -->
         <form id="insta-scan-modal-form">
           <p style="font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:14px;line-height:1.5;">
-            Instagram sahifasidagi barcha postlar, reels va rasmlar skanerlanib, <b>eng eskisidan yangisiga</b> qarab SQLite navbatiga saqlanadi. Postlar takrorlanmaydi (dublikat bo'lmaydi).
+            Instagram sahifasidagi barcha postlar va reels videolari Playwright yordamida skanerlanib, <b>eng eskisidan yangisiga</b> qarab navbatga olinadi. Dublikat bo'lmaydi.
           </p>
 
           <div class="form-group" style="margin-bottom:16px;">
@@ -6503,7 +6513,7 @@ const ATLAS = {
           </div>
 
           <div style="padding:10px 14px;background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:18px;">
-            ℹ️ Skanerlash jarayoni fonda bajariladi va postlar birma-bir navbatga kiritiladi.
+            ℹ️ Skanerlash jarayoni fonda boshlanadi. Agar Vercel bulutida bo'lsangiz, lokal kompyuteringizda yoki quyidagi <b>Havolalar Qo'shish</b> bo'limidan foydalanishingiz mumkin.
           </div>
 
           <div style="display:flex;justify-content:flex-end;gap:10px;">
@@ -6513,10 +6523,50 @@ const ATLAS = {
             </button>
           </div>
         </form>
+
+        <!-- 2. Havolalarni Qo'lda / Ommaviy Kiritish Formasi -->
+        <form id="insta-manual-links-form" style="display:none;">
+          <p style="font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:14px;line-height:1.5;">
+            Instagram postlari yoki Reels havolalarini (yoki shortcode'larini) bittalab yoki har bir qatorga bittadan kiriting. Tizim ularni avtomatik ajratib olib navbatga joylaydi.
+          </p>
+
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Instagram Post / Reel Havolalari</label>
+            <textarea id="modal-manual-urls" class="input-control font-mono" rows="6" placeholder="Masalan:&#10;https://www.instagram.com/reel/DcLkGzAqbz9/&#10;https://www.instagram.com/reel/DcLj3zwqODC/&#10;https://www.instagram.com/p/Db0U9ivIcwC/" required style="resize:vertical;"></textarea>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+            <button type="submit" class="btn-sm btn-primary" id="btn-manual-links-submit">
+              ${this.icons.save} <span>Navbatga Qo'shish</span>
+            </button>
+          </div>
+        </form>
       `
     });
 
-    document.getElementById('insta-scan-modal-form')?.addEventListener('submit', async (e) => {
+    // Tab switcher
+    const tabAuto = document.getElementById('tab-btn-auto-scan');
+    const tabManual = document.getElementById('tab-btn-manual-links');
+    const formAuto = document.getElementById('insta-scan-modal-form');
+    const formManual = document.getElementById('insta-manual-links-form');
+
+    tabAuto?.addEventListener('click', () => {
+      tabAuto.className = 'btn-sm btn-primary';
+      tabManual.className = 'btn-sm btn-secondary';
+      formAuto.style.display = 'block';
+      formManual.style.display = 'none';
+    });
+
+    tabManual?.addEventListener('click', () => {
+      tabManual.className = 'btn-sm btn-primary';
+      tabAuto.className = 'btn-sm btn-secondary';
+      formManual.style.display = 'block';
+      formAuto.style.display = 'none';
+    });
+
+    // Submit 1: Auto Scan
+    formAuto?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const u = document.getElementById('modal-scan-username').value.trim().replace(/^@/, '');
       if (!u) {
@@ -6540,6 +6590,35 @@ const ATLAS = {
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = `${this.icons.download} <span>Skanerlashni Boshlash</span>`;
+        }
+      }
+    });
+
+    // Submit 2: Manual Links
+    formManual?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const urls = document.getElementById('modal-manual-urls').value.trim();
+      if (!urls) {
+        this.toast('Kamida 1 ta havola kiriting', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btn-manual-links-submit');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-sm"></span> Qo'shilmoqda...`;
+      }
+
+      const res = await this.api('/api/instagram/queue/add_urls', 'POST', { urls: urls });
+      if (res && res.success) {
+        this.closeModal();
+        this.toast(res.message || 'Postlar navbatga qo‘shildi!', 'success');
+        this.loadInstagram(viewport);
+      } else {
+        this.toast((res && res.error) || 'Qo‘shishda xatolik', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `${this.icons.save} <span>Navbatga Qo'shish</span>`;
         }
       }
     });
