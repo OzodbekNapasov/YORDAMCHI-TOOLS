@@ -767,6 +767,7 @@ DEFAULT_SEEDED_POSTS = [
     }
 ]
 
+
 def init_insta_tables():
     """Instagram navbati, sozlamalari, layklar va YouTube jadvallarini yaratish"""
     conn = get_db_connection()
@@ -846,7 +847,7 @@ def init_insta_tables():
         "night_mode_enabled": "1",          # 0: O'chirilgan, 1: Yoqilgan (00:00 - 07:00)
         "night_mode_start": "00:00",
         "night_mode_end": "07:00",
-        "insta_session_id": "",             # Instagram Session ID (Cookie) 99 ta postni to'liq skanerlash uchun
+        "insta_session_id": "61835138797%3AzWTgfIiOPBUkVE%3A13%3AAYiLE6mFSW2M7qmjat3MGNfyqvWPPoaneRmr-c__Gg",
         "youtube_auto_upload": "1",         # 0: O'chirilgan, 1: Yoqilgan
         "youtube_schedule_enabled": "1",    # YouTube jadvali faolmi?
         "youtube_schedule_times": "09:00,12:00,15:00,18:30,21:00",  # 5 ta Rek vaqtlari
@@ -1051,15 +1052,14 @@ def reset_youtube_schedule_times():
 # 4. Instagram Profile Scraper (Playwright)
 # ------------------------------------------------------------
 
-async def _scrape_instagram_profile_async(username, max_posts=200):
-    """Playwright orqali profil postlarini (Session ID cookie bilan yoki anonsiz) to'liq skanerlash"""
+async def _scrape_instagram_profile_async(username, max_posts=150):
+    """Playwright orqali profil postlarini skanerlash"""
     try:
         from playwright.async_api import async_playwright
     except ImportError as e:
         raise ImportError("Playwright kutubxonasi o'rnatilmagan.") from e
     
     collected_links = []
-    session_id = get_setting("insta_session_id", "").strip()
     
     try:
         async with async_playwright() as p:
@@ -1068,98 +1068,47 @@ async def _scrape_instagram_profile_async(username, max_posts=200):
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
                 viewport={"width": 1280, "height": 900}
             )
-            
-            if session_id:
-                try:
-                    await context.add_cookies([{
-                        "name": "sessionid",
-                        "value": session_id,
-                        "domain": ".instagram.com",
-                        "path": "/"
-                    }])
-                    print("[Insta Scraper]: SessionID cookie muvaffaqiyatli ulandi.")
-                except Exception as ce:
-                    print(f"[Session Cookie Warning]: {ce}")
-                    
             page = await context.new_page()
             
-            # 1. Reels sahifasini tekshirish
-            target_urls = [
-                f"https://www.instagram.com/{username}/reels/",
-                f"https://www.instagram.com/{username}/"
-            ]
+            url = f"https://www.instagram.com/{username}/"
+            print(f"[Insta Scraper]: Sahifa ochilmoqda: {url}")
+            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(3)
             
             seen_codes = set()
-            for base_url in target_urls:
-                if len(seen_codes) >= max_posts:
-                    break
-                    
-                print(f"[Insta Scraper]: Sahifa ochilmoqda: {base_url}")
-                try:
-                    await page.goto(base_url, wait_until="domcontentloaded", timeout=30000)
-                    await asyncio.sleep(4)
-                except Exception as load_err:
-                    print(f"[Page Load Error]: {load_err}")
-                    continue
-                    
-                scroll_attempts = 0
-                max_scrolls = 60
-                stagnant_count = 0
+            scroll_attempts = 0
+            max_scrolls = 25
+            stagnant_count = 0
+            
+            while scroll_attempts < max_scrolls and len(seen_codes) < max_posts:
+                links = await page.evaluate('''() => {
+                    const anchors = Array.from(document.querySelectorAll('a'));
+                    return anchors.map(a => a.href).filter(h => h.includes('/reel/'));
+                }''')
                 
-                while scroll_attempts < max_scrolls and len(seen_codes) < max_posts:
-                    # Modallarni tozalash
-                    try:
-                        await page.evaluate("""() => {
-                            document.querySelectorAll('div[role="dialog"]').forEach(d => {
-                                const close = d.querySelector('svg[aria-label="Close"], svg[aria-label="Yopish"], svg[aria-label="Закрыть"], button');
-                                if (close) close.click();
-                                else d.remove();
-                            });
-                        }""")
-                    except Exception:
-                        pass
+                initial_len = len(seen_codes)
+                for l in links:
+                    parts = l.split('?')[0].rstrip('/')
+                    code = parts.split('/')[-1]
+                    if code and code not in seen_codes:
+                        seen_codes.add(code)
+                        collected_links.append({
+                            "shortcode": code,
+                            "url": parts,
+                            "is_reel": True
+                        })
                         
-                    items = await page.evaluate('''() => {
-                        const res = [];
-                        document.querySelectorAll('a').forEach(a => {
-                            const href = a.href || '';
-                            if (href.includes('/reel/') || href.includes('/p/')) {
-                                const img = a.querySelector('img');
-                                res.push({
-                                    href: href,
-                                    img: img ? img.src : null,
-                                    alt: img ? img.alt : ''
-                                });
-                            }
-                        });
-                        return res;
-                    }''')
+                if len(seen_codes) == initial_len:
+                    stagnant_count += 1
+                    if stagnant_count >= 4:
+                        break
+                else:
+                    stagnant_count = 0
                     
-                    initial_len = len(seen_codes)
-                    for it in items:
-                        parts = it["href"].split('?')[0].rstrip('/')
-                        code = parts.split('/')[-1]
-                        if code and code not in seen_codes:
-                            seen_codes.add(code)
-                            collected_links.append({
-                                "shortcode": code,
-                                "url": parts,
-                                "is_reel": "/reel/" in parts,
-                                "caption": it.get("alt") or "",
-                                "media_url": it.get("img") or ""
-                            })
-                            
-                    if len(seen_codes) == initial_len:
-                        stagnant_count += 1
-                        if stagnant_count >= 5:
-                            break
-                    else:
-                        stagnant_count = 0
-                        
-                    await page.evaluate("window.scrollBy(0, 1600)")
-                    await asyncio.sleep(1.8)
-                    scroll_attempts += 1
-                    
+                await page.evaluate("window.scrollBy(0, 1600)")
+                await asyncio.sleep(2)
+                scroll_attempts += 1
+                
             await browser.close()
     except Exception as be:
         print(f"[Playwright Launch/Scrape Error]: {be}")
