@@ -14,15 +14,45 @@ import threading
 import subprocess
 import requests
 import telebot
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from services.atlas_db import get_db_connection
+
+UZB_TZ = timezone(timedelta(hours=5))
+
+def get_uzb_now():
+    """Toshkent (O'zbekiston, UTC+5) bo'yicha joriy vaqtni olish"""
+    return datetime.now(timezone.utc).astimezone(UZB_TZ).replace(tzinfo=None)
 
 DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
 
-# Boshlang'ich skanerlangan postlar (Faqat Reel/Video postlar, eskisidan yangisiga qarab)
+# Barcha 12 ta post (Kanal boshlangan dastlabki kunlardan to hozirgi kungacha xronologik tartibda)
 DEFAULT_SEEDED_POSTS = [
+    {
+        "shortcode": "DTKl4neiIGi",
+        "url": "https://www.instagram.com/p/DTKl4neiIGi",
+        "media_type": "post",
+        "post_date": "2024-01-20",
+        "caption": "🎓 Shahrisabz tibbiyot texnikumi — rasmiy axborot va qabul sahifasi.\n\n📍 Shahrisabz shahar\n☎️ 88 260 20 73",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/611243991_17854198077603794_8141413038807599667_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDAxOTQ1MzY2NzYwNjk0Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTA4MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=7pSI3-_Pc-cQ7kNvwEneT1q&_nc_oc=AdrtdIbWBsE78EMouREb3QS-9JC3WF7ZRYJZWGsNxFMPy3ughxkO86aYSuFvcK2V6m8&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=QEXrn4rzV57_hezr1f_ABA&_nc_ss=7ea8c&oh=00_AQEvJxD_Uzw3hlU6bqcsSur9paMbfNHJ_gaf-cShbjSpCw&oe=6A8DD7FA"
+    },
+    {
+        "shortcode": "DTKl2WlCFbP",
+        "url": "https://www.instagram.com/p/DTKl2WlCFbP",
+        "media_type": "post",
+        "post_date": "2024-01-20",
+        "caption": "🏥 Zamonaviy tibbiy ta'lim va amaliyot maskani.\n\n📍 Shahrisabz tibbiyot texnikumi",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/611276333_17854198053603794_4631092453008533657_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDAxOTI5ODA4NDA4MzQwNw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=WRFpBdaCtusQ7kNvwFqqHcN&_nc_oc=AdoM1OdcwT8ITNZBz7401pEMznFxeC7soCX1ofSnTLUrAckxPTt8cLa5t9E3qumfRN8&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=zo4Uz_WYYs7DLt2XxB1MDQ&_nc_ss=7ea8c&oh=00_AQGkuyjL2eeKpcCl_T9LvaQ6eL6IE-lJKZlMvL9GNM-9Kw&oe=6A8DD489"
+    },
+    {
+        "shortcode": "DTKlzm8CJ5N",
+        "url": "https://www.instagram.com/p/DTKlzm8CJ5N",
+        "media_type": "post",
+        "post_date": "2024-01-20",
+        "caption": "🩺 Malakali ustozlar va amaliy laboratoriyalar.\n\n📍 Shahrisabz tibbiyot texnikumi",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/612116905_17854198023603794_5331005024687690903_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDAxOTEwOTQ5MTQxNjY1Mw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTA4MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=zddiMk2qPogQ7kNvwHpBAth&_nc_oc=AdpY3YAPdluDBAOp7-STkH443s_tJc8lT4Pi8SQE0y_9EXvPgoTXguPVZyO4qkW-Sfc&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=7eVuoKPXPYmGinTZusWG9w&_nc_ss=7ea8c&oh=00_AQEpr9wKXvY5Nym4EjE_bzkLMHD3aEW-sK4XfmT6h_nOdw&oe=6A8DF77F"
+    },
     {
         "shortcode": "DbsKZ2qICdh",
         "url": "https://www.instagram.com/reel/DbsKZ2qICdh",
@@ -36,6 +66,14 @@ DEFAULT_SEEDED_POSTS = [
         "media_type": "reel",
         "post_date": "2026-08-08",
         "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n🩺Davolash ishi\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!"
+    },
+    {
+        "shortcode": "Db0U9ivIcwC",
+        "url": "https://www.instagram.com/p/Db0U9ivIcwC",
+        "media_type": "post",
+        "post_date": "2026-08-09",
+        "caption": "🩺 SHAHRISABZ TIBBIYOT TEXNIKUMI\n🎓 3 OYLIK HAMSHIRALIK KURSI\n📚 Nazariy bilimlar • Amaliy ko‘nikmalar • Tajribali ustozlar\n\n💙 Tibbiyot sohasiga ilk qadamingizni biz bilan boshlang!\n\n👩‍⚕️ Yo‘nalishlar:\n• Hamshiralik ishi\n• Davolash ishi\n• Farmasevtika\n\n📢 Qabul davom etmoqda!\n\n📞 Murojaat uchun:\n88 260 20 73\n97 266 20 73\n📍 Shahrisabz tibbiyot texnikumi\n✨ Kelajagingizni bugundan boshlang!",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/768604174_17889330708603794_2515257640581746909_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzk1OTg4MjE2MjQ4MTc3NzY2Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTI1NC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=Lf_Gs-HboeUQ7kNvwE5nXLq&_nc_oc=AdrGFx6YasSpN79YkPmcmmv4UQ12HmXce5_whufzGubjE5kjTPhXeO2mTHyPHYAngYk&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=8S0WoXyNOEm2_F52LgqR1w&_nc_ss=7ea8c&oh=00_AQEz_VB3NGRydzG5-sWRAyqnqC0K6n3XfgyqrWg6Mue-3w&oe=6A8DCFC9"
     },
     {
         "shortcode": "Db-ssJeIyZh",
@@ -160,7 +198,7 @@ def init_insta_tables():
         "last_post_time": "",
         "is_scanning": "0",
         "last_scan_time": "",
-        "last_scan_count": "8",
+        "last_scan_count": "12",
         "night_mode_enabled": "1",          # 0: O'chirilgan, 1: Yoqilgan (00:00 - 07:00)
         "night_mode_start": "00:00",
         "night_mode_end": "07:00",
@@ -173,28 +211,21 @@ def init_insta_tables():
     for k, v in defaults.items():
         cursor.execute("INSERT OR IGNORE INTO insta_settings (key, value) VALUES (?, ?)", (k, v))
 
-    # Faqat video/reel postlarni qoldirish — rasmlar va karusellarni tozalash
-    cursor.execute("DELETE FROM insta_posts_queue WHERE media_type NOT IN ('reel', 'video') AND post_url NOT LIKE '%/reel/%'")
-
-    # 4. Agar navbat bo'sh bo'lsa, @shahrisabz_t_t_uz video/reel postlarini avtomatik joylash
-    cursor.execute("SELECT COUNT(*) as cnt FROM insta_posts_queue")
-    queue_cnt = cursor.fetchone()["cnt"]
-    if queue_cnt == 0:
-        for p in DEFAULT_SEEDED_POSTS:
-            cursor.execute("""
-            INSERT OR IGNORE INTO insta_posts_queue (shortcode, post_url, media_type, caption, post_date, status)
-            VALUES (?, ?, ?, ?, ?, 'PENDING')
-            """, (p["shortcode"], p["url"], p["media_type"], p["caption"], p["post_date"]))
-    else:
-        # Mavjud videolarning matn va sanalarini yangilash
-        for p in DEFAULT_SEEDED_POSTS:
-            cursor.execute("""
-            UPDATE insta_posts_queue 
-            SET caption = CASE WHEN caption IS NULL OR caption = '' THEN ? ELSE caption END,
-                post_date = CASE WHEN post_date IS NULL OR post_date = '' THEN ? ELSE post_date END,
-                media_type = 'reel'
-            WHERE shortcode = ?
-            """, (p["caption"], p["post_date"], p["shortcode"]))
+    # 4. Barcha 12 ta postni bazaga kiritish / yangilash (Eskisidan yangisiga qarab)
+    for p in DEFAULT_SEEDED_POSTS:
+        cursor.execute("""
+        INSERT OR IGNORE INTO insta_posts_queue (shortcode, post_url, media_type, caption, media_url, post_date, status)
+        VALUES (?, ?, ?, ?, ?, ?, 'PENDING')
+        """, (p["shortcode"], p["url"], p["media_type"], p["caption"], p.get("media_url") or "", p["post_date"]))
+        
+        cursor.execute("""
+        UPDATE insta_posts_queue 
+        SET caption = CASE WHEN caption IS NULL OR caption = '' THEN ? ELSE caption END,
+            post_date = CASE WHEN post_date IS NULL OR post_date = '' THEN ? ELSE post_date END,
+            media_type = ?,
+            media_url = CASE WHEN media_url IS NULL OR media_url = '' THEN ? ELSE media_url END
+        WHERE shortcode = ?
+        """, (p["caption"], p["post_date"], p["media_type"], p.get("media_url") or "", p["shortcode"]))
         
     conn.commit()
     conn.close()
@@ -575,40 +606,38 @@ def scan_in_background(username=None, callback_notify=None):
 # ------------------------------------------------------------
 
 def _download_hd_video_ytdlp(post_url):
-    """yt-dlp yordamida original yuqori sifatli (HD 1080p/720p) videoni yuklab olish"""
-    temp_dir = tempfile.gettempdir()
-    output_tpl = os.path.join(temp_dir, f"insta_hd_{int(time.time()*1000)}.%(ext)s")
-    
-    cmd = [
-        "yt-dlp",
-        "--no-warnings",
-        "--quiet",
-        "-f", "best[ext=mp4]/best",
-        "-o", output_tpl,
-        post_url
-    ]
-    
+    """yt-dlp Python moduli yordamida videoni to'g'ridan-to'g'ri yuklab olish (Vercel va barcha tizimlarda 100% ishlaydi)"""
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=60, encoding="utf-8")
-        if res.returncode == 0:
-            for ext in [".mp4", ".mkv", ".webm"]:
-                possible_path = output_tpl.replace("%(ext)s", ext.lstrip('.'))
-                if os.path.exists(possible_path) and os.path.getsize(possible_path) > 10000:
-                    return possible_path
-            for fname in os.listdir(temp_dir):
-                if fname.startswith("insta_hd_") and fname.endswith(".mp4"):
-                    fpath = os.path.join(temp_dir, fname)
-                    if os.path.getsize(fpath) > 10000:
-                        return fpath
+        import yt_dlp
+        temp_dir = tempfile.gettempdir()
+        out_filename = os.path.join(temp_dir, f"insta_hd_{int(time.time()*1000)}.mp4")
+        
+        ydl_opts = {
+            "outtmpl": out_filename,
+            "format": "best[ext=mp4]/best",
+            "quiet": True,
+            "no_warnings": True,
+            "socket_timeout": 30
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([post_url])
+            
+        if os.path.exists(out_filename) and os.path.getsize(out_filename) > 10000:
+            return out_filename
+            
+        base_prefix = out_filename.replace(".mp4", "")
+        for ext in [".mp4", ".mkv", ".webm"]:
+            cand = base_prefix + ext
+            if os.path.exists(cand) and os.path.getsize(cand) > 10000:
+                return cand
     except Exception as e:
-        print(f"[yt-dlp HD Error]: {e}")
+        print(f"[yt-dlp Python Module Error]: {e}")
         
     return None
 
 
 async def _fetch_post_content_async(post_url):
     """Postning to'liq ma'lumotlarini olish (yt-dlp orqali tezkor va xavfsiz)"""
-    # 1. yt-dlp orqali olish (Browser talab qilmaydi, Vercel va serverlarda 100% ishlaydi)
     try:
         import yt_dlp
         ydl_opts = {
@@ -632,7 +661,6 @@ async def _fetch_post_content_async(post_url):
     except Exception as yte:
         print(f"[yt-dlp info error]: {yte}")
 
-    # 2. Agar Playwright mavjud bo'lsa (ixtiyoriy zaxira)
     try:
         from playwright.async_api import async_playwright
         parts = post_url.rstrip('/').split('/')
@@ -671,7 +699,7 @@ async def _fetch_post_content_async(post_url):
 
 
 def post_next_queued_item(chat_id=None, bot_token=None):
-    """Navbatdagi eng eski 1 ta postni olib HD sifatda Telegramga yuborish"""
+    """Navbatdagi eng eski 1 ta postni olib Telegramga yuborish"""
     init_insta_tables()
     
     if not bot_token:
@@ -685,7 +713,6 @@ def post_next_queued_item(chat_id=None, bot_token=None):
     cursor.execute("""
     SELECT * FROM insta_posts_queue 
     WHERE status = 'PENDING' 
-      AND (media_type IN ('reel', 'video') OR post_url LIKE '%/reel/%')
     ORDER BY id ASC 
     LIMIT 1
     """)
@@ -696,7 +723,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         return {
             "success": False,
             "empty": True,
-            "message": "Navbatda yuborilmagan video postlar qolmadi!"
+            "message": "Navbatda yuborilmagan postlar qolmadi!"
         }
         
     post_id = row["id"]
@@ -731,34 +758,12 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         media_sent = False
         sent_msg = None
         
-        # 1. HD Video yuklash (yt-dlp orqali)
-        hd_video_path = _download_hd_video_ytdlp(post_url)
-        
-        if hd_video_path and os.path.exists(hd_video_path):
-            try:
-                with open(hd_video_path, 'rb') as v_file:
-                    sent_msg = bot.send_video(
-                        chat_id,
-                        v_file,
-                        caption=telegram_caption,
-                        parse_mode="HTML" if telegram_caption else None,
-                        reply_markup=inline_kb,
-                        supports_streaming=True
-                    )
-                media_sent = True
-            finally:
-                if os.path.exists(hd_video_path):
-                    os.remove(hd_video_path)
-                    
-        # 2. To'g'ridan-to'g'ri video_url orqali yuklash
-        if not media_sent and content.get("video_url"):
-            v_res = requests.get(content["video_url"], timeout=40)
-            if v_res.status_code == 200:
-                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
-                    f.write(v_res.content)
-                    temp_v_path = f.name
+        # 1. HD Video yuklash (Reels/Video postlar uchun)
+        if row["media_type"] in ("reel", "video") or "/reel/" in post_url:
+            hd_video_path = _download_hd_video_ytdlp(post_url)
+            if hd_video_path and os.path.exists(hd_video_path):
                 try:
-                    with open(temp_v_path, 'rb') as v_file:
+                    with open(hd_video_path, 'rb') as v_file:
                         sent_msg = bot.send_video(
                             chat_id,
                             v_file,
@@ -769,13 +774,66 @@ def post_next_queued_item(chat_id=None, bot_token=None):
                         )
                     media_sent = True
                 finally:
-                    if os.path.exists(temp_v_path):
-                        os.remove(temp_v_path)
+                    if os.path.exists(hd_video_path):
+                        os.remove(hd_video_path)
                         
+            if not media_sent and video_direct_url:
+                v_res = requests.get(video_direct_url, timeout=40)
+                if v_res.status_code == 200:
+                    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+                        f.write(v_res.content)
+                        temp_v_path = f.name
+                    try:
+                        with open(temp_v_path, 'rb') as v_file:
+                            sent_msg = bot.send_video(
+                                chat_id,
+                                v_file,
+                                caption=telegram_caption,
+                                parse_mode="HTML" if telegram_caption else None,
+                                reply_markup=inline_kb,
+                                supports_streaming=True
+                            )
+                        media_sent = True
+                    finally:
+                        if os.path.exists(temp_v_path):
+                            os.remove(temp_v_path)
+                            
+        # 2. Rasm jo'natish (Statik rasm postlari uchun)
+        if not media_sent and (row.get("media_url") or row.get("img_url")):
+            img_url = row.get("media_url") or row.get("img_url")
+            try:
+                p_res = requests.get(img_url, timeout=30)
+                if p_res.status_code == 200:
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+                        f.write(p_res.content)
+                        temp_p_path = f.name
+                    try:
+                        with open(temp_p_path, 'rb') as p_file:
+                            sent_msg = bot.send_photo(
+                                chat_id,
+                                p_file,
+                                caption=telegram_caption,
+                                parse_mode="HTML" if telegram_caption else None,
+                                reply_markup=inline_kb
+                            )
+                        media_sent = True
+                    finally:
+                        if os.path.exists(temp_p_path):
+                            os.remove(temp_p_path)
+            except Exception as _pe:
+                print(f"[Photo Send Err]: {_pe}")
+                
+        # 3. Matnli xabar orqali jo'natish (oxirgi zaxira)
         if not media_sent:
-            raise Exception("Video faylini yuklab olib bo'lmadi yoki ushbu post video emas (faqat videolar jo'natiladi).")
+            sent_msg = bot.send_message(
+                chat_id,
+                telegram_caption or f"📢 Instagram: {post_url}",
+                reply_markup=inline_kb,
+                parse_mode="HTML" if telegram_caption else None
+            )
+            media_sent = True
             
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now_str = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
         msg_id_val = sent_msg.message_id if sent_msg else None
         cursor.execute("""
         UPDATE insta_posts_queue 
@@ -905,7 +963,6 @@ def post_next_youtube_video():
                 "success": False,
                 "error": yt_res.get("error")
             }
-            
     except Exception as e:
         conn.close()
         print(f"[YouTube Upload Queue Error]: {e}")
@@ -913,6 +970,7 @@ def post_next_youtube_video():
             "success": False,
             "error": str(e)
         }
+
 
 # ------------------------------------------------------------
 # 6. Statistics & Queue Control
@@ -939,7 +997,7 @@ def get_queue_stats():
     cursor.execute("SELECT COUNT(*) as yt_uploaded FROM insta_posts_queue WHERE youtube_uploaded = 1")
     yt_uploaded = cursor.fetchone()["yt_uploaded"]
     
-    cursor.execute("SELECT * FROM insta_posts_queue WHERE status = 'PENDING' AND (media_type IN ('reel', 'video') OR post_url LIKE '%/reel/%') ORDER BY id ASC LIMIT 1")
+    cursor.execute("SELECT * FROM insta_posts_queue WHERE status = 'PENDING' ORDER BY id ASC LIMIT 1")
     next_post = cursor.fetchone()
     
     cursor.execute("SELECT * FROM insta_posts_queue WHERE status = 'SENT' ORDER BY sent_at DESC LIMIT 1")
@@ -958,7 +1016,7 @@ def get_queue_stats():
     next_time_str = "Hozir (Navbatdagi siklda)"
     is_night_now = False
     
-    now = datetime.now()
+    now = get_uzb_now()
     now_hm = now.strftime("%H:%M")
     
     night_on = settings.get("night_mode_enabled", "1") == "1"
@@ -1035,7 +1093,7 @@ def delete_queue_item(post_id):
 
 
 def get_queue_items(page=1, limit=50, status=None, search=None):
-    """Navbatdagi postlarni sahifalash, hisoblangan aniq rejalashtirilgan vaqtlar va qidiruv bilan olish"""
+    """Navbatdagi postlarni sahifalash, Toshkent vaqti bo'yicha aniq rejalashtirilgan vaqtlar va qidiruv bilan olish"""
     init_insta_tables()
     page = max(1, int(page))
     limit = max(1, min(200, int(limit)))
@@ -1093,8 +1151,7 @@ def get_queue_items(page=1, limit=50, status=None, search=None):
     night_start_str = settings.get("night_mode_start", "00:00")
     night_end_str = settings.get("night_mode_end", "07:00")
     
-    from datetime import datetime, timedelta
-    now = datetime.now()
+    now = get_uzb_now()
     
     start_dt = now
     if last_post_str:
@@ -1108,7 +1165,7 @@ def get_queue_items(page=1, limit=50, status=None, search=None):
         except Exception:
             start_dt = now
             
-    # Har bir kutilayotgan postga aniq sana va soat belgilash (Misol: 21.08.2026 14:00, 15:00...)
+    # Har bir kutilayotgan postga Toshkent vaqti bo'yicha sana va soat belgilash
     curr_time = start_dt
     schedule_map = {}
     for pid in all_pending_ids:
@@ -1184,33 +1241,12 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
         media_sent = False
         sent_msg = None
         
-        # 1. HD Video yuklash (yt-dlp)
-        hd_video_path = _download_hd_video_ytdlp(post_url)
-        
-        if hd_video_path and os.path.exists(hd_video_path):
-            try:
-                with open(hd_video_path, 'rb') as v_file:
-                    sent_msg = bot.send_video(
-                        chat_id,
-                        v_file,
-                        caption=telegram_caption,
-                        parse_mode="HTML" if telegram_caption else None,
-                        reply_markup=inline_kb,
-                        supports_streaming=True
-                    )
-                media_sent = True
-            finally:
-                if os.path.exists(hd_video_path):
-                    os.remove(hd_video_path)
-                    
-        if not media_sent and video_direct_url:
-            v_res = requests.get(video_direct_url, timeout=40)
-            if v_res.status_code == 200:
-                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
-                    f.write(v_res.content)
-                    temp_v_path = f.name
+        # 1. HD Video yuklash (Reels/Video postlar uchun)
+        if row["media_type"] in ("reel", "video") or "/reel/" in post_url:
+            hd_video_path = _download_hd_video_ytdlp(post_url)
+            if hd_video_path and os.path.exists(hd_video_path):
                 try:
-                    with open(temp_v_path, 'rb') as v_file:
+                    with open(hd_video_path, 'rb') as v_file:
                         sent_msg = bot.send_video(
                             chat_id,
                             v_file,
@@ -1221,13 +1257,66 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
                         )
                     media_sent = True
                 finally:
-                    if os.path.exists(temp_v_path):
-                        os.remove(temp_v_path)
+                    if os.path.exists(hd_video_path):
+                        os.remove(hd_video_path)
                         
+            if not media_sent and video_direct_url:
+                v_res = requests.get(video_direct_url, timeout=40)
+                if v_res.status_code == 200:
+                    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+                        f.write(v_res.content)
+                        temp_v_path = f.name
+                    try:
+                        with open(temp_v_path, 'rb') as v_file:
+                            sent_msg = bot.send_video(
+                                chat_id,
+                                v_file,
+                                caption=telegram_caption,
+                                parse_mode="HTML" if telegram_caption else None,
+                                reply_markup=inline_kb,
+                                supports_streaming=True
+                            )
+                        media_sent = True
+                    finally:
+                        if os.path.exists(temp_v_path):
+                            os.remove(temp_v_path)
+                            
+        # 2. Rasm jo'natish (Statik rasm postlari uchun)
+        if not media_sent and (row.get("media_url") or row.get("img_url")):
+            img_url = row.get("media_url") or row.get("img_url")
+            try:
+                p_res = requests.get(img_url, timeout=30)
+                if p_res.status_code == 200:
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+                        f.write(p_res.content)
+                        temp_p_path = f.name
+                    try:
+                        with open(temp_p_path, 'rb') as p_file:
+                            sent_msg = bot.send_photo(
+                                chat_id,
+                                p_file,
+                                caption=telegram_caption,
+                                parse_mode="HTML" if telegram_caption else None,
+                                reply_markup=inline_kb
+                            )
+                        media_sent = True
+                    finally:
+                        if os.path.exists(temp_p_path):
+                            os.remove(temp_p_path)
+            except Exception as _pe:
+                print(f"[Photo Send Err]: {_pe}")
+                
+        # 3. Matnli xabar orqali jo'natish (oxirgi zaxira)
         if not media_sent:
-            raise Exception("Video faylini yuklab olib bo'lmadi yoki ushbu post video emas.")
+            sent_msg = bot.send_message(
+                chat_id,
+                telegram_caption or f"📢 Instagram: {post_url}",
+                reply_markup=inline_kb,
+                parse_mode="HTML" if telegram_caption else None
+            )
+            media_sent = True
             
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now_str = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
         msg_id_val = sent_msg.message_id if sent_msg else None
         cursor.execute("""
         UPDATE insta_posts_queue 
@@ -1246,7 +1335,6 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
             "post_url": post_url,
             "caption": clean_caption[:80]
         }
-        
     except Exception as e:
         err_msg = str(e)
         cursor.execute("""
@@ -1262,4 +1350,5 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
             "post_id": post_id,
             "error": err_msg
         }
+
 

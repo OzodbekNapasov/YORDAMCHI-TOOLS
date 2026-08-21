@@ -12,7 +12,8 @@ from services.insta_poster_service import (
     post_next_queued_item,
     post_next_youtube_video,
     get_youtube_schedule_times,
-    get_queue_stats
+    get_queue_stats,
+    get_uzb_now
 )
 
 _SCHEDULER_THREAD = None
@@ -20,7 +21,7 @@ _IS_RUNNING = False
 
 def run_scheduler_tick():
     """Telegram va YouTube jadvalini 1 marta tekshirib, vaqti kelgan bo'lsa post chiqarish"""
-    now = datetime.now()
+    now = get_uzb_now()
     now_hm = now.strftime("%H:%M")
     today_date = now.strftime("%Y-%m-%d")
     results = {"checked_at": now.strftime("%Y-%m-%d %H:%M:%S"), "tg_posted": False, "yt_posted": False}
