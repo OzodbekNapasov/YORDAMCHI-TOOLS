@@ -11,11 +11,5 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/instagram/cron_tick",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
