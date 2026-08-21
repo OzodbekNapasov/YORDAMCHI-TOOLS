@@ -2484,6 +2484,9 @@ def api_instagram_settings():
                 "bot_token",
                 "auto_schedule_enabled",
                 "interval_minutes",
+                "night_mode_enabled",
+                "night_mode_start",
+                "night_mode_end",
                 "youtube_auto_upload",
                 "youtube_schedule_enabled",
                 "youtube_schedule_times"

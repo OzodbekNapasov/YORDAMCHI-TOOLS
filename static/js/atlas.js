@@ -5655,7 +5655,7 @@ const ATLAS = {
   // ============================================================
   // 15. INSTAGRAM POSTLARINI SINXRONLASH & AUTOPOSTER
   // ============================================================
-  async loadInstagram(viewport) {
+  async loadInstagram(viewport, initialTab = 'queue') {
     viewport.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;min-height:300px;">
         <div class="spinner"></div>
@@ -5692,7 +5692,7 @@ const ATLAS = {
     const ytAuto = settings.youtube_auto_upload === '1';
     const currentUsername = settings.insta_username || 'shahrisabz_t_t_uz';
 
-    let activeTab = 'queue'; // 'queue' | 'youtube' | 'settings'
+    let activeTab = initialTab || 'queue'; // 'queue' | 'youtube' | 'settings'
     let currentFilter = 'ALL';
     let currentPage = 1;
     let currentSearch = '';
@@ -6210,6 +6210,14 @@ const ATLAS = {
 
     // TAB 2: YOUTUBE SHORTS & REK VAQTLARI
     const renderYouTubeTab = (container) => {
+      const timePurposes = {
+        '09:00': 'Ertalabki auditoriya',
+        '12:00': 'Tushlik vaqti',
+        '15:00': 'Kunning ikkinchi yarmi',
+        '18:30': 'Eng faol davrlardan biri',
+        '21:00': 'Kechki auditoriya'
+      };
+
       container.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:20px;">
           <!-- REK VAQTLARI BOSHQARUVI -->
@@ -6221,34 +6229,62 @@ const ATLAS = {
               Bot har kuni quyida belgilangan vaqtlarda Instagram Reels videolarini avtomatik YouTube Shorts'ga joylab boradi.
             </div>
 
-            <!-- TIMES CHIPS CONTAINER -->
-            <div id="yt-times-chip-box" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
-              ${ytTimes.length === 0 ? `<div style="color:rgba(255,255,255,0.4);font-size:13px;">Hozircha rek vaqtlari kiritilmagan.</div>` : ''}
-              ${ytTimes.map(timeStr => `
-                <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(244,63,94,0.18);border:1px solid rgba(244,63,94,0.4);padding:8px 14px;border-radius:var(--radius-md);">
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#ffffff;">
-                    ⏰ ${timeStr}
-                  </span>
-                  <button class="btn-icon btn-sm btn-delete-yt-time" data-time="${timeStr}" title="${timeStr} vaqtini o'chirish" style="color:#f87171;padding:0;">
-                    ${this.icons.close}
-                  </button>
-                </div>
-              `).join('')}
+            <!-- JADVAL JADVALLI RO'YXAT -->
+            <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border-glass);border-radius:var(--radius-md);overflow:hidden;margin-bottom:20px;">
+              <table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px;">
+                <thead>
+                  <tr style="background:rgba(255,255,255,0.04);border-bottom:1px solid var(--border-glass);">
+                    <th style="padding:10px 14px;width:40px;color:rgba(255,255,255,0.5);">№</th>
+                    <th style="padding:10px 14px;color:rgba(255,255,255,0.7);font-weight:600;">Joylash vaqti</th>
+                    <th style="padding:10px 14px;color:rgba(255,255,255,0.7);font-weight:600;">Maqsad</th>
+                    <th style="padding:10px 14px;text-align:right;color:rgba(255,255,255,0.5);width:60px;">Amallar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${ytTimes.length === 0 ? `
+                    <tr>
+                      <td colspan="4" style="padding:24px;text-align:center;color:rgba(255,255,255,0.4);">
+                        Hozircha vaqtlar belgilanmagan. Quyidagi "Standart (5 ta)" tugmasini bosing.
+                      </td>
+                    </tr>
+                  ` : ytTimes.map((timeStr, idx) => {
+                    const purpose = timePurposes[timeStr] || 'Rejalashtirilgan rek sloti';
+                    return `
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s;" class="hover-row">
+                        <td style="padding:10px 14px;color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;">${idx + 1}</td>
+                        <td style="padding:10px 14px;">
+                          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.35);padding:4px 10px;border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-weight:700;color:#ffffff;font-size:13px;">
+                            ⏰ ${timeStr}
+                          </span>
+                        </td>
+                        <td style="padding:10px 14px;color:rgba(255,255,255,0.85);font-size:13px;">
+                          ${purpose}
+                        </td>
+                        <td style="padding:10px 14px;text-align:right;">
+                          <button type="button" class="btn-icon btn-sm btn-delete-yt-time" data-time="${timeStr}" title="${timeStr} vaqtini o'chirish" style="color:#f87171;padding:4px;border:none;background:transparent;cursor:pointer;">
+                            ${this.icons.close}
+                          </button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
             </div>
 
             <!-- ADD TIME FORM -->
-            <form id="add-yt-time-form" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
-              <input type="text" id="new-yt-time-input" class="input-control" placeholder="Format: 14:30 yoki 20:00" style="max-width:220px;" required>
-              <button type="submit" class="btn-sm btn-primary">
+            <form id="add-yt-time-form" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+              <input type="text" id="new-yt-time-input" class="input-control font-mono" placeholder="Format: 14:30 yoki 20:00" style="max-width:200px;" required>
+              <button type="submit" class="btn-sm btn-primary" id="btn-add-yt-time-submit">
                 ${this.icons.plus} <span>Qo'shish</span>
               </button>
-              <button type="button" class="btn-sm btn-secondary" id="btn-reset-yt-times" title="Standart 09:00, 13:00, 19:30 ga qaytarish">
-                Standart
+              <button type="button" class="btn-sm btn-secondary" id="btn-reset-yt-times" title="5 ta standart vaqtga (09:00, 12:00, 15:00, 18:30, 21:00) qaytarish">
+                ${this.icons.refresh} <span>Standart (5 ta)</span>
               </button>
             </form>
 
-            <div style="padding:12px;background:rgba(0,203,169,0.08);border:1px solid rgba(0,203,169,0.2);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.75);">
-              💡 <b>Tavsiya:</b> Kun davomida eng faol organik tarqalish vaqtlari: <code>09:00</code> (Ertalab), <code>13:00</code> (Tushlik), <code>19:30</code> (Kechki dam olish vaqti).
+            <div style="padding:12px;background:rgba(0,203,169,0.08);border:1px solid rgba(0,203,169,0.2);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;">
+              💡 <b>Standart tavsiya etilgan 5 ta vaqt:</b> <code>09:00</code> (Ertalab), <code>12:00</code> (Tushlik), <code>15:00</code> (Kunning 2-yarmi), <code>18:30</code> (Eng faol davr), <code>21:00</code> (Kechki auditoriya).
             </div>
           </div>
 
@@ -6309,10 +6345,11 @@ const ATLAS = {
         e.preventDefault();
         const input = document.getElementById('new-yt-time-input');
         const timeVal = input.value.trim();
+        if (!timeVal) return;
         const res = await this.api('/api/instagram/youtube/schedule/add', 'POST', { time: timeVal });
         if (res && res.success) {
           this.toast(`Vaqt qo'shildi: ${timeVal}`, 'success');
-          this.loadInstagram(viewport);
+          this.loadInstagram(viewport, 'youtube');
         } else {
           this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
         }
@@ -6320,12 +6357,14 @@ const ATLAS = {
 
       // Delete time listener
       container.querySelectorAll('.btn-delete-yt-time').forEach(btn => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           const t = btn.dataset.time;
           const res = await this.api('/api/instagram/youtube/schedule/remove', 'POST', { time: t });
           if (res && res.success) {
             this.toast(`${t} vaqti o'chirildi`, 'info');
-            this.loadInstagram(viewport);
+            this.loadInstagram(viewport, 'youtube');
           } else {
             this.toast((res && res.error) || 'Xatolik', 'error');
           }
@@ -6336,8 +6375,8 @@ const ATLAS = {
       document.getElementById('btn-reset-yt-times')?.addEventListener('click', async () => {
         const res = await this.api('/api/instagram/youtube/schedule/reset', 'POST');
         if (res && res.success) {
-          this.toast('YouTube vaqtlari standart holatga qaytarildi', 'success');
-          this.loadInstagram(viewport);
+          this.toast('YouTube vaqtlari 5 ta standart vaqtga qaytarildi', 'success');
+          this.loadInstagram(viewport, 'youtube');
         }
       });
 
@@ -6347,7 +6386,7 @@ const ATLAS = {
         const res = await this.api('/api/instagram/settings', 'POST', { youtube_auto_upload: newVal });
         if (res && res.success) {
           this.toast(`YouTube avto-yuklash ${newVal === '1' ? 'yoqildi' : 'o\'chirildi'}`, 'success');
-          this.loadInstagram(viewport);
+          this.loadInstagram(viewport, 'youtube');
         }
       });
 
@@ -6356,7 +6395,7 @@ const ATLAS = {
         const res = await this.api('/api/instagram/settings', 'POST', { youtube_schedule_enabled: newVal });
         if (res && res.success) {
           this.toast(`YouTube jadvali ${newVal === '1' ? 'yoqildi' : 'o\'chirildi'}`, 'success');
-          this.loadInstagram(viewport);
+          this.loadInstagram(viewport, 'youtube');
         }
       });
 
@@ -6367,7 +6406,7 @@ const ATLAS = {
         const res = await this.api('/api/instagram/post_youtube', 'POST');
         if (res && res.success) {
           this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
-          this.loadInstagram(viewport);
+          this.loadInstagram(viewport, 'youtube');
         } else {
           this.toast((res && res.error) || (res && res.message) || 'Yuklashda xatolik', 'error');
           btn.disabled = false;
@@ -6378,13 +6417,17 @@ const ATLAS = {
 
     // TAB 3: SINXRONLASH SOZLAMALARI
     const renderSettingsTab = (container) => {
+      const nightOn = settings.night_mode_enabled !== '0'; // default true
+      const nightStart = settings.night_mode_start || '00:00';
+      const nightEnd = settings.night_mode_end || '07:00';
+
       container.innerHTML = `
-        <div class="glass-card" style="max-width:800px;margin:0 auto;">
+        <div class="glass-card" style="max-width:850px;margin:0 auto;">
           <div class="card-title" style="display:flex;align-items:center;gap:8px;">
             ${this.icons.settings} Instagram & AutoPoster Tizim Sozlamalari
           </div>
           <div class="card-subtitle" style="margin-bottom:20px;">
-            Instagram profili, Telegram maqsadli kanali va avtomatik post yuborish oraliqlarini sozlash
+            Instagram profili, Telegram maqsadli kanali, post oraliqlari va tungi rejimni sozlash
           </div>
 
           <form id="insta-settings-form">
@@ -6423,7 +6466,8 @@ const ATLAS = {
               </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border-radius:var(--radius-md);border:1px solid var(--border-glass);">
+            <!-- TELEGRAM INTERVAL & GENERAL TOGGLES -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:var(--radius-md);border:1px solid var(--border-glass);">
               <div>
                 <label class="form-label">Telegram Avto-yuborish Oralig'i (Daqiqalarda)</label>
                 <div class="input-container">
@@ -6448,8 +6492,40 @@ const ATLAS = {
               </div>
             </div>
 
+            <!-- TELEGRAM TUNGI REJIM (QUIET HOURS: 00:00 - 07:00) -->
+            <div style="margin-bottom:20px;padding:16px;background:rgba(99,102,241,0.07);border-radius:var(--radius-md);border:1px solid rgba(99,102,241,0.25);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div>
+                  <div style="font-size:14px;font-weight:700;color:#ffffff;display:flex;align-items:center;gap:6px;">
+                    🌙 Telegram Tungi Sokinlik Rejimi
+                  </div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">
+                    Tungi vaqtda obunachilarni bezovta qilmaslik uchun Telegramga post yuborishni to'xtatib turish
+                  </div>
+                </div>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#ffffff;">
+                  <input type="checkbox" id="sett-night-mode-chk" ${nightOn ? 'checked' : ''} style="width:18px;height:18px;accent-color:#818cf8;">
+                  <span style="font-weight:600;">Rejimni yoqish</span>
+                </label>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center;">
+                <div>
+                  <label class="form-label" style="font-size:12px;">Boshlanish vaqti</label>
+                  <input type="text" id="sett-night-start" class="input-control font-mono" value="${nightStart}" placeholder="00:00" style="max-width:140px;" required>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:12px;">Tugash vaqti (Ertalab davom etadi)</label>
+                  <input type="text" id="sett-night-end" class="input-control font-mono" value="${nightEnd}" placeholder="07:00" style="max-width:140px;" required>
+                </div>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:8px;">
+                ℹ️ Belgilangan oraliqda (<b>${nightStart} dan ${nightEnd} gacha</b>) bot hech qanday post chiqarmaydi va ertalab <b>${nightEnd}</b> dan boshlab avtomatik davom ettiradi.
+              </div>
+            </div>
+
             <div style="display:flex;justify-content:flex-end;gap:10px;">
-              <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.loadInstagram(document.getElementById('content-viewport'))">
+              <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.loadInstagram(document.getElementById('content-viewport'), 'settings')">
                 Bekor qilish
               </button>
               <button type="submit" class="btn-sm btn-primary">
@@ -6468,13 +6544,16 @@ const ATLAS = {
           bot_token: document.getElementById('sett-bot-token').value.trim(),
           interval_minutes: document.getElementById('sett-interval').value.trim(),
           auto_schedule_enabled: document.getElementById('sett-tg-auto-chk').checked ? '1' : '0',
-          youtube_auto_upload: document.getElementById('sett-yt-auto-chk').checked ? '1' : '0'
+          youtube_auto_upload: document.getElementById('sett-yt-auto-chk').checked ? '1' : '0',
+          night_mode_enabled: document.getElementById('sett-night-mode-chk').checked ? '1' : '0',
+          night_mode_start: document.getElementById('sett-night-start').value.trim() || '00:00',
+          night_mode_end: document.getElementById('sett-night-end').value.trim() || '07:00'
         };
 
         const res = await this.api('/api/instagram/settings', 'POST', payload);
         if (res && res.success) {
-          this.toast("Instagram sozlamalari muvaffaqiyatli saqlandi!", 'success');
-          this.loadInstagram(viewport);
+          this.toast("Instagram sozlamalari va tungi rejim muvaffaqiyatli saqlandi!", 'success');
+          this.loadInstagram(viewport, 'settings');
         } else {
           this.toast((res && res.error) || 'Saqlashda xatolik', 'error');
         }

@@ -29,30 +29,46 @@ def _scheduler_loop():
         today_date = now.strftime("%Y-%m-%d")
         
         # ------------------------------------------------------------
-        # 1. Telegram Rejali Yuborish (Interval bo'yicha, masalan har 60 daqiqa)
+        # 1. Telegram Rejali Yuborish (Interval bo'yicha + Tungi rejim)
         # ------------------------------------------------------------
         try:
             tg_enabled = get_setting("auto_schedule_enabled", "0") == "1"
             if tg_enabled:
-                interval_min = int(get_setting("interval_minutes", "60"))
-                last_post_str = get_setting("last_post_time", "")
-                
-                should_post_tg = False
-                if not last_post_str:
-                    should_post_tg = True
+                # Tungi rejim tekshiruvi (Standart: 00:00 dan 07:00 gacha sokinlik)
+                night_mode_on = get_setting("night_mode_enabled", "1") == "1"
+                night_start = get_setting("night_mode_start", "00:00")
+                night_end = get_setting("night_mode_end", "07:00")
+
+                is_night = False
+                if night_mode_on:
+                    if night_start <= night_end:
+                        is_night = (night_start <= now_hm < night_end)
+                    else:
+                        is_night = (now_hm >= night_start or now_hm < night_end)
+
+                if is_night:
+                    # Tungi vaqtda post yuborilmaydi
+                    pass
                 else:
-                    try:
-                        last_post_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
-                        if (now - last_post_dt).total_seconds() >= interval_min * 60:
-                            should_post_tg = True
-                    except Exception:
-                        should_post_tg = True
-                        
-                if should_post_tg:
-                    print(f"[Telegram Scheduler]: Rejali post yuborilmoqda ({interval_min} daqiqa oraliq)...")
-                    tg_res = post_next_queued_item()
-                    print(f"[Telegram Scheduler Natijasi]: {tg_res}")
+                    interval_min = int(get_setting("interval_minutes", "60"))
+                    last_post_str = get_setting("last_post_time", "")
                     
+                    should_post_tg = False
+                    if not last_post_str:
+                        should_post_tg = True
+                    else:
+                        try:
+                            last_post_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
+                            if (now - last_post_dt).total_seconds() >= interval_min * 60:
+                                should_post_tg = True
+                        except Exception:
+                            should_post_tg = True
+                            
+                    if should_post_tg:
+                        print(f"[Telegram Scheduler]: Rejali post yuborilmoqda ({interval_min} daqiqa oraliq)...")
+                        tg_res = post_next_queued_item()
+                        print(f"[Telegram Scheduler Natijasi]: {tg_res}")
+                        
         except Exception as e:
             print(f"[Telegram Scheduler Error]: {e}")
             

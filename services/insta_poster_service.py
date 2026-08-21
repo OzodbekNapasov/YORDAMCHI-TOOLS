@@ -230,19 +230,27 @@ def clean_caption_text(raw_caption, username=None):
 # 3. YouTube Shorts Jadval Boshqaruvi
 # ------------------------------------------------------------
 
+DEFAULT_YOUTUBE_SCHEDULE_TIMES = "09:00,12:00,15:00,18:30,21:00"
+
 def get_youtube_schedule_times():
     """Sozlangan YouTube vaqtlarini ro'yxat ko'rinishida olish"""
-    raw = get_setting("youtube_schedule_times", "09:00,13:00,19:30")
+    raw = get_setting("youtube_schedule_times", DEFAULT_YOUTUBE_SCHEDULE_TIMES)
     times = [t.strip() for t in raw.split(",") if t.strip()]
-    return sorted(list(set(times)))
+    # Normalize times to HH:MM format
+    normalized = []
+    for t in times:
+        m = re.match(r"^([01]?\d|2[0-3]):([0-5]\d)$", t)
+        if m:
+            normalized.append(f"{int(m.group(1)):02d}:{int(m.group(2)):02d}")
+    return sorted(list(set(normalized)))
 
 
 def add_youtube_schedule_time(time_str):
     """Yangi vaqt qo'shish (Format: HH:MM)"""
-    time_str = time_str.strip()
+    time_str = str(time_str).strip()
     match = re.match(r"^([01]?\d|2[0-3]):([0-5]\d)$", time_str)
     if not match:
-        return False, "Noto'g'ri format! Vaqtni '09:30' yoki '18:00' formatida kiriting."
+        return False, "Noto'g'ri format! Vaqtni '14:30' yoki '20:00' formatida kiriting."
     
     hh, mm = match.groups()
     formatted = f"{int(hh):02d}:{int(mm):02d}"
@@ -252,7 +260,7 @@ def add_youtube_schedule_time(time_str):
         return False, f"Ushbu vaqt ({formatted}) allaqachon jadvalda mavjud!"
         
     current_times.append(formatted)
-    current_times = sorted(current_times)
+    current_times = sorted(list(set(current_times)))
     set_setting("youtube_schedule_times", ",".join(current_times))
     return True, formatted
 
@@ -260,7 +268,11 @@ def add_youtube_schedule_time(time_str):
 def remove_youtube_schedule_time(time_str):
     """Vaqtni jadvaldan o'chirish"""
     current_times = get_youtube_schedule_times()
-    formatted = time_str.strip()
+    time_str = str(time_str).strip()
+    
+    m = re.match(r"^([01]?\d|2[0-3]):([0-5]\d)$", time_str)
+    formatted = f"{int(m.group(1)):02d}:{int(m.group(2)):02d}" if m else time_str
+    
     if formatted in current_times:
         current_times.remove(formatted)
         set_setting("youtube_schedule_times", ",".join(current_times))
@@ -269,9 +281,9 @@ def remove_youtube_schedule_time(time_str):
 
 
 def reset_youtube_schedule_times():
-    """Standart YouTube vaqtlariga qaytarish (09:00, 13:00, 19:30)"""
-    set_setting("youtube_schedule_times", "09:00,13:00,19:30")
-    return ["09:00", "13:00", "19:30"]
+    """Standart 5 ta YouTube vaqtlariga qaytarish (09:00, 12:00, 15:00, 18:30, 21:00)"""
+    set_setting("youtube_schedule_times", DEFAULT_YOUTUBE_SCHEDULE_TIMES)
+    return ["09:00", "12:00", "15:00", "18:30", "21:00"]
 
 # ------------------------------------------------------------
 # 4. Instagram Profile Scraper (Playwright)
