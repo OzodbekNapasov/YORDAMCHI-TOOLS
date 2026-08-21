@@ -6150,8 +6150,11 @@ const ATLAS = {
               </thead>
               <tbody>
                 ${items.map((item, idx) => {
+                  const isTgSent = item.status === 'SENT';
+                  const isYtUploaded = item.youtube_uploaded == 1 || item.youtube_uploaded === true || item.youtube_uploaded === '1' || Boolean(item.youtube_url);
+
                   let tgBadge = '';
-                  if (item.status === 'SENT') {
+                  if (isTgSent) {
                     tgBadge = `<span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);display:inline-flex;align-items:center;gap:4px;">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> TG: Yuborildi
                     </span>`;
@@ -6166,8 +6169,8 @@ const ATLAS = {
                   }
 
                   let ytBadge = '';
-                  if (item.youtube_uploaded === 1) {
-                    ytBadge = `<a href="${item.youtube_url || '#'}" target="_blank" class="badge" style="background:rgba(244,63,94,0.2);color:#fb7185;border:1px solid rgba(244,63,94,0.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="YouTube Shorts da ko'rish">
+                  if (isYtUploaded) {
+                    ytBadge = `<a href="${item.youtube_url || 'https://www.youtube.com'}" target="_blank" class="badge" style="background:rgba(244,63,94,0.2);color:#fb7185;border:1px solid rgba(244,63,94,0.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="YouTube Shorts da ko'rish">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT: Yuklandi
                     </a>`;
                   } else {
@@ -6205,12 +6208,26 @@ const ATLAS = {
                       </td>
                       <td style="text-align:right;">
                         <div style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">
-                          <button class="btn-sm btn-primary btn-post-single-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" title="Telegram kanalga hozir chiqarish">
-                            ${this.icons.send} <span>TG</span>
-                          </button>
-                          <button class="btn-sm btn-secondary btn-post-single-yt-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);" title="YouTube Shorts ga hozir yuklash">
-                            ${this.icons.youtube} <span>YT</span>
-                          </button>
+                          ${isTgSent ? `
+                            <button class="btn-sm" style="padding:4px 8px;font-size:11px;opacity:0.55;cursor:not-allowed;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);" disabled title="Telegramga yuborilgan">
+                              ✅ <span>TG</span>
+                            </button>
+                          ` : `
+                            <button class="btn-sm btn-primary btn-post-single-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" title="Telegram kanalga hozir chiqarish">
+                              ${this.icons.send} <span>TG</span>
+                            </button>
+                          `}
+
+                          ${isYtUploaded ? `
+                            <button class="btn-sm" style="padding:4px 8px;font-size:11px;opacity:0.55;cursor:not-allowed;background:rgba(244,63,94,0.15);color:#fb7185;border:1px solid rgba(244,63,94,0.3);" disabled title="YouTube Shorts ga yuklangan">
+                              ✅ <span>YT</span>
+                            </button>
+                          ` : `
+                            <button class="btn-sm btn-secondary btn-post-single-yt-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);" title="YouTube Shorts ga hozir yuklash">
+                              ${this.icons.youtube} <span>YT</span>
+                            </button>
+                          `}
+
                           <button class="btn-icon btn-sm btn-delete-single-action" data-id="${item.id}" title="Navbatdan o'chirish" style="color:#f87171;">
                             ${this.icons.trash}
                           </button>
