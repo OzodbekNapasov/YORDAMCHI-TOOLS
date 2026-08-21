@@ -911,11 +911,12 @@ def get_all_settings():
 # ------------------------------------------------------------
 
 def get_post_inline_keyboard(post_id, post_url, likes_count=0):
-    """Post tagidagi Like va Instagramga o'tish inline tugmalari"""
-    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
-    btn_like = telebot.types.InlineKeyboardButton(f"❤️ {likes_count}", callback_data=f"insta_like_{post_id}")
+    """Post tagidagi Like va Instagramga o'tish inline tugmalari (Alohida-alohida qatorlarda)"""
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
     btn_link = telebot.types.InlineKeyboardButton("🔗 Instagramda ko‘rish", url=post_url)
-    markup.add(btn_like, btn_link)
+    btn_like = telebot.types.InlineKeyboardButton(f"❤️ {likes_count}", callback_data=f"insta_like_{post_id}")
+    markup.add(btn_link)
+    markup.add(btn_like)
     return markup
 
 
