@@ -58,14 +58,16 @@ DEFAULT_SEEDED_POSTS = [
         "url": "https://www.instagram.com/reel/DbsKZ2qICdh",
         "media_type": "reel",
         "post_date": "2026-08-06",
-        "caption": "🎓 Kelajagingizni bugundan boshlang!\n\n👩‍⚕️ Davlat namunasidagi diplom asosida zamonaviy tibbiy kasbni egallang.\n\n✅ Hamshiralik\n✅ Feldsherlik\n✅ Farmatsiya\n\n📚 Qulay to’lov imkoniyatlari\n👨‍🏫 Tajribali ustozlar\n💼 Bitirgach ish topish imkoniyatini oshiruvchi amaliy ta’lim\n\n📍 Shahrisabz tibbiyot texnikumi\n\n📞 Batafsil ma’lumot va ro’yxatdan o’tish:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n⏳ Qabul davom etmoqda. Joylar cheklangan — hoziroq murojaat qiling!"
+        "caption": "🎓 Kelajagingizni bugundan boshlang!\n\n👩‍⚕️ Davlat namunasidagi diplom asosida zamonaviy tibbiy kasbni egallang.\n\n✅ Hamshiralik\n✅ Feldsherlik\n✅ Farmatsiya\n\n📚 Qulay to’lov imkoniyatlari\n👨‍🏫 Tajribali ustozlar\n💼 Bitirgach ish topish imkoniyatini oshiruvchi amaliy ta’lim\n\n📍 Shahrisabz tibbiyot texnikumi\n\n📞 Batafsil ma’lumot va ro’yxatdan o’tish:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n⏳ Qabul davom etmoqda. Joylar cheklangan — hoziroq murojaat qiling!",
+        "media_url": ""
     },
     {
         "shortcode": "DbyU4H_oLZr",
         "url": "https://www.instagram.com/reel/DbyU4H_oLZr",
         "media_type": "reel",
         "post_date": "2026-08-08",
-        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n🩺Davolash ishi\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!"
+        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n🩺Davolash ishi\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!",
+        "media_url": ""
     },
     {
         "shortcode": "Db0U9ivIcwC",
@@ -80,48 +82,738 @@ DEFAULT_SEEDED_POSTS = [
         "url": "https://www.instagram.com/reel/Db-ssJeIyZh",
         "media_type": "reel",
         "post_date": "2026-08-13",
-        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMIDA QABUL DAVOM ETMOQDA! 🩺\n\nKelajakdagi kasbingizni bugundan tanlang! 💙\nSifatli ta’lim, zamonaviy bilim va tibbiyot sohasida mustahkam kelajak sari bir qadam! 👩‍⚕️👨‍⚕️\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n✨ Qabul davom etmoqda! Shoshiling, o‘z o‘rningizni band qiling!"
+        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMIDA QABUL DAVOM ETMOQDA! 🩺\n\nKelajakdagi kasbingizni bugundan tanlang! 💙\nSifatli ta’lim, zamonaviy bilim va tibbiyot sohasida mustahkam kelajak sari bir qadam! 👩‍⚕️👨‍⚕️\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n✨ Qabul davom etmoqda! Shoshiling, o‘z o‘rningizni band qiling!",
+        "media_url": ""
     },
     {
         "shortcode": "DcBekL6Omao",
         "url": "https://www.instagram.com/reel/DcBekL6Omao",
         "media_type": "reel",
         "post_date": "2026-08-14",
-        "caption": "📚 3 OYLIK HAMSHIRALIK KURSI\n\n🩺 Shahrisabz tibbiyot texnikumida 3 oylik hamshiralik kursiga qabul davom etmoqda!\n\n🎓 Zamonaviy bilim va amaliy ko‘nikmalar\n👩‍⚕️ Tajribali mutaxassislardan ta’lim\n📜 Kurs yakunida rasmiy sertifikat\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n\nJoylar soni cheklangan! Hoziroq ro'yxatdan o'ting."
+        "caption": "📚 3 OYLIK HAMSHIRALIK KURSI\n\n🩺 Shahrisabz tibbiyot texnikumida 3 oylik hamshiralik kursiga qabul davom etmoqda!\n\n🎓 Zamonaviy bilim va amaliy ko‘nikmalar\n👩‍⚕️ Tajribali mutaxassislardan ta’lim\n📜 Kurs yakunida rasmiy sertifikat\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n\nJoylar soni cheklangan! Hoziroq ro'yxatdan o'ting.",
+        "media_url": ""
     },
     {
         "shortcode": "DcDX1cOoIoX",
         "url": "https://www.instagram.com/reel/DcDX1cOoIoX",
         "media_type": "reel",
         "post_date": "2026-08-15",
-        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 97 266 20 73\n+998 88 260 20 73\n\n📍 Shahrisabz tibbiyot texnikumi"
+        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 97 266 20 73\n+998 88 260 20 73\n\n📍 Shahrisabz tibbiyot texnikumi",
+        "media_url": ""
     },
     {
         "shortcode": "DcIsWQ5IT8b",
         "url": "https://www.instagram.com/reel/DcIsWQ5IT8b",
         "media_type": "reel",
         "post_date": "2026-08-17",
-        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 88 260 20 73\n+998 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi"
+        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 88 260 20 73\n+998 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi",
+        "media_url": ""
     },
     {
         "shortcode": "DcLj3zwqODC",
         "url": "https://www.instagram.com/reel/DcLj3zwqODC",
         "media_type": "reel",
         "post_date": "2026-08-18",
-        "caption": "📚 Tibbiyotda o‘qishni xohlayapsizmi? 🩺\nUnda bu video aynan siz uchun! ❤️\n\n📍 Shahrisabz tibbiyot texnikumi — kelajakdagi kasbingiz sari ishonchli qadam! 🎓\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73\n\n❤️ Bu videoni tibbiyotda o‘qishni xohlayotgan do‘stingizga yuboring!"
+        "caption": "📚 Tibbiyotda o‘qishni xohlayapsizmi? 🩺\nUnda bu video aynan siz uchun! ❤️\n\n📍 Shahrisabz tibbiyot texnikumi — kelajakdagi kasbingiz sari ishonchli qadam! 🎓\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73\n\n❤️ Bu videoni tibbiyotda o‘qishni xohlayotgan do‘stingizga yuboring!",
+        "media_url": ""
     },
     {
         "shortcode": "DcLkGzAqbz9",
         "url": "https://www.instagram.com/reel/DcLkGzAqbz9",
         "media_type": "reel",
         "post_date": "2026-08-18",
-        "caption": "🩺 Bugun kasb tanlaysiz — ertaga shu kasb bilan daromad topasiz! 🎓✨\n\nKelajagingiz uchun to‘g‘ri tanlov qiling!\n🏥 Shahrisabz tibbiyot texnikumi — bilim, kasb va kelajak sari ishonchli qadam! ❤️\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73"
+        "caption": "🩺 Bugun kasb tanlaysiz — ertaga shu kasb bilan daromad topasiz! 🎓✨\n\nKelajagingiz uchun to‘g‘ri tanlov qiling!\n🏥 Shahrisabz tibbiyot texnikumi — bilim, kasb va kelajak sari ishonchli qadam! ❤️\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSt44CRiLZm",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DSt44CRiLZm",
+        "media_type": "post",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVnNapxCFwV",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DVnNapxCFwV",
+        "media_type": "post",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DRjbVIVCKY4",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRjbVIVCKY4",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DRodxW9iPAr",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRodxW9iPAr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DRtp7ONiAtK",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRtp7ONiAtK",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DRy5jtWiId5",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRy5jtWiId5",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DR6hnfsCFyT",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DR6hnfsCFyT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSE-3rGiKBm",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSE-3rGiKBm",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSJ8o_MCK6L",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSJ8o_MCK6L",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSPNK1QiLHZ",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSPNK1QiLHZ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSUShSniPWi",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSUShSniPWi",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSZZK5-iGaQ",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSZZK5-iGaQ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSeyEF-iD-F",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSeyEF-iD-F",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSjeW5QCCWM",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSjeW5QCCWM",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSpAFnBCKqm",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSpAFnBCKqm",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSr8JAwiIrD",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSr8JAwiIrD",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DSwyPTkiGXT",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSwyPTkiGXT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DS4io8miA5G",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DS4io8miA5G",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTCi_cJCKgb",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTCi_cJCKgb",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTHudhLiEJT",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTHudhLiEJT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTNEIiLCBPn",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTNEIiLCBPn",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTVcl6SCM8c",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTVcl6SCM8c",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTZ6oL_iF_9",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTZ6oL_iF_9",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTfs3bGCEpw",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTfs3bGCEpw",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTkQ2h0CGiL",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTkQ2h0CGiL",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DTsk6bBiMni",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTsk6bBiMni",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DT5ZwpSCPP5",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DT5ZwpSCPP5",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DT-zcCLiB8H",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DT-zcCLiB8H",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUAQjBGCB4A",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUAQjBGCB4A",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUFqF5JCCaH",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUFqF5JCCaH",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUNkpDriCCw",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUNkpDriCCw",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUTJbgRCKCG",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUTJbgRCKCG",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUXtJcICKwZ",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUXtJcICKwZ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUfO8fKiKKO",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUfO8fKiKKO",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUpmMSWiM6Z",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUpmMSWiM6Z",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUtKLNjCMdN",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUtKLNjCMdN",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DUx6qpGCHkF",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUx6qpGCHkF",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DU2t0CjCHe3",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DU2t0CjCHe3",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DU54oq3CO87",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DU54oq3CO87",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVIjRREiIrl",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVIjRREiIrl",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVNoH20CPvf",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVNoH20CPvf",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVVe3uRCEFb",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVVe3uRCEFb",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVdIhEDiNIt",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVdIhEDiNIt",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVizuydiPhQ",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVizuydiPhQ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVp7_HiiDbt",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVp7_HiiDbt",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DVvOB48iNtB",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVvOB48iNtB",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DV0kxwXiOZr",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DV0kxwXiOZr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DV6NKXpiEir",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DV6NKXpiEir",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DWBZI4FiOfr",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWBZI4FiOfr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DWTpURNCDlO",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWTpURNCDlO",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DWYYWK5javA",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWYYWK5javA",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DWgUzd1CFet",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWgUzd1CFet",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DWlYAA_iMdS",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWlYAA_iMdS",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DWtGYcHCIDC",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWtGYcHCIDC",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DW4B346iBAj",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DW4B346iBAj",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DXW5UTACBgc",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXW5UTACBgc",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DXcCaxSiKsd",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXcCaxSiKsd",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DXrm0raiBPy",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXrm0raiBPy",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DXzVIPBIVdy",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXzVIPBIVdy",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DX3Qge2IbY7",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DX3Qge2IbY7",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYANijgofN1",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYANijgofN1",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYCqG4_oMnt",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYCqG4_oMnt",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYETpQMIIbU",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYETpQMIIbU",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYKkWqWI7Zv",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYKkWqWI7Zv",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYPixRjo3pN",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYPixRjo3pN",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYR0e6aov9W",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYR0e6aov9W",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYTx55nInwT",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYTx55nInwT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYXfbi-IFue",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYXfbi-IFue",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYchonJI9Dc",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYchonJI9Dc",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYmhGqho5af",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYmhGqho5af",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DYpe_FHIfXW",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYpe_FHIfXW",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZFvYRzoKfF",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZFvYRzoKfF",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZK3Tgloqle",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZK3Tgloqle",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZQIF8boF6m",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZQIF8boF6m",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZXzq1xobjf",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZXzq1xobjf",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZiF3OnI20A",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZiF3OnI20A",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZmsMiGISzz",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZmsMiGISzz",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZ21e-tokIM",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZ21e-tokIM",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DZ5VIGdo5XW",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZ5VIGdo5XW",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DaGbAwuIwRP",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaGbAwuIwRP",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DaSUrQEIfRp",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaSUrQEIfRp",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DaUmCM_Ihxp",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaUmCM_Ihxp",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DaVul-HIUpb",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaVul-HIUpb",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "Daat-i5o3Vc",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/Daat-i5o3Vc",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DafkAI3qOnr",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DafkAI3qOnr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
+    },
+    {
+        "shortcode": "DanRQ0kKsiF",
+        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DanRQ0kKsiF",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "",
+        "media_url": ""
     }
 ]
-
-# ------------------------------------------------------------
-# 1. Database Initialization & Settings
-# ------------------------------------------------------------
 
 def init_insta_tables():
     """Instagram navbati, sozlamalari, layklar va YouTube jadvallarini yaratish"""
