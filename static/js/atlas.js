@@ -6094,7 +6094,7 @@ const ATLAS = {
 
         const query = new URLSearchParams({
           page: currentPage,
-          limit: 15,
+          limit: 50,
           status: currentFilter === 'ALL' ? '' : currentFilter,
           search: currentSearch
         });
@@ -6132,18 +6132,18 @@ const ATLAS = {
             <table class="glass-table">
               <thead>
                 <tr>
-                  <th style="width:50px;text-align:center;">ID</th>
-                  <th style="width:90px;text-align:center;">Format</th>
-                  <th style="width:140px;">Shortcode / Havola</th>
+                  <th style="width:45px;text-align:center;">№</th>
+                  <th style="width:85px;text-align:center;">Format</th>
+                  <th style="width:135px;">Shortcode / Havola</th>
                   <th>Post Matni (Caption)</th>
-                  <th style="width:120px;text-align:center;">Holati</th>
-                  <th style="width:120px;text-align:center;">YouTube Shorts</th>
-                  <th style="width:140px;">Sana / Vaqt</th>
-                  <th style="width:110px;text-align:right;">Amallar</th>
+                  <th style="width:110px;text-align:center;">Holati</th>
+                  <th style="width:170px;">Chiqarish Rejasi (Vaqt)</th>
+                  <th style="width:110px;text-align:center;">YouTube Shorts</th>
+                  <th style="width:85px;text-align:right;">Amallar</th>
                 </tr>
               </thead>
               <tbody>
-                ${items.map(item => {
+                ${items.map((item, idx) => {
                   let statusBadge = '';
                   if (item.status === 'SENT') {
                     statusBadge = `<span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);">Yuborildi</span>`;
@@ -6167,13 +6167,16 @@ const ATLAS = {
                   const isReel = item.media_type === 'reel' || item.post_url.includes('/reel/');
                   const typeLabel = isReel ? '🎬 Reel' : (item.media_type === 'video' ? '📹 Video' : '📸 Rasm');
 
-                  const dateHtml = item.sent_at 
-                    ? `<span style="color:#34d399;font-weight:600;" title="Telegramga chiqdi">✅ ${item.sent_at}</span>`
-                    : (item.post_date ? `<span style="color:rgba(255,255,255,0.85);" title="Instagram post sanasi">📅 ${item.post_date}</span>` : `<span style="color:rgba(255,255,255,0.45);">${item.created_at || '—'}</span>`);
+                  const scheduleHtml = item.status === 'SENT' 
+                    ? `<div style="font-size:12px;color:#34d399;font-weight:700;">✅ ${item.sent_at}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">(TG ga yuborildi)</div>`
+                    : (item.status === 'FAILED'
+                       ? `<div style="color:#f87171;font-weight:700;font-size:11px;">⚠️ Xatolik</div>`
+                       : `<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.4);padding:4px 8px;border-radius:var(--radius-sm);color:#38bdf8;font-weight:800;font-size:12px;font-family:'JetBrains Mono',monospace;">⏰ ${item.scheduled_time || 'Reja bo‘yicha'}</div><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">Asl joylangan: ${item.post_date || '—'}</div>`
+                    );
 
                   return `
                     <tr>
-                      <td class="mono" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.45);">${item.id}</td>
+                      <td class="mono" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.45);">${idx + 1}</td>
                       <td style="text-align:center;">
                         <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);">${typeLabel}</span>
                       </td>
@@ -6188,12 +6191,12 @@ const ATLAS = {
                         </div>
                       </td>
                       <td style="text-align:center;">${statusBadge}</td>
-                      <td style="text-align:center;">${ytBadge}</td>
                       <td>
                         <div style="font-size:11px;font-family:'JetBrains Mono',monospace;">
-                          ${dateHtml}
+                          ${scheduleHtml}
                         </div>
                       </td>
+                      <td style="text-align:center;">${ytBadge}</td>
                       <td style="text-align:right;">
                         <div style="display:flex;gap:4px;justify-content:flex-end;">
                           <button class="btn-icon btn-sm btn-post-single-action" data-id="${item.id}" title="Telegramga yuborish" style="color:#38bdf8;">
@@ -6204,7 +6207,6 @@ const ATLAS = {
                           </button>
                         </div>
                       </td>
-                    </tr>
                   `;
                 }).join('')}
               </tbody>

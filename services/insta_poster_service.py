@@ -1018,7 +1018,6 @@ def clear_all_queue():
     conn.close()
     return True
 
-
 def delete_queue_item(post_id):
     """Bitta postni navbatdan o'chirish"""
     try:
@@ -1035,11 +1034,11 @@ def delete_queue_item(post_id):
         return False
 
 
-def get_queue_items(page=1, limit=20, status=None, search=None):
-    """Navbatdagi postlarni sahifalash va qidiruv bilan olish"""
+def get_queue_items(page=1, limit=50, status=None, search=None):
+    """Navbatdagi postlarni sahifalash, hisoblangan aniq rejalashtirilgan vaqtlar va qidiruv bilan olish"""
     init_insta_tables()
     page = max(1, int(page))
-    limit = max(1, min(100, int(limit)))
+    limit = max(1, min(200, int(limit)))
     offset = (page - 1) * limit
     
     conn = get_db_connection()
@@ -1067,7 +1066,7 @@ def get_queue_items(page=1, limit=20, status=None, search=None):
     cursor.execute(count_sql, params)
     total_count = cursor.fetchone()["cnt"]
     
-    # Order: If status == 'SENT', sent_at DESC, else id ASC
+    # Order: If status == 'SENT', sent_at DESC, else id ASC (xronologik eng eskisidan yangisiga)
     order_sql = "ORDER BY sent_at DESC" if status and status.upper() == "SENT" else "ORDER BY id ASC"
     
     query_sql = f"""
@@ -1080,17 +1079,59 @@ def get_queue_items(page=1, limit=20, status=None, search=None):
     LIMIT ? OFFSET ?
     """
     cursor.execute(query_sql, params + [limit, offset])
-    rows = cursor.fetchall()
+    rows = [dict(r) for r in cursor.fetchall()]
+    
+    # Barcha PENDING postlar uchun rejalashtirilgan kelgusi vaqtlarni hisoblash
+    cursor.execute("SELECT id FROM insta_posts_queue WHERE status = 'PENDING' ORDER BY id ASC")
+    all_pending_ids = [r["id"] for r in cursor.fetchall()]
     conn.close()
     
-    total_pages = (total_count + limit - 1) // limit if total_count > 0 else 1
+    settings = get_all_settings()
+    interval_min = int(settings.get("interval_minutes") or 60)
+    last_post_str = settings.get("last_post_time", "")
+    night_on = settings.get("night_mode_enabled", "1") == "1"
+    night_start_str = settings.get("night_mode_start", "00:00")
+    night_end_str = settings.get("night_mode_end", "07:00")
     
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    
+    start_dt = now
+    if last_post_str:
+        try:
+            last_dt = datetime.strptime(last_post_str, "%Y-%m-%d %H:%M:%S")
+            cand = last_dt + timedelta(minutes=interval_min)
+            if cand > now:
+                start_dt = cand
+            else:
+                start_dt = now
+        except Exception:
+            start_dt = now
+            
+    # Har bir kutilayotgan postga aniq sana va soat belgilash (Misol: 21.08.2026 14:00, 15:00...)
+    curr_time = start_dt
+    schedule_map = {}
+    for pid in all_pending_ids:
+        if night_on:
+            hm_str = curr_time.strftime("%H:%M")
+            if night_start_str <= hm_str < night_end_str:
+                end_parts = night_end_str.split(":")
+                curr_time = curr_time.replace(hour=int(end_parts[0]), minute=int(end_parts[1]), second=0)
+                if curr_time < now:
+                    curr_time += timedelta(days=1)
+        schedule_map[pid] = curr_time.strftime("%d.%m.%Y %H:%M")
+        curr_time += timedelta(minutes=interval_min)
+        
+    for r in rows:
+        r["scheduled_time"] = schedule_map.get(r["id"]) or "—"
+        
     return {
-        "items": [dict(r) for r in rows],
+        "success": True,
+        "items": rows,
         "total": total_count,
         "page": page,
         "limit": limit,
-        "total_pages": total_pages
+        "total_pages": (total_count + limit - 1) // limit if limit > 0 else 1
     }
 
 
@@ -1121,12 +1162,16 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
     try:
         username = get_setting("insta_username", DEFAULT_INSTA_USERNAME)
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        content = loop.run_until_complete(_fetch_post_content_async(post_url))
-        loop.close()
-        
-        raw_caption = content.get("caption") or row["caption"] or ""
+        raw_caption = row["caption"] or ""
+        video_direct_url = None
+        if not raw_caption:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            content = loop.run_until_complete(_fetch_post_content_async(post_url))
+            loop.close()
+            raw_caption = content.get("caption") or ""
+            video_direct_url = content.get("video_url")
+            
         clean_caption = clean_caption_text(raw_caption, username)
         
         if len(clean_caption) > 1000:
@@ -1139,7 +1184,7 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
         media_sent = False
         sent_msg = None
         
-        # HD Video yuklash
+        # 1. HD Video yuklash (yt-dlp)
         hd_video_path = _download_hd_video_ytdlp(post_url)
         
         if hd_video_path and os.path.exists(hd_video_path):
@@ -1158,8 +1203,8 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
                 if os.path.exists(hd_video_path):
                     os.remove(hd_video_path)
                     
-        if not media_sent and content.get("video_url"):
-            v_res = requests.get(content["video_url"], timeout=40)
+        if not media_sent and video_direct_url:
+            v_res = requests.get(video_direct_url, timeout=40)
             if v_res.status_code == 200:
                 with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
                     f.write(v_res.content)
@@ -1179,33 +1224,8 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
                     if os.path.exists(temp_v_path):
                         os.remove(temp_v_path)
                         
-        if not media_sent and content.get("img_url"):
-            p_res = requests.get(content["img_url"], timeout=30)
-            if p_res.status_code == 200:
-                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
-                    f.write(p_res.content)
-                    temp_p_path = f.name
-                try:
-                    with open(temp_p_path, 'rb') as p_file:
-                        sent_msg = bot.send_photo(
-                            chat_id,
-                            p_file,
-                            caption=telegram_caption,
-                            parse_mode="HTML" if telegram_caption else None,
-                            reply_markup=inline_kb
-                        )
-                    media_sent = True
-                finally:
-                    if os.path.exists(temp_p_path):
-                        os.remove(temp_p_path)
-                        
         if not media_sent:
-            sent_msg = bot.send_message(
-                chat_id,
-                telegram_caption or f"📸 Instagram Post: {post_url}",
-                reply_markup=inline_kb,
-                parse_mode="HTML" if telegram_caption else None
-            )
+            raise Exception("Video faylini yuklab olib bo'lmadi yoki ushbu post video emas.")
             
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg_id_val = sent_msg.message_id if sent_msg else None
