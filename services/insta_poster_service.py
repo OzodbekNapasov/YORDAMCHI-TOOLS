@@ -807,3 +807,229 @@ def clear_all_queue():
     conn.commit()
     conn.close()
     return True
+
+
+def delete_queue_item(post_id):
+    """Bitta postni navbatdan o'chirish"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM insta_posts_queue WHERE id = ?", (post_id,))
+        cursor.execute("DELETE FROM insta_post_likes WHERE post_id = ?", (post_id,))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return deleted
+    except Exception as e:
+        print(f"[Delete Queue Item Error]: {e}")
+        return False
+
+
+def get_queue_items(page=1, limit=20, status=None, search=None):
+    """Navbatdagi postlarni sahifalash va qidiruv bilan olish"""
+    init_insta_tables()
+    page = max(1, int(page))
+    limit = max(1, min(100, int(limit)))
+    offset = (page - 1) * limit
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    where_clauses = []
+    params = []
+    
+    if status and status.upper() not in ("ALL", ""):
+        if status.upper() == "YOUTUBE":
+            where_clauses.append("youtube_uploaded = 1")
+        else:
+            where_clauses.append("status = ?")
+            params.append(status.upper())
+            
+    if search:
+        s_term = f"%{search.strip()}%"
+        where_clauses.append("(shortcode LIKE ? OR caption LIKE ?)")
+        params.extend([s_term, s_term])
+        
+    where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+    
+    # Count total matching
+    count_sql = f"SELECT COUNT(*) as cnt FROM insta_posts_queue {where_sql}"
+    cursor.execute(count_sql, params)
+    total_count = cursor.fetchone()["cnt"]
+    
+    # Order: If status == 'SENT', sent_at DESC, else id ASC
+    order_sql = "ORDER BY sent_at DESC" if status and status.upper() == "SENT" else "ORDER BY id ASC"
+    
+    query_sql = f"""
+    SELECT id, shortcode, post_url, media_type, caption, media_url, post_date,
+           status, sent_at, error_msg, likes_count, telegram_msg_id,
+           youtube_uploaded, youtube_url, youtube_uploaded_at, created_at
+    FROM insta_posts_queue
+    {where_sql}
+    {order_sql}
+    LIMIT ? OFFSET ?
+    """
+    cursor.execute(query_sql, params + [limit, offset])
+    rows = cursor.fetchall()
+    conn.close()
+    
+    total_pages = (total_count + limit - 1) // limit if total_count > 0 else 1
+    
+    return {
+        "items": [dict(r) for r in rows],
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
+
+
+def post_single_item(post_id, chat_id=None, bot_token=None):
+    """Bitta aniq tanlangan postni Telegramga yuborish"""
+    init_insta_tables()
+    
+    if not bot_token:
+        bot_token = get_setting("bot_token", DEFAULT_BOT_TOKEN)
+    if not chat_id:
+        chat_id = get_setting("target_chat_id", DEFAULT_TARGET_CHAT_ID)
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM insta_posts_queue WHERE id = ?", (post_id,))
+    row = cursor.fetchone()
+    
+    if not row:
+        conn.close()
+        return {"success": False, "error": f"Post topilmadi (ID: {post_id})"}
+        
+    shortcode = row["shortcode"]
+    post_url = row["post_url"]
+    
+    bot = telebot.TeleBot(bot_token)
+    
+    try:
+        username = get_setting("insta_username", DEFAULT_INSTA_USERNAME)
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        content = loop.run_until_complete(_fetch_post_content_async(post_url))
+        loop.close()
+        
+        raw_caption = content.get("caption") or row["caption"] or ""
+        clean_caption = clean_caption_text(raw_caption, username)
+        
+        if len(clean_caption) > 1000:
+            telegram_caption = clean_caption[:997] + "..."
+        else:
+            telegram_caption = clean_caption
+            
+        inline_kb = get_post_inline_keyboard(post_id, post_url, likes_count=row["likes_count"] or 0)
+        
+        media_sent = False
+        sent_msg = None
+        
+        # HD Video yuklash
+        hd_video_path = _download_hd_video_ytdlp(post_url)
+        
+        if hd_video_path and os.path.exists(hd_video_path):
+            try:
+                with open(hd_video_path, 'rb') as v_file:
+                    sent_msg = bot.send_video(
+                        chat_id,
+                        v_file,
+                        caption=telegram_caption,
+                        parse_mode="HTML" if telegram_caption else None,
+                        reply_markup=inline_kb,
+                        supports_streaming=True
+                    )
+                media_sent = True
+            finally:
+                if os.path.exists(hd_video_path):
+                    os.remove(hd_video_path)
+                    
+        if not media_sent and content.get("video_url"):
+            v_res = requests.get(content["video_url"], timeout=40)
+            if v_res.status_code == 200:
+                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+                    f.write(v_res.content)
+                    temp_v_path = f.name
+                try:
+                    with open(temp_v_path, 'rb') as v_file:
+                        sent_msg = bot.send_video(
+                            chat_id,
+                            v_file,
+                            caption=telegram_caption,
+                            parse_mode="HTML" if telegram_caption else None,
+                            reply_markup=inline_kb,
+                            supports_streaming=True
+                        )
+                    media_sent = True
+                finally:
+                    if os.path.exists(temp_v_path):
+                        os.remove(temp_v_path)
+                        
+        if not media_sent and content.get("img_url"):
+            p_res = requests.get(content["img_url"], timeout=30)
+            if p_res.status_code == 200:
+                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+                    f.write(p_res.content)
+                    temp_p_path = f.name
+                try:
+                    with open(temp_p_path, 'rb') as p_file:
+                        sent_msg = bot.send_photo(
+                            chat_id,
+                            p_file,
+                            caption=telegram_caption,
+                            parse_mode="HTML" if telegram_caption else None,
+                            reply_markup=inline_kb
+                        )
+                    media_sent = True
+                finally:
+                    if os.path.exists(temp_p_path):
+                        os.remove(temp_p_path)
+                        
+        if not media_sent:
+            sent_msg = bot.send_message(
+                chat_id,
+                telegram_caption or f"📸 Instagram Post: {post_url}",
+                reply_markup=inline_kb,
+                parse_mode="HTML" if telegram_caption else None
+            )
+            
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        msg_id_val = sent_msg.message_id if sent_msg else None
+        cursor.execute("""
+        UPDATE insta_posts_queue 
+        SET status = 'SENT', sent_at = ?, caption = ?, error_msg = NULL, telegram_msg_id = ?
+        WHERE id = ?
+        """, (now_str, clean_caption, msg_id_val, post_id))
+        conn.commit()
+        
+        set_setting("last_post_time", now_str)
+        conn.close()
+        
+        return {
+            "success": True,
+            "post_id": post_id,
+            "shortcode": shortcode,
+            "post_url": post_url,
+            "caption": clean_caption[:80]
+        }
+        
+    except Exception as e:
+        err_msg = str(e)
+        cursor.execute("""
+        UPDATE insta_posts_queue 
+        SET status = 'FAILED', error_msg = ?
+        WHERE id = ?
+        """, (err_msg, post_id))
+        conn.commit()
+        conn.close()
+        print(f"[Post Single Error]: {e}")
+        return {
+            "success": False,
+            "post_id": post_id,
+            "error": err_msg
+        }
+

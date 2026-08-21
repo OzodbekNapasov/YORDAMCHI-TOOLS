@@ -1721,6 +1721,20 @@ def api_global_search():
             "item_id": r["id"]
         })
 
+    # Instagram postlaridan qidirish
+    try:
+        cursor.execute("SELECT id, shortcode, caption, status FROM insta_posts_queue WHERE shortcode LIKE ? OR caption LIKE ? LIMIT 5", (term, term))
+        for r in cursor.fetchall():
+            results.append({
+                "type": "instagram",
+                "title": f"Instagram Post: {r['shortcode']}",
+                "subtitle": (r["caption"] or "Matnsiz")[:60] + f" [{r['status']}]",
+                "route": "instagram",
+                "item_id": r["id"]
+            })
+    except Exception:
+        pass
+
     conn.close()
     return jsonify({"success": True, "results": results})
 
@@ -2184,4 +2198,345 @@ def api_meta_ads_settings():
             return jsonify({"success": True, "settings": settings})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ============================================================
+# 15. INSTAGRAM & YOUTUBE AUTOPOSTER ENDPOINTS
+# ============================================================
+
+@atlas_api.route("/instagram/stats", methods=["GET"])
+@admin_required
+def api_instagram_stats():
+    """Instagram navbati, sozlamalari va umumiy statistika"""
+    try:
+        from services.insta_poster_service import get_queue_stats, get_youtube_schedule_times
+        from services.youtube_service import is_youtube_ready
+        stats = get_queue_stats()
+        yt_times = get_youtube_schedule_times()
+        yt_ready = is_youtube_ready()
+        
+        return jsonify({
+            "success": True,
+            "stats": stats,
+            "youtube_schedule_times": yt_times,
+            "youtube_ready": yt_ready
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/queue", methods=["GET"])
+@admin_required
+def api_instagram_queue():
+    """Postlar navbati ro'yxatini olish (filtrlash, sahifalash, qidirish)"""
+    try:
+        from services.insta_poster_service import get_queue_items
+        page = request.args.get("page", 1, type=int)
+        limit = request.args.get("limit", 20, type=int)
+        status = request.args.get("status", "")
+        search = request.args.get("search", "")
+        
+        data = get_queue_items(page=page, limit=limit, status=status, search=search)
+        return jsonify({"success": True, **data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/scan", methods=["POST"])
+@admin_required
+def api_instagram_scan():
+    """Instagram profilidagi postlarni fonda skanerlab navbatga olish"""
+    try:
+        from services.insta_poster_service import scan_in_background, get_setting, set_setting
+        admin = get_current_admin()
+        req_data = request.get_json(silent=True) or {}
+        username = req_data.get("username") or get_setting("insta_username", "shahrisabz_t_t_uz")
+        username = str(username).strip().lstrip("@")
+        
+        if not username:
+            return jsonify({"success": False, "error": "Instagram username kiritilmadi"}), 400
+            
+        set_setting("insta_username", username)
+        
+        # Start background scan
+        scan_in_background(username=username)
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "start_scan",
+            "info",
+            {"username": username},
+            request.remote_addr
+        )
+        
+        return jsonify({
+            "success": True,
+            "message": f"@{username} profili skanerlanishi fonda boshlandi. Postlar ketma-ket navbatga qo'shiladi.",
+            "username": username
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/scan/status", methods=["GET"])
+@admin_required
+def api_instagram_scan_status():
+    """Skanerlash holati"""
+    try:
+        from services.insta_poster_service import get_setting
+        is_scanning = get_setting("is_scanning", "0") == "1"
+        last_scan_time = get_setting("last_scan_time", "")
+        last_scan_count = int(get_setting("last_scan_count", "0"))
+        
+        return jsonify({
+            "success": True,
+            "is_scanning": is_scanning,
+            "last_scan_time": last_scan_time,
+            "last_scan_count": last_scan_count
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/post_next", methods=["POST"])
+@admin_required
+def api_instagram_post_next():
+    """Navbatdagi 1 ta postni darhol Telegramga yuborish"""
+    try:
+        from services.insta_poster_service import post_next_queued_item
+        admin = get_current_admin()
+        res = post_next_queued_item()
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "post_next",
+            "success" if res.get("success") else "error",
+            res,
+            request.remote_addr
+        )
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/post_youtube", methods=["POST"])
+@admin_required
+def api_instagram_post_youtube():
+    """Navbatdagi 1 ta videoni YouTube Shorts ga yuklash"""
+    try:
+        from services.insta_poster_service import post_next_youtube_video
+        admin = get_current_admin()
+        res = post_next_youtube_video()
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "post_youtube",
+            "success" if res.get("success") else "error",
+            res,
+            request.remote_addr
+        )
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/post_single/<int:post_id>", methods=["POST"])
+@admin_required
+def api_instagram_post_single(post_id):
+    """Aniq tanlangan 1 ta postni Telegramga yuborish"""
+    try:
+        from services.insta_poster_service import post_single_item
+        admin = get_current_admin()
+        res = post_single_item(post_id)
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "post_single",
+            "success" if res.get("success") else "error",
+            {"post_id": post_id, "result": res},
+            request.remote_addr
+        )
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/queue/<int:post_id>", methods=["DELETE"])
+@admin_required
+def api_instagram_delete_post(post_id):
+    """Postni navbatdan o'chirish"""
+    try:
+        from services.insta_poster_service import delete_queue_item
+        admin = get_current_admin()
+        success = delete_queue_item(post_id)
+        if success:
+            log_audit(
+                admin["username"] if admin else "web_admin",
+                "instagram",
+                "delete_queue_item",
+                "success",
+                {"post_id": post_id},
+                request.remote_addr
+            )
+            return jsonify({"success": True, "message": "Post navbatdan muvaffaqiyatli o'chirildi."})
+        return jsonify({"success": False, "error": "Post topilmadi yoki o'chirilmadi."}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/queue/reset", methods=["POST"])
+@admin_required
+def api_instagram_reset_queue():
+    """Xatolik (FAILED) bo'lgan barcha postlarni qayta navbatga (PENDING) qaytarish"""
+    try:
+        from services.insta_poster_service import reset_queue_status
+        admin = get_current_admin()
+        count = reset_queue_status()
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "reset_queue",
+            "success",
+            {"reset_count": count},
+            request.remote_addr
+        )
+        return jsonify({
+            "success": True,
+            "message": f"{count} ta post holati qayta kutilmoqda (PENDING) holatiga o'tkazildi.",
+            "count": count
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/queue/clear", methods=["POST"])
+@admin_required
+def api_instagram_clear_queue():
+    """Barcha navbatni tozalash"""
+    try:
+        from services.insta_poster_service import clear_all_queue
+        admin = get_current_admin()
+        clear_all_queue()
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "clear_queue",
+            "warning",
+            {},
+            request.remote_addr
+        )
+        return jsonify({"success": True, "message": "Barcha postlar navbati tozalandi."})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/settings", methods=["GET", "POST"])
+@admin_required
+def api_instagram_settings():
+    """Instagram va YouTube AutoPoster sozlamalarini olish yoki saqlash"""
+    try:
+        from services.insta_poster_service import get_all_settings, set_setting
+        admin = get_current_admin()
+        
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            allowed_keys = [
+                "insta_username",
+                "target_chat_id",
+                "bot_token",
+                "auto_schedule_enabled",
+                "interval_minutes",
+                "youtube_auto_upload",
+                "youtube_schedule_enabled",
+                "youtube_schedule_times"
+            ]
+            
+            for k in allowed_keys:
+                if k in data:
+                    val = str(data[k]).strip()
+                    if k == "insta_username":
+                        val = val.lstrip("@")
+                    set_setting(k, val)
+                    
+            updated = get_all_settings()
+            log_audit(
+                admin["username"] if admin else "web_admin",
+                "instagram",
+                "update_settings",
+                "info",
+                {"updated_keys": list(data.keys())},
+                request.remote_addr
+            )
+            return jsonify({"success": True, "settings": updated, "message": "Sozlamalar saqlandi."})
+            
+        settings = get_all_settings()
+        return jsonify({"success": True, "settings": settings})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/youtube/schedule", methods=["GET"])
+@admin_required
+def api_instagram_yt_schedule():
+    """YouTube Shorts rejalashtirilgan vaqtlari"""
+    try:
+        from services.insta_poster_service import get_youtube_schedule_times
+        times = get_youtube_schedule_times()
+        return jsonify({"success": True, "times": times})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/youtube/schedule/add", methods=["POST"])
+@admin_required
+def api_instagram_yt_schedule_add():
+    """Yangi YouTube vaqtini qo'shish (masalan: 14:30)"""
+    try:
+        from services.insta_poster_service import add_youtube_schedule_time, get_youtube_schedule_times
+        data = request.get_json(silent=True) or {}
+        time_str = str(data.get("time", "")).strip()
+        
+        success, msg = add_youtube_schedule_time(time_str)
+        if success:
+            times = get_youtube_schedule_times()
+            return jsonify({"success": True, "message": msg, "times": times})
+        return jsonify({"success": False, "error": msg}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/youtube/schedule/remove", methods=["POST"])
+@admin_required
+def api_instagram_yt_schedule_remove():
+    """YouTube vaqtini o'chirish"""
+    try:
+        from services.insta_poster_service import remove_youtube_schedule_time, get_youtube_schedule_times
+        data = request.get_json(silent=True) or {}
+        time_str = str(data.get("time", "")).strip()
+        
+        remove_youtube_schedule_time(time_str)
+        times = get_youtube_schedule_times()
+        return jsonify({"success": True, "message": f"{time_str} vaqti o'chirildi.", "times": times})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/instagram/youtube/schedule/reset", methods=["POST"])
+@admin_required
+def api_instagram_yt_schedule_reset():
+    """YouTube vaqtlarini standart holatga (09:00, 13:00, 19:30) qaytarish"""
+    try:
+        from services.insta_poster_service import reset_youtube_schedule_times, get_youtube_schedule_times
+        reset_youtube_schedule_times()
+        times = get_youtube_schedule_times()
+        return jsonify({"success": True, "message": "YouTube vaqtlari standart holatga qaytarildi.", "times": times})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 

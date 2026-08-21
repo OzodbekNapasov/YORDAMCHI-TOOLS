@@ -60,7 +60,13 @@ const ATLAS = {
     target: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
     dollarSign: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
     play: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
-    pause: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+    pause: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
+    instagram: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+    youtube: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>`,
+    clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    videoCamera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+    externalLink: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`
   },
 
   // API Wrapper
@@ -329,6 +335,7 @@ const ATLAS = {
         certificates: "Rasmiy Ma'lumotnomalar Bolimi",
         amaliyot: "Malakaviy Amaliyot Buyruqlari & Rejalari",
         meta_ads: 'Meta Ads Manager Boshqaruv Markazi',
+        instagram: "Instagram Postlarini Sinxronlash & AutoPoster",
         academic_groups: "O'quv Guruhlari Boshqaruvi",
         groups: 'Ulangan Telegram Guruhlar',
         dashboard: 'Boshqaruv Paneli',
@@ -356,6 +363,7 @@ const ATLAS = {
       case 'certificates': this.loadCertificates(viewport); break;
       case 'amaliyot': this.loadAmaliyot(viewport); break;
       case 'meta_ads': this.loadMetaAds(viewport); break;
+      case 'instagram': this.loadInstagram(viewport); break;
       case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
       case 'groups': this.loadGroups(viewport, 'telegram'); break;
       case 'dashboard': this.loadDashboard(viewport); break;
@@ -492,6 +500,9 @@ const ATLAS = {
             <div class="sidebar-group-title">Marketing & Reklama</div>
             <div class="nav-item" data-route="meta_ads">
               ${this.icons.target || this.icons.zap} <span>Meta Ads Manager</span>
+            </div>
+            <div class="nav-item" data-route="instagram">
+              ${this.icons.instagram} <span>Instagram Sinxronlash</span>
             </div>
 
             <div class="sidebar-group-title">O'quv Bo'limi & Bot</div>
@@ -5639,6 +5650,899 @@ const ATLAS = {
     if (changeLimitLink && setLimitBtn) {
       changeLimitLink.addEventListener('click', () => setLimitBtn.click());
     }
+  },
+
+  // ============================================================
+  // 15. INSTAGRAM POSTLARINI SINXRONLASH & AUTOPOSTER
+  // ============================================================
+  async loadInstagram(viewport) {
+    viewport.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:300px;">
+        <div class="spinner"></div>
+      </div>
+    `;
+
+    const [statsRes, settRes] = await Promise.all([
+      this.api('/api/instagram/stats'),
+      this.api('/api/instagram/settings')
+    ]);
+
+    if (!statsRes || !statsRes.success) {
+      viewport.innerHTML = `
+        <div class="glass-card" style="text-align:center;padding:40px 20px;">
+          <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+          <h3 style="margin-bottom:8px;color:#f87171;">Instagram AutoPoster Ma'lumotlarini Yuklab Bo'lmadi</h3>
+          <p style="color:rgba(255,255,255,0.7);max-width:500px;margin:0 auto 20px auto;">
+            ${(statsRes && statsRes.error) || "Baza yoki API bilan ulanishda xatolik yuz berdi."}
+          </p>
+          <button class="btn-primary" onclick="ATLAS.loadInstagram(document.getElementById('content-viewport'))">
+            ${this.icons.refresh} Qayta urinib ko'rish
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    const stats = statsRes.stats || {};
+    const settings = (settRes && settRes.settings) || stats.settings || {};
+    const ytTimes = statsRes.youtube_schedule_times || [];
+    const ytReady = statsRes.youtube_ready;
+
+    const tgAuto = settings.auto_schedule_enabled === '1';
+    const ytAuto = settings.youtube_auto_upload === '1';
+    const currentUsername = settings.insta_username || 'shahrisabz_t_t_uz';
+
+    let activeTab = 'queue'; // 'queue' | 'youtube' | 'settings'
+    let currentFilter = 'ALL';
+    let currentPage = 1;
+    let currentSearch = '';
+
+    const render = () => {
+      viewport.innerHTML = `
+        <div class="instagram-container">
+          <!-- HEADER WITH STATS & CONTROLS -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <h2 style="font-size:20px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;">
+                  ${this.icons.instagram} Instagram Postlarini Sinxronlash
+                </h2>
+                <span class="badge" style="background:rgba(20,184,166,0.2);color:#2ee59d;border:1px solid rgba(46,229,157,0.3);font-family:'JetBrains Mono',monospace;">
+                  @${currentUsername}
+                </span>
+                ${tgAuto ? `
+                  <span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
+                    🟢 TG Avto-yuborish (${settings.interval_minutes || 60} daq)
+                  </span>
+                ` : `
+                  <span class="badge" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">
+                    ⚪️ TG Avto-yuborish Faol Emas
+                  </span>
+                `}
+                ${ytAuto ? `
+                  <span class="badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">
+                    🔴 YouTube Shorts Faol (${ytTimes.length} ta rek)
+                  </span>
+                ` : `
+                  <span class="badge" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">
+                    ⚪️ YouTube Shorts Faol Emas
+                  </span>
+                `}
+              </div>
+              <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">
+                Instagram profilidagi barcha postlar, reels va rasmlarni Telegram kanal va YouTube Shorts'ga xronologik avtomatik joylash markazi
+              </p>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn-sm btn-secondary" id="insta-refresh-btn" title="Yangilash">
+                ${this.icons.refresh} <span>Yangilash</span>
+              </button>
+              <button class="btn-sm btn-primary" id="btn-open-scan-modal">
+                ${this.icons.download} <span>Instagramdan Skanerlash</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI METRIC CARDS -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:24px;">
+            <div class="glass-card" style="padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Jami Postlar</div>
+                  <div style="font-size:26px;font-weight:800;color:#ffffff;margin-top:4px;" id="stat-total-val">${stats.total || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Bazadagi barcha skanerlangan</div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(20,184,166,0.15);display:flex;align-items:center;justify-content:center;color:#00cba9;">
+                  ${this.icons.instagram}
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding:16px;border-left:3px solid #f59e0b;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Kutilayotgan Navbat</div>
+                  <div style="font-size:26px;font-weight:800;color:#fbbf24;margin-top:4px;" id="stat-pending-val">${stats.pending || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Yuborilishi kutilayotgan postlar</div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;color:#fbbf24;">
+                  ${this.icons.clock}
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding:16px;border-left:3px solid #10b981;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Telegramga Chiqdi</div>
+                  <div style="font-size:26px;font-weight:800;color:#34d399;margin-top:4px;" id="stat-sent-val">${stats.sent || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Muvaffaqiyatli yuborilgan</div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;color:#34d399;">
+                  ${this.icons.send}
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding:16px;border-left:3px solid #ef4444;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Xatoliklar</div>
+                  <div style="font-size:26px;font-weight:800;color:#f87171;margin-top:4px;" id="stat-failed-val">${stats.failed || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">
+                    ${stats.failed > 0 ? `<a href="javascript:void(0)" id="quick-reset-failed-link" style="color:#f87171;text-decoration:underline;">Qayta tiklash</a>` : 'Xatoliklar yo\'q'}
+                  </div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;color:#f87171;">
+                  ${this.icons.alert}
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding:16px;border-left:3px solid #f43f5e;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">YouTube Shorts</div>
+                  <div style="font-size:26px;font-weight:800;color:#fb7185;margin-top:4px;" id="stat-yt-val">${stats.yt_uploaded || 0}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">Shorts sifatida joylandi</div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(244,63,94,0.15);display:flex;align-items:center;justify-content:center;color:#fb7185;">
+                  ${this.icons.youtube}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB BUTTONS -->
+          <div class="tab-pills-row" style="margin-bottom:18px;">
+            <button class="tab-pill-btn ${activeTab === 'queue' ? 'active' : ''}" id="tab-btn-insta-queue">
+              ${this.icons.documents} <span>Postlar Navbati & Boshqaruv</span>
+            </button>
+            <button class="tab-pill-btn ${activeTab === 'youtube' ? 'active' : ''}" id="tab-btn-insta-youtube">
+              ${this.icons.youtube} <span>YouTube Shorts & Rek Vaqtlari</span>
+            </button>
+            <button class="tab-pill-btn ${activeTab === 'settings' ? 'active' : ''}" id="tab-btn-insta-settings">
+              ${this.icons.settings} <span>Sinxronlash Sozlamalari</span>
+            </button>
+          </div>
+
+          <!-- TAB VIEWPORT -->
+          <div id="insta-tab-viewport"></div>
+        </div>
+      `;
+
+      // Event Bindings
+      document.getElementById('insta-refresh-btn').addEventListener('click', () => {
+        this.loadInstagram(viewport);
+      });
+
+      document.getElementById('btn-open-scan-modal').addEventListener('click', () => {
+        this.renderScanModal(currentUsername, viewport);
+      });
+
+      const resetFailedLink = document.getElementById('quick-reset-failed-link');
+      if (resetFailedLink) {
+        resetFailedLink.addEventListener('click', async () => {
+          const res = await this.api('/api/instagram/queue/reset', 'POST');
+          if (res && res.success) {
+            this.toast(res.message || 'Xatoliklar qayta navbatga olindi', 'success');
+            this.loadInstagram(viewport);
+          } else {
+            this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+          }
+        });
+      }
+
+      document.getElementById('tab-btn-insta-queue').addEventListener('click', () => {
+        activeTab = 'queue';
+        renderTabContent();
+      });
+      document.getElementById('tab-btn-insta-youtube').addEventListener('click', () => {
+        activeTab = 'youtube';
+        renderTabContent();
+      });
+      document.getElementById('tab-btn-insta-settings').addEventListener('click', () => {
+        activeTab = 'settings';
+        renderTabContent();
+      });
+
+      renderTabContent();
+    };
+
+    const renderTabContent = () => {
+      document.querySelectorAll('.tab-pill-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      if (activeTab === 'queue') document.getElementById('tab-btn-insta-queue')?.classList.add('active');
+      if (activeTab === 'youtube') document.getElementById('tab-btn-insta-youtube')?.classList.add('active');
+      if (activeTab === 'settings') document.getElementById('tab-btn-insta-settings')?.classList.add('active');
+
+      const tabBox = document.getElementById('insta-tab-viewport');
+      if (!tabBox) return;
+
+      if (activeTab === 'queue') renderQueueTab(tabBox);
+      else if (activeTab === 'youtube') renderYouTubeTab(tabBox);
+      else if (activeTab === 'settings') renderSettingsTab(tabBox);
+    };
+
+    // TAB 1: POSTLAR NAVBATI
+    const renderQueueTab = async (container) => {
+      container.innerHTML = `
+        <div class="glass-card">
+          <!-- ACTION CONTROLS & FILTER ROW -->
+          <div class="card-header-flex" style="flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="insta-status-filters">
+              <button class="btn-sm ${currentFilter === 'ALL' ? 'btn-primary' : 'btn-secondary'} filter-status-btn" data-status="ALL">Barchasi (${stats.total || 0})</button>
+              <button class="btn-sm ${currentFilter === 'PENDING' ? 'btn-primary' : 'btn-secondary'} filter-status-btn" data-status="PENDING">Kutilmoqda (${stats.pending || 0})</button>
+              <button class="btn-sm ${currentFilter === 'SENT' ? 'btn-primary' : 'btn-secondary'} filter-status-btn" data-status="SENT">Yuborildi (${stats.sent || 0})</button>
+              <button class="btn-sm ${currentFilter === 'FAILED' ? 'btn-primary' : 'btn-secondary'} filter-status-btn" data-status="FAILED">Xatolik (${stats.failed || 0})</button>
+              <button class="btn-sm ${currentFilter === 'YOUTUBE' ? 'btn-primary' : 'btn-secondary'} filter-status-btn" data-status="YOUTUBE">YouTube Shorts (${stats.yt_uploaded || 0})</button>
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="insta-search-input" class="input-control" style="width:200px;height:34px;font-size:12px;" placeholder="Shortcode yoki matn..." value="${currentSearch}">
+              
+              <button class="btn-sm btn-primary" id="btn-post-next-tg" title="Navbatdagi 1 ta postni darhol Telegramga yuborish">
+                ${this.icons.send} <span>1 ta TG ga yuborish</span>
+              </button>
+              
+              <button class="btn-sm btn-secondary" id="btn-post-next-yt" title="Navbatdagi 1 ta videoni darhol YouTube Shorts ga yuklash">
+                ${this.icons.youtube} <span>1 ta YT ga yuklash</span>
+              </button>
+
+              <button class="btn-sm btn-secondary" id="btn-reset-queue" title="Xatolik bo'lgan postlarni qayta tiklash">
+                ${this.icons.refresh}
+              </button>
+
+              <button class="btn-sm btn-danger" id="btn-clear-queue" title="Navbatni tozalash" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);">
+                ${this.icons.trash}
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE CONTAINER -->
+          <div id="insta-table-container">
+            <div style="display:flex;align-items:center;justify-content:center;padding:40px;">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Status filters
+      container.querySelectorAll('.filter-status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentFilter = btn.dataset.status;
+          currentPage = 1;
+          renderQueueTab(container);
+        });
+      });
+
+      // Search
+      const searchInput = document.getElementById('insta-search-input');
+      if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            currentSearch = e.target.value;
+            currentPage = 1;
+            loadTableData();
+          }, 350);
+        });
+      }
+
+      // Action buttons
+      document.getElementById('btn-post-next-tg')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btn-post-next-tg');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-sm"></span> Yuborilmoqda...`;
+        const res = await this.api('/api/instagram/post_next', 'POST');
+        if (res && res.success) {
+          this.toast(`Post muvaffaqiyatli Telegramga yuborildi! [${res.shortcode}]`, 'success');
+          this.loadInstagram(viewport);
+        } else {
+          this.toast((res && res.error) || (res && res.message) || 'Post yuborishda xatolik', 'error');
+          btn.disabled = false;
+          btn.innerHTML = `${this.icons.send} <span>1 ta TG ga yuborish</span>`;
+        }
+      });
+
+      document.getElementById('btn-post-next-yt')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btn-post-next-yt');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-sm"></span> Yuklanmoqda...`;
+        const res = await this.api('/api/instagram/post_youtube', 'POST');
+        if (res && res.success) {
+          this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
+          this.loadInstagram(viewport);
+        } else {
+          this.toast((res && res.error) || (res && res.message) || 'YouTube yuklashda xatolik', 'error');
+          btn.disabled = false;
+          btn.innerHTML = `${this.icons.youtube} <span>1 ta YT ga yuklash</span>`;
+        }
+      });
+
+      document.getElementById('btn-reset-queue')?.addEventListener('click', async () => {
+        const res = await this.api('/api/instagram/queue/reset', 'POST');
+        if (res && res.success) {
+          this.toast(res.message || 'Xatoliklar qayta tiklandi', 'success');
+          this.loadInstagram(viewport);
+        } else {
+          this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+        }
+      });
+
+      document.getElementById('btn-clear-queue')?.addEventListener('click', () => {
+        this.confirmModal({
+          title: "Barcha postlar navbatini tozalash",
+          message: "Rostdan ham barcha skanerlangan postlar navbatini tozalab tashlamoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
+          confirmText: "Ha, tozalash",
+          onConfirm: async () => {
+            const res = await this.api('/api/instagram/queue/clear', 'POST');
+            if (res && res.success) {
+              this.toast("Navbat tozalandi", 'success');
+              this.loadInstagram(viewport);
+            } else {
+              this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+            }
+          }
+        });
+      });
+
+      // Load table data
+      const loadTableData = async () => {
+        const tableBox = document.getElementById('insta-table-container');
+        if (!tableBox) return;
+
+        tableBox.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:center;padding:40px;">
+            <div class="spinner"></div>
+          </div>
+        `;
+
+        const query = new URLSearchParams({
+          page: currentPage,
+          limit: 15,
+          status: currentFilter === 'ALL' ? '' : currentFilter,
+          search: currentSearch
+        });
+
+        const queueRes = await this.api(`/api/instagram/queue?${query.toString()}`);
+        if (!queueRes || !queueRes.success) {
+          tableBox.innerHTML = `<div style="text-align:center;padding:24px;color:#f87171;">Postlarni yuklab bo'lmadi</div>`;
+          return;
+        }
+
+        const items = queueRes.items || [];
+        const total = queueRes.total || 0;
+        const totalPages = queueRes.total_pages || 1;
+
+        if (items.length === 0) {
+          tableBox.innerHTML = `
+            <div style="text-align:center;padding:48px 20px;color:rgba(255,255,255,0.45);">
+              <div style="font-size:32px;margin-bottom:10px;">📭</div>
+              <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:4px;">Hech qanday post topilmadi</div>
+              <p style="font-size:13px;max-width:400px;margin:0 auto 16px auto;">
+                ${currentSearch ? "Qidiruv bo'yicha mos keluvchi postlar mavjud emas." : "Instagramdan yangi postlarni skanerlab olish uchun yuqoridagi 'Instagramdan Skanerlash' tugmasini bosing."}
+              </p>
+              ${!currentSearch ? `
+                <button class="btn-sm btn-primary" onclick="document.getElementById('btn-open-scan-modal').click()">
+                  ${this.icons.download} <span>Instagramdan Skanerlash</span>
+                </button>
+              ` : ''}
+            </div>
+          `;
+          return;
+        }
+
+        tableBox.innerHTML = `
+          <div class="table-responsive">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th style="width:50px;text-align:center;">ID</th>
+                  <th style="width:90px;text-align:center;">Format</th>
+                  <th style="width:140px;">Shortcode / Havola</th>
+                  <th>Post Matni (Caption)</th>
+                  <th style="width:120px;text-align:center;">Holati</th>
+                  <th style="width:120px;text-align:center;">YouTube Shorts</th>
+                  <th style="width:140px;">Sana / Vaqt</th>
+                  <th style="width:110px;text-align:right;">Amallar</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(item => {
+                  let statusBadge = '';
+                  if (item.status === 'SENT') {
+                    statusBadge = `<span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);">Yuborildi</span>`;
+                  } else if (item.status === 'FAILED') {
+                    statusBadge = `<span class="badge" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);" title="${item.error_msg || ''}">Xatolik</span>`;
+                  } else {
+                    statusBadge = `<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">Kutilmoqda</span>`;
+                  }
+
+                  let ytBadge = '';
+                  if (item.youtube_uploaded === 1) {
+                    ytBadge = `<a href="${item.youtube_url || '#'}" target="_blank" class="badge" style="background:rgba(244,63,94,0.2);color:#fb7185;border:1px solid rgba(244,63,94,0.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                      ${this.icons.youtube} Yuklangan
+                    </a>`;
+                  } else if (item.media_type === 'reel' || item.post_url.includes('/reel/')) {
+                    ytBadge = `<span class="badge" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);">Reels (Kutilmoqda)</span>`;
+                  } else {
+                    ytBadge = `<span style="color:rgba(255,255,255,0.3);font-size:11px;">Rasm / Carousel</span>`;
+                  }
+
+                  const isReel = item.media_type === 'reel' || item.post_url.includes('/reel/');
+                  const typeLabel = isReel ? '🎬 Reel' : (item.media_type === 'video' ? '📹 Video' : '📸 Rasm');
+
+                  return `
+                    <tr>
+                      <td class="mono" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.45);">${item.id}</td>
+                      <td style="text-align:center;">
+                        <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);">${typeLabel}</span>
+                      </td>
+                      <td>
+                        <a href="${item.post_url}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+                          ${item.shortcode} ${this.icons.externalLink || ''}
+                        </a>
+                      </td>
+                      <td>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.85);max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${(item.caption || '').replace(/"/g, '&quot;')}">
+                          ${item.caption ? item.caption : '<span style="color:rgba(255,255,255,0.3);font-style:italic;">(Matnsiz)</span>'}
+                        </div>
+                      </td>
+                      <td style="text-align:center;">${statusBadge}</td>
+                      <td style="text-align:center;">${ytBadge}</td>
+                      <td>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'JetBrains Mono',monospace;">
+                          ${item.sent_at || item.created_at || '—'}
+                        </div>
+                      </td>
+                      <td style="text-align:right;">
+                        <div style="display:flex;gap:4px;justify-content:flex-end;">
+                          <button class="btn-icon btn-sm btn-post-single-action" data-id="${item.id}" title="Telegramga yuborish" style="color:#38bdf8;">
+                            ${this.icons.send}
+                          </button>
+                          <button class="btn-icon btn-sm btn-delete-single-action" data-id="${item.id}" title="Navbatdan o'chirish" style="color:#f87171;">
+                            ${this.icons.trash}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- PAGINATION -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border-glass);flex-wrap:wrap;gap:8px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);">
+              Jami: <b>${total}</b> ta post • Sahifa <b>${currentPage}</b> / <b>${totalPages}</b>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-sm btn-secondary" id="insta-prev-page-btn" ${currentPage <= 1 ? 'disabled' : ''}>
+                ${this.icons.arrowLeft || '◀'} Oldingi
+              </button>
+              <button class="btn-sm btn-secondary" id="insta-next-page-btn" ${currentPage >= totalPages ? 'disabled' : ''}>
+                Keyingi ${this.icons.arrowRight || '▶'}
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Row action buttons
+        tableBox.querySelectorAll('.btn-post-single-action').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            btn.disabled = true;
+            this.toast(`Post yuborilmoqda (ID: ${id})...`, 'info');
+            const res = await this.api(`/api/instagram/post_single/${id}`, 'POST');
+            if (res && res.success) {
+              this.toast(`Post muvaffaqiyatli Telegramga yuborildi!`, 'success');
+              this.loadInstagram(viewport);
+            } else {
+              this.toast((res && res.error) || 'Yuborishda xatolik yuz berdi', 'error');
+              btn.disabled = false;
+            }
+          });
+        });
+
+        tableBox.querySelectorAll('.btn-delete-single-action').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            this.confirmModal({
+              title: "Postni navbatdan o'chirish",
+              message: `ID: ${id} bo'lgan postni navbatdan o'chirishni tasdiqlaysizmi?`,
+              confirmText: "O'chirish",
+              onConfirm: async () => {
+                const res = await this.api(`/api/instagram/queue/${id}`, 'DELETE');
+                if (res && res.success) {
+                  this.toast("Post navbatdan o'chirildi", 'success');
+                  loadTableData();
+                } else {
+                  this.toast((res && res.error) || 'O\'chirishda xatolik', 'error');
+                }
+              }
+            });
+          });
+        });
+
+        // Pagination buttons
+        document.getElementById('insta-prev-page-btn')?.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            loadTableData();
+          }
+        });
+        document.getElementById('insta-next-page-btn')?.addEventListener('click', () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            loadTableData();
+          }
+        });
+      };
+
+      loadTableData();
+    };
+
+    // TAB 2: YOUTUBE SHORTS & REK VAQTLARI
+    const renderYouTubeTab = (container) => {
+      container.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:20px;">
+          <!-- REK VAQTLARI BOSHQARUVI -->
+          <div class="glass-card">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+              ${this.icons.clock} YouTube Shorts Rek Vaqtlari
+            </div>
+            <div class="card-subtitle" style="margin-bottom:16px;">
+              Bot har kuni quyida belgilangan vaqtlarda Instagram Reels videolarini avtomatik YouTube Shorts'ga joylab boradi.
+            </div>
+
+            <!-- TIMES CHIPS CONTAINER -->
+            <div id="yt-times-chip-box" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+              ${ytTimes.length === 0 ? `<div style="color:rgba(255,255,255,0.4);font-size:13px;">Hozircha rek vaqtlari kiritilmagan.</div>` : ''}
+              ${ytTimes.map(timeStr => `
+                <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(244,63,94,0.18);border:1px solid rgba(244,63,94,0.4);padding:8px 14px;border-radius:var(--radius-md);">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#ffffff;">
+                    ⏰ ${timeStr}
+                  </span>
+                  <button class="btn-icon btn-sm btn-delete-yt-time" data-time="${timeStr}" title="${timeStr} vaqtini o'chirish" style="color:#f87171;padding:0;">
+                    ${this.icons.close}
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- ADD TIME FORM -->
+            <form id="add-yt-time-form" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+              <input type="text" id="new-yt-time-input" class="input-control" placeholder="Format: 14:30 yoki 20:00" style="max-width:220px;" required>
+              <button type="submit" class="btn-sm btn-primary">
+                ${this.icons.plus} <span>Qo'shish</span>
+              </button>
+              <button type="button" class="btn-sm btn-secondary" id="btn-reset-yt-times" title="Standart 09:00, 13:00, 19:30 ga qaytarish">
+                Standart
+              </button>
+            </form>
+
+            <div style="padding:12px;background:rgba(0,203,169,0.08);border:1px solid rgba(0,203,169,0.2);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.75);">
+              💡 <b>Tavsiya:</b> Kun davomida eng faol organik tarqalish vaqtlari: <code>09:00</code> (Ertalab), <code>13:00</code> (Tushlik), <code>19:30</code> (Kechki dam olish vaqti).
+            </div>
+          </div>
+
+          <!-- YOUTUBE INTEGRATSIYASI & HOLATI -->
+          <div class="glass-card">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+              ${this.icons.youtube} YouTube API Integratsiyasi
+            </div>
+            <div class="card-subtitle" style="margin-bottom:16px;">
+              Google Data API v3 orqali YouTube kanaliga to'g'ridan-to'g'ri avtorizatsiya holati
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--radius-md);background:${ytReady ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'};border:1px solid ${ytReady ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
+                <div style="font-size:24px;">${ytReady ? '🟢' : '⚠️'}</div>
+                <div>
+                  <div style="font-weight:700;color:#ffffff;font-size:14px;">
+                    ${ytReady ? 'YouTube API Muvaffaqiyatli Ulangan' : 'YouTube Avtorizatsiyasi Kutilmoqda'}
+                  </div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px;">
+                    ${ytReady ? "Token fayli faol (youtube_token.json). Bot belgilangan vaqtlarda yuklashga tayyor." : "Tizimda youtube_token.json mavjud emas. Google Cloud Console orqali OAuth ulanish talab qilinadi."}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#ffffff;">YouTube Avto-yuklash (Rejim)</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.5);">Reels videolarni avtomatik shorts qilish</div>
+                </div>
+                <button class="btn-sm ${ytAuto ? 'btn-primary' : 'btn-secondary'}" id="toggle-yt-auto-btn">
+                  ${ytAuto ? 'Yoqilgan (ON)' : 'O\'chirilgan (OFF)'}
+                </button>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#ffffff;">Aniq vaqtlar jadvali (Daemon)</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.5);">Rek vaqtlarida fon siklida yuklash</div>
+                </div>
+                <button class="btn-sm ${settings.youtube_schedule_enabled === '1' ? 'btn-primary' : 'btn-secondary'}" id="toggle-yt-sched-btn">
+                  ${settings.youtube_schedule_enabled === '1' ? 'Yoqilgan (ON)' : 'O\'chirilgan (OFF)'}
+                </button>
+              </div>
+
+              <button class="btn-sm btn-primary" id="btn-manual-yt-upload" style="margin-top:8px;">
+                ${this.icons.youtube} <span>Hozir Navbatdagi 1 ta Videoni Yuklash</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Add time listener
+      document.getElementById('add-yt-time-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('new-yt-time-input');
+        const timeVal = input.value.trim();
+        const res = await this.api('/api/instagram/youtube/schedule/add', 'POST', { time: timeVal });
+        if (res && res.success) {
+          this.toast(`Vaqt qo'shildi: ${timeVal}`, 'success');
+          this.loadInstagram(viewport);
+        } else {
+          this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+        }
+      });
+
+      // Delete time listener
+      container.querySelectorAll('.btn-delete-yt-time').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const t = btn.dataset.time;
+          const res = await this.api('/api/instagram/youtube/schedule/remove', 'POST', { time: t });
+          if (res && res.success) {
+            this.toast(`${t} vaqti o'chirildi`, 'info');
+            this.loadInstagram(viewport);
+          } else {
+            this.toast((res && res.error) || 'Xatolik', 'error');
+          }
+        });
+      });
+
+      // Reset standard times
+      document.getElementById('btn-reset-yt-times')?.addEventListener('click', async () => {
+        const res = await this.api('/api/instagram/youtube/schedule/reset', 'POST');
+        if (res && res.success) {
+          this.toast('YouTube vaqtlari standart holatga qaytarildi', 'success');
+          this.loadInstagram(viewport);
+        }
+      });
+
+      // Toggles
+      document.getElementById('toggle-yt-auto-btn')?.addEventListener('click', async () => {
+        const newVal = ytAuto ? '0' : '1';
+        const res = await this.api('/api/instagram/settings', 'POST', { youtube_auto_upload: newVal });
+        if (res && res.success) {
+          this.toast(`YouTube avto-yuklash ${newVal === '1' ? 'yoqildi' : 'o\'chirildi'}`, 'success');
+          this.loadInstagram(viewport);
+        }
+      });
+
+      document.getElementById('toggle-yt-sched-btn')?.addEventListener('click', async () => {
+        const newVal = settings.youtube_schedule_enabled === '1' ? '0' : '1';
+        const res = await this.api('/api/instagram/settings', 'POST', { youtube_schedule_enabled: newVal });
+        if (res && res.success) {
+          this.toast(`YouTube jadvali ${newVal === '1' ? 'yoqildi' : 'o\'chirildi'}`, 'success');
+          this.loadInstagram(viewport);
+        }
+      });
+
+      document.getElementById('btn-manual-yt-upload')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btn-manual-yt-upload');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-sm"></span> YouTube Shorts yuklanmoqda...`;
+        const res = await this.api('/api/instagram/post_youtube', 'POST');
+        if (res && res.success) {
+          this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
+          this.loadInstagram(viewport);
+        } else {
+          this.toast((res && res.error) || (res && res.message) || 'Yuklashda xatolik', 'error');
+          btn.disabled = false;
+          btn.innerHTML = `${this.icons.youtube} <span>Hozir Navbatdagi 1 ta Videoni Yuklash</span>`;
+        }
+      });
+    };
+
+    // TAB 3: SINXRONLASH SOZLAMALARI
+    const renderSettingsTab = (container) => {
+      container.innerHTML = `
+        <div class="glass-card" style="max-width:800px;margin:0 auto;">
+          <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+            ${this.icons.settings} Instagram & AutoPoster Tizim Sozlamalari
+          </div>
+          <div class="card-subtitle" style="margin-bottom:20px;">
+            Instagram profili, Telegram maqsadli kanali va avtomatik post yuborish oraliqlarini sozlash
+          </div>
+
+          <form id="insta-settings-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+              <div class="form-group">
+                <label class="form-label">Instagram Foydalanuvchi Nomi (Username)</label>
+                <div class="input-container">
+                  <span class="input-icon-left">${this.icons.instagram}</span>
+                  <input type="text" id="sett-insta-username" class="input-control" value="${settings.insta_username || ''}" placeholder="Masalan: shahrisabz_t_t_uz" required>
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">
+                  @ belgisisiz profil nomini kiriting
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Telegram Maqsadli Chat / Kanal ID</label>
+                <div class="input-container">
+                  <span class="input-icon-left">${this.icons.send}</span>
+                  <input type="text" id="sett-target-chat" class="input-control" value="${settings.target_chat_id || ''}" placeholder="Masalan: -100123456789 yoki @kanal" required>
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">
+                  Postlar boradigan shaxsiy chat yoki kanal ID si
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label">Telegram Bot Token</label>
+              <div class="input-container">
+                <span class="input-icon-left">${this.icons.lock}</span>
+                <input type="text" id="sett-bot-token" class="input-control font-mono" value="${settings.bot_token || ''}" placeholder="8818017813:AAE..." required>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">
+                Postlarni yuboruvchi asosiy bot tokeni
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border-radius:var(--radius-md);border:1px solid var(--border-glass);">
+              <div>
+                <label class="form-label">Telegram Avto-yuborish Oralig'i (Daqiqalarda)</label>
+                <div class="input-container">
+                  <span class="input-icon-left">${this.icons.clock}</span>
+                  <input type="number" min="5" max="1440" id="sett-interval" class="input-control" value="${settings.interval_minutes || 60}" required>
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;">
+                  Har necha daqiqada navbatdagi 1 ta post Telegramga chiqsin (Standart: 60)
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:10px;">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#ffffff;">
+                  <input type="checkbox" id="sett-tg-auto-chk" ${tgAuto ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent-glow);">
+                  <span>Telegram avtomatik rejali yuborish faol</span>
+                </label>
+
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#ffffff;">
+                  <input type="checkbox" id="sett-yt-auto-chk" ${ytAuto ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent-glow);">
+                  <span>YouTube Shorts avto-yuklash faol</span>
+                </label>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;">
+              <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.loadInstagram(document.getElementById('content-viewport'))">
+                Bekor qilish
+              </button>
+              <button type="submit" class="btn-sm btn-primary">
+                ${this.icons.save} <span>Sozlamalarni Saqlash</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.getElementById('insta-settings-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          insta_username: document.getElementById('sett-insta-username').value.trim(),
+          target_chat_id: document.getElementById('sett-target-chat').value.trim(),
+          bot_token: document.getElementById('sett-bot-token').value.trim(),
+          interval_minutes: document.getElementById('sett-interval').value.trim(),
+          auto_schedule_enabled: document.getElementById('sett-tg-auto-chk').checked ? '1' : '0',
+          youtube_auto_upload: document.getElementById('sett-yt-auto-chk').checked ? '1' : '0'
+        };
+
+        const res = await this.api('/api/instagram/settings', 'POST', payload);
+        if (res && res.success) {
+          this.toast("Instagram sozlamalari muvaffaqiyatli saqlandi!", 'success');
+          this.loadInstagram(viewport);
+        } else {
+          this.toast((res && res.error) || 'Saqlashda xatolik', 'error');
+        }
+      });
+    };
+
+    render();
+  },
+
+  // Modal: Instagramdan Skanerlash
+  renderScanModal(defaultUsername, viewport) {
+    this.modal({
+      title: "📥 Instagram Profilidan Postlarni Skanerlash",
+      contentHtml: `
+        <form id="insta-scan-modal-form">
+          <p style="font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:14px;line-height:1.5;">
+            Instagram sahifasidagi barcha postlar, reels va rasmlar skanerlanib, <b>eng eskisidan yangisiga</b> qarab SQLite navbatiga saqlanadi. Postlar takrorlanmaydi (dublikat bo'lmaydi).
+          </p>
+
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Instagram Foydalanuvchi Nomi (Username)</label>
+            <div class="input-container">
+              <span class="input-icon-left">${this.icons.instagram}</span>
+              <input type="text" id="modal-scan-username" class="input-control" value="${defaultUsername || 'shahrisabz_t_t_uz'}" required>
+            </div>
+          </div>
+
+          <div style="padding:10px 14px;background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);border-radius:var(--radius-sm);font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:18px;">
+            ℹ️ Skanerlash jarayoni fonda bajariladi va postlar birma-bir navbatga kiritiladi.
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+            <button type="submit" class="btn-sm btn-primary" id="btn-start-scan-submit">
+              ${this.icons.download} <span>Skanerlashni Boshlash</span>
+            </button>
+          </div>
+        </form>
+      `
+    });
+
+    document.getElementById('insta-scan-modal-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('modal-scan-username').value.trim().replace(/^@/, '');
+      if (!u) {
+        this.toast('Instagram username kiriting', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btn-start-scan-submit');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-sm"></span> Jarayon boshlanmoqda...`;
+      }
+
+      const res = await this.api('/api/instagram/scan', 'POST', { username: u });
+      if (res && res.success) {
+        this.closeModal();
+        this.toast(res.message || `@${u} profili skanerlanishi fonda boshlandi!`, 'success');
+        this.loadInstagram(viewport);
+      } else {
+        this.toast((res && res.error) || 'Skanerlashda xatolik', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `${this.icons.download} <span>Skanerlashni Boshlash</span>`;
+        }
+      }
+    });
   }
 };
 

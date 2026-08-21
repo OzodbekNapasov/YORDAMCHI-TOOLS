@@ -383,6 +383,8 @@ def init_db():
         ("contracts", "Kontraktlar va Debitorlik", "Talabalar to'lov kontraktlarini yangilash va debitorlik hisobotlari", 1, "{}"),
         ("documents", "Ma'lumotnomalar Generatori", "1-kursga qabul va o'qiyotganligi haqida 300 DPI rasmiy ma'lumotnomalar", 1, "{}"),
         ("screenshots", "Guruh Screenshotlari", "Guruhlar bo'yicha to'lov ro'yxati grafik screenshotlari", 1, "{}"),
+        ("meta_ads", "Meta Ads Manager", "Facebook va Instagram reklama hisoblari, balans va byudjet nazorati", 1, "{}"),
+        ("instagram", "Instagram AutoPoster & Shorts", "Instagram postlarini Telegram va YouTube Shorts'ga xronologik avtomatik joylash", 1, "{}"),
         ("broadcast", "Ommaviy Xabarlar", "Foydalanuvchilar va guruhlarga mass broadcast yuborish tizimi", 1, "{}"),
         ("automation", "Avtomatlashtirish Dvigateli", "Triggers, shartlar va avtomatik reaksiyalar", 1, "{}"),
         ("audit_logs", "Audit va Monitoring", "Barcha operatsiyalar va so'rovlarni xavfsiz qayd qilish", 1, "{}")
