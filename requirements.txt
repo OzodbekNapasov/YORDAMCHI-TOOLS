@@ -11,3 +11,8 @@ python-dotenv
 supabase
 pg8000
 playwright
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+yt-dlp
+reportlab

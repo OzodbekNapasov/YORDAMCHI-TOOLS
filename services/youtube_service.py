@@ -7,12 +7,6 @@ import os
 import sys
 import json
 import time
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-
 # YouTube Upload Scope
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube']
 
@@ -23,18 +17,27 @@ CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
 
 def is_youtube_ready():
     """YouTube ulanish va ruxsatnomasi mavjudligini tekshirish"""
-    if os.path.exists(TOKEN_FILE):
-        try:
-            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-            if creds and (creds.valid or (creds.expired and creds.refresh_token)):
-                return True
-        except Exception:
-            pass
+    if not os.path.exists(TOKEN_FILE):
+        return False
+    try:
+        from google.oauth2.credentials import Credentials
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+        if creds and (creds.valid or (creds.expired and creds.refresh_token)):
+            return True
+    except Exception as e:
+        print(f"[YouTube Check Info]: {e}")
     return False
 
 
 def get_youtube_credentials():
     """OAuth 2.0 orqali ruxsat olingan ma'lumotlarni yuklash yoki yangilash"""
+    try:
+        from google.oauth2.credentials import Credentials
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from google.auth.transport.requests import Request
+    except ImportError as e:
+        raise ImportError("Google API kutubxonalari o'rnatilmagan (google-api-python-client, google-auth-oauthlib)") from e
+
     creds = None
     if os.path.exists(TOKEN_FILE):
         try:
@@ -79,6 +82,9 @@ def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public
         return {"success": False, "error": f"Video fayl topilmadi: {video_path}"}
 
     try:
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+
         creds = get_youtube_credentials()
         youtube = build('youtube', 'v3', credentials=creds)
 

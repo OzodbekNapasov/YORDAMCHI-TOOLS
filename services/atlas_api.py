@@ -2210,10 +2210,14 @@ def api_instagram_stats():
     """Instagram navbati, sozlamalari va umumiy statistika"""
     try:
         from services.insta_poster_service import get_queue_stats, get_youtube_schedule_times
-        from services.youtube_service import is_youtube_ready
         stats = get_queue_stats()
         yt_times = get_youtube_schedule_times()
-        yt_ready = is_youtube_ready()
+        
+        try:
+            from services.youtube_service import is_youtube_ready
+            yt_ready = is_youtube_ready()
+        except Exception:
+            yt_ready = False
         
         return jsonify({
             "success": True,
