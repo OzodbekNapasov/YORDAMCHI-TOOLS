@@ -23,6 +23,94 @@ def get_uzb_now():
     """Toshkent (O'zbekiston, UTC+5) bo'yicha joriy vaqtni olish"""
     return datetime.now(timezone.utc).astimezone(UZB_TZ).replace(tzinfo=None)
 
+
+# ------------------------------------------------------------
+# 1.1. Supabase Cloud State Sync (Vercel Serverless Persistent Sync)
+# ------------------------------------------------------------
+
+def _get_supabase_headers():
+    from services.atlas_db import _get_supabase_credentials
+    supa_url, supa_key = _get_supabase_credentials()
+    if not supa_url or not supa_key:
+        return None, None
+    headers = {
+        "apikey": supa_key,
+        "Authorization": f"Bearer {supa_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+    }
+    return supa_url, headers
+
+
+def load_insta_cloud_state():
+    """Supabase Cloud dan yuborilgan postlar va YouTube yuklanganlar holatini olish"""
+    try:
+        supa_url, headers = _get_supabase_headers()
+        if supa_url and headers:
+            r = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state", headers=headers, timeout=5)
+            if r.status_code == 200 and r.json():
+                raw_val = r.json()[0].get("value")
+                if raw_val:
+                    return json.loads(raw_val)
+    except Exception as e:
+        print(f"[Supabase Load Insta State Info]: {e}")
+        
+    # Local fallback
+    try:
+        val = get_setting("insta_poster_state_local", "")
+        if val:
+            return json.loads(val)
+    except Exception:
+        pass
+    return {"sent_shortcodes": {}, "yt_uploaded_shortcodes": {}, "last_post_time": ""}
+
+
+def save_insta_cloud_state(state: dict):
+    """Supabase Cloud ga holatni saqlash"""
+    try:
+        set_setting("insta_poster_state_local", json.dumps(state))
+    except Exception:
+        pass
+        
+    try:
+        supa_url, headers = _get_supabase_headers()
+        if supa_url and headers:
+            payload = {
+                "key": "insta_poster_state",
+                "value": json.dumps(state),
+                "category": "instagram",
+                "description": "Instagram & YouTube AutoPoster persistent cloud state"
+            }
+            requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json=payload, timeout=5)
+    except Exception as e:
+        print(f"[Supabase Save Insta State Err]: {e}")
+
+
+def mark_post_sent_in_cloud(shortcode: str, sent_at_str: str):
+    """Post Telegramga yuborilganda bulut holatiga yozish"""
+    try:
+        state = load_insta_cloud_state()
+        if "sent_shortcodes" not in state:
+            state["sent_shortcodes"] = {}
+        state["sent_shortcodes"][shortcode] = sent_at_str
+        state["last_post_time"] = sent_at_str
+        save_insta_cloud_state(state)
+    except Exception as e:
+        print(f"[Cloud Mark Sent Err]: {e}")
+
+
+def mark_youtube_uploaded_in_cloud(shortcode: str, yt_url: str):
+    """Post YouTubega yuklanganda bulut holatiga yozish"""
+    try:
+        state = load_insta_cloud_state()
+        if "yt_uploaded_shortcodes" not in state:
+            state["yt_uploaded_shortcodes"] = {}
+        state["yt_uploaded_shortcodes"][shortcode] = yt_url
+        save_insta_cloud_state(state)
+    except Exception as e:
+        print(f"[Cloud Mark YT Err]: {e}")
+
+
 DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
@@ -759,6 +847,19 @@ def init_insta_tables():
             WHERE shortcode = ?
             """, (cap, p_date, p_url, m_url, sc))
 
+    # 5. Supabase Cloud holatidan allaqachon yuborilgan va YouTubega yuklanganlarni sinxronlash
+    try:
+        cloud_state = load_insta_cloud_state()
+        sent_dict = cloud_state.get("sent_shortcodes", {})
+        for sc, sent_date in sent_dict.items():
+            cursor.execute("UPDATE insta_posts_queue SET status = 'SENT', sent_at = ? WHERE shortcode = ?", (sent_date, sc))
+            
+        yt_dict = cloud_state.get("yt_uploaded_shortcodes", {})
+        for sc, yt_url in yt_dict.items():
+            cursor.execute("UPDATE insta_posts_queue SET youtube_uploaded = 1, youtube_url = ? WHERE shortcode = ?", (yt_url, sc))
+    except Exception as _ce:
+        print(f"[Init Cloud Sync Err]: {_ce}")
+
     conn.commit()
     conn.close()
 
@@ -1374,6 +1475,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         """, (now_str, clean_caption, msg_id_val, post_id))
         conn.commit()
         
+        mark_post_sent_in_cloud(shortcode, now_str)
         set_setting("last_post_time", now_str)
         conn.close()
         
@@ -1481,6 +1583,7 @@ def post_next_youtube_video():
             """, (yt_res.get("url"), now_str, caption, post_id))
             conn.commit()
             conn.close()
+            mark_youtube_uploaded_in_cloud(shortcode, yt_res.get("url") or "")
             
             return {
                 "success": True,
@@ -1571,6 +1674,7 @@ def post_single_youtube_item(post_id):
             """, (yt_res.get("url"), now_str, caption, post_id))
             conn.commit()
             conn.close()
+            mark_youtube_uploaded_in_cloud(shortcode, yt_res.get("url") or "")
             
             return {
                 "success": True,
@@ -1947,6 +2051,7 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
         """, (now_str, clean_caption, msg_id_val, post_id))
         conn.commit()
         
+        mark_post_sent_in_cloud(shortcode, now_str)
         set_setting("last_post_time", now_str)
         conn.close()
         
