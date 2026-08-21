@@ -5748,6 +5748,9 @@ const ATLAS = {
               <button class="btn-sm btn-secondary" id="insta-refresh-btn" title="Yangilash">
                 ${this.icons.refresh} <span>Yangilash</span>
               </button>
+              <button class="btn-sm btn-secondary" id="btn-open-add-url-modal" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="Instagram post havolasi orqali navbatga qo'shish">
+                ${this.icons.plus || '+'} <span>Havola Bilan Qo‘shish</span>
+              </button>
               <button class="btn-sm btn-primary" id="btn-open-scan-modal">
                 ${this.icons.download} <span>Instagramdan Skanerlash</span>
               </button>
@@ -5912,6 +5915,10 @@ const ATLAS = {
         this.loadInstagram(viewport, activeTab);
       });
 
+      document.getElementById('btn-open-add-url-modal')?.addEventListener('click', () => {
+        this.renderAddUrlModal(viewport);
+      });
+
       document.getElementById('btn-open-scan-modal').addEventListener('click', () => {
         this.renderScanModal(currentUsername, viewport);
       });
@@ -5991,8 +5998,12 @@ const ATLAS = {
             </div>
 
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <input type="text" id="insta-search-input" class="input-control" style="width:200px;height:34px;font-size:12px;" placeholder="Shortcode yoki matn..." value="${currentSearch}">
+              <input type="text" id="insta-search-input" class="input-control" style="width:180px;height:34px;font-size:12px;" placeholder="Shortcode yoki matn..." value="${currentSearch}">
               
+              <button class="btn-sm btn-secondary" id="btn-toolbar-add-url" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="Havola (URL) orqali yangi post qo'shish">
+                ${this.icons.plus || '+'} <span>Havola Bilan Qo‘shish</span>
+              </button>
+
               <button class="btn-sm btn-primary" id="btn-post-next-tg" title="Navbatdagi 1 ta postni darhol Telegramga yuborish">
                 ${this.icons.send} <span>1 ta TG ga yuborish</span>
               </button>
@@ -6027,6 +6038,11 @@ const ATLAS = {
           currentPage = 1;
           renderQueueTab(container);
         });
+      });
+
+      // Add URL click from toolbar
+      document.getElementById('btn-toolbar-add-url')?.addEventListener('click', () => {
+        this.renderAddUrlModal(viewport);
       });
 
       // Search
@@ -6851,6 +6867,66 @@ const ATLAS = {
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = `${this.icons.save} <span>Navbatga Qo'shish</span>`;
+        }
+      }
+    });
+  },
+
+  renderAddUrlModal(viewport) {
+    const modal = document.getElementById('modal-container');
+    if (!modal) return;
+
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width:540px;">
+        <div class="modal-header">
+          <h3 style="margin:0;display:flex;align-items:center;gap:8px;font-size:16px;">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Instagram Havolasi Bilan Navbatga Qo'shish
+          </h3>
+          <button class="modal-close" onclick="ATLAS.closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px 24px;">
+          <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">
+            Instagram post yoki reel havolasini kiriting. Bir vaqtda bir nechta havolalarni har birini yangi qatordan kiritishingiz mumkin:
+          </p>
+          <form id="form-direct-add-url">
+            <div class="form-group" style="margin-bottom:18px;">
+              <textarea id="direct-add-urls-input" class="input-control" rows="4" style="font-family:'JetBrains Mono',monospace;font-size:12px;width:100%;resize:vertical;" placeholder="https://www.instagram.com/reel/DTNEIiLCBPn/&#10;https://www.instagram.com/reel/DTVcl6SCM8c/" required></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+              <button type="submit" class="btn-primary" id="btn-submit-direct-add-url">
+                ${this.icons.plus || '+'} <span>Navbatga Qo'shish</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    modal.classList.add('active');
+
+    document.getElementById('form-direct-add-url')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const urls = document.getElementById('direct-add-urls-input').value.trim();
+      if (!urls) {
+        this.toast('Kamida 1 ta havola kiriting', 'error');
+        return;
+      }
+      const btn = document.getElementById('btn-submit-direct-add-url');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-sm"></span> Qo'shilmoqda...`;
+      }
+      const res = await this.api('/api/instagram/queue/add_urls', 'POST', { urls: urls });
+      if (res && res.success) {
+        this.closeModal();
+        this.toast(res.message || 'Postlar navbatga muvaffaqiyatli qo‘shildi!', 'success');
+        this.loadInstagram(viewport);
+      } else {
+        this.toast((res && res.error) || 'Qo‘shishda xatolik', 'error');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `${this.icons.plus || '+'} <span>Navbatga Qo'shish</span>`;
         }
       }
     });

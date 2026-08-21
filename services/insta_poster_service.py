@@ -1221,6 +1221,67 @@ def scan_and_enqueue_posts(username=None, max_posts=150):
         }
 
 
+def add_posts_by_urls(urls_text):
+    """Foydalanuvchi kiritgan Instagram post/reel havolalarini navbatga qo'shish"""
+    init_insta_tables()
+    if not urls_text:
+        return {"success": False, "error": "Hech qanday havola kiritilmadi."}
+        
+    import re
+    # Extract shortcodes and urls
+    pattern = r'(?:https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/([A-Za-z0-9_-]+)|([A-Za-z0-9_-]{11}))'
+    matches = re.findall(pattern, urls_text)
+    
+    extracted_shortcodes = []
+    for m in matches:
+        code = m[0] or m[1]
+        if code and len(code) >= 9 and code not in extracted_shortcodes:
+            extracted_shortcodes.append(code)
+            
+    if not extracted_shortcodes:
+        # Fallback: split by lines/spaces
+        tokens = [t.strip().rstrip('/') for t in re.split(r'[\s,\n]+', urls_text) if t.strip()]
+        for t in tokens:
+            if '/reel/' in t or '/p/' in t:
+                parts = t.split('/')
+                sc = parts[-1] if parts[-1] else parts[-2]
+                if sc and sc not in extracted_shortcodes:
+                    extracted_shortcodes.append(sc)
+                    
+    if not extracted_shortcodes:
+        return {"success": False, "error": "Instagram havolalari aniqlanmadi. Format: https://www.instagram.com/reel/DTNEIiLCBPn/"}
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    added_count = 0
+    existing_count = 0
+    
+    for sc in extracted_shortcodes:
+        cursor.execute("SELECT id FROM insta_posts_queue WHERE shortcode = ?", (sc,))
+        if cursor.fetchone():
+            existing_count += 1
+            continue
+            
+        post_url = f"https://www.instagram.com/reel/{sc}"
+        cursor.execute("""
+        INSERT INTO insta_posts_queue (shortcode, post_url, media_type, caption, status)
+        VALUES (?, ?, 'reel', '', 'PENDING')
+        """, (sc, post_url))
+        added_count += 1
+        
+    conn.commit()
+    conn.close()
+    
+    return {
+        "success": True,
+        "total_parsed": len(extracted_shortcodes),
+        "new_added": added_count,
+        "existing_skipped": existing_count,
+        "message": f"{added_count} ta yangi post navbatga qo'shildi! ({existing_count} ta avvaldan mavjud)"
+    }
+
+
 def scan_in_background(username=None, callback_notify=None):
     """Fon rejimida skanerlash"""
     def _task():
