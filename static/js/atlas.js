@@ -78,8 +78,8 @@ const ATLAS = {
       title: 'KONTRAKTLAR & BAZA',
       subtitle: 'Bank debitorkasi, 1C/Hemis sinxronlash va to\'lovlar monitoringi',
       category: 'Moliya & Hujjatlar',
-      color: '#f59e0b',
-      glow: 'rgba(245, 158, 11, 0.45)',
+      color: '#10b981',
+      glow: 'rgba(16, 185, 129, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`
     },
     {
@@ -88,8 +88,8 @@ const ATLAS = {
       title: 'MALAKAVIY AMALIYOT',
       subtitle: 'Talabalar amaliyot buyruqlari, korxonalar bazasi va so\'rovnomalar',
       category: 'O\'quv Bo\'limi',
-      color: '#f97316',
-      glow: 'rgba(249, 115, 22, 0.45)',
+      color: '#0ea5e9',
+      glow: 'rgba(14, 165, 233, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`
     },
     {
@@ -98,8 +98,8 @@ const ATLAS = {
       title: 'MA\'LUMOTNOMALAR',
       subtitle: 'QR-kodli rasmiy o\'qish ma\'lumotnomalari va buyruqlar generatori',
       category: 'Hujjatlar',
-      color: '#8d6e63',
-      glow: 'rgba(141, 110, 99, 0.45)',
+      color: '#6366f1',
+      glow: 'rgba(99, 102, 241, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z"/></svg>`
     },
     {
@@ -108,8 +108,8 @@ const ATLAS = {
       title: 'RASMIY BUYRUQLAR',
       subtitle: 'Rektorat farmoyishlari, chetlashtirish va tiklash buyruqlari arxivi',
       category: 'Kantselyariya',
-      color: '#10b981',
-      glow: 'rgba(16, 185, 129, 0.45)',
+      color: '#8b5cf6',
+      glow: 'rgba(139, 92, 246, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6M9 16h6"/></svg>`
     },
     {
@@ -118,8 +118,8 @@ const ATLAS = {
       title: 'META ADS MANAGER',
       subtitle: 'Facebook va Instagram reklama hisoblari, lidlar tahlili va kampaniyalar',
       category: 'Marketing',
-      color: '#06b6d4',
-      glow: 'rgba(6, 182, 212, 0.45)',
+      color: '#ec4899',
+      glow: 'rgba(236, 72, 153, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8a4 4 0 0 0-4 4c0 2 2 4 4 4s4-2 4-4a4 4 0 0 0-4-4z"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/></svg>`
     },
     {
@@ -128,8 +128,8 @@ const ATLAS = {
       title: 'INSTAGRAM & YT POSTER',
       subtitle: 'Reels va postlarni Telegram kanal va YouTube Shorts\'ga avtomatik joylash',
       category: 'Avtomatizatsiya',
-      color: '#3b82f6',
-      glow: 'rgba(59, 130, 246, 0.45)',
+      color: '#f43f5e',
+      glow: 'rgba(244, 63, 94, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`
     },
     {
@@ -138,8 +138,8 @@ const ATLAS = {
       title: 'BOSHQARUV PANEL',
       subtitle: 'Telegram bot faoliyati, foydalanuvchilar va guruhlar markaziy nazorati',
       category: 'Boshqaruv',
-      color: '#6366f1',
-      glow: 'rgba(99, 102, 241, 0.45)',
+      color: '#06b6d4',
+      glow: 'rgba(6, 182, 212, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`
     },
     {
@@ -148,8 +148,8 @@ const ATLAS = {
       title: 'STATISTIKA & TAHLIL',
       subtitle: 'Barcha xizmatlar bo\'yicha dinamik grafiklar, konversiya va audit hisobotlari',
       category: 'Monitoring',
-      color: '#8b5cf6',
-      glow: 'rgba(139, 92, 246, 0.45)',
+      color: '#f59e0b',
+      glow: 'rgba(245, 158, 11, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`
     }
   ],

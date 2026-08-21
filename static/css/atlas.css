@@ -2654,14 +2654,14 @@ body.hub-cursor-active * {
   box-sizing: border-box;
 }
 
-/* User Image 1 Style Cards — Night Theme / Dark Frosted Glass */
+/* User Image 1 Style Cards — Modern Carousel / Bold Keynote Style */
 .hub-card {
-  background: rgba(7, 24, 27, 0.78);
+  background: radial-gradient(circle at 100% 0%, var(--card-glow, rgba(0, 203, 169, 0.15)) 0%, rgba(7, 24, 27, 0.88) 55%), rgba(6, 20, 23, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   color: #ffffff;
-  border-radius: 20px;
-  padding: 20px 22px 16px 22px;
+  border-radius: 22px;
+  padding: 22px 24px 18px 24px;
   cursor: none !important;
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
   display: flex;
@@ -2671,15 +2671,15 @@ body.hub-cursor-active * {
   overflow: hidden;
   box-sizing: border-box;
   user-select: none;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .hub-card:hover {
   transform: translateY(-6px);
-  background: rgba(10, 36, 40, 0.92);
+  background: radial-gradient(circle at 100% 0%, var(--card-glow, rgba(0, 203, 169, 0.25)) 0%, rgba(10, 36, 40, 0.94) 60%), rgba(8, 28, 32, 0.95);
   border-color: var(--card-color, #00cba9);
-  box-shadow: 0 20px 45px -10px var(--card-glow, rgba(0, 203, 169, 0.45)), 0 0 28px var(--card-glow, rgba(0, 203, 169, 0.35)), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 22px 48px -10px var(--card-glow, rgba(0, 203, 169, 0.45)), 0 0 30px var(--card-glow, rgba(0, 203, 169, 0.35)), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 /* Right-Side Colored Corner Tab with Number */
@@ -2687,76 +2687,81 @@ body.hub-cursor-active * {
   position: absolute;
   top: 0;
   right: 0;
-  width: 44px;
-  height: 52px;
-  background: var(--card-color, #f59e0b);
-  border-top-right-radius: 19px;
-  border-bottom-left-radius: 14px;
+  width: 48px;
+  height: 56px;
+  background: var(--card-color, #10b981);
+  border-top-right-radius: 21px;
+  border-bottom-left-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 19px;
+  font-weight: 900;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  box-shadow: -3px 3px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: -3px 3px 14px rgba(0, 0, 0, 0.4);
   transition: height 0.25s ease, box-shadow 0.25s ease;
 }
 
 .hub-card:hover .hub-card-corner-tab {
-  height: 58px;
-  box-shadow: -3px 4px 16px var(--card-glow, rgba(0, 0, 0, 0.5));
+  height: 62px;
+  box-shadow: -4px 5px 18px var(--card-glow, rgba(0, 0, 0, 0.5));
 }
 
 .hub-card-icon-circle {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e2e8f0;
-  margin-bottom: 12px;
+  color: var(--card-color, #10b981);
+  margin-bottom: 8px;
   transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .hub-card-icon-circle svg {
-  width: 20px !important;
-  height: 20px !important;
-  max-width: 20px !important;
-  max-height: 20px !important;
+  width: 24px !important;
+  height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
 }
 
 .hub-card:hover .hub-card-icon-circle {
   transform: scale(1.1);
-  background: var(--card-color, #00cba9);
-  color: #041416;
-  border-color: var(--card-color, #00cba9);
-  box-shadow: 0 0 16px var(--card-glow, rgba(0, 203, 169, 0.5));
+  background: var(--card-color, #10b981);
+  color: #031214;
+  border-color: var(--card-color, #10b981);
+  box-shadow: 0 0 20px var(--card-glow, rgba(0, 203, 169, 0.6));
 }
 
 .hub-card-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 6px 0;
 }
 
 .hub-card-title {
-  font-size: 14.5px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
   color: #ffffff;
-  letter-spacing: 0.3px;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
-  margin-bottom: 6px;
-  line-height: 1.25;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .hub-card-desc {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.62);
-  line-height: 1.45;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
+  font-weight: 450;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -2765,38 +2770,54 @@ body.hub-cursor-active * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .hub-card-category {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 10.5px;
+  color: var(--card-color, #10b981);
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 4px 9px;
+  border-radius: 6px;
 }
 
 .hub-card-cta {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--card-color, #00cba9);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 4px;
-  transition: gap 0.2s ease;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.22s ease;
 }
 
 .hub-card-cta svg {
-  width: 12px !important;
-  height: 12px !important;
-  max-width: 12px !important;
-  max-height: 12px !important;
+  width: 13px !important;
+  height: 13px !important;
+  max-width: 13px !important;
+  max-height: 13px !important;
+  transition: transform 0.2s ease;
 }
 
 .hub-card:hover .hub-card-cta {
-  gap: 7px;
+  background: var(--card-color, #10b981);
+  color: #031214;
+  border-color: var(--card-color, #10b981);
+  box-shadow: 0 0 14px var(--card-glow, rgba(0, 203, 169, 0.4));
+}
+
+.hub-card:hover .hub-card-cta svg {
+  transform: translateX(3px);
 }
 
 .hub-footer {
