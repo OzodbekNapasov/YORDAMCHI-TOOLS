@@ -476,8 +476,15 @@ const ATLAS = {
     // Cursor visibility
     const cursor = document.getElementById('hub-custom-cursor');
     const dot = document.getElementById('hub-cursor-dot');
-    if (cursor) cursor.style.display = route === 'hub' ? 'block' : 'none';
-    if (dot) dot.style.display = route === 'hub' ? 'block' : 'none';
+    if (route === 'hub') {
+      document.body.classList.add('hub-cursor-active');
+      if (cursor) cursor.style.display = 'block';
+      if (dot) dot.style.display = 'block';
+    } else {
+      document.body.classList.remove('hub-cursor-active');
+      if (cursor) cursor.style.display = 'none';
+      if (dot) dot.style.display = 'none';
+    }
 
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.route === route);
@@ -675,9 +682,11 @@ const ATLAS = {
     }
 
     if (this.currentRoute === 'hub') {
+      document.body.classList.add('hub-cursor-active');
       cursor.style.display = 'block';
       dot.style.display = 'block';
     } else {
+      document.body.classList.remove('hub-cursor-active');
       cursor.style.display = 'none';
       dot.style.display = 'none';
     }

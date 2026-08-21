@@ -2500,8 +2500,17 @@ input:checked + .slider:before {
 
 /* ============================================================
    MUNDARIJA (SERVICE HUB) — FULL-SCREEN IMMERSIVE LAUNCHER
-   Clean Card Grid with Right-Side Colored Tabs & Interactive Glow
+   Dark Frosted Glass Cards with Right-Side Colored Tabs & Glow
 ============================================================ */
+
+.app-container.hub-mode,
+.app-container.hub-mode *,
+.hub-page-container,
+.hub-page-container *,
+body.hub-cursor-active,
+body.hub-cursor-active * {
+  cursor: none !important;
+}
 
 .app-container.hub-mode .sidebar,
 .app-container.hub-mode .header {
@@ -2645,14 +2654,16 @@ input:checked + .slider:before {
   box-sizing: border-box;
 }
 
-/* User Image 1 Style Cards */
+/* User Image 1 Style Cards — Night Theme / Dark Frosted Glass */
 .hub-card {
-  background: #ffffff;
-  color: #0f172a;
+  background: rgba(7, 24, 27, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  color: #ffffff;
   border-radius: 20px;
   padding: 20px 22px 16px 22px;
-  cursor: pointer;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+  cursor: none !important;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -2660,8 +2671,15 @@ input:checked + .slider:before {
   overflow: hidden;
   box-sizing: border-box;
   user-select: none;
-  border: 2px solid transparent;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hub-card:hover {
+  transform: translateY(-6px);
+  background: rgba(10, 36, 40, 0.92);
+  border-color: var(--card-color, #00cba9);
+  box-shadow: 0 20px 45px -10px var(--card-glow, rgba(0, 203, 169, 0.45)), 0 0 28px var(--card-glow, rgba(0, 203, 169, 0.35)), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Right-Side Colored Corner Tab with Number */
@@ -2672,7 +2690,7 @@ input:checked + .slider:before {
   width: 44px;
   height: 52px;
   background: var(--card-color, #f59e0b);
-  border-top-right-radius: 18px;
+  border-top-right-radius: 19px;
   border-bottom-left-radius: 14px;
   display: flex;
   align-items: center;
@@ -2681,32 +2699,27 @@ input:checked + .slider:before {
   font-size: 16px;
   font-weight: 800;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
-  transition: height 0.25s ease;
+  box-shadow: -3px 3px 12px rgba(0, 0, 0, 0.35);
+  transition: height 0.25s ease, box-shadow 0.25s ease;
 }
 
 .hub-card:hover .hub-card-corner-tab {
   height: 58px;
-}
-
-.hub-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--card-color, #00cba9);
-  box-shadow: 0 20px 40px -10px var(--card-glow, rgba(0, 203, 169, 0.45)), 0 0 25px var(--card-glow, rgba(0, 203, 169, 0.35));
+  box-shadow: -3px 4px 16px var(--card-glow, rgba(0, 0, 0, 0.5));
 }
 
 .hub-card-icon-circle {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 1.5px solid rgba(15, 23, 42, 0.12);
-  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1e293b;
+  color: #e2e8f0;
   margin-bottom: 12px;
-  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .hub-card-icon-circle svg {
@@ -2719,8 +2732,9 @@ input:checked + .slider:before {
 .hub-card:hover .hub-card-icon-circle {
   transform: scale(1.1);
   background: var(--card-color, #00cba9);
-  color: #ffffff;
+  color: #041416;
   border-color: var(--card-color, #00cba9);
+  box-shadow: 0 0 16px var(--card-glow, rgba(0, 203, 169, 0.5));
 }
 
 .hub-card-body {
@@ -2730,7 +2744,7 @@ input:checked + .slider:before {
 .hub-card-title {
   font-size: 14.5px;
   font-weight: 800;
-  color: #0f172a;
+  color: #ffffff;
   letter-spacing: 0.3px;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -2739,7 +2753,7 @@ input:checked + .slider:before {
 
 .hub-card-desc {
   font-size: 11.5px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.62);
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2752,16 +2766,16 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: space-between;
   margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hub-card-category {
   font-size: 10px;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
 
 .hub-card-cta {
@@ -2841,5 +2855,6 @@ input:checked + .slider:before {
     padding: 16px 14px;
   }
 }
+
 
 
