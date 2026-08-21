@@ -729,23 +729,35 @@ def init_insta_tables():
     # 4. Agar navbat 70 tadan kam bo'lsa, barcha 74 ta videoni eskisidan yangisiga qarab qayta joylash
     cursor.execute("SELECT COUNT(*) as cnt FROM insta_posts_queue")
     cnt_val = cursor.fetchone()["cnt"]
-    if cnt_val < 50:
+    if cnt_val < 70:
         cursor.execute("DELETE FROM insta_posts_queue")
         for p in DEFAULT_SEEDED_POSTS:
+            sc = p.get("shortcode") or ""
+            p_url = p.get("post_url") or p.get("url") or f"https://www.instagram.com/reel/{sc}"
+            m_type = p.get("media_type") or "reel"
+            cap = p.get("caption") or ""
+            m_url = p.get("media_url") or ""
+            p_date = p.get("post_date") or ""
             cursor.execute("""
             INSERT INTO insta_posts_queue (shortcode, post_url, media_type, caption, media_url, post_date, status)
             VALUES (?, ?, ?, ?, ?, ?, 'PENDING')
-            """, (p["shortcode"], p["url"], p.get("media_type") or "reel", p.get("caption") or "", p.get("media_url") or "", p.get("post_date") or ""))
+            """, (sc, p_url, m_type, cap, m_url, p_date))
     else:
         for p in DEFAULT_SEEDED_POSTS:
+            sc = p.get("shortcode") or ""
+            p_url = p.get("post_url") or p.get("url") or f"https://www.instagram.com/reel/{sc}"
+            cap = p.get("caption") or ""
+            p_date = p.get("post_date") or ""
+            m_url = p.get("media_url") or ""
             cursor.execute("""
             UPDATE insta_posts_queue 
             SET caption = CASE WHEN caption IS NULL OR caption = '' THEN ? ELSE caption END,
                 post_date = CASE WHEN post_date IS NULL OR post_date = '' THEN ? ELSE post_date END,
                 media_type = 'reel',
+                post_url = CASE WHEN post_url IS NULL OR post_url = '' THEN ? ELSE post_url END,
                 media_url = CASE WHEN media_url IS NULL OR media_url = '' THEN ? ELSE media_url END
             WHERE shortcode = ?
-            """, (p.get("caption") or "", p.get("post_date") or "", p.get("media_url") or "", p["shortcode"]))
+            """, (cap, p_date, p_url, m_url, sc))
 
     conn.commit()
     conn.close()
