@@ -167,6 +167,63 @@ const ATLAS = {
     return this.toast(message, type);
   },
 
+  // Universal Modal System
+  modal({ title, contentHtml, maxWidth = '560px' }) {
+    let container = document.getElementById('modal-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'modal-container';
+      container.className = 'modal-backdrop';
+      document.body.appendChild(container);
+    }
+
+    container.innerHTML = `
+      <div class="modal-card" style="max-width:${maxWidth};">
+        <div class="modal-header">
+          <h3 style="margin:0;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;">${title}</h3>
+          <button class="modal-close" onclick="ATLAS.closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px 24px;">
+          ${contentHtml}
+        </div>
+      </div>
+    `;
+    container.classList.add('active');
+  },
+
+  closeModal() {
+    const container = document.getElementById('modal-container');
+    if (container) {
+      container.classList.remove('active');
+      container.innerHTML = '';
+    }
+  },
+
+  confirmModal({ title, message, confirmText = "O'chirish", onConfirm }) {
+    this.modal({
+      title: `<span style="color:#f87171;">⚠️ ${title || 'Tasdiqlash'}</span>`,
+      maxWidth: '440px',
+      contentHtml: `
+        <p style="font-size:13px;color:rgba(255,255,255,0.8);margin-bottom:20px;line-height:1.5;">
+          ${message || "Haqiqatan ham bu amalni bajarmoqchimisiz?"}
+        </p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" class="btn-secondary btn-sm" onclick="ATLAS.closeModal()">Bekor qilish</button>
+          <button type="button" class="btn-danger btn-sm" id="btn-modal-confirm-action" style="background:#ef4444;color:#fff;border:none;padding:6px 16px;font-weight:700;border-radius:var(--radius-sm);cursor:pointer;">
+            ${confirmText}
+          </button>
+        </div>
+      `
+    });
+
+    document.getElementById('btn-modal-confirm-action')?.addEventListener('click', async () => {
+      this.closeModal();
+      if (typeof onConfirm === 'function') {
+        await onConfirm();
+      }
+    });
+  },
+
   // Init Application with Strict Server Verification
   async init() {
     this.bindGlobalEvents();
@@ -6873,37 +6930,26 @@ const ATLAS = {
   },
 
   renderAddUrlModal(viewport) {
-    const modal = document.getElementById('modal-container');
-    if (!modal) return;
-
-    modal.innerHTML = `
-      <div class="modal-card" style="max-width:540px;">
-        <div class="modal-header">
-          <h3 style="margin:0;display:flex;align-items:center;gap:8px;font-size:16px;">
-            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            Instagram Havolasi Bilan Navbatga Qo'shish
-          </h3>
-          <button class="modal-close" onclick="ATLAS.closeModal()">&times;</button>
-        </div>
-        <div class="modal-body" style="padding:20px 24px;">
-          <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">
-            Instagram post yoki reel havolasini kiriting. Bir vaqtda bir nechta havolalarni har birini yangi qatordan kiritishingiz mumkin:
-          </p>
-          <form id="form-direct-add-url">
-            <div class="form-group" style="margin-bottom:18px;">
-              <textarea id="direct-add-urls-input" class="input-control" rows="4" style="font-family:'JetBrains Mono',monospace;font-size:12px;width:100%;resize:vertical;" placeholder="https://www.instagram.com/reel/DTNEIiLCBPn/&#10;https://www.instagram.com/reel/DTVcl6SCM8c/" required></textarea>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;">
-              <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-              <button type="submit" class="btn-primary" id="btn-submit-direct-add-url">
-                ${this.icons.plus || '+'} <span>Navbatga Qo'shish</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
-    modal.classList.add('active');
+    this.modal({
+      title: `🔗 Instagram Havolasi Bilan Navbatga Qo'shish`,
+      maxWidth: '540px',
+      contentHtml: `
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">
+          Instagram post yoki reel havolasini kiriting. Bir vaqtda bir nechta havolalarni har birini yangi qatordan kiritishingiz mumkin:
+        </p>
+        <form id="form-direct-add-url">
+          <div class="form-group" style="margin-bottom:18px;">
+            <textarea id="direct-add-urls-input" class="input-control" rows="4" style="font-family:'JetBrains Mono',monospace;font-size:12px;width:100%;resize:vertical;" placeholder="https://www.instagram.com/reel/DTNEIiLCBPn/&#10;https://www.instagram.com/reel/DTVcl6SCM8c/" required></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;">
+            <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+            <button type="submit" class="btn-primary" id="btn-submit-direct-add-url">
+              ${this.icons.plus || '+'} <span>Navbatga Qo'shish</span>
+            </button>
+          </div>
+        </form>
+      `
+    });
 
     document.getElementById('form-direct-add-url')?.addEventListener('submit', async (e) => {
       e.preventDefault();

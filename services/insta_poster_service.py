@@ -847,13 +847,33 @@ def init_insta_tables():
             WHERE shortcode = ?
             """, (cap, p_date, p_url, m_url, sc))
 
-    # 5. Supabase Cloud holatidan allaqachon yuborilgan va YouTubega yuklanganlarni sinxronlash
+    # 5. Supabase Cloud holatidan allaqachon yuborilgan, qo'shilgan va o'chirilganlarni sinxronlash
     try:
         cloud_state = load_insta_cloud_state()
+        
+        # 5.1 O'chirilgan postlarni tozalash
+        deleted_list = cloud_state.get("deleted_shortcodes", [])
+        if deleted_list:
+            for dsc in deleted_list:
+                cursor.execute("DELETE FROM insta_posts_queue WHERE shortcode = ?", (dsc,))
+                
+        # 5.2 Foydalanuvchi qo'shgan maxsus postlarni tiklash
+        for cp in cloud_state.get("custom_posts", []):
+            sc = cp.get("shortcode")
+            if sc and sc not in deleted_list:
+                cursor.execute("SELECT id FROM insta_posts_queue WHERE shortcode = ?", (sc,))
+                if not cursor.fetchone():
+                    cursor.execute("""
+                    INSERT INTO insta_posts_queue (shortcode, post_url, media_type, caption, media_url, post_date, status)
+                    VALUES (?, ?, ?, ?, ?, ?, 'PENDING')
+                    """, (sc, cp.get("post_url", f"https://www.instagram.com/reel/{sc}"), cp.get("media_type", "reel"), cp.get("caption", ""), cp.get("media_url", ""), cp.get("post_date", "")))
+
+        # 5.3 Yuborilganlar holati
         sent_dict = cloud_state.get("sent_shortcodes", {})
         for sc, sent_date in sent_dict.items():
             cursor.execute("UPDATE insta_posts_queue SET status = 'SENT', sent_at = ? WHERE shortcode = ?", (sent_date, sc))
             
+        # 5.4 YouTube yuklanganlar holati
         yt_dict = cloud_state.get("yt_uploaded_shortcodes", {})
         for sc, yt_url in yt_dict.items():
             cursor.execute("UPDATE insta_posts_queue SET youtube_uploaded = 1, youtube_url = ? WHERE shortcode = ?", (yt_url, sc))
@@ -1222,31 +1242,31 @@ def scan_and_enqueue_posts(username=None, max_posts=150):
 
 
 def add_posts_by_urls(urls_text):
-    """Foydalanuvchi kiritgan Instagram post/reel havolalarini navbatga qo'shish"""
+    """Foydalanuvchi kiritgan Instagram post/reel havolalarini tahlil qilib, matni (caption) bilan navbatga qo'shish"""
     init_insta_tables()
     if not urls_text:
         return {"success": False, "error": "Hech qanday havola kiritilmadi."}
         
-    import re
-    # Extract shortcodes and urls
-    pattern = r'(?:https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/([A-Za-z0-9_-]+)|([A-Za-z0-9_-]{11}))'
-    matches = re.findall(pattern, urls_text)
-    
+    import re, asyncio
+    # Extract shortcodes cleanly (ignoring query parameters like ?igsh=...)
+    clean_pattern = r'instagram\.com/(?:reel|p|tv)/([A-Za-z0-9_-]+)'
+    raw_lines = urls_text.splitlines()
     extracted_shortcodes = []
-    for m in matches:
-        code = m[0] or m[1]
-        if code and len(code) >= 9 and code not in extracted_shortcodes:
-            extracted_shortcodes.append(code)
-            
-    if not extracted_shortcodes:
-        # Fallback: split by lines/spaces
-        tokens = [t.strip().rstrip('/') for t in re.split(r'[\s,\n]+', urls_text) if t.strip()]
-        for t in tokens:
-            if '/reel/' in t or '/p/' in t:
-                parts = t.split('/')
-                sc = parts[-1] if parts[-1] else parts[-2]
-                if sc and sc not in extracted_shortcodes:
-                    extracted_shortcodes.append(sc)
+    
+    for line in raw_lines:
+        line_str = line.strip()
+        if not line_str:
+            continue
+        m = re.findall(clean_pattern, line_str)
+        if m:
+            for code in m:
+                if code and code not in extracted_shortcodes:
+                    extracted_shortcodes.append(code)
+        else:
+            token = line_str.rstrip('/').split('/')[-1].split('?')[0].strip()
+            if len(token) >= 9 and len(token) <= 15 and re.match(r'^[A-Za-z0-9_-]+$', token):
+                if token not in extracted_shortcodes:
+                    extracted_shortcodes.append(token)
                     
     if not extracted_shortcodes:
         return {"success": False, "error": "Instagram havolalari aniqlanmadi. Format: https://www.instagram.com/reel/DTNEIiLCBPn/"}
@@ -1256,6 +1276,8 @@ def add_posts_by_urls(urls_text):
     
     added_count = 0
     existing_count = 0
+    new_custom_posts = []
+    now_str = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
     
     for sc in extracted_shortcodes:
         cursor.execute("SELECT id FROM insta_posts_queue WHERE shortcode = ?", (sc,))
@@ -1264,21 +1286,61 @@ def add_posts_by_urls(urls_text):
             continue
             
         post_url = f"https://www.instagram.com/reel/{sc}"
+        caption = ""
+        media_url = ""
+        
+        # Sarlavha va rasmni avtomatik tortib olish
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            content = loop.run_until_complete(_fetch_post_content_async(post_url))
+            loop.close()
+            if content:
+                caption = content.get("caption") or ""
+                media_url = content.get("img_url") or content.get("video_url") or ""
+        except Exception as fe:
+            print(f"[Fetch info for {sc}]: {fe}")
+            
         cursor.execute("""
-        INSERT INTO insta_posts_queue (shortcode, post_url, media_type, caption, status)
-        VALUES (?, ?, 'reel', '', 'PENDING')
-        """, (sc, post_url))
+        INSERT INTO insta_posts_queue (shortcode, post_url, media_type, caption, media_url, post_date, status)
+        VALUES (?, ?, 'reel', ?, ?, ?, 'PENDING')
+        """, (sc, post_url, caption, media_url, now_str))
         added_count += 1
+        
+        new_custom_posts.append({
+            "shortcode": sc,
+            "post_url": post_url,
+            "media_type": "reel",
+            "caption": caption,
+            "media_url": media_url,
+            "post_date": now_str
+        })
         
     conn.commit()
     conn.close()
     
+    # Supabase Cloud holatida saqlash
+    try:
+        if new_custom_posts:
+            cloud_state = load_insta_cloud_state()
+            cust = cloud_state.get("custom_posts", [])
+            for ncp in new_custom_posts:
+                if not any(c.get("shortcode") == ncp["shortcode"] for c in cust):
+                    cust.append(ncp)
+            del_list = cloud_state.get("deleted_shortcodes", [])
+            del_list = [d for d in del_list if not any(ncp["shortcode"] == d for ncp in new_custom_posts)]
+            cloud_state["custom_posts"] = cust
+            cloud_state["deleted_shortcodes"] = del_list
+            save_insta_cloud_state(cloud_state)
+    except Exception as _ce:
+        print(f"[Save Custom Posts Cloud Err]: {_ce}")
+        
     return {
         "success": True,
         "total_parsed": len(extracted_shortcodes),
         "new_added": added_count,
         "existing_skipped": existing_count,
-        "message": f"{added_count} ta yangi post navbatga qo'shildi! ({existing_count} ta avvaldan mavjud)"
+        "message": f"{added_count} ta yangi post matni bilan navbatga qo'shildi! ({existing_count} ta avvaldan bor)"
     }
 
 
@@ -1871,15 +1933,34 @@ def clear_all_queue():
     return True
 
 def delete_queue_item(post_id):
-    """Bitta postni navbatdan o'chirish"""
+    """Bitta postni navbatdan o'chirish va bulutda saqlash"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        cursor.execute("SELECT shortcode FROM insta_posts_queue WHERE id = ?", (post_id,))
+        row = cursor.fetchone()
+        sc = row["shortcode"] if row else None
+
         cursor.execute("DELETE FROM insta_posts_queue WHERE id = ?", (post_id,))
         cursor.execute("DELETE FROM insta_post_likes WHERE post_id = ?", (post_id,))
         deleted = cursor.rowcount > 0
         conn.commit()
         conn.close()
+
+        if sc:
+            try:
+                cloud_state = load_insta_cloud_state()
+                del_list = cloud_state.get("deleted_shortcodes", [])
+                if sc not in del_list:
+                    del_list.append(sc)
+                cloud_state["deleted_shortcodes"] = del_list
+                # Remove from custom_posts if exists
+                if "custom_posts" in cloud_state:
+                    cloud_state["custom_posts"] = [cp for cp in cloud_state["custom_posts"] if cp.get("shortcode") != sc]
+                save_insta_cloud_state(cloud_state)
+            except Exception as _ce:
+                print(f"[Delete Cloud Sync Err]: {_ce}")
+
         return deleted
     except Exception as e:
         print(f"[Delete Queue Item Error]: {e}")
