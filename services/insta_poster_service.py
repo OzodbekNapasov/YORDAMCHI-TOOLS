@@ -21,20 +21,92 @@ DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
 
-# Boshlang'ich skanerlangan postlar (Seed)
+# Boshlang'ich skanerlangan postlar (Eng eskisidan yangisiga qarab xronologik tartibda)
 DEFAULT_SEEDED_POSTS = [
-    {"shortcode": "DbsKZ2qICdh", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DbsKZ2qICdh", "media_type": "reel"},
-    {"shortcode": "DbyU4H_oLZr", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DbyU4H_oLZr", "media_type": "reel"},
-    {"shortcode": "Db0U9ivIcwC", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/Db0U9ivIcwC", "media_type": "post"},
-    {"shortcode": "Db-ssJeIyZh", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/Db-ssJeIyZh", "media_type": "reel"},
-    {"shortcode": "DcBekL6Omao", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcBekL6Omao", "media_type": "reel"},
-    {"shortcode": "DcDX1cOoIoX", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcDX1cOoIoX", "media_type": "reel"},
-    {"shortcode": "DcIsWQ5IT8b", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcIsWQ5IT8b", "media_type": "reel"},
-    {"shortcode": "DcLj3zwqODC", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcLj3zwqODC", "media_type": "reel"},
-    {"shortcode": "DcLkGzAqbz9", "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DcLkGzAqbz9", "media_type": "reel"},
-    {"shortcode": "DTKlzm8CJ5N", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DTKlzm8CJ5N", "media_type": "post"},
-    {"shortcode": "DTKl2WlCFbP", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DTKl2WlCFbP", "media_type": "post"},
-    {"shortcode": "DTKl4neiIGi", "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DTKl4neiIGi", "media_type": "post"}
+    {
+        "shortcode": "DbsKZ2qICdh",
+        "url": "https://www.instagram.com/reel/DbsKZ2qICdh",
+        "media_type": "reel",
+        "post_date": "2026-08-06",
+        "caption": "🎓 Kelajagingizni bugundan boshlang!\n\n👩‍⚕️ Davlat namunasidagi diplom asosida zamonaviy tibbiy kasbni egallang.\n\n✅ Hamshiralik\n✅ Feldsherlik\n✅ Farmatsiya\n\n📚 Qulay to’lov imkoniyatlari\n👨‍🏫 Tajribali ustozlar\n💼 Bitirgach ish topish imkoniyatini oshiruvchi amaliy ta’lim\n\n📍 Shahrisabz tibbiyot texnikumi\n\n📞 Batafsil ma’lumot va ro’yxatdan o’tish:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n⏳ Qabul davom etmoqda. Joylar cheklangan — hoziroq murojaat qiling!"
+    },
+    {
+        "shortcode": "DbyU4H_oLZr",
+        "url": "https://www.instagram.com/reel/DbyU4H_oLZr",
+        "media_type": "reel",
+        "post_date": "2026-08-08",
+        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n🩺Davolash ishi\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!"
+    },
+    {
+        "shortcode": "Db0U9ivIcwC",
+        "url": "https://www.instagram.com/p/Db0U9ivIcwC",
+        "media_type": "post",
+        "post_date": "2026-08-09",
+        "caption": "🩺 SHAHRISABZ TIBBIYOT TEXNIKUMI 🎓 3 OYLIK HAMSHIRALIK KURSI 📚\n\nSiz ham qisqa vaqt ichida tibbiy bilim va amaliy ko‘nikmalarga ega bo‘lishni istaysizmi?\n\nBizning 3 oylik hamshiralik kurslarimizda:\n✅ Boshlang‘ich birinchi tibbiy yordam\n✅ Ukol va muolaja qilish texnikalari\n✅ Bemorlarni to‘g‘ri parvarishlash\n\n📞 Murojaat uchun: 88 260 20 73 | 97 266 20 73"
+    },
+    {
+        "shortcode": "Db-ssJeIyZh",
+        "url": "https://www.instagram.com/reel/Db-ssJeIyZh",
+        "media_type": "reel",
+        "post_date": "2026-08-13",
+        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMIDA QABUL DAVOM ETMOQDA! 🩺\n\nKelajakdagi kasbingizni bugundan tanlang! 💙\nSifatli ta’lim, zamonaviy bilim va tibbiyot sohasida mustahkam kelajak sari bir qadam! 👩‍⚕️👨‍⚕️\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n✨ Qabul davom etmoqda! Shoshiling, o‘z o‘rningizni band qiling!"
+    },
+    {
+        "shortcode": "DcBekL6Omao",
+        "url": "https://www.instagram.com/reel/DcBekL6Omao",
+        "media_type": "reel",
+        "post_date": "2026-08-14",
+        "caption": "📚 3 OYLIK HAMSHIRALIK KURSI\n\n🩺 Shahrisabz tibbiyot texnikumida 3 oylik hamshiralik kursiga qabul davom etmoqda!\n\n🎓 Zamonaviy bilim va amaliy ko‘nikmalar\n👩‍⚕️ Tajribali mutaxassislardan ta’lim\n📜 Kurs yakunida rasmiy sertifikat\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n\nJoylar soni cheklangan! Hoziroq ro'yxatdan o'ting."
+    },
+    {
+        "shortcode": "DcDX1cOoIoX",
+        "url": "https://www.instagram.com/reel/DcDX1cOoIoX",
+        "media_type": "reel",
+        "post_date": "2026-08-15",
+        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 97 266 20 73\n+998 88 260 20 73\n\n📍 Shahrisabz tibbiyot texnikumi"
+    },
+    {
+        "shortcode": "DcIsWQ5IT8b",
+        "url": "https://www.instagram.com/reel/DcIsWQ5IT8b",
+        "media_type": "reel",
+        "post_date": "2026-08-17",
+        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 88 260 20 73\n+998 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi"
+    },
+    {
+        "shortcode": "DcLj3zwqODC",
+        "url": "https://www.instagram.com/reel/DcLj3zwqODC",
+        "media_type": "reel",
+        "post_date": "2026-08-18",
+        "caption": "📚 Tibbiyotda o‘qishni xohlayapsizmi? 🩺\nUnda bu video aynan siz uchun! ❤️\n\n📍 Shahrisabz tibbiyot texnikumi — kelajakdagi kasbingiz sari ishonchli qadam! 🎓\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73\n\n❤️ Bu videoni tibbiyotda o‘qishni xohlayotgan do‘stingizga yuboring!"
+    },
+    {
+        "shortcode": "DcLkGzAqbz9",
+        "url": "https://www.instagram.com/reel/DcLkGzAqbz9",
+        "media_type": "reel",
+        "post_date": "2026-08-18",
+        "caption": "🩺 Bugun kasb tanlaysiz — ertaga shu kasb bilan daromad topasiz! 🎓✨\n\nKelajagingiz uchun to‘g‘ri tanlov qiling!\n🏥 Shahrisabz tibbiyot texnikumi — bilim, kasb va kelajak sari ishonchli qadam! ❤️\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73"
+    },
+    {
+        "shortcode": "DTKlzm8CJ5N",
+        "url": "https://www.instagram.com/p/DTKlzm8CJ5N",
+        "media_type": "post",
+        "post_date": "2026-08-19",
+        "caption": "🏥 Shahrisabz tibbiyot texnikumi yangiliklari va talabalar amaliyoti.\n\n📍 Manzil: Shahrisabz shahar, Tibbiyot texnikumi binosi\n☎️ Aloqa: 88 260 20 73 | 97 266 20 73"
+    },
+    {
+        "shortcode": "DTKl2WlCFbP",
+        "url": "https://www.instagram.com/p/DTKl2WlCFbP",
+        "media_type": "post",
+        "post_date": "2026-08-19",
+        "caption": "🎓 Hamshiralik, Feldsherlik va Farmatsiya yo'nalishlarida sifatli ta'lim.\n\n📞 Murojaat uchun: +998 88 260 20 73 | +998 77 088 20 73"
+    },
+    {
+        "shortcode": "DTKl4neiIGi",
+        "url": "https://www.instagram.com/p/DTKl4neiIGi",
+        "media_type": "post",
+        "post_date": "2026-08-20",
+        "caption": "✨ Kelajagingizni biz bilan quring! Shahrisabz tibbiyot texnikumi.\n\n☎️ 88 260 20 73\n☎️ 97 266 20 73"
+    }
 ]
 
 # ------------------------------------------------------------
@@ -129,15 +201,25 @@ def init_insta_tables():
     for k, v in defaults.items():
         cursor.execute("INSERT OR IGNORE INTO insta_settings (key, value) VALUES (?, ?)", (k, v))
 
-    # 4. Agar navbat bo'sh bo'lsa, @shahrisabz_t_t_uz postlarini avtomatik urug'lantirish (Seed)
+    # 4. Agar navbat bo'sh bo'lsa yoki postlarda matn/sana yetishmasa, to'liq ma'lumotlarni yangilash/joylash
     cursor.execute("SELECT COUNT(*) as cnt FROM insta_posts_queue")
     queue_cnt = cursor.fetchone()["cnt"]
     if queue_cnt == 0:
         for p in DEFAULT_SEEDED_POSTS:
             cursor.execute("""
-            INSERT OR IGNORE INTO insta_posts_queue (shortcode, post_url, media_type, status)
-            VALUES (?, ?, ?, 'PENDING')
-            """, (p["shortcode"], p["url"], p["media_type"]))
+            INSERT OR IGNORE INTO insta_posts_queue (shortcode, post_url, media_type, caption, post_date, status)
+            VALUES (?, ?, ?, ?, ?, 'PENDING')
+            """, (p["shortcode"], p["url"], p["media_type"], p["caption"], p["post_date"]))
+    else:
+        # Mavjud bo'sh matnlarni to'ldirish
+        for p in DEFAULT_SEEDED_POSTS:
+            cursor.execute("""
+            UPDATE insta_posts_queue 
+            SET caption = CASE WHEN caption IS NULL OR caption = '' THEN ? ELSE caption END,
+                post_date = CASE WHEN post_date IS NULL OR post_date = '' THEN ? ELSE post_date END,
+                media_type = ?
+            WHERE shortcode = ?
+            """, (p["caption"], p["post_date"], p["media_type"], p["shortcode"]))
         
     conn.commit()
     conn.close()

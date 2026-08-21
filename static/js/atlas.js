@@ -6167,6 +6167,10 @@ const ATLAS = {
                   const isReel = item.media_type === 'reel' || item.post_url.includes('/reel/');
                   const typeLabel = isReel ? '🎬 Reel' : (item.media_type === 'video' ? '📹 Video' : '📸 Rasm');
 
+                  const dateHtml = item.sent_at 
+                    ? `<span style="color:#34d399;font-weight:600;" title="Telegramga chiqdi">✅ ${item.sent_at}</span>`
+                    : (item.post_date ? `<span style="color:rgba(255,255,255,0.85);" title="Instagram post sanasi">📅 ${item.post_date}</span>` : `<span style="color:rgba(255,255,255,0.45);">${item.created_at || '—'}</span>`);
+
                   return `
                     <tr>
                       <td class="mono" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.45);">${item.id}</td>
@@ -6179,15 +6183,15 @@ const ATLAS = {
                         </a>
                       </td>
                       <td>
-                        <div style="font-size:12px;color:rgba(255,255,255,0.85);max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${(item.caption || '').replace(/"/g, '&quot;')}">
+                        <div style="font-size:12px;color:rgba(255,255,255,0.9);max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;" title="${(item.caption || '').replace(/"/g, '&quot;')}">
                           ${item.caption ? item.caption : '<span style="color:rgba(255,255,255,0.3);font-style:italic;">(Matnsiz)</span>'}
                         </div>
                       </td>
                       <td style="text-align:center;">${statusBadge}</td>
                       <td style="text-align:center;">${ytBadge}</td>
                       <td>
-                        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'JetBrains Mono',monospace;">
-                          ${item.sent_at || item.created_at || '—'}
+                        <div style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+                          ${dateHtml}
                         </div>
                       </td>
                       <td style="text-align:right;">
