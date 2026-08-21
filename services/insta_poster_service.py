@@ -21,7 +21,7 @@ DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
 
-# Boshlang'ich skanerlangan postlar (Eng eskisidan yangisiga qarab xronologik tartibda)
+# Boshlang'ich skanerlangan postlar (Faqat Reel/Video postlar, eskisidan yangisiga qarab)
 DEFAULT_SEEDED_POSTS = [
     {
         "shortcode": "DbsKZ2qICdh",
@@ -36,13 +36,6 @@ DEFAULT_SEEDED_POSTS = [
         "media_type": "reel",
         "post_date": "2026-08-08",
         "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n🩺Davolash ishi\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!"
-    },
-    {
-        "shortcode": "Db0U9ivIcwC",
-        "url": "https://www.instagram.com/p/Db0U9ivIcwC",
-        "media_type": "post",
-        "post_date": "2026-08-09",
-        "caption": "🩺 SHAHRISABZ TIBBIYOT TEXNIKUMI 🎓 3 OYLIK HAMSHIRALIK KURSI 📚\n\nSiz ham qisqa vaqt ichida tibbiy bilim va amaliy ko‘nikmalarga ega bo‘lishni istaysizmi?\n\nBizning 3 oylik hamshiralik kurslarimizda:\n✅ Boshlang‘ich birinchi tibbiy yordam\n✅ Ukol va muolaja qilish texnikalari\n✅ Bemorlarni to‘g‘ri parvarishlash\n\n📞 Murojaat uchun: 88 260 20 73 | 97 266 20 73"
     },
     {
         "shortcode": "Db-ssJeIyZh",
@@ -85,27 +78,6 @@ DEFAULT_SEEDED_POSTS = [
         "media_type": "reel",
         "post_date": "2026-08-18",
         "caption": "🩺 Bugun kasb tanlaysiz — ertaga shu kasb bilan daromad topasiz! 🎓✨\n\nKelajagingiz uchun to‘g‘ri tanlov qiling!\n🏥 Shahrisabz tibbiyot texnikumi — bilim, kasb va kelajak sari ishonchli qadam! ❤️\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73"
-    },
-    {
-        "shortcode": "DTKlzm8CJ5N",
-        "url": "https://www.instagram.com/p/DTKlzm8CJ5N",
-        "media_type": "post",
-        "post_date": "2026-08-19",
-        "caption": "🏥 Shahrisabz tibbiyot texnikumi yangiliklari va talabalar amaliyoti.\n\n📍 Manzil: Shahrisabz shahar, Tibbiyot texnikumi binosi\n☎️ Aloqa: 88 260 20 73 | 97 266 20 73"
-    },
-    {
-        "shortcode": "DTKl2WlCFbP",
-        "url": "https://www.instagram.com/p/DTKl2WlCFbP",
-        "media_type": "post",
-        "post_date": "2026-08-19",
-        "caption": "🎓 Hamshiralik, Feldsherlik va Farmatsiya yo'nalishlarida sifatli ta'lim.\n\n📞 Murojaat uchun: +998 88 260 20 73 | +998 77 088 20 73"
-    },
-    {
-        "shortcode": "DTKl4neiIGi",
-        "url": "https://www.instagram.com/p/DTKl4neiIGi",
-        "media_type": "post",
-        "post_date": "2026-08-20",
-        "caption": "✨ Kelajagingizni biz bilan quring! Shahrisabz tibbiyot texnikumi.\n\n☎️ 88 260 20 73\n☎️ 97 266 20 73"
     }
 ]
 
@@ -188,7 +160,7 @@ def init_insta_tables():
         "last_post_time": "",
         "is_scanning": "0",
         "last_scan_time": "",
-        "last_scan_count": "12",
+        "last_scan_count": "8",
         "night_mode_enabled": "1",          # 0: O'chirilgan, 1: Yoqilgan (00:00 - 07:00)
         "night_mode_start": "00:00",
         "night_mode_end": "07:00",
@@ -201,7 +173,10 @@ def init_insta_tables():
     for k, v in defaults.items():
         cursor.execute("INSERT OR IGNORE INTO insta_settings (key, value) VALUES (?, ?)", (k, v))
 
-    # 4. Agar navbat bo'sh bo'lsa yoki postlarda matn/sana yetishmasa, to'liq ma'lumotlarni yangilash/joylash
+    # Faqat video/reel postlarni qoldirish — rasmlar va karusellarni tozalash
+    cursor.execute("DELETE FROM insta_posts_queue WHERE media_type NOT IN ('reel', 'video') AND post_url NOT LIKE '%/reel/%'")
+
+    # 4. Agar navbat bo'sh bo'lsa, @shahrisabz_t_t_uz video/reel postlarini avtomatik joylash
     cursor.execute("SELECT COUNT(*) as cnt FROM insta_posts_queue")
     queue_cnt = cursor.fetchone()["cnt"]
     if queue_cnt == 0:
@@ -211,15 +186,15 @@ def init_insta_tables():
             VALUES (?, ?, ?, ?, ?, 'PENDING')
             """, (p["shortcode"], p["url"], p["media_type"], p["caption"], p["post_date"]))
     else:
-        # Mavjud bo'sh matnlarni to'ldirish
+        # Mavjud videolarning matn va sanalarini yangilash
         for p in DEFAULT_SEEDED_POSTS:
             cursor.execute("""
             UPDATE insta_posts_queue 
             SET caption = CASE WHEN caption IS NULL OR caption = '' THEN ? ELSE caption END,
                 post_date = CASE WHEN post_date IS NULL OR post_date = '' THEN ? ELSE post_date END,
-                media_type = ?
+                media_type = 'reel'
             WHERE shortcode = ?
-            """, (p["caption"], p["post_date"], p["media_type"], p["shortcode"]))
+            """, (p["caption"], p["post_date"], p["shortcode"]))
         
     conn.commit()
     conn.close()
@@ -431,7 +406,7 @@ async def _scrape_instagram_profile_async(username, max_posts=150):
             while scroll_attempts < max_scrolls and len(seen_codes) < max_posts:
                 links = await page.evaluate('''() => {
                     const anchors = Array.from(document.querySelectorAll('a'));
-                    return anchors.map(a => a.href).filter(h => h.includes('/p/') || h.includes('/reel/'));
+                    return anchors.map(a => a.href).filter(h => h.includes('/reel/'));
                 }''')
                 
                 initial_len = len(seen_codes)
@@ -443,7 +418,7 @@ async def _scrape_instagram_profile_async(username, max_posts=150):
                         collected_links.append({
                             "shortcode": code,
                             "url": parts,
-                            "is_reel": "/reel/" in parts
+                            "is_reel": True
                         })
                         
                 if len(seen_codes) == initial_len:
@@ -688,6 +663,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
     cursor.execute("""
     SELECT * FROM insta_posts_queue 
     WHERE status = 'PENDING' 
+      AND (media_type IN ('reel', 'video') OR post_url LIKE '%/reel/%')
     ORDER BY id ASC 
     LIMIT 1
     """)
@@ -698,7 +674,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         return {
             "success": False,
             "empty": True,
-            "message": "Navbatda yuborilmagan postlar qolmadi!"
+            "message": "Navbatda yuborilmagan video postlar qolmadi!"
         }
         
     post_id = row["id"]
@@ -728,7 +704,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         media_sent = False
         sent_msg = None
         
-        # HD Video yuklash
+        # 1. HD Video yuklash (yt-dlp orqali)
         hd_video_path = _download_hd_video_ytdlp(post_url)
         
         if hd_video_path and os.path.exists(hd_video_path):
@@ -747,6 +723,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
                 if os.path.exists(hd_video_path):
                     os.remove(hd_video_path)
                     
+        # 2. To'g'ridan-to'g'ri video_url orqali yuklash
         if not media_sent and content.get("video_url"):
             v_res = requests.get(content["video_url"], timeout=40)
             if v_res.status_code == 200:
@@ -768,33 +745,8 @@ def post_next_queued_item(chat_id=None, bot_token=None):
                     if os.path.exists(temp_v_path):
                         os.remove(temp_v_path)
                         
-        if not media_sent and content.get("img_url"):
-            p_res = requests.get(content["img_url"], timeout=30)
-            if p_res.status_code == 200:
-                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
-                    f.write(p_res.content)
-                    temp_p_path = f.name
-                try:
-                    with open(temp_p_path, 'rb') as p_file:
-                        sent_msg = bot.send_photo(
-                            chat_id,
-                            p_file,
-                            caption=telegram_caption,
-                            parse_mode="HTML" if telegram_caption else None,
-                            reply_markup=inline_kb
-                        )
-                    media_sent = True
-                finally:
-                    if os.path.exists(temp_p_path):
-                        os.remove(temp_p_path)
-                        
         if not media_sent:
-            sent_msg = bot.send_message(
-                chat_id,
-                telegram_caption or f"📸 Instagram Post: {post_url}",
-                reply_markup=inline_kb,
-                parse_mode="HTML" if telegram_caption else None
-            )
+            raise Exception("Video faylini yuklab olib bo'lmadi yoki ushbu post video emas (faqat videolar jo'natiladi).")
             
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg_id_val = sent_msg.message_id if sent_msg else None
@@ -960,7 +912,7 @@ def get_queue_stats():
     cursor.execute("SELECT COUNT(*) as yt_uploaded FROM insta_posts_queue WHERE youtube_uploaded = 1")
     yt_uploaded = cursor.fetchone()["yt_uploaded"]
     
-    cursor.execute("SELECT * FROM insta_posts_queue WHERE status = 'PENDING' ORDER BY id ASC LIMIT 1")
+    cursor.execute("SELECT * FROM insta_posts_queue WHERE status = 'PENDING' AND (media_type IN ('reel', 'video') OR post_url LIKE '%/reel/%') ORDER BY id ASC LIMIT 1")
     next_post = cursor.fetchone()
     
     cursor.execute("SELECT * FROM insta_posts_queue WHERE status = 'SENT' ORDER BY sent_at DESC LIMIT 1")
