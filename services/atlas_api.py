@@ -2397,6 +2397,28 @@ def api_instagram_post_single(post_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@atlas_api.route("/instagram/post_single_youtube/<int:post_id>", methods=["POST"])
+@admin_required
+def api_instagram_post_single_youtube(post_id):
+    """Aniq tanlangan 1 ta videoni YouTube Shorts ga yuklash"""
+    try:
+        from services.insta_poster_service import post_single_youtube_item
+        admin = get_current_admin()
+        res = post_single_youtube_item(post_id)
+        
+        log_audit(
+            admin["username"] if admin else "web_admin",
+            "instagram",
+            "post_single_youtube",
+            "success" if res.get("success") else "error",
+            {"post_id": post_id, "result": res},
+            request.remote_addr
+        )
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @atlas_api.route("/instagram/queue/<int:post_id>", methods=["DELETE"])
 @admin_required
 def api_instagram_delete_post(post_id):

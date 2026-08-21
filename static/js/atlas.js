@@ -6204,9 +6204,12 @@ const ATLAS = {
                         </div>
                       </td>
                       <td style="text-align:right;">
-                        <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
-                          <button class="btn-sm btn-primary btn-post-single-action" data-id="${item.id}" style="padding:4px 10px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;" title="Ushbu postni hozir Telegramga chiqarish">
-                            ${this.icons.send} <span>Hozir yuklash</span>
+                        <div style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">
+                          <button class="btn-sm btn-primary btn-post-single-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;" title="Telegram kanalga hozir chiqarish">
+                            ${this.icons.send} <span>TG</span>
+                          </button>
+                          <button class="btn-sm btn-secondary btn-post-single-yt-action" data-id="${item.id}" style="padding:4px 8px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);" title="YouTube Shorts ga hozir yuklash">
+                            ${this.icons.youtube} <span>YT</span>
                           </button>
                           <button class="btn-icon btn-sm btn-delete-single-action" data-id="${item.id}" title="Navbatdan o'chirish" style="color:#f87171;">
                             ${this.icons.trash}
@@ -6249,6 +6252,24 @@ const ATLAS = {
             } else {
               this.toast((res && res.error) || 'Yuborishda xatolik yuz berdi', 'error');
               btn.disabled = false;
+            }
+          });
+        });
+
+        tableBox.querySelectorAll('.btn-post-single-yt-action').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-sm"></span> YT...`;
+            this.toast(`Video YouTube Shorts ga yuklanmoqda (ID: ${id})...`, 'info');
+            const res = await this.api(`/api/instagram/post_single_youtube/${id}`, 'POST');
+            if (res && res.success) {
+              this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
+              this.loadInstagram(viewport);
+            } else {
+              this.toast((res && res.error) || 'YouTube yuklashda xatolik yuz berdi', 'error');
+              btn.disabled = false;
+              btn.innerHTML = `${this.icons.youtube} <span>YT</span>`;
             }
           });
         });

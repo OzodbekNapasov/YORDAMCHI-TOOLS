@@ -694,7 +694,7 @@ def init_insta_tables():
         "bot_token": DEFAULT_BOT_TOKEN,
         "target_chat_id": DEFAULT_TARGET_CHAT_ID,
         "insta_username": DEFAULT_INSTA_USERNAME,
-        "auto_schedule_enabled": "0",
+        "auto_schedule_enabled": "1",
         "interval_minutes": "60",
         "last_post_time": "",
         "is_scanning": "0",
@@ -1498,6 +1498,96 @@ def post_next_youtube_video():
     except Exception as e:
         conn.close()
         print(f"[YouTube Upload Queue Error]: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def post_single_youtube_item(post_id):
+    """Aniq tanlangan bitta videoni YouTube Shorts ga yuklash"""
+    init_insta_tables()
+    from services.youtube_service import is_youtube_ready, upload_video_to_youtube
+    
+    if not is_youtube_ready():
+        return {
+            "success": False,
+            "error": "YouTube avtorizatsiyasi mavjud emas! (youtube_token.json)"
+        }
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM insta_posts_queue WHERE id = ?", (post_id,))
+    row = cursor.fetchone()
+    
+    if not row:
+        conn.close()
+        return {"success": False, "error": f"Post topilmadi (ID: {post_id})"}
+        
+    shortcode = row["shortcode"]
+    post_url = row["post_url"]
+    
+    username = get_setting("insta_username", DEFAULT_INSTA_USERNAME)
+    
+    try:
+        # 1. Post matnini olish
+        caption = row["caption"] or ""
+        if not caption:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            content = loop.run_until_complete(_fetch_post_content_async(post_url))
+            loop.close()
+            raw_caption = content.get("caption") or ""
+            caption = clean_caption_text(raw_caption, username)
+            
+        # 2. HD Videoni yuklab olish
+        vpath = _download_hd_video_ytdlp(post_url)
+        if not vpath or not os.path.exists(vpath):
+            conn.close()
+            return {
+                "success": False,
+                "error": f"Videoni yuklab bo'lmadi: {post_url}"
+            }
+            
+        # 3. YouTube Shorts ga yuklash
+        yt_res = upload_video_to_youtube(
+            vpath,
+            caption=caption,
+            post_url=post_url,
+            privacy="public",
+            is_shorts=True
+        )
+        
+        if os.path.exists(vpath):
+            os.remove(vpath)
+            
+        if yt_res.get("success"):
+            now_str = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("""
+            UPDATE insta_posts_queue 
+            SET youtube_uploaded = 1, youtube_url = ?, youtube_uploaded_at = ?, caption = ?
+            WHERE id = ?
+            """, (yt_res.get("url"), now_str, caption, post_id))
+            conn.commit()
+            conn.close()
+            
+            return {
+                "success": True,
+                "post_id": post_id,
+                "shortcode": shortcode,
+                "url": yt_res.get("url"),
+                "title": yt_res.get("title")
+            }
+        else:
+            conn.close()
+            return {
+                "success": False,
+                "error": yt_res.get("error")
+            }
+    except Exception as e:
+        conn.close()
+        print(f"[YouTube Upload Single Error]: {e}")
         return {
             "success": False,
             "error": str(e)
