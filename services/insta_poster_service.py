@@ -1363,6 +1363,16 @@ def post_next_queued_item(chat_id=None, bot_token=None):
     shortcode = row["shortcode"]
     post_url = row["post_url"]
     
+    # ATOMIC CLAIM: Bir vaqtning o'zida ikkita jarayon bitta postni yuborib qo'ymasligi uchun darhol statusni 'PROCESSING' qilish
+    now_claim_str = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute("UPDATE insta_posts_queue SET status = 'PROCESSING', sent_at = ? WHERE id = ? AND status = 'PENDING'", (now_claim_str, post_id))
+    conn.commit()
+    if cursor.rowcount == 0:
+        conn.close()
+        return {"success": False, "message": "Post ayni vaqtda boshqa so'rov orqali yuborilmoqda."}
+        
+    set_setting("last_post_time", now_claim_str)
+    
     bot = telebot.TeleBot(bot_token)
     
     try:
@@ -1939,6 +1949,16 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
         
     shortcode = row["shortcode"]
     post_url = row["post_url"]
+    
+    # ATOMIC CLAIM
+    now_claim_str = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute("UPDATE insta_posts_queue SET status = 'PROCESSING', sent_at = ? WHERE id = ? AND status = 'PENDING'", (now_claim_str, post_id))
+    conn.commit()
+    if cursor.rowcount == 0 and row["status"] != 'FAILED':
+        conn.close()
+        return {"success": False, "message": "Ushbu post ayni paytda yuborilmoqda yoki allaqachon yuborilgan."}
+        
+    set_setting("last_post_time", now_claim_str)
     
     bot = telebot.TeleBot(bot_token)
     
