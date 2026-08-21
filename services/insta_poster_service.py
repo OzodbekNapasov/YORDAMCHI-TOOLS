@@ -1876,8 +1876,8 @@ def get_queue_items(page=1, limit=50, status=None, search=None):
     cursor.execute(query_sql, params + [limit, offset])
     rows = [dict(r) for r in cursor.fetchall()]
     
-    # Barcha PENDING postlar uchun rejalashtirilgan kelgusi vaqtlarni hisoblash
-    cursor.execute("SELECT id FROM insta_posts_queue WHERE status = 'PENDING' ORDER BY id ASC")
+    # Barcha PENDING / PROCESSING postlar uchun rejalashtirilgan kelgusi vaqtlarni hisoblash
+    cursor.execute("SELECT id FROM insta_posts_queue WHERE status IN ('PENDING', 'PROCESSING') ORDER BY id ASC")
     all_pending_ids = [r["id"] for r in cursor.fetchall()]
     conn.close()
     
@@ -1917,7 +1917,12 @@ def get_queue_items(page=1, limit=50, status=None, search=None):
         curr_time += timedelta(minutes=interval_min)
         
     for r in rows:
-        r["scheduled_time"] = schedule_map.get(r["id"]) or "—"
+        if r.get("status") == 'SENT':
+            r["scheduled_time"] = r.get("sent_at") or "Yuborildi"
+        elif r.get("status") == 'FAILED':
+            r["scheduled_time"] = "Xatolik"
+        else:
+            r["scheduled_time"] = schedule_map.get(r["id"]) or start_dt.strftime("%d.%m.%Y %H:%M")
         
     return {
         "success": True,

@@ -6164,12 +6164,17 @@ const ATLAS = {
               <tbody>
                 ${items.map((item, idx) => {
                   const isTgSent = item.status === 'SENT';
+                  const isTgProcessing = item.status === 'PROCESSING';
                   const isYtUploaded = item.youtube_uploaded == 1 || item.youtube_uploaded === true || item.youtube_uploaded === '1' || Boolean(item.youtube_url);
 
                   let tgBadge = '';
                   if (isTgSent) {
                     tgBadge = `<span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);display:inline-flex;align-items:center;gap:4px;">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> TG: Yuborildi
+                    </span>`;
+                  } else if (isTgProcessing) {
+                    tgBadge = `<span class="badge" style="background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);display:inline-flex;align-items:center;gap:4px;">
+                      🔄 Yuborilmoqda...
                     </span>`;
                   } else if (item.status === 'FAILED') {
                     tgBadge = `<span class="badge" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);display:inline-flex;align-items:center;gap:4px;" title="${item.error_msg || ''}">
@@ -6192,11 +6197,12 @@ const ATLAS = {
                     </span>`;
                   }
 
+                  const validSched = (item.scheduled_time && item.scheduled_time !== '—' && !item.scheduled_time.includes('?')) ? item.scheduled_time : 'Hozir (Navbatda)';
                   const scheduleHtml = item.status === 'SENT' 
                     ? `<div style="font-size:12px;color:#34d399;font-weight:700;">✅ ${item.sent_at}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">(TG ga yuborildi)</div>`
                     : (item.status === 'FAILED'
                        ? `<div style="color:#f87171;font-weight:700;font-size:11px;">⚠️ Xatolik</div>`
-                       : `<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.4);padding:4px 8px;border-radius:var(--radius-sm);color:#38bdf8;font-weight:800;font-size:12px;font-family:'JetBrains Mono',monospace;">⏰ ${item.scheduled_time || 'Reja bo‘yicha'}</div><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">Asl joylangan: ${item.post_date || '—'}</div>`
+                       : `<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.4);padding:4px 8px;border-radius:var(--radius-sm);color:#38bdf8;font-weight:800;font-size:12px;font-family:'JetBrains Mono',monospace;">⏰ ${validSched}</div><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">Asl joylangan: ${item.post_date || '—'}</div>`
                     );
 
                   return `
