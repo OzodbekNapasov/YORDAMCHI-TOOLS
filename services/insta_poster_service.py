@@ -30,788 +30,740 @@ DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
 # Barcha 12 ta post (Kanal boshlangan dastlabki kunlardan to hozirgi kungacha xronologik tartibda)
 DEFAULT_SEEDED_POSTS = [
     {
-        "shortcode": "DTKl4neiIGi",
-        "url": "https://www.instagram.com/p/DTKl4neiIGi",
-        "media_type": "post",
-        "post_date": "2024-01-20",
-        "caption": "🎓 Shahrisabz tibbiyot texnikumi — rasmiy axborot va qabul sahifasi.\n\n📍 Shahrisabz shahar\n☎️ 88 260 20 73",
-        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/611243991_17854198077603794_8141413038807599667_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDAxOTQ1MzY2NzYwNjk0Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTA4MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=7pSI3-_Pc-cQ7kNvwEneT1q&_nc_oc=AdrtdIbWBsE78EMouREb3QS-9JC3WF7ZRYJZWGsNxFMPy3ughxkO86aYSuFvcK2V6m8&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=QEXrn4rzV57_hezr1f_ABA&_nc_ss=7ea8c&oh=00_AQEvJxD_Uzw3hlU6bqcsSur9paMbfNHJ_gaf-cShbjSpCw&oe=6A8DD7FA"
+        "shortcode": "DRjbVIVCKY4",
+        "url": "https://www.instagram.com/reel/DRjbVIVCKY4",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nSiz qayerda o’qiysiz?\n\n#Sh_t_t #top #trendy\nView all 123 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/589651207_17849813403603794_7263413659352260049_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzc3NDk4MTExMTk3NDI0MTg0ODE3ODQ5ODEzNDAwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=ORmWIPRsU7sQ7kNvwGVlmx0&_nc_oc=AdqG5ADEyQazKaxyZsr2g8LxzATqt41ERYVtmWPu3ei1-5kA4yDjOMPcry6-8BvJW7Q&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=WSnwz61fZjr3XKPRW7TuyA&_nc_ss=7aa8c&oh=00_AQHav_ZDM7EUdpm0DpMRsSqMz4uSImH37h6eSYAe7u-jbw&oe=6A8E0838"
     },
     {
-        "shortcode": "DTKl2WlCFbP",
-        "url": "https://www.instagram.com/p/DTKl2WlCFbP",
-        "media_type": "post",
-        "post_date": "2024-01-20",
-        "caption": "🏥 Zamonaviy tibbiy ta'lim va amaliyot maskani.\n\n📍 Shahrisabz tibbiyot texnikumi",
-        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/611276333_17854198053603794_4631092453008533657_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDAxOTI5ODA4NDA4MzQwNw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=WRFpBdaCtusQ7kNvwFqqHcN&_nc_oc=AdoM1OdcwT8ITNZBz7401pEMznFxeC7soCX1ofSnTLUrAckxPTt8cLa5t9E3qumfRN8&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=zo4Uz_WYYs7DLt2XxB1MDQ&_nc_ss=7ea8c&oh=00_AQGkuyjL2eeKpcCl_T9LvaQ6eL6IE-lJKZlMvL9GNM-9Kw&oe=6A8DD489"
+        "shortcode": "DRodxW9iPAr",
+        "url": "https://www.instagram.com/reel/DRodxW9iPAr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa mediklar bormi?😁\n\n#sh_t_t #top #trendy #rek\nView all 150 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/589046083_17849005200603794_8488477151399204100_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzc3NjM5OTIyMjgwODA0NzY1OTE3ODQ5MDA1MTk0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Afw8x_EzwNsQ7kNvwEuOts_&_nc_oc=AdoEqn6VpZWNau1cDtDsmClcgMTZrLuWTpKR3cOlUhz86pta0tQjktjLspb30o_uSkI&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=h-zGlByx5TEjw9QMU-VMLg&_nc_ss=7aa8c&oh=00_AQFCUYM0JDiEUJs2tl53eNN78xylhNH_8lWk-RkW4Pgs9A&oe=6A8DE777"
     },
     {
-        "shortcode": "DTKlzm8CJ5N",
-        "url": "https://www.instagram.com/p/DTKlzm8CJ5N",
-        "media_type": "post",
-        "post_date": "2024-01-20",
-        "caption": "🩺 Malakali ustozlar va amaliy laboratoriyalar.\n\n📍 Shahrisabz tibbiyot texnikumi",
-        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/612116905_17854198023603794_5331005024687690903_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDAxOTEwOTQ5MTQxNjY1Mw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTA4MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=zddiMk2qPogQ7kNvwHpBAth&_nc_oc=AdpY3YAPdluDBAOp7-STkH443s_tJc8lT4Pi8SQE0y_9EXvPgoTXguPVZyO4qkW-Sfc&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=7eVuoKPXPYmGinTZusWG9w&_nc_ss=7ea8c&oh=00_AQEpr9wKXvY5Nym4EjE_bzkLMHD3aEW-sK4XfmT6h_nOdw&oe=6A8DF77F"
+        "shortcode": "DRtp7ONiAtK",
+        "url": "https://www.instagram.com/reel/DRtp7ONiAtK",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nOrzularni kutmang Boshlang!\n\n#sh_t_t #top #trendy #rek\nView all 66 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/586685087_17849462508603794_688447264543591703_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzc3Nzg2MDA1MjA0OTIwMTk5NDE3ODQ5NDYyNTA1NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=0r_Qjfyo7-MQ7kNvwG6YUhz&_nc_oc=Adqt4w9s5Hj-OYSSwInuusPWRH_hFvgDxlGNdSM620b-BEpcazLyFHquIAoNCf_ICXE&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=VQ2UmLDWtruTxBNRrXFkcA&_nc_ss=7aa8c&oh=00_AQGMUpBDIiN-nNAJfhYOOP_d3EwsA3pXmG5yA2tQGvjRwg&oe=6A8DE079"
+    },
+    {
+        "shortcode": "DRy5jtWiId5",
+        "url": "https://www.instagram.com/reel/DRy5jtWiId5",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nXo’rlangan talabalarga jo’natib qo’yila😂\n\n#top #trendy #rek #sh_t_t\nView all 97 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/587287087_17849540337603794_4439394871092035268_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=Mzc3OTMzNjE3OTg0NjUxNDU1MzE3ODQ5NTQwMzM0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=zCByvsCGUHQQ7kNvwG1rvZW&_nc_oc=AdpWRd8upGq85pU9Pd5pvIjUcFjhUzhnAv_PcK2gwDlAMFnxIy74cwWFeosl_HOnieA&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=CkqKlfdnN9XjBYMI9sKjMw&_nc_ss=7aa8c&oh=00_AQHfzh8MejzKs1YFnG011r0yMaN30dfROE5ndlJpmmysIw&oe=6A8E08F5"
+    },
+    {
+        "shortcode": "DR6hnfsCFyT",
+        "url": "https://www.instagram.com/reel/DR6hnfsCFyT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nDarsga kechikkan talabalarga jo’natib qo’yamiz😁\n\n#top #trendy #rek #sh_t_t\nView all 130 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/589564559_17849963388603794_8436211665209365171_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzc4MTQ4MjY4Njc1MDE1Mzg3NTE3ODQ5OTYzMzgyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=yi5xIsiN9KsQ7kNvwGU-pGj&_nc_oc=Ado9KNHdAB33JpZotdPT_DJzG1jIpSUwFdkol0r9JsS5vuPn1PZkUrsSmUQU0viBn30&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=A6UaSYukVqH6W2eqTVcyMw&_nc_ss=7aa8c&oh=00_AQHjr9S1wpxQQBQehXaVfhFJkJUN48Ri_elTTRalZxP_pA&oe=6A8DE157"
+    },
+    {
+        "shortcode": "DSE-3rGiKBm",
+        "url": "https://www.instagram.com/reel/DSE-3rGiKBm",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShoshiling qabullarimiz davom etmoqda!\n\n#top #trendy #sh_t_t #rek\nView all 68 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/586299629_17850507447603794_6052882430061458757_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzc4NDQyNjA5MTYzMzQ4Mzg3ODE3ODUwNTA3NDQxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=QLbDOtseMCwQ7kNvwH57QH5&_nc_oc=AdqMC8f8HHSpFWixmO-5pnqXPiPTue4aMXKjuYGG0zshLBQo2MAQMUttGa99GW2o1KU&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=6P97O-e_Fl6aw9oqpid70w&_nc_ss=7aa8c&oh=00_AQFRLy6e3LMKJV4eIvhO4OdrS52h1j6rTLrcic9PII1dbg&oe=6A8DD925"
+    },
+    {
+        "shortcode": "DSJ8o_MCK6L",
+        "url": "https://www.instagram.com/reel/DSJ8o_MCK6L",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nHammada shunaqami?😁\n\n#top #trendy #rek #sh_t_t\nView all 56 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/587290380_17850755148603794_3738082414261184144_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzc4NTgyMzY2MTE5ODk3ODY5OTE3ODUwNzU1MTQ1NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=mfU6zPeUi00Q7kNvwEPsfef&_nc_oc=AdqwySPpJ8pmXsaKjdeUncQPVLqWZZrFsxc_-TnjiUeVHYPTZK9TkIuqV8_88_B-_cU&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=HwqJpDNoT4AmvS6NxhNLOA&_nc_ss=7aa8c&oh=00_AQFG1klDQAljUjVfhuD_kvF4redB3n1ElzoBwICdT9hrgw&oe=6A8DEAC7"
+    },
+    {
+        "shortcode": "DSPNK1QiLHZ",
+        "url": "https://www.instagram.com/reel/DSPNK1QiLHZ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n1 daqiqa kech qolgan talabalar bormi?😂\n\n#top #trendy #rek #sh_t_t\nView all 52 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/587566380_17851025922603794_1988818647039825411_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=Mzc4NzMwMzczMDYyNjk5ODc0NTE3ODUxMDI1OTE5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Wy1jw5TQc2EQ7kNvwFXcihY&_nc_oc=AdrZ-2d0OXM5x7KFf5OMqiBcsi2Fw5Gk4byNYhUWlGaELMXa7fngiVkqPjoUfkpT1HE&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=q1-ps9ynFFSyI4SQjCos9g&_nc_ss=7aa8c&oh=00_AQHjRmvCZBGqhx3qbRjBR3bSkQUiiBdop9cHNzB-9_eKkw&oe=6A8DEA80"
+    },
+    {
+        "shortcode": "DSUShSniPWi",
+        "url": "https://www.instagram.com/reel/DSUShSniPWi",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nDuoni saqlab qo’yila kerak bo’ladi😁\n\n#top #trendy #rek #sh_t_t\nView all 59 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/589912093_17851275486603794_2200196141232640405_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=Mzc4ODczNDYzOTA5NjAwMTk1NDE3ODUxMjc1NDgwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=2vQXwFBjjdwQ7kNvwENI2dE&_nc_oc=AdosCRBM2ZTUHR8r2wY6D0POCGz5TSudXSOccN9Twbdj6i-Sr85avialdK49coFIge0&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=fxr5xz3nkdhCS6MN_2eEIQ&_nc_ss=7aa8c&oh=00_AQEYVqxiXN7wwmqaFAZnRB82grSMXolFnI0SvQ56ZYkiqA&oe=6A8DE2B3"
+    },
+    {
+        "shortcode": "DSZZK5-iGaQ",
+        "url": "https://www.instagram.com/reel/DSZZK5-iGaQ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nAldaysanku sardor😂\n\n#top #trendy #rek #sh_t_t\nView all 217 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/587159712_17851549362603794_8203982341406748470_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5MDE3MTI2MjAxODkzODUxMjE3ODUxNTQ5MzU5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=FOXP5lgA03QQ7kNvwEgsuLQ&_nc_oc=AdozdqzLHrjBNrde9Dpr39t7ZUTQ_W-psuTgszgSNlktmtYbSTYtqVhr7Etkc7uA1mc&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=yRh7L5nu9WB94n2_bC_kfw&_nc_ss=7aa8c&oh=00_AQFICvga-BMs0ndOxE2I73xv-KGtU2IrgBAnlpwWx4w-rg&oe=6A8DE649"
+    },
+    {
+        "shortcode": "DSeyEF-iD-F",
+        "url": "https://www.instagram.com/reel/DSeyEF-iD-F",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nHammada shunaqami?😂\n\n#top #trendy #rek #sh_t_t\nView all 44 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/603942211_17851818345603794_5438331768542804326_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5MTY4ODExOTkxMzgyNDEzMzE3ODUxODE4MzQyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=iV-UlOZl23sQ7kNvwHoJ3_N&_nc_oc=AdqBnUmPn_JsQ4zq_wnNFga9OT3203xiDEy7VnN-rYM8JoJnYX7nPL_k5vGFHVsALtI&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=PwJpZXkuefCg87DnU94hzA&_nc_ss=7aa8c&oh=00_AQFOXt6FbzVw-QWUipE1YdkS79UZnIUGBwk_yNnUKbf8mA&oe=6A8E0049"
+    },
+    {
+        "shortcode": "DSjeW5QCCWM",
+        "url": "https://www.instagram.com/reel/DSjeW5QCCWM",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa talabalarga jo’natib qo’yamiz😂\n\n#top #trendy #rek #sh_t_t\nView all 65 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/587421548_17852069040603794_7889374255892437743_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5MzAwODgyNTg3MjE2NDIzNjE3ODUyMDY5MDM0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=s0YwI5PWMdAQ7kNvwFNqgvv&_nc_oc=AdpYUpnj6W1rmwrZMOqMtiuC8PxR6HhiU6YVPlMz4HCurEV57IhErD2H5T-MZ4LiO0o&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=Xj204_YS_yl_nNIDZi_ePg&_nc_ss=7aa8c&oh=00_AQEN9cY5ZPcRK1PzMCZhSV7yEMtzu26bcRXwvSbK9Qj4tw&oe=6A8E0B94"
+    },
+    {
+        "shortcode": "DSpAFnBCKqm",
+        "url": "https://www.instagram.com/reel/DSpAFnBCKqm",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n19 yoshida kontrakt to’lab bo’lganlar bormi?😂\n\n#top #trendy #rek #sh_t_t\nView all 46 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/604122678_17852341425603794_1162040892939669265_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5NDU2NDU0NjUyNzAxMzU0MjE3ODUyMzQxNDE5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=mx6X8-PtzDQQ7kNvwEkTR3g&_nc_oc=Adp3maGWRmEi9oNPOdvvb8ezNY5tgRZrt4DFmGfeyuZwH4u3YoRVG3M-fxSkCJefcl4&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=OCTjg9Ecy2h-DYTBBARfJw&_nc_ss=7aa8c&oh=00_AQF1u7Fa5r2bJnPoTJeSvjGdvOoBwRu1ifMliTSK6-ewcw&oe=6A8DFE2D"
+    },
+    {
+        "shortcode": "DSr8JAwiIrD",
+        "url": "https://www.instagram.com/reel/DSr8JAwiIrD",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n@sh_t_t_uz da yangi yil bayrami🎄😍🥳\n\n#top #trendy #rek #sh_t_t\nView all 54 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/587421539_17852516568603794_4114425389886887470_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5NTM5MTYxMzA2OTk4NjQ5OTE3ODUyNTE2NTYyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMDIuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=dUXrS1o2ZtEQ7kNvwHvWsrY&_nc_oc=AdrXYk32HnZudPBFitDS7GhNU0f4ZEQB6cxnJKYtdvtkjfSaED3zuTXLkUiF-Ju9RIk&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=GZRxw1gBTJF7zoOHDjX_vQ&_nc_ss=7aa8c&oh=00_AQG8kjQlPHuTNr63g-XZag8sa2OU_JvCUjwccopoHvKIxQ&oe=6A8DF78C"
+    },
+    {
+        "shortcode": "DSwyPTkiGXT",
+        "url": "https://www.instagram.com/reel/DSwyPTkiGXT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa uqituvchilar bormi?😁\n\n#top #trendy #rek #sh_t_t\nView all 46 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/607780556_17852766711603794_8232116156190337365_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5Njc1NTQ0MDAwNTA0Nzc2MzE3ODUyNzY2NzA4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=w_yz42WlWzAQ7kNvwG4ekQ-&_nc_oc=AdraDVIC7CVtjBLpcli862ryPeYqDrmTNJ3HVEFT0fhQzM16Iy-aL2Tb5RiesI2dlI0&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=EsM_AlK88IKRbGs9uatR1g&_nc_ss=7aa8c&oh=00_AQHMHmpSPxJ5IpgIGlfKMNFcbqUbaqvzZybg5cVcxT6Xdg&oe=6A8E0003"
+    },
+    {
+        "shortcode": "DS4io8miA5G",
+        "url": "https://www.instagram.com/reel/DS4io8miA5G",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa adashganlar bormi?😂\n\n#top #trendy #rek #sh_t_t\nView all 44 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.71878-15/607511451_1576125613611204_7134628815920301988_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=Mzc5ODkzODYzMzExODQyMDU1MDEyMTgwMzcwMjM1NTI5ODI%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=VzB6X_a6sCkQ7kNvwG_v7R4&_nc_oc=Adp5NQ8160U8lmG1bPAojdRetuoDnZ8NoFpBCt5EX_aVbzTreMJVczgXsaqGo-YIgsY&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=Cs7LnsdNAWddPvKXoPBVSQ&_nc_ss=7aa8c&oh=00_AQFzljSDBi4JBQ4XxzDDuDA8f8OwVTKXFG4VFOtlRnB3JA&oe=6A8DEB20"
+    },
+    {
+        "shortcode": "DTCi_cJCKgb",
+        "url": "https://www.instagram.com/reel/DTCi_cJCKgb",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa elparvar talabalar bormi?😁\n\n#top #trendy #rek #sh_t_t\nView all 39 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/610633600_17853770703603794_4601971800645600988_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzgwMTc1NDkyODU3ODg2NTE3OTE3ODUzNzcwNjk3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=5Ny7neb_kHYQ7kNvwEp_eE5&_nc_oc=Adpxdqp3fsGNnTEBD4_ddDapDbbOhYCcjeQ9h2DgKNmtI7bXte1gCXJaHC8oamp8D5g&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=atxzGqOabVF0uAdCXHQRVw&_nc_ss=7aa8c&oh=00_AQE5ETkpbsN6J5Ty3GeIsQa7PnIpRBiv27AiluklV1C1KA&oe=6A8DFA5F"
+    },
+    {
+        "shortcode": "DTHudhLiEJT",
+        "url": "https://www.instagram.com/reel/DTHudhLiEJT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa talabalar bormi?😂\n\n#top #trendy #rek #sh_t_t\nView all 76 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/610719576_17854029945603794_6125872318287604891_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzgwMzIxMjc0ODk2ODk2ODc4NzE3ODU0MDI5OTM5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=QuunDwyJc40Q7kNvwEcuQxx&_nc_oc=Adpoj3Xyk-A6HQKYIKKmm0-wFN1F8x4pXzcDUMNgiAwvIw2sCfbxgbwyhd_O63uqThQ&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=DjolcZiRkccXs-2mmc1KJA&_nc_ss=7aa8c&oh=00_AQEiFBPU_Lyqedm2v7LPss5NU1LMQ7Y5xI3ASO44w7_RDg&oe=6A8DE9A7"
+    },
+    {
+        "shortcode": "DTNEIiLCBPn",
+        "url": "https://www.instagram.com/reel/DTNEIiLCBPn",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nHammada shunaqami?🤦🏻‍♀️\n\n#top #trendy #rek #top #sh_t_t\nView all 59 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/610781553_17854335450603794_8273537095932445673_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNDcxNTQzODgzMjA5NjIzMTE3ODU0MzM1NDQ3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=-AY9itddX1oQ7kNvwG1W3LN&_nc_oc=AdrP_0q-tYcHdgFs1AljZSlMjfkLVYZW-YPx5zBIfIHI1X_lxpQ3s-CO1EwmMksbCTM&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=nXHdVaV_cdOZrGMpFFKT_w&_nc_ss=7aa8c&oh=00_AQGRuSK2B6tz4xRZAyFQlySo2UKh_2vG50P2f5v7EqJUGw&oe=6A8DF2F6"
+    },
+    {
+        "shortcode": "DTVcl6SCM8c",
+        "url": "https://www.instagram.com/reel/DTVcl6SCM8c",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBir muhabbat tarixi😂\n\n#top #trendy #rek #sh_t_t\nView all 135 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/612104661_17854780650603794_6009500926953552661_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=MzgwNzA3NDgxMDUxNDE2NTUzMjE3ODU0NzgwNjQ0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=UbAVI5nJJssQ7kNvwGdWaFx&_nc_oc=AdoMh5kdv4POh7MQuVTqmAgPrv00oRXWTQ3AtX4xVZWaMXiVAOD-4prjWfbLBRRf4zo&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=HtoIqsWmFshp-GrNPpxJiA&_nc_ss=7aa8c&oh=00_AQHuYIoZHBXuhW5DCOPRjaqmJ7rKbkahF_fdoc1Am_zeuw&oe=6A8DF568"
+    },
+    {
+        "shortcode": "DTZ6oL_iF_9",
+        "url": "https://www.instagram.com/reel/DTZ6oL_iF_9",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nSiz 1 misz yoki 2😂\n\n#top #trendy #rek #sh_t_t\nView all 52 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/613765717_17855004117603794_4839733021772996227_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzgwODMzMjgwODI3MjI0MDYzNzE3ODU1MDA0MTE0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=onDyC4jpJcUQ7kNvwG8s7ne&_nc_oc=Ado91iyzhE13FvPEyx0FD8Pun6dJMLalYD2dVdZ7HTGpXiUQ5aiw2Mao_Hy-bd786js&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=W_ECJq83rwCymTSntnOiMA&_nc_ss=7aa8c&oh=00_AQHcvhuYdwjrwUU21fG8zJQplWZcjXJ27vTBYlakmk7bhg&oe=6A8DFE31"
+    },
+    {
+        "shortcode": "DTfs3bGCEpw",
+        "url": "https://www.instagram.com/reel/DTfs3bGCEpw",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShifokor — bu nafaqat kasb, balki inson hayotini asrashga bag‘ishlangan buyuk mas’uliyat.🤍\n\n#top #sh_t_t #trendy #rek\nView all 81 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/616818049_17855305548603794_1899069972058223454_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=MzgwOTk2MTEzMjQ4ODY3MzkwNDE3ODU1MzA1NTQyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=96Uhg9yhiVEQ7kNvwFvQ7jz&_nc_oc=Adri_EALEKS9zBRrV5qtAFqw9ooP2v2FqYMX9n9FXVKzEW3ou7tXUg3Wgjfb-HATuTM&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=K4uzf4r9HzRTUQyFVJws3A&_nc_ss=7aa8c&oh=00_AQFVFJGNNyN5Ge7aghdCibZrhHUqW1IIby3w_VVwYnuyiw&oe=6A8DDBDD"
+    },
+    {
+        "shortcode": "DTkQ2h0CGiL",
+        "url": "https://www.instagram.com/reel/DTkQ2h0CGiL",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa do’stlar bormi?😁\n\n#top #trendy #rek #sh_t_t\nView all 70 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/616318553_17855651202603794_5591778728880140138_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=MzgxMTI0NTMwMDU2NDY1MDEyMzE3ODU1NjUxMTk2NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=GRNAcqMwVTMQ7kNvwFx2AZ_&_nc_oc=AdquwKil1dnvkKEAnHEFHNU6LT6kzGn3zJWnRM1OU08iXfR1Ek5CgLaBm9v4CG7eVCs&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=XkKLzGs53SZK9GPSQN7bUA&_nc_ss=7aa8c&oh=00_AQFBsWYvGe0YM8iR1BmSlAPmyeuxw_OpHK7EBg4UsGv9ew&oe=6A8DEA71"
+    },
+    {
+        "shortcode": "DTsk6bBiMni",
+        "url": "https://www.instagram.com/reel/DTsk6bBiMni",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBo’lganmi?😂\n\n#top #trendy #sh_t_t #rek\nView all 57 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/618676351_17856092994603794_5101200529822619216_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=MzgxMzU4NTMyODg5Njc4ODk2MjE3ODU2MDkyOTkxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=29x8XaKyeMIQ7kNvwEcf94-&_nc_oc=AdrGVJmWe45czkfDMdrwai9IZhkwxfsa-5FfElslbhpqfdIHTwQ0W6ZtqhJuCEcMaO8&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=SeeseRUZ5K2wNP27iYZjwg&_nc_ss=7aa8c&oh=00_AQFnGrRQOnFar5RPgIsfDcZ5N-yMkjdZwoll1LHoitSl9w&oe=6A8DF431"
+    },
+    {
+        "shortcode": "DT5ZwpSCPP5",
+        "url": "https://www.instagram.com/reel/DT5ZwpSCPP5",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa do’stlarga yuborib qo’yila😁\n\n#rek #top #shtt\nView all 64 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.71878-15/620908910_4446553802242829_8273568673076963822_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzgxNzE5NTQ1MzE5Njg1ODM2MTE3ODU2NzEwODk1NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=2gi8acI9B5sQ7kNvwF_HdrO&_nc_oc=AdrkXaHouUk5TGKuC7nUljeDJW6TLU8-TKDnGvMfukiBtQBVFN4GXociGlFPLZFO9Zg&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=3y_Hg2INFnHsWVUvrBagag&_nc_ss=7aa8c&oh=00_AQHl_GepQvX4DUI3pNL42mfdimu7_F6Nqyb2IxYSCODLdg&oe=6A8DEE5B"
+    },
+    {
+        "shortcode": "DT-zcCLiB8H",
+        "url": "https://www.instagram.com/reel/DT-zcCLiB8H",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nU bilim olishni tanladi🐧🥹\n\n#top #rek #sh_t_t #trendy #shtt\nView all 35 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.71878-15/622973060_3368883893286916_1155082809039139195_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=MzgxODcxNTc2MDkxNTEyODA3MQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=E5BUbZXAWJIQ7kNvwGs33ul&_nc_oc=Adqoxap8yYd7NfOpFPiRWMMDOw4SS447Lb2jSnZKz3qsn6N_nso9ZjakgG-3Ks0GdRA&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=NL5jh59yfKHZ32RCoXbOiQ&_nc_ss=7aa8c&oh=00_AQF7H2GzUYQFhAOLYKSNRyjP045cQLIBpwMR9ed78TLqNQ&oe=6A8DF717"
+    },
+    {
+        "shortcode": "DUAQjBGCB4A",
+        "url": "https://www.instagram.com/reel/DUAQjBGCB4A",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nQishki qabullar boshlandi!!!\n\n#rek #top #sh_t_t #trendy #rek\nView all 33 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.71878-15/621684784_919085487263903_1200299497726139712_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzgxOTEyNTI1OTExMDk4MTEyMDE3ODU3MDk0NDEyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=g1XkXKl_Pi4Q7kNvwFX0DmV&_nc_oc=AdrAYWUnwcdDut6lTVan9acjY0HuajpfHFjY4Bk7zx3x52et_BJTRkQCpCFfaVE53nU&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=pEpABnqKM8SDuBach1k32A&_nc_ss=7aa8c&oh=00_AQGGv_Gw3m8LLlYTss5YPXJ5f6r8nU_z8g2gxAQOJ10WWQ&oe=6A8DDAFE"
+    },
+    {
+        "shortcode": "DUFqF5JCCaH",
+        "url": "https://www.instagram.com/reel/DUFqF5JCCaH",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBuvijonni gaplariga quloq solamiz😁\n\n#rek #top #sh_t_t #trendy #top\nView all 100 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.71878-15/624071038_1610688246924095_8346877269672530139_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzgyMDY0NDk4MTc5OTM5Njk5OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=nMVd93oqK2YQ7kNvwFTlXkE&_nc_oc=Adp9bJkYL_nEFEFUauEMkQtuKEFh--LogqEcaGAx45p3tJV3AlEWXr5wJ-8UPdikLJY&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=w6_c3yyJrj3k_x6FBl0qZQ&_nc_ss=7aa8c&oh=00_AQHpac7WbctWefxOK2A_vNbpNVyU03c4xuRllq2wRuEsJA&oe=6A8DD637"
+    },
+    {
+        "shortcode": "DUNkpDriCCw",
+        "url": "https://www.instagram.com/reel/DUNkpDriCCw",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBildirsoyda nma bor😁\n\n#top #sh_t_t #rek #trendy\nView all 46 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.71878-15/627039937_740486352452854_6768456279248154060_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzgyMjg3MjgwOTgzMTkzMjA4MDE3ODU3ODMxNjA4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=pE2W51IENjIQ7kNvwEDw_w2&_nc_oc=AdowhWcdRW3ESk8SDWlORQ9CH3HXe_Ujm68EMjtWw7v_5UXIUYzekyUzHnJ92dtuY0Y&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=zCOy8obfWFdKf1MyaEspCw&_nc_ss=7aa8c&oh=00_AQHm4u4uKUuu6uzwm_19xuXh5zs7iT0ejecaaFC6NgLbqA&oe=6A8DDE50"
+    },
+    {
+        "shortcode": "DUTJbgRCKCG",
+        "url": "https://www.instagram.com/reel/DUTJbgRCKCG",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa do’stlaga yuborib qo’yamiz😁\n\n#top #sh_t_t #rek #trendy\nView all 44 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/624871087_17858135610603794_2214074215272740923_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzgyNDQ0MTk4MTA1NzY3MTMwMjE3ODU4MTM1NjA0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=otuutcrMR98Q7kNvwEt6yDz&_nc_oc=AdrH-WDI2Y_2Ajp20AjQIkkBWkhghxnXRG8EioB66C_fHs1WTFmLul3iWlFae8NpwFM&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=NcQA13uIK2cn7DyeD7mGOA&_nc_ss=7aa8c&oh=00_AQGLcHv4Rt2eFsht8--viFx1EyTSh-DPzbSjYIGERi_0Tg&oe=6A8DE00C"
+    },
+    {
+        "shortcode": "DUXtJcICKwZ",
+        "url": "https://www.instagram.com/reel/DUXtJcICKwZ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa talabalar bormi?😁\n\n#top #sh_t_t #rek #trendy\nView all 40 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/625869900_17858367486603794_4810474513453082532_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=MzgyNTcyNDk2OTI0MjM3MzE0NTE3ODU4MzY3NDgzNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=fVLL_HXcLcoQ7kNvwHHcUSb&_nc_oc=Adp7_wVK0bKzPOOLj5tvqYg2XsCYQlN9FPDX7q6NqXayu7Xwomqm_KDVzr-v-SFDjss&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=FOQNzrcoSE9B16V9bgd_Bw&_nc_ss=7aa8c&oh=00_AQFJQCjSylNHpMhteEgwgFA8ucNOtx3ttK8gmunqW94shA&oe=6A8DE617"
+    },
+    {
+        "shortcode": "DUfO8fKiKKO",
+        "url": "https://www.instagram.com/reel/DUfO8fKiKKO",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nQishki qabullar davom etmoqda\n\n#rek #top #sh_t_t #trendy\nView all 37 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/626279469_17858780973603794_8431793573115617281_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=MzgyNzg0MzkzNzU3MDY5Mzc3NDE3ODU4NzgwOTY3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Fj0GMI-DlS4Q7kNvwEdHnMK&_nc_oc=Adrr3MbRH9iPxUxgMFyFTek9BK1HPn75Hyy6OyxUQe95rohRJSq0MohnJVk9uQ37vlE&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=3OlEqQ48jmYhXClPa081Vg&_nc_ss=7aa8c&oh=00_AQEekTykSLtX2LfKW9RNUOfOOXBSi6rfDCuQmVGhe1p_JA&oe=6A8E0555"
+    },
+    {
+        "shortcode": "DUpmMSWiM6Z",
+        "url": "https://www.instagram.com/reel/DUpmMSWiM6Z",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa talabalar bormi?😂\n\n#top #sh_t_t #rek #trendy\nView all 25 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/626274292_17859323334603794_1640976625973940690_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=MzgzMDc2MDkyODE2MTg3NzY1NzE3ODU5MzIzMzMxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=9NevYvdX4pcQ7kNvwFbYCDx&_nc_oc=AdrJaf-jSmevnrun611cFnRSOlqsy9qLQEOpNmWC6T_x7vkF50C6tFCFafIbeZ2VGAk&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=Dce8qRCTL_oPvKEOpCEMTQ&_nc_ss=7aa8c&oh=00_AQHI228kiqajviuFkhXYjFZyUqK7hgRUeaaudNZ5GlDwUA&oe=6A8DD922"
+    },
+    {
+        "shortcode": "DUtKLNjCMdN",
+        "url": "https://www.instagram.com/reel/DUtKLNjCMdN",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunchaki trend 😁\n\n#top #rek #sh_t_t #trendy\nView all 38 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/631797373_17859526953603794_8828224679904856768_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzgzMTc2MzYwODg4NzkzNjg0NTE3ODU5NTI2OTQ3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=p6jpdDewyAkQ7kNvwHTfiOO&_nc_oc=AdqqkSxuyA762GSaWwezJz6admoyJjLBE4d906dKo-vTDhFFPqSJfbXHSenKMpgy6Z4&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=tyjyJujEB61lqU0h7hPfWg&_nc_ss=7aa8c&oh=00_AQH-CrWJfscWLRlnXOCI3VQ3Hl57BTOzXdfmp5ezVhTuFA&oe=6A8DF0F6"
+    },
+    {
+        "shortcode": "DUx6qpGCHkF",
+        "url": "https://www.instagram.com/reel/DUx6qpGCHkF",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nAtaylab kechikadiganla bormi?😂\n\n#top #sh_t_t #rek #trendy\nView all 34 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/630198810_17859820209603794_1884983112286867221_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzgzMzEwMjc3NDkwOTMwMzA0NTE3ODU5ODIwMjAzNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=eHOfVoCbGvkQ7kNvwGDCtjy&_nc_oc=AdqZYj2cZxmjdThqdCHGDGSOx_yGkR5xlbGH4hmkTXLO6Vt40dV-TER53Qm-kBYBvVE&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=YRt_VH_wOwvl80iQXfLdag&_nc_ss=7aa8c&oh=00_AQHIZUtMgx-JPVwqD4zSEh12bnETlKR_LQBal_xyFnexMw&oe=6A8DF0A0"
+    },
+    {
+        "shortcode": "DU2t0CjCHe3",
+        "url": "https://www.instagram.com/reel/DU2t0CjCHe3",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa talabalar juda ko’p to’g’rimi?😁\n\n#top #sh_t_t #rek #trendy\nView all 25 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/638309215_17860074819603794_3313066125879698132_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=MzgzNDQ1MzYyMDk5MzU4NzEyNzE3ODYwMDc0ODE2NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=8bbF2roDH9wQ7kNvwFIz1lo&_nc_oc=AdpHHqpddwER2mP-gXEGUkhAuB_nVPy3o9CTiwr2oW_x2yt7dYVbwJmyV5_yKvWanJI&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=strl_BY9rY3ZH8DqdxcYsA&_nc_ss=7aa8c&oh=00_AQH5qosZXunxQbR1Hjb3vwrC49VmL-2r5seyvD4jni6_yQ&oe=6A8DDD3E"
+    },
+    {
+        "shortcode": "DU54oq3CO87",
+        "url": "https://www.instagram.com/reel/DU54oq3CO87",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nAssalomu alaykum!\nKirib kelgan muqaddas Ramadan oyi muborak bo‘lsin! 🤲🌙\n\nAlloh tutgan ro‘zalarimizni, qilgan ibodatlarimizni, duolarimizni qabul aylasin.\nBu oy xonadoningizga tinchlik, qalbingizga xotirjamlik, hayotingizga baraka olib kelsin.\nRamazon oyida qilgan har bir yaxshiligingiz o‘zingizga ming karra qaytsin.\n\n#top #sh_t_t #rek #trendy\nView all comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.71878-15/634591444_1227298869515755_2702214579590344354_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzgzNTM0NTY0MzA4Njg2ODI4MzE3ODYwMjQ4NjYwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=um7UQHubn_EQ7kNvwH0km5_&_nc_oc=Adr1a2UtzvVP59cCi9sQOvPHQ6LflqwoZKUJEJ1GXPLBv5Fld_6xQm5J-9-w4YdqGo0&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=BrccKplziJRS_Xn_qibhdA&_nc_ss=7aa8c&oh=00_AQFQLBYvTdb1cNZcnTsjYsaZQgFfT3xs-Y1RTSgpTkWvRQ&oe=6A8E0AE7"
+    },
+    {
+        "shortcode": "DVIjRREiIrl",
+        "url": "https://www.instagram.com/reel/DVIjRREiIrl",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBo’lganmi?😂\n\n#top #rek #trendy #sh_t_t\nView all 41 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/640314685_17861052657603794_8126300758667421218_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=MzgzOTQ3MzgwMDUyMjAwOTMxNzE3ODYxMDUyNjU0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=aZjDZQHo2jcQ7kNvwE9s55G&_nc_oc=AdouW39K0ol2BxlzzqOlC9zzBFZfr5regOYJqjNA1Zz2_UQ9-2hKZyPru8muMWOJyyc&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=gGTnrxNksky09zJCbX35sw&_nc_ss=7aa8c&oh=00_AQHDZa3yMnOLvD5sJaELtE0_R92RodE5m5-9GW05XCLbrw&oe=6A8DDB08"
+    },
+    {
+        "shortcode": "DVNoH20CPvf",
+        "url": "https://www.instagram.com/reel/DVNoH20CPvf",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nMedik😌\n\n#top #sh_t_t #rek #trendy\nView all 24 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/640419003_17861341467603794_274728346241980243_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzg0MDkwMjUxODk2ODc0NDkyNzE3ODYxMzQxNDY0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=myHpz_c7wOEQ7kNvwEhZ3lj&_nc_oc=AdoQ_aqQ6GKMBbShred-LngXzcGzxUeCG_3P8FZeZDtiUFe7dAHk5uqfn4DJvPGa9HA&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=DIVnYgbvhGRJCKP3HF4eHA&_nc_ss=7aa8c&oh=00_AQFayzxE9YSSyy3yAXeE_59p_oCfPL3LJs9H7HVVe3cPNA&oe=6A8DD718"
+    },
+    {
+        "shortcode": "DVVe3uRCEFb",
+        "url": "https://www.instagram.com/reel/DVVe3uRCEFb",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nLo’liga 😂\n\n#top #sh_t_t #rek #trendy\nView all 42 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/641246106_17861839272603794_7967914859451737245_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=Mzg0MzExMzYyNzY3NTAxNzU2MzE3ODYxODM5MjY5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=J5Qhb91USYYQ7kNvwEZhOnn&_nc_oc=AdrYUi1g9zCi-WGO48LdGlt48ypcw-_N7tPiLwuiMb6EMeDwQBZ45VT3L7oy1700EDw&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=2NcCT5QSotPyBgMCDhxMtg&_nc_ss=7aa8c&oh=00_AQE4Nyg59YxS-FtsETgFZh7eilWjw-6wiU_czbxC-wJykA&oe=6A8E0324"
+    },
+    {
+        "shortcode": "DVdIhEDiNIt",
+        "url": "https://www.instagram.com/reel/DVdIhEDiNIt",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nQabul hali ham davom etmoqda✅\n\n#top #sh_t_t #rek #trendy\nView all 34 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/642503346_17862662595603794_8868701518946796304_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzg0NTI2NzExMzMxMzM1ODM4MTE3ODYyNjYyNTg5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=uMG6-uMLb-MQ7kNvwGqGOCE&_nc_oc=Adqjf0CeN9T1LecF6-QLcmqB7ooQ82xR5DrHjGb1i4mhjIamg7hopm0ifFFZ4i_SoEs&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=z5ahkAim5d-hydxjvqTBpQ&_nc_ss=7aa8c&oh=00_AQHe3Fr5LQ23ORT9GdCEhuoitFlPjTA05rEJghGGD3a1RA&oe=6A8DE587"
+    },
+    {
+        "shortcode": "DVizuydiPhQ",
+        "url": "https://www.instagram.com/reel/DVizuydiPhQ",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nRuzador talabala qanisila?👀😂\n\n#rek #top #sh_t_t #trendy\nView all 22 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.71878-15/626274080_1245631757035835_6591845505124691298_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=Mzg0Njg2NDU0NzM3ODQyNzk4NA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=ydyO6LhU2bYQ7kNvwH3u98G&_nc_oc=AdolN5k3Bqj3ul6c0ZyzZWsSkekoe4l8wVQNpZmrWw5qqeaSoYle08IKVvuFT5Ib4jk&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=zb99Xu2NJbIs7cx7MuSogg&_nc_ss=7aa8c&oh=00_AQH7CUDelfMehcZrrQBlwDqGuU4eg3QhvlPko-OdhOCHSg&oe=6A8DFE09"
+    },
+    {
+        "shortcode": "DVp7_HiiDbt",
+        "url": "https://www.instagram.com/reel/DVp7_HiiDbt",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nSHTTdan ajoyib taklif:\n\nTexnikum jamoasi kengaymoqda!\n\nMatematika\nFizika\nOna tili\nKimyo\nBiologiya\nIngliz tili\n\nKeling, yoshlar kelajagini birgalikda quramiz! Bizning ahil jamoamizga qo‘shiling!!!\n\nBatafsil ma’lumot: +998 97 587 46 57\nView all 18 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.71878-15/642975061_969494118946370_7629759141177621588_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzg0ODg3MTE3ODczMTUzNDA2MQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=7qgAYNsabSYQ7kNvwGPD5AU&_nc_oc=Adow5qJiNi_V8JvP0NrWOlyVaD22cQaBf9iCoN3Bw-_nfcpi64hxCRtm946VYqlX8q4&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=xOBABXoDlnTWfRP_ua4UNg&_nc_ss=7aa8c&oh=00_AQHxCQUNTtqP-QJjrKGxslZePegESRP50iTXxcqZYtB2NA&oe=6A8DEC1C"
+    },
+    {
+        "shortcode": "DVvOB48iNtB",
+        "url": "https://www.instagram.com/reel/DVvOB48iNtB",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n3-paradan keyin hammada shunaqami?😂\n\n#top #sh_t_t #rek #trendy\nView all 28 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/649225540_17863480374603794_7361355992944530199_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzg1MDM1NzkwODk0MDgzOTc0NTE3ODYzNDgwMzcxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=MG5Vy81zvkQQ7kNvwFkF0XY&_nc_oc=AdrXP_HjhrWjZJ7mTzfeIiRs2WgtL-a_lBE7K_Ded8ORDfuC8sr0bpb1zWcWTI3icdw&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=3OHMAqXpluzb2b-rNQHKzg&_nc_ss=7aa8c&oh=00_AQFXwf2sCVcGatdrQqa7u4kBOuE4JCjg43TiT2inM283Xw&oe=6A8E0612"
+    },
+    {
+        "shortcode": "DV0kxwXiOZr",
+        "url": "https://www.instagram.com/reel/DV0kxwXiOZr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nXatolarini tushunib yetgan talabalar bormi?😂\n\n#top #sh_t_t #rek #trendy #shtt\nView all 24 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/651237540_17863810629603794_1739866319928772259_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzg1MTg2NTMzMDE3MTgzMTkxNTE3ODYzODEwNjIzNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=2qx5Yz0p-cEQ7kNvwE4swol&_nc_oc=AdqQjqMLGrIUrNdlwGMmWYRxxTLC_MyHzD4P_Tkgh9krkl28dKv7Ndch5yrjtDmEa5I&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=3sOZEDx-h-GmsWcSACasxw&_nc_ss=7aa8c&oh=00_AQFHrBnKdm7FR7YfZV8yDUZEqiU0fk7mWgSJxVRx_VbRDg&oe=6A8DD838"
+    },
+    {
+        "shortcode": "DV6NKXpiEir",
+        "url": "https://www.instagram.com/reel/DV6NKXpiEir",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n1-kurslar shu yerdamisila?😁\n\n#top #sh_t_t #rek #trendy #shtt\nView all 18 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.71878-15/651043924_1459103595674615_4697717673100468782_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=Mzg1MzQ1MDMxODM2MTE1MTY1OTE3ODY0MTcyNzExNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=WzaRGeUx1u0Q7kNvwGbKmNB&_nc_oc=AdpMvNxuvWa9qLw3QBk9j6LK8NG9pkYVfO9kPBE5vAi35z10IpuvHdXkDUQPrLxkq-k&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=FX9wd0JIYLLbF7HygDIv8g&_nc_ss=7aa8c&oh=00_AQGpQYj06x_jvQgEvwEoANV7SmnpLCJv2z42UhX4VscPsQ&oe=6A8E084A"
+    },
+    {
+        "shortcode": "DWBZI4FiOfr",
+        "url": "https://www.instagram.com/reel/DWBZI4FiOfr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShahrisabz tibbiyot texnikumi ✅\n\n#top #sh_t_t #rek #trendy\nView all 32 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.71878-15/654488208_1455479886171210_7572868809851804576_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzg1NTQ3MzMxNzE0Njg0NzIxMTE3ODY0NjI1MjYxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=wpjLKqUjAVQQ7kNvwELXFPE&_nc_oc=AdrFenUxgCopKRdeZ4ttKmTREy2d-3b8j-_O9ny4Ej_4O1O8vK_7_ki74srDeoxRHNk&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=xunGzu55QLkxGE_YFR_PDA&_nc_ss=7aa8c&oh=00_AQHgDxG4nuqmqpAYexgf67tuvLhTQxv7TR5mJEYdHtmCyg&oe=6A8E043B"
+    },
+    {
+        "shortcode": "DWTpURNCDlO",
+        "url": "https://www.instagram.com/reel/DWTpURNCDlO",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nNavro‘z – bu shunchaki bayram emas, bu yangilanish, mehr-oqibat va ezgulik ramzi 🌿\nBu kun qalblarga iliqlik, yuzlarga tabassum va hayotga yangi umidlar olib kiradi.\n\n#top #sh_t_t #rek #navruz\nView all 38 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/655878665_17865988110603794_901993804736612452_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=Mzg2MDYxMTAxODM1NTM5MDc5ODE3ODY1OTg4MTA0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcxMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=oEMKwhEbtgQQ7kNvwHYbFwm&_nc_oc=Adpftz9AXV829R4c_rncK9PA_XJ4QeOTad19wEzdJMCIhTd7JJ7WU0fMMW1TZDBdLmU&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=7h8z2i-_iRmj2aPx_6NfmQ&_nc_ss=7aa8c&oh=00_AQHAtyrDDpyr8kUaJajA3QgEdEocIztGH1RPw7HwB4YWDA&oe=6A8DD7FC"
+    },
+    {
+        "shortcode": "DWYYWK5javA",
+        "url": "https://www.instagram.com/reel/DWYYWK5javA",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "marvarid__restaurant\n\nShunaqa talabalar bormi😂\nView all 45 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.71878-15/656291290_1260488996187824_1052778148750124439_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzg2MTk0Mzc1NzExNzk1OTEwNDE4MDY0OTExMzU5NDEzNTgw.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=AAkCZqBAIg0Q7kNvwGoYlMC&_nc_oc=Adr730pymWJPC6nbEVw0WySdiG7UFED_-j_xTzhspDPMoW2pQ7YI4dxFCHARzK7yyqQ&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=cCs-JbhqmiF4vgWMl-Rytw&_nc_ss=7aa8c&oh=00_AQFeZl2xoxYZsCRkMRvgY2i27Vv24ZaqKNM5utamSV7AhA&oe=6A8DF9A1"
+    },
+    {
+        "shortcode": "DWgUzd1CFet",
+        "url": "https://www.instagram.com/reel/DWgUzd1CFet",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nTibbiyot — bu kasb emas, inson hayotini asrash san’atidir✨\nView all 30 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.71878-15/658521459_755775964133867_1324091763709097252_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=Mzg2NDE3OTk3NzkzNTY3MzI2MTE3ODY2ODg4MTQwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=UFYWXYdNzCMQ7kNvwG55Ijg&_nc_oc=AdoJbPzQof5HljiUtcgQTft2zDM3LbDyG2QpdCqJXZHq8f1jpLjasWzpCWdCxwEq3gw&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=pYC7CUka4170BVXkBZ6hnw&_nc_ss=7aa8c&oh=00_AQGzxmo1wkD0fKe8zuVGINVDQHrXWEIJQmpos95Mwu0ffw&oe=6A8E0961"
+    },
+    {
+        "shortcode": "DWlYAA_iMdS",
+        "url": "https://www.instagram.com/reel/DWlYAA_iMdS",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nCo tam😂\nView all 23 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.71878-15/658796355_2022103078385710_8345370645018191441_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzg2NTYwMTQwOTM0OTYzMzg3NDE3ODY3MjE1ODI0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=iKYk6TedvSYQ7kNvwEH2hXM&_nc_oc=AdqnKUaSI6STxTubLhr29QZ9fIdaqi9OjZK7HBVlIJ4dhnWs0ceaa84pywqf0OAJgHQ&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=PnIBa1koMmO-PhJUGwu5DA&_nc_ss=7aa8c&oh=00_AQHkfidbH_lmcji2ynTeife1nI5zAeiv64LgNiBnvn1esA&oe=6A8DE4ED"
+    },
+    {
+        "shortcode": "DWtGYcHCIDC",
+        "url": "https://www.instagram.com/reel/DWtGYcHCIDC",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShunaqa talabalarga sekin yuborib qo’yamiz😁\n\n#top #sh_t_t #rek #trendy\nView all 33 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.71878-15/658408063_1481238473509223_7018787942380967889_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=Mzg2Nzc3NTcyMjcxMDQwMTIxODE3ODY3Njk5MzIyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=idce1LTHgYoQ7kNvwHRoqeg&_nc_oc=Adoox4jcztg2mvmtus_D7gJrp7Q3Rcv0aLTpk46B5yiXes_HNByOk0BQPBjoXHAdoSo&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=HSn2qdLb1N0I7NyM-Yq9ZQ&_nc_ss=7aa8c&oh=00_AQFllCzI4V_NVnyFLXlZl4EcXlQcfPYXX6jiZBKQsSUfEQ&oe=6A8DEB98"
+    },
+    {
+        "shortcode": "DW4B346iBAj",
+        "url": "https://www.instagram.com/reel/DW4B346iBAj",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nUzur uzur adashib ketdi😂\n\n#top #sh_t_t #rek #trendy #shtt\nView all 37 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.71878-15/669732411_4550562075176908_117289590717516896_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=Mzg3MDg1MjExODQ1NDIxMDU5NTE3ODY4Mzk5MjQ5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=GwJQ1T4THPEQ7kNvwFSNFyx&_nc_oc=Adoat5fx1mJLt61Km2as4eMC0e0zSbcBVekRYC5bZmzrKRTqRYx2p5Wya7pLTqF0PnI&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=u9oZR6ieVG2UYxBXBXkfxg&_nc_ss=7aa8c&oh=00_AQEFiCQnS3LjjBJ5ji0vCeT2BseYszdWAqUTI671XY2iKQ&oe=6A8DF242"
+    },
+    {
+        "shortcode": "DXW5UTACBgc",
+        "url": "https://www.instagram.com/reel/DXW5UTACBgc",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBizning talabalar trendan qolmaydi😅👩‍⚕️💉\n\n#medical #mood #trend #student #doctor\nView all 32 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/660718656_17871788460603794_3911305089397702996_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=Mzg3OTU0MDIxMjQ2ODU1Mzc1NjE3ODcxNzg4NDU3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=2O0CQ1gWtdwQ7kNvwHijLZI&_nc_oc=AdqePnsFYbocefaAG8m00bU6j3lQnHmRj-LTa-Xft5T0vRV6Js7JcGUZ7_8EfBr35eI&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=w8tQtmscRYVhWB_VjbtHrA&_nc_ss=7aa8c&oh=00_AQEO_ViughSwgUQhG2xfgny89CKLzJjr3mKzdnUSMtIeMQ&oe=6A8DFBF9"
+    },
+    {
+        "shortcode": "DXcCaxSiKsd",
+        "url": "https://www.instagram.com/reel/DXcCaxSiKsd",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nTalabalardan nima uchun oʻqiyotganini soʻradik📚\n\n#study #university #medecine #doctor\nView all 38 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.71878-15/671221156_981771737710390_8174818558836676382_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=Mzg4MDk4NzYxNDYxMDIzODIzNw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=yUilviBEuPEQ7kNvwHXWBI_&_nc_oc=Adq4hhVrCkLGDgmaya5kkmBnN70EdE8yvrWq_tPR7HFBGUqkcJr-NXuNLXR3nYbr41c&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=630G0yQdljySRjpQw-Lwaw&_nc_ss=7aa8c&oh=00_AQGXWw5PEAAtHmoOlEz_ztGBkIHASw89aU8qGgaWJTbKnA&oe=6A8E0213"
+    },
+    {
+        "shortcode": "DXrm0raiBPy",
+        "url": "https://www.instagram.com/reel/DXrm0raiBPy",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nSiz bir kunga ustoz boʻlib qolganingizda nima qilgan boʻlardingiz?😅\n\n#medicina #sh_t_t #doctor #study #university\nView all 33 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/682212785_17871788412603794_8574979604826687570_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzg4NTM2OTg0OTMzMzQyMTA0MjE3ODcxNzg4NDA5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwNzguc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=XLxoSKkKtuAQ7kNvwGzpY0G&_nc_oc=AdoLuQ5T5WwnmumyUwVS-1Z7poonWmhaZpEv4Pmy7EnlfydZ7IvE7cFp-L2mZZrSnCI&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=zJxKZtSv0TIUY3dc7AZvAQ&_nc_ss=7aa8c&oh=00_AQFyhrZMD2pA3ST9qa_721zaudpNdOlegaqrz3T0eEQPGQ&oe=6A8DE004"
+    },
+    {
+        "shortcode": "DXzVIPBIVdy",
+        "url": "https://www.instagram.com/reel/DXzVIPBIVdy",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShahrisabz tibbiyot texnikumi talabalari @marvarid__restaurant da!⛰️🪁\n\n#picnic #student #team #mountains #sh_t_t\nView all 135 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.71878-15/682740485_2505645349947161_366271079829712014_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=Mzg4NzU0MzgyODIwODUwNjczODk2NDIyNzgzNjM0MDk0MQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=eqGSVkx9iWMQ7kNvwF8_hJ0&_nc_oc=Adp3V-hGJgTFWLmN_37OYfwySVwWvKx1bCqetnEdFXIo3lfQgjhVFhffq8_YLd668jk&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=I5MMmWWoAX798RE43zh21A&_nc_ss=7aa8c&oh=00_AQEMI-qi2jRe4kG8sBBqho4BzsncKJybeUd_q6ZEL3Yelg&oe=6A8DE2B0"
+    },
+    {
+        "shortcode": "DX3Qge2IbY7",
+        "url": "https://www.instagram.com/reel/DX3Qge2IbY7",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎉 Shahrisabz Tibbiyot Texnikumida ajoyib Osh festivali!\nTalabalarimiz nafaqat bilimda, balki an’anada ham yetakchi 🍚🔥\n\n📚 Bizda mavjud yo‘nalishlar:\n— Hamshiralik ishi (2 yil)\n— Hamshiralik ishi (3 yil)\n— Feldsherlik ishi\n— Farmatsiya\n\n👩‍⚕️ Kelajak kasbingni biz bilan boshlagin!\n📞 Batafsil: 97 587 46 57\nView all 67 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/718935547_17878352388603794_3218555404067166555_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=Mzg4ODY0OTQwNDE0NTU3OTU3OTE3ODc4MzUyMzgyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=sDX_R4oPE3YQ7kNvwHlN8n-&_nc_oc=AdounB2Z48ihvL2-a_Va494C5lo2Q7Y70RNTfQhZ_TZg3eM-fRwjOZgYHtPENlhIFCc&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=6NzCEAAklDqQS1Kvyul1oQ&_nc_ss=7aa8c&oh=00_AQE9QaN5WI1zFWCw3bsTfAzIge7xewmAJxD5jwyaxoZ5MA&oe=6A8DD7FE"
+    },
+    {
+        "shortcode": "DYANijgofN1",
+        "url": "https://www.instagram.com/reel/DYANijgofN1",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🧠 Siz bu faktlarni bilarmidingiz?\n\n🎥 Ko‘ring va hayratda qoling 🤯\n💬 Sizga qaysi biri yoqdi?\n\n#tibbiyot #medicina #doctor #facts #video\nView all 24 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/717930116_17878351779603794_6740780159194765318_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5MTE2OTYyNzI0MzQxMDI5MzE3ODc4MzUxNzc2NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=icybepU7SckQ7kNvwEwrvA1&_nc_oc=Adqmuqi7Vd8RHcYpMI0TSkYK6nu5bT5bJQg4thtJzRmK7Ljp0oNiNxKcbvYDwpLZm8s&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=I9-pVYFceRAaNQDyI90cdQ&_nc_ss=7aa8c&oh=00_AQFpJZ9H7P_J4BM4XjV9zkh4Hs4bW4cfGKoiesC9SiBnVw&oe=6A8DD5FD"
+    },
+    {
+        "shortcode": "DYCqG4_oMnt",
+        "url": "https://www.instagram.com/reel/DYCqG4_oMnt",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🧑‍🍳Texnikumimizda “Osh festivali”ning 2-bosqichi ham yuqori kayfiyat va milliy an’analar ruhida bo‘lib o‘tdi!\nVideoni tomosha qiling va fikrlaringizni izohlarda yozib qoldiring😉\n\n#palov #festival #celebration #debat #sh_t_t\nView all 66 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/718174620_17878352841603794_8291536620083589526_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5MTg1ODIxOTQ2ODkwMDg0NTE3ODc4MzUyODM4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=cGwux1E8Fy4Q7kNvwEAshlm&_nc_oc=Adpu84ymj8iwN8IVswSUalGTVe7GrXJbtRC9THHXj-Y4sfN8QMA2eOR-T0scaFh20_8&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=LxnJGSPOiMhrsT6fCki2rg&_nc_ss=7aa8c&oh=00_AQG14KJbSdP6wm4ShXMD7mVyU3cpDL4xy556KnmdDgzpWQ&oe=6A8E02C7"
+    },
+    {
+        "shortcode": "DYETpQMIIbU",
+        "url": "https://www.instagram.com/reel/DYETpQMIIbU",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎉 Talabalik onlariga yana bir chiroyli xotira!\n🎥Marvarid Restoran hamkorligidagi maroqli dam olishdan lavhalar\n\n#picnic #sh_t_t #students #restaurant #mountians\nView all 43 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/718111912_17878352814603794_7946516531210798079_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5MjMyMjM3NTcyMDUzNTc2NDE3ODc4MzUyODExNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=wKbz9OE26-gQ7kNvwEfQ3Lr&_nc_oc=AdowqnCXlPBX7CCby5rZ6WG3ezReBCmwn0ZPmQNzPlmzhDnjGTHHYC2VyXQa74gAnFc&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=7vo4XynOg1o6PKpPe2YBew&_nc_ss=7aa8c&oh=00_AQHMEz5IBseHemNOXVMgwqen5zj3mvHZOF26tIhN1dBM9Q&oe=6A8DE108"
+    },
+    {
+        "shortcode": "DYKkWqWI7Zv",
+        "url": "https://www.instagram.com/reel/DYKkWqWI7Zv",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🧑‍🍳 ,,Osh festivali’’ doirasida boʻlib oʻtgan musiqaviy chiqishlardan lavhalar!\nFestivalning eng zo‘r momentlari shu videoda🔥\n\n#festival #sh_t_t #celebrites #show #music\nView all 38 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/718111683_17878352793603794_1114744034797134762_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5NDA4NDcxNDc4NjY5ODg2MzE3ODc4MzUyNzg3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=VFlyU02NVigQ7kNvwGpZdHj&_nc_oc=Adpv4XSkMqGEi4BSJkr37IeSZ_3F3IzFUJKSmTHb9GCGnIH56UT1ghxdlVgeKxq6XCU&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=_oKvQrlMi0lpbpNx75C5RQ&_nc_ss=7aa8c&oh=00_AQGtRR_yK2svnBOqLzqQTEL_QsqRxjBNAt_MDF_Oc2DQiA&oe=6A8E021C"
+    },
+    {
+        "shortcode": "DYPixRjo3pN",
+        "url": "https://www.instagram.com/reel/DYPixRjo3pN",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nOsh festivalining 2-bosqichidagi musiqaviy chiqishlar kayfiyatni yanada yuqori darajaga olib chiqdi!🎶🔥\n✨Milliy ruh, zamonaviy vibe va unutilmas atmosfera — barchasi bir videoda🤩\n\n#traditional #show #fest #festival #dance\nView all 45 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/718378415_17878353540603794_1086226798043918435_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5NTQ4NTEyMjM4NjAzMzIyOTE3ODc4MzUzNTM3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=P6Q43Z529yYQ7kNvwGf7Xvl&_nc_oc=AdqKMW-BQul4qvDQzINs6PbnfYW_Rc7YI8WhpmNOUcpPK2Ce-2Ev75LmhbuPTYI0ESk&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=_aYGyOEMqy_KecibwKhkGA&_nc_ss=7aa8c&oh=00_AQHN3qbyzoBO61HlTvw0lCTpsFmIIwxV9mlDtQAussYQjw&oe=6A8DF8E3"
+    },
+    {
+        "shortcode": "DYR0e6aov9W",
+        "url": "https://www.instagram.com/reel/DYR0e6aov9W",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nHayotda eng qimmat narsa — o‘z ustingizda ishlash!📚\nSiz uchun vaqtinchalik hashamatmi yoki kelajakni quradigan ta’limmi? 🎓\n\n#education #video #sh_t_t #trendy #doctor\nView all 61 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/718264668_17878351761603794_7774283313857822610_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5NjEyNTk3NTM3ODk4NDc5MDE3ODc4MzUxNzU1NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=mo4hJ06J2E0Q7kNvwG70nni&_nc_oc=AdrfExUEqTDKE-hZG7BJ5VSZXRxwTDbQwiRvH4XGcP6OGzX3PPHXp5YW8Q1ObH0KIVM&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=Dn11tizkulP40WAyXQ10_A&_nc_ss=7aa8c&oh=00_AQG7Kw1vbjt9lTeYlv__bUxsB_70-8T7lw6r62-67YZsyg&oe=6A8DD8FB"
+    },
+    {
+        "shortcode": "DYTx55nInwT",
+        "url": "https://www.instagram.com/reel/DYTx55nInwT",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nTalabalarimizning navbatdagi maroqli dam olish kuni — Marvarid Restoran da unutilmas lahzalar ✨\n\n#picnic #day #student #mountain #sh_t_t\nView all 17 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/717273752_17878351737603794_1831646140296794504_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5NjY3NzU4NTc1NDY4NDQzNTE3ODc4MzUxNzMxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=y5E70XlKmncQ7kNvwEWS3x1&_nc_oc=Adrf3vAasNK3FkHx5J5CzN--i3phbF4aRe-Bxj6h2Gr-atbDfdCsKYC5hn2YyBtEGsA&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=IBHnOcqqYoGwaKZKJFeFJQ&_nc_ss=7aa8c&oh=00_AQGZZ8wpRs9VkzvDON8NDf2KMG4Wp7EkH7e6ExEDRC-4Aw&oe=6A8DD7E0"
+    },
+    {
+        "shortcode": "DYXfbi-IFue",
+        "url": "https://www.instagram.com/reel/DYXfbi-IFue",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🍚,,Osh festivali’’ning 3-bosqichi yuqori kayfiyat va samimiy muhitda bo‘lib o‘tdi!\n🇺🇿Milliy qadriyatlarimizni aks ettirgan ushbu festival yana bir bor barchani bir dasturxon atrofida jamladi🔥\n\n#festival #traditonal #palov #cooking #show\nView all 30 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/718190175_17878351506603794_3849661819796039514_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5NzcyMjIzNDkyOTY5OTc0MjE3ODc4MzUxNTAzNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=t2PLD-wd1lIQ7kNvwFNS1lQ&_nc_oc=AdpMPXK75F0d_6eTxXdFsm5d1PZJLsuEu2MqQGGaL3E3JMKYf-grnlLIOZz9S6jBP4U&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=e4SFLN2skDdNqz7Ul869Jw&_nc_ss=7aa8c&oh=00_AQE5ggdGdrHrv8fMIhZP65cLZfyta4w5p6XA27wkQ0RbAQ&oe=6A8DD87B"
+    },
+    {
+        "shortcode": "DYchonJI9Dc",
+        "url": "https://www.instagram.com/reel/DYchonJI9Dc",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nDarslarga kelmay sessiya vaqti koʻrinish bergan talaba😂\nVideoni talabalarga yuborib qoʻyamiz✈️😉\n\n#sh_t_t #student #medicina #doctor\nView all 34 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/718150663_17878350921603794_1403448720840394549_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=Mzg5OTEzOTMwMzczOTIxNjA5MjE3ODc4MzUwOTE4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=P8sOSKBPmnQQ7kNvwHuM0GD&_nc_oc=Adq7zWm-2Z6v8jODEo8ChvjfmHSIxGwRZOhiorPDUqiACKpMxfuQhalNQ3quP-uHCaQ&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=Weuybg9hQ2YvxErVY--6ng&_nc_ss=7aa8c&oh=00_AQFh6Cn1MhkmZ_oqDDbfuwqi-5KLR3uEIBMi33eB5-qMWg&oe=6A8DE626"
+    },
+    {
+        "shortcode": "DYmhGqho5af",
+        "url": "https://www.instagram.com/reel/DYmhGqho5af",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nBizdan biroz kayfiyat😅\n\n#trendy #kontent #medicina #doctor #student\nView all 21 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/718238077_17878351020603794_1844750789845904180_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=MzkwMTk1MTcyMDY3NjM2NTk4MzE3ODc4MzUxMDE3NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=cmYfstMnPMEQ7kNvwG8BHg8&_nc_oc=AdpcSvgy7kRKRzmuNQp-U2Q4HFtJS80XML0Qe4wtWrYLLisweweaTfd3h4BCKCMtw1M&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=mYD84SM5lVhObmO51efYPg&_nc_ss=7aa8c&oh=00_AQGbM6jW6T_Sh48SHJWs62sEntvAjCVwqfNdtdI5Fsnf5g&oe=6A8DF259"
+    },
+    {
+        "shortcode": "DYpe_FHIfXW",
+        "url": "https://www.instagram.com/reel/DYpe_FHIfXW",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nKontraktingizni kim toʻlaydi?😅\n\n#medicina #student #sh_t_t #doctor\nView all 174 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/718510755_17878349913603794_5117950856878429501_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzkwMjc4NjgyODMwMzk4ODE4MjE3ODc4MzQ5OTEwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=gY8RSTPuvtsQ7kNvwG_NtZV&_nc_oc=AdqubnB9vsY0sUIrIztaW0s7f-ysOl-5_cq2cOTVKWFdludflhGdkDMCJV8u2ZYgMmQ&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=jrxWuIghrdZLvEgsyF7KJA&_nc_ss=7aa8c&oh=00_AQFBH0jhUjgMikGV5ss0siXZrXhpOZs1KwoP3KzgHbkDtg&oe=6A8DE3E0"
+    },
+    {
+        "shortcode": "DZFvYRzoKfF",
+        "url": "https://www.instagram.com/reel/DZFvYRzoKfF",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n✨ Shahrisabz shahar,tibbiyot texnikumida tashkil etilgan Osh festivalining final bosqichi yuqori kayfiyat va milliy an’analar ruhida bo‘lib o‘tdi!🎉\n\n🍽️ Milliy taomimizga ehtirom, an’analarimizga hurmat va yoshlarning iste’dodi mujassam bo‘lgan ajoyib tadbirdan lavhalar🎥\n\n#national #festival #palov #final\nView all 29 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/717637719_17878347585603794_6783841195261335774_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzkxMDc0MDIyODAxNDM4NTA5MzE3ODc4MzQ3NTgyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjk0MS5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=GVG9j4vKbcMQ7kNvwELKDct&_nc_oc=AdpXNaeYBv8JH4ywSoXrLzXSPkR5NXMCziAXvA--ESvfwpSUiHVp5YYR9ECxkGiOvrc&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=FFlZldzjfNQM19ixxSdTlA&_nc_ss=7aa8c&oh=00_AQGJaAuChMujCgdyWWc_5hSpNmA6tPSVrFmAZaf20vVPlA&oe=6A8DDE57"
+    },
+    {
+        "shortcode": "DZK3Tgloqle",
+        "url": "https://www.instagram.com/reel/DZK3Tgloqle",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n📚Ta’lim jarayonida bilim olish bilan bir qatorda,talabalik hayotining turli qiziqarli va unutilmas lahzalari ham uchrab turadi\n🎓 Biz bilan talabalik hayotini kuzatishda davom eting!\n\n#student #life #medicina #shtt #doctor\nView all 15 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/717417521_17878354002603794_5108241383307455963_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzkxMjE4MjQ1OTU0NDAyMTM0MjE3ODc4MzUzOTk5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=SNQiWDj9uLMQ7kNvwEblUZ9&_nc_oc=Adq9_mgZfF9ua51iPJgFZ5U9s0rRAefW4otV1AsktjKddgCynwT2A3Qd-MVHwCmSFHQ&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=4KcZ9VYvqvAdGerZEwOmCA&_nc_ss=7aa8c&oh=00_AQFov9pOkk-ixYTCL37TPAnKYWQOKxo_ZaGAthDf-aQHwA&oe=6A8DE12F"
+    },
+    {
+        "shortcode": "DZQIF8boF6m",
+        "url": "https://www.instagram.com/reel/DZQIF8boF6m",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🇺🇿 Bugun millionlab yuraklar bir maqsad uchun uradi — Vatan sharafi uchun!\n\n🧬Shahrisabz tibbiyot texnikumi jamoasi nomidan O‘zbekiston milliy terma jamoasiga omad tilaymiz. Maydonda jasorat, ishonch va g‘alaba ruhi hamrohingiz bo‘lsin!\n\n#football #uzbekistan #team #play\nView all 68 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/718150670_17878353507603794_6926347002369560820_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzkxMzY2MzY2OTA0MjQzNzc5ODE3ODc4MzUzNTAxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=zHfXuETgj7sQ7kNvwFmn4cT&_nc_oc=AdoJMFzg85Q63n-GNUiZk4jkBlITrkTSPiFzn9yDcakoFrfUV2Bce4-zosxledGDJlc&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=4D91ckY7ee_u9zhXs2CdPA&_nc_ss=7aa8c&oh=00_AQH27iVQt4jhqQ0lZfc6jsNisnqctSiM4cLQ1GFN_IUUKg&oe=6A8DF30A"
+    },
+    {
+        "shortcode": "DZXzq1xobjf",
+        "url": "https://www.instagram.com/reel/DZXzq1xobjf",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓 Yangi bosqich sari ilk qadam!\n\n💉Shahrisabz tibbiyot texnikumida bitiruvchi talabalarimizga diplomlar tantanali ravishda topshirildi!Yillar davomida olingan bilim, mehnat va intilishlar o‘z samarasini berdi. Endilikda ular sog‘liqni saqlash tizimida xalqimiz salomatligi yo‘lida xizmat qiladigan malakali mutaxassislar sifatida yangi qadam tashlashadi!\n\n⚕️Shahrisabz tibbiyot texnikumi — kelajak tibbiyot xodimlarini tarbiyalaydigan bilim maskani\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#medicina #student #doctor #sh_t_t\nView all 35 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/718510287_17878748637603794_7874820937097469571_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzkxNTgyNTY0NTM1MzAyMzcxMTE3ODc4NzQ4NjM0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=5IICn0QVwN4Q7kNvwGXvJaD&_nc_oc=Ado10jBqr2dNZ9uMNG8Wub8JChgNmWLXdQK0cgjTBXh4XuHYdNxrh4BXtFT7MiofeUw&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=N4Y3B-RH55PPhXhacQJACA&_nc_ss=7aa8c&oh=00_AQHCDo9AFMI8NgRU-3irHDbc0wqGNw1Q5SLdSgaLKP5oUQ&oe=6A8DED11"
+    },
+    {
+        "shortcode": "DZiF3OnI20A",
+        "url": "https://www.instagram.com/reel/DZiF3OnI20A",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓 Kelajagingizni tibbiyot bilan bog‘lashga tayyormisiz?\n📢 Shahrisabz tibbiyot texnikumida qabul jarayonlari boshlandi!\n\n✅ Sifatli ta’lim\n✅ Amaliy mashg‘ulotlar\n✅ Zamonaviy o‘quv muhiti\n✅ Kelajak kasbiga ishonchli yo‘l!\n\nBularning barchasi Shahrisabz tibbiyot texnikumida!😊\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#medicina #qabul #doctor #medical\nView all 221 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/724225856_17879635134603794_6481220129063128652_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=MzkxODcyMDQxMTI1ODU0NzQ1NjE3ODc5NjM1MTMxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=pByIOoWD1HYQ7kNvwGIybQu&_nc_oc=AdrLCxMkJ9y7V9-YEd0mpaeNP08AQPjZedV8g8WzO64TPjYu0zKcwjaPm3mNFsQUmwQ&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=4_2RFlWtNyQrhsNKn3xCVw&_nc_ss=7aa8c&oh=00_AQGUv5-XzzX_3DfIhH8P0cj-dWgjxUTYXKutm356kq33Kw&oe=6A8DD7C7"
+    },
+    {
+        "shortcode": "DZmsMiGISzz",
+        "url": "https://www.instagram.com/reel/DZmsMiGISzz",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🏥 Shahrisabz tibbiyot texnikumida 2026–2027 o‘quv yili uchun qabul boshlandi!\n⚕️Tibbiyot sohasida zamonaviy bilim va amaliy ko‘nikmalarga ega bo‘lishni istasangiz, sizni texnikumimiz safiga chorlaymiz. Tajribali ustozlar, qulay ta’lim muhiti va amaliy mashg‘ulotlar sizning muvaffaqiyatli kelajagingiz uchun mustahkam poydevor bo‘ladi!\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#medicine #medical #trend #sh_t_t #student\nView all 9 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/719891395_17879635437603794_1214038757250353905_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkyMDAxNDkwMDk2Mjg2NDM3MTE3ODc5NjM1NDM0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=ebZnveypedYQ7kNvwHbkJSN&_nc_oc=AdpDMoJi4mXbq0XkQWLkOREKu8abIEvXRFzdLgbEj3RkQ6lVUoxJzAUia7uI1-gr8TQ&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=Q6vk-xz0JKImDw57mgEwnA&_nc_ss=7aa8c&oh=00_AQF0n1gjxp5jxn3e-KAAj9h-8le1rBFN4oNNTpuCIDEGCQ&oe=6A8DD7DC"
+    },
+    {
+        "shortcode": "DZ21e-tokIM",
+        "url": "https://www.instagram.com/reel/DZ21e-tokIM",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\nShahrisabz tibbiyot texnikumi talabalari nazariy bilimlarini amaliyotda mustahkamlab, shifoxonalarda o‘z kasbiy ko‘nikmalarini oshirmoqda!🩺\n⚕️Shahrisabz tibbiyot texnikumi — bilim, tajriba va kelajak sari ishonchli qadam!\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#medicina #student #shtt #medical #practicas\nView all 37 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/726660011_17880687141603794_2297877475627815769_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzkyNDU1OTM1MDY4Njk1ODA5MjE3ODgwNjg3MTM4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEzMjAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=VrN28HF4A9sQ7kNvwFd19Wg&_nc_oc=AdohBXbDtnAMsUcenIyZKKBfKF0RIMkWpg_DHvq3VDVqZHlVoYOn_EyQPG613znTyd4&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=nOo0W6m0RfXOH4AarCC5kQ&_nc_ss=7aa8c&oh=00_AQEqnR89RHsguLeU158YXTNpeoULHUo-NEbRFv9ArLKJ-w&oe=6A8E0141"
+    },
+    {
+        "shortcode": "DZ5VIGdo5XW",
+        "url": "https://www.instagram.com/reel/DZ5VIGdo5XW",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n⚕️Shahrisabz tibbiyot texnikumida talabalar uchun navbatdagi imtihon jarayonlari bo‘lib o‘tdi!\n\nBu sinovlar orqali talabalar o‘z bilim, tayyorgarlik va mas’uliyatini yana bir bor namoyon etishdi!📚🩺\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\nView all 33 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/728951196_17880848865603794_2867727271234174749_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=MzkyNTI2MTQ2NTkwMjM1NTkyNjE3ODgwODQ4ODU5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=ovPoi5cR0NcQ7kNvwFZGDq-&_nc_oc=Ado9b7yNLLDgK9xb_fL6TXMlHrbdOJQT-TvY6gl_3kZlPG2bJEGHH2OKZvodL0KDvr0&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=uYtkVO05oAuc8owntDRqMw&_nc_ss=7aa8c&oh=00_AQEmbtfc_RXFlVy_sesVeElD08YTnC9nTFTSKmdiu2COWg&oe=6A8E0A2E"
+    },
+    {
+        "shortcode": "DaGbAwuIwRP",
+        "url": "https://www.instagram.com/reel/DaGbAwuIwRP",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓Texnikum bitiruvchilari uchun yana bir katta imkoniyat!\n\n📢 Yangi qarorga muvofiq, texnikum bitiruvchilari bakalavriat ta’lim yo’nalishlarida 2-bosqichdan o’qishni davom ettirish imkoniyatiga ega bo’ladilar!\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#medical #texnikum #education #information #news\nView all 10 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/730348028_17881776780603794_6299544802287217079_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=MzkyODk0NjUyNDQ5Njc5MDYwNzE3ODgxNzc2Nzc0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=HpYnuL6GN4oQ7kNvwHbcVs1&_nc_oc=AdqFUC1-PcZqJ1oACJbOYJR7AH9cb1Ajer6NaoaZS_l0aAdJhW8x5YMYbYdfmHBbz0c&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=4U9HPpjO7_4BL2R7zZKSvw&_nc_ss=7aa8c&oh=00_AQGQck3c8oRas3fdl4RyanYJOfdtUK9JgH8BeTs-Lo_iIQ&oe=6A8DEFD1"
+    },
+    {
+        "shortcode": "DaSUrQEIfRp",
+        "url": "https://www.instagram.com/reel/DaSUrQEIfRp",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🌍 Chet davlatlarda malakali hamshiralar yuqori maosh evaziga faoliyat yuritmoqda.\n\nBugun o‘zingizga beradigan eng muhim savol:\nSiz ham shunday imkoniyatga tayyormisiz?\n\n📚 To‘g‘ri ta’lim va mustahkam bilim — kelajakdagi muvaffaqiyatning birinchi qadami.\nView all 21 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/730304065_17882572359603794_7229176790201590731_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMjI5NjM1Nzc2NDc4OTM1MzE3ODgyNTcyMzU2NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEzMjAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Va4eRObtVpcQ7kNvwHwK6GV&_nc_oc=AdpE5SiJOaep7Rwfew_pNnjoEmm9DvORp77Uly2wdR3jCTgQet4Nf8y8fnvdHkaBAvY&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=2mQiBUvFOeNUQTdt0mXAzA&_nc_ss=7aa8c&oh=00_AQHQnbb6gLTC_uVqKwtz9IQjHwpEr1i5GSncAL8uX8-8aA&oe=6A8E012B"
+    },
+    {
+        "shortcode": "DaUmCM_Ihxp",
+        "url": "https://www.instagram.com/reel/DaUmCM_Ihxp",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓Davlat namunasidagi diplom - kelajagingiz uchun mustahkam poydevor!\n\nBizning texnikumni tamomlaganingizdan so'ng davlat namunasidagi diplomga ega boʻlasiz. Sifatli ta'lim, amaliy bilim va ishonchli kelajak sari ilk qadamingizni bugun qo'ying!\n\n☎️Murojat uchun:\n+998 88-260-20-73\n+998 97-266-20-73\n\n#medicina #student #sh_t_t #medical\nView all 5 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/731187434_17882720607603794_4706536199031980710_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMjkzNTY1MTc1MTc2MzA0OTE3ODgyNzIwNjAxNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=9IlDuO8kcqIQ7kNvwEFDzkf&_nc_oc=Adq3aDLsekQLrdVOmi1sxIPsZKOKWVDG54A_eQeqaDrxvdthvazq-lkW0DU8nteOPNU&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=W-G1O6UVxWW6MEMhjtdSzA&_nc_ss=7aa8c&oh=00_AQFD1OeUmF-wNfYU7QWFJZMahiCHWeYIh_sZHjUz0Lgp8Q&oe=6A8DF568"
+    },
+    {
+        "shortcode": "DaVul-HIUpb",
+        "url": "https://www.instagram.com/reel/DaVul-HIUpb",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🩺Kelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi?\n\n⚕️Shahrisabz Tibbiyot Texnikumida 2026/2027-o‘quv yili uchun qabul ochiq! Zamonaviy ta’lim, malakali ustozlar va amaliyotga yo‘naltirilgan darslar sizni kutmoqda!\n\n📚 Bugunoq hujjatlaringizni topshiring va orzuyingizdagi kasb sari ilk qadamni tashlang!\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#medicina #trend #student #doctor\nView all 7 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/734622994_17882803671603794_2025168563615860052_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMzI1NDc2OTAyOTc2MTYyNzE3ODgyODAzNjY4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEzMjAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=C5FvvIpNWfcQ7kNvwF95Kwt&_nc_oc=AdojEbRfdJRFbub-vuxoZSsxNLpWIZ1GUJmBLCrRKm2EzDcBDqWd8mM-Qk68mzEk2Q8&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=mtusWT-8q0WJkZDJy83k2w&_nc_ss=7aa8c&oh=00_AQF_ReU7D1FNhfUB7xQH3XVedyXbKD3UvAQcjzZb_hUr5A&oe=6A8DF841"
+    },
+    {
+        "shortcode": "Daat-i5o3Vc",
+        "url": "https://www.instagram.com/reel/Daat-i5o3Vc",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓Kelajagingizni ishonchli ta’lim bilan boshlang!\n\nShahrisabz tibbiyot texnikumida qabul davom etmoqda!\n\n✅ Zamonaviy ta’lim\n✅ Malakali ustozlar\n✅ Amaliyotga yo’naltirilgan darslar\n✅ Kelajak kasbingiz sari mustahkam qadam\n\nBugunoq hujjatlaringizni topshiring va tibbiyot sohasidagi orzularingizni ro’yobga chiqaring!\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#student #medicina #doctor #medical #sh_t_t\nView all comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/735286999_17883157032603794_7698145393653279594_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNDY1OTQzNDYzNjM0MjYyMDE3ODgzMTU3MDI2NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=PCFZDxa5imIQ7kNvwFep0Ji&_nc_oc=Adp74Pt1-Br6bT6Cg-LyTwgi4-fHKBZqPVdvkNEjuQCeiAQ9uzUfCpjaBTpS0LXEM-I&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=eWjyXxl6XwadGzEdFBtCXg&_nc_ss=7aa8c&oh=00_AQG7ZxSOOS76DriznYaQPgGsC-58fbgLzWB9CiPGH6s6Yg&oe=6A8DD69C"
+    },
+    {
+        "shortcode": "DafkAI3qOnr",
+        "url": "https://www.instagram.com/reel/DafkAI3qOnr",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n⚕️Shahrisabz tibbiyot texnikumida qabul davom etmoqda!\n\nSifatli ta’lim, malakali ustozlar va amaliyotga yoʻnaltirilgan darslar orqali kelajakdagi kasbingiz sari dadil qadam tashlang!\n\n✨ Nega aynan biz?\n• Zamonaviy ta’lim muhiti\n• Tajribali oʻqituvchilar\n• Amaliy mashgʻulotlarga alohida e’tibor\n• Kelajagingiz uchun mustahkam poydevor\n\nBugun hujjat topshiring va tibbiyot sohasidagi orzularingizni biz bilan amalga oshiring!\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\n\n#doctor #student #medicina #medical\nView all 21 comments",
+        "media_url": "https://instagram.fbhk1-4.fna.fbcdn.net/v/t51.82787-15/733676697_17883483765603794_9038112597963596022_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNjAyMjkzODU0MzI1Mzk5NTE3ODgzNDgzNzU5NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=PwAR66ds8EkQ7kNvwHMrUwg&_nc_oc=Adpb8x2_u4LMgeOdsTjHcExCVFzeckn6De3F1vfWqtsyQ4b_5GYbsfPJoyJMznSJHtQ&_nc_zt=23&_nc_ht=instagram.fbhk1-4.fna&_nc_gid=TElS5hgkb7YazAptO22wsg&_nc_ss=7aa8c&oh=00_AQFgAW4iKU0qlqKFBW_3bPtz7OT2bhsChf5KpfWA1Jdq2A&oe=6A8DFF59"
+    },
+    {
+        "shortcode": "DanRQ0kKsiF",
+        "url": "https://www.instagram.com/reel/DanRQ0kKsiF",
+        "media_type": "reel",
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n⏳ Vaqt o‘tadi, kasblar o‘zgaradi. Ammo tibbiyot sohasi doimo eng barqaror va eng daromadli yo‘nalishlardan biri bo‘lib qoladi.\n\nKelajagingizni ishonchli kasb bilan boshlang. Qabul davom etmoqda!\n\n☎️Murojat uchun:+998 88-260-20-73\n+998 97-266-20-73\nView all 5 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/735776074_17883973863603794_7932890001227399685_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzkzODE5MjMyMTkwMjQ2MzEwOTE3ODgzOTczODYwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=y3BnmBdU9PMQ7kNvwFp3kQq&_nc_oc=AdpsiyMcJInB4KE3z89AhtWsFaekB7j3Xn-bqZ5GBovIvYkVzUADREXvacQrEyszjTw&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=eXepdRCUpAhlu8FfRRMu0Q&_nc_ss=7aa8c&oh=00_AQHAgmwDMvmUxX1y7REpLIdLhQjZWvrA60vB_wIjGuhHDQ&oe=6A8DEE5F"
     },
     {
         "shortcode": "DbsKZ2qICdh",
         "url": "https://www.instagram.com/reel/DbsKZ2qICdh",
         "media_type": "reel",
-        "post_date": "2026-08-06",
-        "caption": "🎓 Kelajagingizni bugundan boshlang!\n\n👩‍⚕️ Davlat namunasidagi diplom asosida zamonaviy tibbiy kasbni egallang.\n\n✅ Hamshiralik\n✅ Feldsherlik\n✅ Farmatsiya\n\n📚 Qulay to’lov imkoniyatlari\n👨‍🏫 Tajribali ustozlar\n💼 Bitirgach ish topish imkoniyatini oshiruvchi amaliy ta’lim\n\n📍 Shahrisabz tibbiyot texnikumi\n\n📞 Batafsil ma’lumot va ro’yxatdan o’tish:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n⏳ Qabul davom etmoqda. Joylar cheklangan — hoziroq murojaat qiling!",
-        "media_url": ""
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓 Kelajagingizni bugundan boshlang!\n\n👩‍⚕️ Davlat namunasidagi diplom asosida zamonaviy tibbiy kasbni egallang.\n\n✅ Hamshiralik\n✅ Feldsherlik\n✅ Farmatsiya\n\n📚 Qulay to’lov imkoniyatlari\n👨‍🏫 Tajribali ustozlar\n💼 Bitirgach ish topish imkoniyatini oshiruvchi amaliy ta’lim\n\n📍 Shahrisabz tibbiyot texnikumi\n\n📞 Batafsil ma’lumot va ro’yxatdan o’tish:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n⏳ Qabul davom etmoqda. Joylar cheklangan — hoziroq murojaat qiling!\nView all 32 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/765059407_17888737608603794_1824720334118703319_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=Mzk1NzU4MzkyOTY5MjY2MTYwMTE3ODg4NzM3NjAyNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEzMjAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=gNh0foWilbEQ7kNvwH2liB9&_nc_oc=Adr3CsndWyMCrl7Fsq7J8n9hVcuN51rdxVYXqQNDRa5JRJi0OrwvoezaaWmRxMUz04s&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=2nAZ8XxfNsPDHA_XqR3pug&_nc_ss=7aa8c&oh=00_AQGHZG_68lRCoToS1vfYIhfy6DUUuAXB8FMHptJJMFgB9Q&oe=6A8DF851"
     },
     {
         "shortcode": "DbyU4H_oLZr",
         "url": "https://www.instagram.com/reel/DbyU4H_oLZr",
         "media_type": "reel",
-        "post_date": "2026-08-08",
-        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n🩺Davolash ishi\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!",
-        "media_url": ""
-    },
-    {
-        "shortcode": "Db0U9ivIcwC",
-        "url": "https://www.instagram.com/p/Db0U9ivIcwC",
-        "media_type": "post",
-        "post_date": "2026-08-09",
-        "caption": "🩺 SHAHRISABZ TIBBIYOT TEXNIKUMI\n🎓 3 OYLIK HAMSHIRALIK KURSI\n📚 Nazariy bilimlar • Amaliy ko‘nikmalar • Tajribali ustozlar\n\n💙 Tibbiyot sohasiga ilk qadamingizni biz bilan boshlang!\n\n👩‍⚕️ Yo‘nalishlar:\n• Hamshiralik ishi\n• Davolash ishi\n• Farmasevtika\n\n📢 Qabul davom etmoqda!\n\n📞 Murojaat uchun:\n88 260 20 73\n97 266 20 73\n📍 Shahrisabz tibbiyot texnikumi\n✨ Kelajagingizni bugundan boshlang!",
-        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/768604174_17889330708603794_2515257640581746909_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&_nc_map=urlgen_bucketless&ig_cache_key=Mzk1OTg4MjE2MjQ4MTc3NzY2Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTI1NC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=Lf_Gs-HboeUQ7kNvwE5nXLq&_nc_oc=AdrGFx6YasSpN79YkPmcmmv4UQ12HmXce5_whufzGubjE5kjTPhXeO2mTHyPHYAngYk&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=8S0WoXyNOEm2_F52LgqR1w&_nc_ss=7ea8c&oh=00_AQEz_VB3NGRydzG5-sWRAyqnqC0K6n3XfgyqrWg6Mue-3w&oe=6A8DCFC9"
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓 SHAHRISABZ TIBBIYOT TEXNIKUMI\n\n📢 QABUL DAVOM ETMOQDA!\n\nKelajagingizni tibbiyot sohasi bilan bog‘lashni istaysizmi? 🩺\nUnda bizning texnikumimizga hujjat topshirishga shoshiling!\n\n👩🏻‍⚕️Hamshiralik ishi\n\n🩺Davolash ishi\n\n💊Farmatsiya\n\n📞 Murojaat uchun telefon raqamlari:\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n✨ Sifatli ta’lim — yorqin kelajak sari birinchi qadam!\nView all 20 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/763806030_17889193026603794_1270812021053151547_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=Mzk1OTMxODg0MDIxNjY5NjQyNzE3ODg5MTkzMDIwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEzMjAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Y-M46mZ6E_AQ7kNvwGuDok6&_nc_oc=Adrz6qN00zaZFskdap7UY-nhluT5vR7uVJk2s50OyHkPTGiLC8EPHHN68yc60Ltn6gQ&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=Q8UYea3GN1_91roQHXrPlg&_nc_ss=7aa8c&oh=00_AQGxgjgxDdYOfJLANAsDxcMcQ8sHc_lUxU6U1TjaanGJpA&oe=6A8E04AE"
     },
     {
         "shortcode": "Db-ssJeIyZh",
         "url": "https://www.instagram.com/reel/Db-ssJeIyZh",
         "media_type": "reel",
-        "post_date": "2026-08-13",
-        "caption": "🎓 SHAHRISABZ TIBBIYOT TEXNIKUMIDA QABUL DAVOM ETMOQDA! 🩺\n\nKelajakdagi kasbingizni bugundan tanlang! 💙\nSifatli ta’lim, zamonaviy bilim va tibbiyot sohasida mustahkam kelajak sari bir qadam! 👩‍⚕️👨‍⚕️\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n✨ Qabul davom etmoqda! Shoshiling, o‘z o‘rningizni band qiling!",
-        "media_url": ""
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n🎓 SHAHRISABZ TIBBIYOT TEXNIKUMIDA QABUL DAVOM ETMOQDA! 🩺\n\nKelajakdagi kasbingizni bugundan tanlang! 💙\nSifatli ta’lim, zamonaviy bilim va tibbiyot sohasida mustahkam kelajak sari bir qadam! 👩‍⚕️👨‍⚕️\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n✨ Qabul davom etmoqda! Shoshiling, o‘z o‘rningizni band qiling!\nView all 27 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/770235294_17890064757603794_4928756045833025198_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzk2MjgwMTI3MDAwNTM3NjYwOTE3ODkwMDY0NzU0NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEzMjAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=jysSC9tahccQ7kNvwH1N02I&_nc_oc=AdowG-0RfrZ8F19XeqDwhhuluhVesYeb6zYXlaCygQmxZvcgRwKnHu38RoKpGGlrdKU&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=sCvQeB24gZjrqBZLWJm0OA&_nc_ss=7aa8c&oh=00_AQGVcyO6Sr6lvKrBWN7gjOJPNwuK_fCt_niGWHUGIog95Q&oe=6A8DD9C5"
     },
     {
         "shortcode": "DcBekL6Omao",
         "url": "https://www.instagram.com/reel/DcBekL6Omao",
         "media_type": "reel",
-        "post_date": "2026-08-14",
-        "caption": "📚 3 OYLIK HAMSHIRALIK KURSI\n\n🩺 Shahrisabz tibbiyot texnikumida 3 oylik hamshiralik kursiga qabul davom etmoqda!\n\n🎓 Zamonaviy bilim va amaliy ko‘nikmalar\n👩‍⚕️ Tajribali mutaxassislardan ta’lim\n📜 Kurs yakunida rasmiy sertifikat\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n\nJoylar soni cheklangan! Hoziroq ro'yxatdan o'ting.",
-        "media_url": ""
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n📚 3 OYLIK HAMSHIRALIK KURSI\n\n🩺 Shahrisabz tibbiyot texnikumida 3 oylik hamshiralik kursiga qabul davom etmoqda!\n\n🎓 Zamonaviy bilim va amaliy ko‘nikmalar\n👩‍⚕️ Tajribali mutaxassislardan ta’lim\n📜 Kurs yakunida sertifikat\n\n📞 Murojaat uchun:\n☎️ 77 088 20 73\n☎️ 88 260 20 73\n☎️ 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n\nJoylar soni cheklangan! Batafsil ma’lumot uchun bog‘laning.\nView all 36 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/775243993_17890236744603794_3132229336775129250_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzk2MzU4MzU3NTE0NzMwODcxMjE3ODkwMjM2NzM4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=2BxsdU2Kx78Q7kNvwHJ85wx&_nc_oc=AdptnbUJsZuLlWzpKrbS3aUah6A4hf0-can_LUQ_wUoUJ1skZlaNMQXWCKj69h6Kge0&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=cEhYmPb41B3hbu7VuuZzZg&_nc_ss=7aa8c&oh=00_AQH_Xo7gZpquMYIF6B0ll9yWrSrbFaj3cN761PCLzvrgVw&oe=6A8DFD93"
     },
     {
         "shortcode": "DcDX1cOoIoX",
         "url": "https://www.instagram.com/reel/DcDX1cOoIoX",
         "media_type": "reel",
-        "post_date": "2026-08-15",
-        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 97 266 20 73\n+998 88 260 20 73\n\n📍 Shahrisabz tibbiyot texnikumi",
-        "media_url": ""
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 97 266 20 73\n+998 88 260 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n#Shahrisabz #TibbiyotTexnikumi #Qabul2026 #Tibbiyot #Talaba\nView all 20 comments",
+        "media_url": "https://instagram.fbhk1-1.fna.fbcdn.net/v/t51.82787-15/772853424_17890427796603794_3810014169498174263_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzk2NDExNjkyNDUyODM2NDA1NTE3ODkwNDI3NzkwNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=F8MP5INj0IUQ7kNvwEda1UZ&_nc_oc=Adq0HdayRy19eJAI3p4oEs6-dxkuE88TlkVmE3j-c1RWoQX4mZ_GqmU3dZZC0U0EsPI&_nc_zt=23&_nc_ht=instagram.fbhk1-1.fna&_nc_gid=DfYEwmmccqttwy14Adf8Aw&_nc_ss=7aa8c&oh=00_AQHurf0rKMJcEnQH27zGPTef0G9iEw7S_SLjz1TxCZA_bg&oe=6A8DE7FF"
     },
     {
         "shortcode": "DcIsWQ5IT8b",
         "url": "https://www.instagram.com/reel/DcIsWQ5IT8b",
         "media_type": "reel",
-        "post_date": "2026-08-17",
-        "caption": "📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 88 260 20 73\n+998 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi",
-        "media_url": ""
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n📚 Shahrisabz tibbiyot texnikumi — kelajagingiz uchun mustahkam qadam! 🩺\n\n🎓 Zamonaviy ta’lim\n👩‍⚕️ Amaliy mashg‘ulotlar\n📚 Sifatli bilim va tajriba\n\n📞 Batafsil ma’lumot uchun:\n+998 77 088 20 73\n+998 88 260 20 73\n+998 97 266 20 73\n\n📍 Shahrisabz tibbiyot texnikumi\n#Shahrisabz #TibbiyotTexnikumi #Qabul2026 #Tibbiyot #Talaba\nView all 5 comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/774197436_17890832214603794_6962989922684394933_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzk2NTYxNDUxNTkxMzA0NzgzNTE3ODkwODMyMjA4NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjQ4MC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=sjws28q2o2EQ7kNvwECHlcY&_nc_oc=AdqZxXPXYTBOwNQpgIKBOb4iT099UmyDtsaK06ZHRuHfaTDluG7JMY_9cYjwkCAGUPk&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=1MRNlyVQTDCpaKss1mpCOA&_nc_ss=7aa8c&oh=00_AQFHTntPHgU54_UptssgBfa5mA2L14IOwBHqEwJDKUhKrg&oe=6A8DFCE4"
     },
     {
         "shortcode": "DcLj3zwqODC",
         "url": "https://www.instagram.com/reel/DcLj3zwqODC",
         "media_type": "reel",
-        "post_date": "2026-08-18",
-        "caption": "📚 Tibbiyotda o‘qishni xohlayapsizmi? 🩺\nUnda bu video aynan siz uchun! ❤️\n\n📍 Shahrisabz tibbiyot texnikumi — kelajakdagi kasbingiz sari ishonchli qadam! 🎓\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73\n\n❤️ Bu videoni tibbiyotda o‘qishni xohlayotgan do‘stingizga yuboring!",
-        "media_url": ""
+        "post_date": "",
+        "caption": "shahrisabz_t_t_uz\n\n📚 Tibbiyotda o‘qishni xohlayapsizmi? 🩺\nUnda bu video aynan siz uchun! ❤️\n\n📍 Shahrisabz tibbiyot texnikumi — kelajakdagi kasbingiz sari ishonchli qadam! 🎓\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73\n\n❤️ Bu videoni tibbiyotda o‘qishni xohlayotgan do‘stingizga yuboring!\nView all comments",
+        "media_url": "https://instagram.fbhk1-3.fna.fbcdn.net/v/t51.82787-15/773867678_17891038656603794_2411323614986854335_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=Mzk2NjQyMTY2MzYwNjE2OTc5NDE3ODkxMDM4NjUzNjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=lRczLmR4ebAQ7kNvwGoD4Jk&_nc_oc=AdoeCN4TzCr96cIe59UjZmXvwR3KI4ypsrY-xOANlmwEEwc3qeOxsxjq-JwJx0HaNvU&_nc_zt=23&_nc_ht=instagram.fbhk1-3.fna&_nc_gid=bmwhPmqcKt0FHX2B0G_eYg&_nc_ss=7aa8c&oh=00_AQGxQuT1oJIW8wdBZ_34bWcyQU5act2Hbl6GzmacIFMHdw&oe=6A8DFD4F"
     },
     {
         "shortcode": "DcLkGzAqbz9",
         "url": "https://www.instagram.com/reel/DcLkGzAqbz9",
         "media_type": "reel",
-        "post_date": "2026-08-18",
-        "caption": "🩺 Bugun kasb tanlaysiz — ertaga shu kasb bilan daromad topasiz! 🎓✨\n\nKelajagingiz uchun to‘g‘ri tanlov qiling!\n🏥 Shahrisabz tibbiyot texnikumi — bilim, kasb va kelajak sari ishonchli qadam! ❤️\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSt44CRiLZm",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DSt44CRiLZm",
-        "media_type": "post",
         "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVnNapxCFwV",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/p/DVnNapxCFwV",
-        "media_type": "post",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DRjbVIVCKY4",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRjbVIVCKY4",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DRodxW9iPAr",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRodxW9iPAr",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DRtp7ONiAtK",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRtp7ONiAtK",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DRy5jtWiId5",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DRy5jtWiId5",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DR6hnfsCFyT",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DR6hnfsCFyT",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSE-3rGiKBm",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSE-3rGiKBm",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSJ8o_MCK6L",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSJ8o_MCK6L",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSPNK1QiLHZ",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSPNK1QiLHZ",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSUShSniPWi",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSUShSniPWi",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSZZK5-iGaQ",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSZZK5-iGaQ",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSeyEF-iD-F",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSeyEF-iD-F",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSjeW5QCCWM",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSjeW5QCCWM",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSpAFnBCKqm",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSpAFnBCKqm",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSr8JAwiIrD",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSr8JAwiIrD",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DSwyPTkiGXT",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DSwyPTkiGXT",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DS4io8miA5G",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DS4io8miA5G",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTCi_cJCKgb",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTCi_cJCKgb",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTHudhLiEJT",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTHudhLiEJT",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTNEIiLCBPn",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTNEIiLCBPn",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTVcl6SCM8c",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTVcl6SCM8c",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTZ6oL_iF_9",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTZ6oL_iF_9",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTfs3bGCEpw",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTfs3bGCEpw",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTkQ2h0CGiL",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTkQ2h0CGiL",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DTsk6bBiMni",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DTsk6bBiMni",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DT5ZwpSCPP5",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DT5ZwpSCPP5",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DT-zcCLiB8H",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DT-zcCLiB8H",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUAQjBGCB4A",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUAQjBGCB4A",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUFqF5JCCaH",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUFqF5JCCaH",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUNkpDriCCw",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUNkpDriCCw",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUTJbgRCKCG",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUTJbgRCKCG",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUXtJcICKwZ",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUXtJcICKwZ",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUfO8fKiKKO",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUfO8fKiKKO",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUpmMSWiM6Z",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUpmMSWiM6Z",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUtKLNjCMdN",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUtKLNjCMdN",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DUx6qpGCHkF",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DUx6qpGCHkF",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DU2t0CjCHe3",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DU2t0CjCHe3",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DU54oq3CO87",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DU54oq3CO87",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVIjRREiIrl",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVIjRREiIrl",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVNoH20CPvf",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVNoH20CPvf",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVVe3uRCEFb",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVVe3uRCEFb",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVdIhEDiNIt",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVdIhEDiNIt",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVizuydiPhQ",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVizuydiPhQ",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVp7_HiiDbt",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVp7_HiiDbt",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DVvOB48iNtB",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DVvOB48iNtB",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DV0kxwXiOZr",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DV0kxwXiOZr",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DV6NKXpiEir",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DV6NKXpiEir",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DWBZI4FiOfr",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWBZI4FiOfr",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DWTpURNCDlO",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWTpURNCDlO",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DWYYWK5javA",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWYYWK5javA",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DWgUzd1CFet",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWgUzd1CFet",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DWlYAA_iMdS",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWlYAA_iMdS",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DWtGYcHCIDC",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DWtGYcHCIDC",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DW4B346iBAj",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DW4B346iBAj",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DXW5UTACBgc",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXW5UTACBgc",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DXcCaxSiKsd",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXcCaxSiKsd",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DXrm0raiBPy",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXrm0raiBPy",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DXzVIPBIVdy",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DXzVIPBIVdy",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DX3Qge2IbY7",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DX3Qge2IbY7",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYANijgofN1",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYANijgofN1",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYCqG4_oMnt",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYCqG4_oMnt",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYETpQMIIbU",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYETpQMIIbU",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYKkWqWI7Zv",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYKkWqWI7Zv",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYPixRjo3pN",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYPixRjo3pN",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYR0e6aov9W",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYR0e6aov9W",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYTx55nInwT",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYTx55nInwT",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYXfbi-IFue",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYXfbi-IFue",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYchonJI9Dc",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYchonJI9Dc",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYmhGqho5af",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYmhGqho5af",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DYpe_FHIfXW",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DYpe_FHIfXW",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZFvYRzoKfF",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZFvYRzoKfF",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZK3Tgloqle",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZK3Tgloqle",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZQIF8boF6m",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZQIF8boF6m",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZXzq1xobjf",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZXzq1xobjf",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZiF3OnI20A",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZiF3OnI20A",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZmsMiGISzz",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZmsMiGISzz",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZ21e-tokIM",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZ21e-tokIM",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DZ5VIGdo5XW",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DZ5VIGdo5XW",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DaGbAwuIwRP",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaGbAwuIwRP",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DaSUrQEIfRp",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaSUrQEIfRp",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DaUmCM_Ihxp",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaUmCM_Ihxp",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DaVul-HIUpb",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DaVul-HIUpb",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "Daat-i5o3Vc",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/Daat-i5o3Vc",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DafkAI3qOnr",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DafkAI3qOnr",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
-    },
-    {
-        "shortcode": "DanRQ0kKsiF",
-        "url": "https://www.instagram.com/shahrisabz_t_t_uz/reel/DanRQ0kKsiF",
-        "media_type": "reel",
-        "post_date": "",
-        "caption": "",
-        "media_url": ""
+        "caption": "shahrisabz_t_t_uz\n\n🩺 Bugun kasb tanlaysiz — ertaga shu kasb bilan daromad topasiz! 🎓✨\n\nKelajagingiz uchun to‘g‘ri tanlov qiling!\n🏥 Shahrisabz tibbiyot texnikumi — bilim, kasb va kelajak sari ishonchli qadam! ❤️\n\n📲 Batafsil ma’lumot uchun:\n☎️ 88 260 20 73\n☎️ 77 088 20 73\n☎️ 97 266 20 73\nView all 7 comments",
+        "media_url": "https://instagram.fbhk1-2.fna.fbcdn.net/v/t51.82787-15/774744693_17891039091603794_4793673403631759598_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=Mzk2NjQyMjY5MzU5MzA3MDg0NTE3ODkxMDM5MDg1NjAzNzk0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=nj0Z85cFMCUQ7kNvwG828N8&_nc_oc=AdrUSs9syFItQTmijha-H-0N6K5JgMQCtkXLWtZmblC5jMKCKggeQtxFlk7ISA74TkQ&_nc_zt=23&_nc_ht=instagram.fbhk1-2.fna&_nc_gid=D9TNLp_1NuJqqEm_9IhPag&_nc_ss=7aa8c&oh=00_AQGGlqqAoC-u-ydHi_6vCwVRdZRBBquy-G7ChE5qxKoQ7A&oe=6A8DF6F6"
     }
 ]
 
