@@ -66,12 +66,20 @@ def load_insta_cloud_state():
 
 
 def save_insta_cloud_state(state: dict):
-    """Supabase Cloud ga holatni saqlash"""
+    """Supabase Cloud ga holatni saqlash (Rekursiyasiz: to'g'ridan-to'g'ri DB ga yozish)"""
+    # LOCAL: to'g'ridan-to'g'ri SQLite ga yozamiz (set_setting orqali EMAS!)
+    # set_setting → save_insta_cloud_state → set_setting cheksiz siklini oldini olish uchun
     try:
-        set_setting("insta_poster_state_local", json.dumps(state))
-    except Exception:
-        pass
-        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)",
+                       ("insta_poster_state_local", json.dumps(state)))
+        conn.commit()
+        conn.close()
+    except Exception as _db_e:
+        print(f"[Cloud State Local Save Err]: {_db_e}")
+
+    # CLOUD: Supabase ga yuborish
     try:
         supa_url, headers = _get_supabase_headers()
         if supa_url and headers:
@@ -994,28 +1002,110 @@ def get_setting(key, default=""):
 
 
 def set_setting(key, value):
-    """Sozlamani yangilash (Supabase Cloud + Local SQLite)"""
+    """Sozlamani yangilash (Local SQLite + Supabase Cloud, rekursiyasiz)"""
     val_str = str(value) if value is not None else ""
+
+    # 1. Local SQLite ga yozish
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)", (key, val_str))
         conn.commit()
         conn.close()
-    except Exception:
-        pass
-        
+    except Exception as _db_e:
+        print(f"[Set Setting DB Error]: {_db_e}")
+
+    # 2. Supabase cloud_state.settings ga to'g'ridan-to'g'ri yuborish
+    # save_insta_cloud_state CHAQIRILMAYDI — rekursiyadan himoya
     try:
-        cloud_state = load_insta_cloud_state()
-        if "settings" not in cloud_state:
-            cloud_state["settings"] = {}
-        cloud_state["settings"][key] = val_str
-        save_insta_cloud_state(cloud_state)
+        supa_url, headers = _get_supabase_headers()
+        if supa_url and headers:
+            # Avval mavjud holatni olish
+            r = requests.get(
+                f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state",
+                headers=headers, timeout=4
+            )
+            if r.status_code == 200 and r.json():
+                try:
+                    cloud_state = json.loads(r.json()[0].get("value") or "{}")
+                except Exception:
+                    cloud_state = {}
+            else:
+                cloud_state = {}
+
+            if "settings" not in cloud_state:
+                cloud_state["settings"] = {}
+            cloud_state["settings"][key] = val_str
+
+            # Yangilangan holatni saqlash
+            payload = {
+                "key": "insta_poster_state",
+                "value": json.dumps(cloud_state),
+                "category": "instagram",
+                "description": "Instagram & YouTube AutoPoster persistent cloud state"
+            }
+            requests.post(
+                f"{supa_url}/rest/v1/atlas_settings",
+                headers=headers, json=payload, timeout=4
+            )
         return True
     except Exception as e:
-        print(f"[Insta Set Setting Cloud Error]: {e}")
+        print(f"[Set Setting Cloud Error]: {e}")
         return False
 
+
+def set_settings_batch(updates: dict):
+    """Bir vaqtda bir nechta sozlamalarni yangilash (1 ta Supabase so'rovi bilan, tez va rekursiyasiz)"""
+    if not updates:
+        return True
+
+    # 1. Local SQLite - hammasi birga
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        for k, v in updates.items():
+            val_str = str(v) if v is not None else ""
+            cursor.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)", (k, val_str))
+        conn.commit()
+        conn.close()
+    except Exception as _db_e:
+        print(f"[Batch Set Setting DB Error]: {_db_e}")
+
+    # 2. Supabase - faqat 1 ta GET + 1 ta POST (ko'p set_setting emas!)
+    try:
+        supa_url, headers = _get_supabase_headers()
+        if supa_url and headers:
+            r = requests.get(
+                f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state",
+                headers=headers, timeout=4
+            )
+            if r.status_code == 200 and r.json():
+                try:
+                    cloud_state = json.loads(r.json()[0].get("value") or "{}")
+                except Exception:
+                    cloud_state = {}
+            else:
+                cloud_state = {}
+
+            if "settings" not in cloud_state:
+                cloud_state["settings"] = {}
+            for k, v in updates.items():
+                cloud_state["settings"][k] = str(v) if v is not None else ""
+
+            payload = {
+                "key": "insta_poster_state",
+                "value": json.dumps(cloud_state),
+                "category": "instagram",
+                "description": "Instagram & YouTube AutoPoster persistent cloud state"
+            }
+            requests.post(
+                f"{supa_url}/rest/v1/atlas_settings",
+                headers=headers, json=payload, timeout=4
+            )
+        return True
+    except Exception as e:
+        print(f"[Batch Set Setting Cloud Error]: {e}")
+        return False
 
 def get_all_settings():
     """Barcha sozlamalarni lug'at ko'rinishida olish"""
