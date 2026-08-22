@@ -111,6 +111,52 @@ def mark_youtube_uploaded_in_cloud(shortcode: str, yt_url: str):
         print(f"[Cloud Mark YT Err]: {e}")
 
 
+def notify_admin_post_published(platform, item_info):
+    """Post Telegram yoki YouTube ga chiqqanda adminga (ID: 8135594558) avtomatik bildirishnoma yuborish"""
+    try:
+        admin_id = 8135594558
+        bot_tokens = [
+            "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs",
+            get_setting("bot_token", DEFAULT_BOT_TOKEN)
+        ]
+        
+        now_formatted = get_uzb_now().strftime("%H:%M:%S (%d.%m.%Y)")
+        
+        if platform == "telegram":
+            caption_preview = (item_info.get("caption") or "").strip()
+            if len(caption_preview) > 200:
+                caption_preview = caption_preview[:197] + "..."
+            
+            text = (
+                f"🚀 <b>Telegram Kanalga Yangi Post Joylandi!</b>\n\n"
+                f"🎬 <b>Reels:</b> <code>{item_info.get('shortcode', '')}</code>\n"
+                f"📝 <b>Matn:</b> {caption_preview if caption_preview else '(Matnsiz)'}\n"
+                f"🔗 <b>Instagram:</b> {item_info.get('post_url', '')}\n"
+                f"⏰ <b>Vaqt:</b> {now_formatted}"
+            )
+        elif platform == "youtube":
+            text = (
+                f"🎬 <b>YouTube Shorts ga Yangi Video Yuklandi!</b>\n\n"
+                f"📌 <b>Sarlavha:</b> {item_info.get('title', '')}\n"
+                f"🔗 <b>YouTube Havola:</b> {item_info.get('url', '')}\n"
+                f"📸 <b>Instagram Asli:</b> {item_info.get('post_url', '')}\n"
+                f"⏰ <b>Vaqt:</b> {now_formatted}"
+            )
+        else:
+            return
+            
+        for tok in bot_tokens:
+            if not tok: continue
+            try:
+                t_bot = telebot.TeleBot(tok)
+                t_bot.send_message(admin_id, text, parse_mode="HTML")
+                break
+            except Exception as _e:
+                print(f"[Notify Admin Err with tok {tok[:10]}]: {_e}")
+    except Exception as e:
+        print(f"[Notify Admin Post Published General Error]: {e}")
+
+
 DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
@@ -1627,6 +1673,13 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         set_setting("last_post_time", now_str)
         conn.close()
         
+        notify_admin_post_published("telegram", {
+            "post_id": post_id,
+            "shortcode": shortcode,
+            "post_url": post_url,
+            "caption": clean_caption
+        })
+        
         return {
             "success": True,
             "post_id": post_id,
@@ -1733,6 +1786,14 @@ def post_next_youtube_video():
             conn.close()
             mark_youtube_uploaded_in_cloud(shortcode, yt_res.get("url") or "")
             
+            notify_admin_post_published("youtube", {
+                "post_id": post_id,
+                "shortcode": shortcode,
+                "post_url": post_url,
+                "url": yt_res.get("url"),
+                "title": yt_res.get("title")
+            })
+            
             return {
                 "success": True,
                 "post_id": post_id,
@@ -1823,6 +1884,14 @@ def post_single_youtube_item(post_id):
             conn.commit()
             conn.close()
             mark_youtube_uploaded_in_cloud(shortcode, yt_res.get("url") or "")
+            
+            notify_admin_post_published("youtube", {
+                "post_id": post_id,
+                "shortcode": shortcode,
+                "post_url": post_url,
+                "url": yt_res.get("url"),
+                "title": yt_res.get("title")
+            })
             
             return {
                 "success": True,
@@ -2238,6 +2307,13 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
         mark_post_sent_in_cloud(shortcode, now_str)
         set_setting("last_post_time", now_str)
         conn.close()
+        
+        notify_admin_post_published("telegram", {
+            "post_id": post_id,
+            "shortcode": shortcode,
+            "post_url": post_url,
+            "caption": clean_caption
+        })
         
         return {
             "success": True,
