@@ -61,6 +61,7 @@ def run_scheduler_tick():
                         tg_res = post_next_queued_item()
                         results["tg_posted"] = True
                         results["tg_res"] = tg_res
+                        return results # 1-minutli keyingi cron tick YouTube ni yengil bajarishi uchun darhol yakunlash
         except Exception as e:
             results["tg_error"] = str(e)
             print(f"[Telegram Scheduler Error]: {e}")

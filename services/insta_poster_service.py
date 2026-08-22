@@ -877,6 +877,13 @@ def init_insta_tables():
         yt_dict = cloud_state.get("yt_uploaded_shortcodes", {})
         for sc, yt_url in yt_dict.items():
             cursor.execute("UPDATE insta_posts_queue SET youtube_uploaded = 1, youtube_url = ? WHERE shortcode = ?", (yt_url, sc))
+
+        # 5.5 Barcha mavjud postlar matnidagi username prefiksini tozalash
+        cursor.execute("SELECT id, caption FROM insta_posts_queue WHERE caption IS NOT NULL AND caption != ''")
+        for q_row in cursor.fetchall():
+            c_cleaned = clean_caption_text(q_row["caption"])
+            if c_cleaned != q_row["caption"]:
+                cursor.execute("UPDATE insta_posts_queue SET caption = ? WHERE id = ?", (c_cleaned, q_row["id"]))
     except Exception as _ce:
         print(f"[Init Cloud Sync Err]: {_ce}")
 
@@ -975,13 +982,20 @@ def toggle_post_like(post_id, user_id):
 
 
 def clean_caption_text(raw_caption, username=None):
-    """Instagram caption matnini tozalash"""
+    """Instagram caption matnini tozalash (username prefiksi, izohlar va ortiqcha matnlarni olib tashlash)"""
     if not raw_caption:
         return ""
-    text = raw_caption.strip()
+    text = str(raw_caption).strip()
     
-    if username and text.lower().startswith(username.lower()):
-        text = text[len(username):].strip()
+    usernames = ["shahrisabz_t_t_uz", "shahrisabz.t.t.uz", "shahrisabz_tt_uz"]
+    if username:
+        usernames.insert(0, str(username).lstrip("@").strip())
+        
+    for u in set(usernames):
+        if not u:
+            continue
+        pattern = rf"^(?:@)?{re.escape(u)}[:\s\-\n\r]*"
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE).strip()
         
     patterns = [
         r'View all \d+ comments.*',
@@ -995,7 +1009,7 @@ def clean_caption_text(raw_caption, username=None):
     for p in patterns:
         text = re.sub(p, '', text, flags=re.IGNORECASE | re.DOTALL).strip()
         
-    return text
+    return text.strip()
 
 # ------------------------------------------------------------
 # 3. YouTube Shorts Jadval Boshqaruvi
@@ -2022,7 +2036,12 @@ def get_queue_items(page=1, limit=500, status=None, search=None):
     LIMIT ? OFFSET ?
     """
     cursor.execute(query_sql, params + [limit, offset])
-    rows = [dict(r) for r in cursor.fetchall()]
+    raw_rows = cursor.fetchall()
+    rows = []
+    for r in raw_rows:
+        d = dict(r)
+        d["caption"] = clean_caption_text(d.get("caption") or "")
+        rows.append(d)
     
     # Barcha PENDING / PROCESSING postlar uchun rejalashtirilgan kelgusi vaqtlarni hisoblash
     cursor.execute("SELECT id FROM insta_posts_queue WHERE status IN ('PENDING', 'PROCESSING') ORDER BY id ASC")
