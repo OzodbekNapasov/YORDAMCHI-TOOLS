@@ -781,8 +781,16 @@ DEFAULT_SEEDED_POSTS = [
 ]
 
 
-def init_insta_tables():
-    """Instagram jadvallarini yaratish va 74 ta videoni bazaga sinxronlash"""
+_INIT_INSTA_DONE = False
+_LAST_CLOUD_SYNC_TS = 0
+
+def init_insta_tables(force=False):
+    """Instagram jadvallarini yaratish va 74 ta videoni bazaga sinxronlash (Ultra-fast cached)"""
+    global _INIT_INSTA_DONE, _LAST_CLOUD_SYNC_TS
+    now_ts = time.time()
+    if _INIT_INSTA_DONE and not force and (now_ts - _LAST_CLOUD_SYNC_TS < 180):
+        return
+
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -957,6 +965,8 @@ def init_insta_tables():
 
     conn.commit()
     conn.close()
+    _INIT_INSTA_DONE = True
+    _LAST_CLOUD_SYNC_TS = time.time()
 
 
 def get_setting(key, default=""):
