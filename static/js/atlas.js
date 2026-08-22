@@ -6205,8 +6205,60 @@ const ATLAS = {
   // ============================================================
   async loadInstagram(viewport, initialTab = 'queue') {
     viewport.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;min-height:300px;">
-        <div class="spinner"></div>
+      <div class="instagram-container">
+        <!-- HEADER SHIMMER -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <div class="skeleton-shimmer skeleton-text" style="width:320px;height:24px;margin-bottom:8px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:240px;height:14px;"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="skeleton-shimmer skeleton-btn" style="width:130px;height:36px;border-radius:8px;"></div>
+            <div class="skeleton-shimmer skeleton-btn" style="width:110px;height:36px;border-radius:8px;"></div>
+            <div class="skeleton-shimmer skeleton-btn" style="width:110px;height:36px;border-radius:8px;"></div>
+          </div>
+        </div>
+
+        <!-- FULL-WIDTH SUBTABS SHIMMER -->
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:20px;width:100%;">
+          <div class="skeleton-shimmer skeleton-btn" style="height:42px;border-radius:10px;"></div>
+          <div class="skeleton-shimmer skeleton-btn" style="height:42px;border-radius:10px;"></div>
+          <div class="skeleton-shimmer skeleton-btn" style="height:42px;border-radius:10px;"></div>
+        </div>
+
+        <!-- TOP STATUS / BANNER SHIMMER -->
+        <div class="glass-card" style="padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="skeleton-shimmer skeleton-btn" style="width:38px;height:38px;border-radius:50%;"></div>
+            <div>
+              <div class="skeleton-shimmer skeleton-text" style="width:160px;height:16px;margin-bottom:6px;"></div>
+              <div class="skeleton-shimmer skeleton-text" style="width:280px;height:12px;"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div class="skeleton-shimmer skeleton-badge" style="width:110px;height:26px;"></div>
+            <div class="skeleton-shimmer skeleton-badge" style="width:130px;height:26px;"></div>
+          </div>
+        </div>
+
+        <!-- QUEUE TABLE SHIMMER -->
+        <div class="glass-card" style="padding:20px;border-radius:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="skeleton-shimmer skeleton-text" style="width:200px;height:18px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:120px;height:14px;"></div>
+          </div>
+          ${[1, 2, 3, 4, 5, 6].map(() => `
+            <div style="display:flex;gap:12px;margin-bottom:14px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+              <div class="skeleton-shimmer skeleton-badge" style="width:36px;height:28px;"></div>
+              <div class="skeleton-shimmer skeleton-btn" style="width:40px;height:40px;border-radius:8px;"></div>
+              <div class="skeleton-shimmer skeleton-text" style="flex:1;height:16px;"></div>
+              <div class="skeleton-shimmer skeleton-badge" style="width:100px;height:28px;"></div>
+              <div class="skeleton-shimmer skeleton-badge" style="width:100px;height:28px;"></div>
+              <div class="skeleton-shimmer skeleton-btn" style="width:50px;height:28px;border-radius:6px;"></div>
+              <div class="skeleton-shimmer skeleton-btn" style="width:50px;height:28px;border-radius:6px;"></div>
+            </div>
+          `).join('')}
+        </div>
       </div>
     `;
 
