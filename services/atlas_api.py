@@ -2213,13 +2213,6 @@ def api_meta_ads_settings():
 def api_instagram_stats():
     """Instagram navbati, sozlamalari va umumiy statistika"""
     try:
-        # Har safar dashboard ochilganda yoki statistika so'ralganda jadvalni tekshirish
-        try:
-            from services.insta_scheduler import run_scheduler_tick
-            run_scheduler_tick()
-        except Exception as _tick_e:
-            print(f"[Auto Stats Tick Warn]: {_tick_e}")
-            
         from services.insta_poster_service import get_queue_stats, get_youtube_schedule_times
         stats = get_queue_stats()
         yt_times = get_youtube_schedule_times()
