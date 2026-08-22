@@ -5554,8 +5554,62 @@ const ATLAS = {
   // ============================================================
   async loadMetaAds(viewport) {
     viewport.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;min-height:300px;">
-        <div class="spinner"></div>
+      <div class="meta-ads-container">
+        <!-- HEADER SHIMMER -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <div class="skeleton-shimmer skeleton-text" style="width:280px;height:24px;margin-bottom:8px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:340px;height:14px;"></div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div class="skeleton-shimmer skeleton-btn" style="width:160px;height:34px;border-radius:8px;"></div>
+            <div class="skeleton-shimmer skeleton-btn" style="width:110px;height:34px;border-radius:8px;"></div>
+          </div>
+        </div>
+
+        <!-- TOP METRICS GRID SHIMMER -->
+        <div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-bottom:24px;">
+          <div class="glass-card" style="padding:18px;">
+            <div class="skeleton-shimmer skeleton-text" style="width:90px;margin-bottom:10px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:140px;height:22px;margin-bottom:8px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:110px;"></div>
+          </div>
+          <div class="glass-card" style="padding:18px;">
+            <div class="skeleton-shimmer skeleton-text" style="width:100px;margin-bottom:10px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:120px;height:22px;margin-bottom:8px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:130px;"></div>
+          </div>
+          <div class="glass-card" style="padding:18px;">
+            <div class="skeleton-shimmer skeleton-text" style="width:120px;margin-bottom:10px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:110px;height:22px;margin-bottom:8px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:150px;"></div>
+          </div>
+          <div class="glass-card" style="padding:18px;">
+            <div class="skeleton-shimmer skeleton-text" style="width:110px;margin-bottom:10px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:130px;height:22px;margin-bottom:8px;"></div>
+            <div class="skeleton-shimmer skeleton-text" style="width:120px;"></div>
+          </div>
+        </div>
+
+        <!-- TABS SHIMMER -->
+        <div style="display:flex;gap:10px;margin-bottom:20px;">
+          <div class="skeleton-shimmer skeleton-btn" style="width:140px;height:34px;border-radius:8px;"></div>
+          <div class="skeleton-shimmer skeleton-btn" style="width:170px;height:34px;border-radius:8px;"></div>
+          <div class="skeleton-shimmer skeleton-btn" style="width:210px;height:34px;border-radius:8px;"></div>
+        </div>
+
+        <!-- TABLE SHIMMER -->
+        <div class="glass-card" style="padding:22px;">
+          <div class="skeleton-shimmer skeleton-text" style="width:200px;height:18px;margin-bottom:18px;"></div>
+          ${[1, 2, 3].map(() => `
+            <div style="display:flex;gap:14px;margin-bottom:14px;align-items:center;">
+              <div class="skeleton-shimmer skeleton-btn" style="width:36px;height:36px;border-radius:8px;"></div>
+              <div class="skeleton-shimmer skeleton-text" style="flex:1;height:16px;"></div>
+              <div class="skeleton-shimmer skeleton-badge" style="width:90px;"></div>
+              <div class="skeleton-shimmer skeleton-btn" style="width:70px;height:28px;border-radius:6px;"></div>
+            </div>
+          `).join('')}
+        </div>
       </div>
     `;
 
@@ -6323,15 +6377,15 @@ const ATLAS = {
             </div>
           </div>
 
-          <!-- TAB BUTTONS -->
-          <div class="tab-pills-row" style="margin-bottom:18px;">
-            <button class="tab-pill-btn ${activeTab === 'queue' ? 'active' : ''}" id="tab-btn-insta-queue">
+          <!-- TAB BUTTONS (FULL WIDTH) -->
+          <div class="tab-pills-row" style="margin-bottom:18px;display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;width:100%;">
+            <button class="tab-pill-btn ${activeTab === 'queue' ? 'active' : ''}" id="tab-btn-insta-queue" style="width:100%;justify-content:center;text-align:center;display:flex;align-items:center;gap:6px;">
               ${this.icons.documents} <span>Postlar Navbati & Boshqaruv</span>
             </button>
-            <button class="tab-pill-btn ${activeTab === 'youtube' ? 'active' : ''}" id="tab-btn-insta-youtube">
+            <button class="tab-pill-btn ${activeTab === 'youtube' ? 'active' : ''}" id="tab-btn-insta-youtube" style="width:100%;justify-content:center;text-align:center;display:flex;align-items:center;gap:6px;">
               ${this.icons.youtube} <span>YouTube Shorts & Rek Vaqtlari</span>
             </button>
-            <button class="tab-pill-btn ${activeTab === 'settings' ? 'active' : ''}" id="tab-btn-insta-settings">
+            <button class="tab-pill-btn ${activeTab === 'settings' ? 'active' : ''}" id="tab-btn-insta-settings" style="width:100%;justify-content:center;text-align:center;display:flex;align-items:center;gap:6px;">
               ${this.icons.settings} <span>Sinxronlash Sozlamalari</span>
             </button>
           </div>
@@ -6599,8 +6653,31 @@ const ATLAS = {
         if (!tableBox) return;
 
         tableBox.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:center;padding:40px;">
-            <div class="spinner"></div>
+          <div class="table-responsive">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;text-align:center;">№</th>
+                  <th style="width:70px;text-align:center;">Instagram</th>
+                  <th>Post Matni (Caption)</th>
+                  <th style="width:145px;text-align:center;">Telegram Holati</th>
+                  <th style="width:145px;text-align:center;">YouTube Holati</th>
+                  <th style="width:140px;text-align:center;">Amallar</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${[1, 2, 3, 4, 5].map(n => `
+                  <tr>
+                    <td style="text-align:center;"><div class="skeleton-shimmer skeleton-text" style="width:16px;"></div></td>
+                    <td style="text-align:center;"><div class="skeleton-shimmer skeleton-btn" style="border-radius:8px;margin:0 auto;"></div></td>
+                    <td><div class="skeleton-shimmer skeleton-text" style="width:${55 + (n * 8)}%;"></div></td>
+                    <td style="text-align:center;"><div class="skeleton-shimmer skeleton-badge"></div></td>
+                    <td style="text-align:center;"><div class="skeleton-shimmer skeleton-badge"></div></td>
+                    <td style="text-align:center;"><div class="skeleton-shimmer skeleton-btn" style="width:80px;height:26px;"></div></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
         `;
 
@@ -6647,10 +6724,9 @@ const ATLAS = {
                   <th style="width:40px;text-align:center;">№</th>
                   <th style="width:70px;text-align:center;">Instagram</th>
                   <th>Post Matni (Caption)</th>
-                  <th style="width:130px;text-align:center;">Telegram Holati</th>
-                  <th style="width:130px;text-align:center;">YouTube Holati</th>
-                  <th style="width:165px;">Chiqarish Rejasi</th>
-                  <th style="width:145px;text-align:center;">Amallar</th>
+                  <th style="width:145px;text-align:center;">Telegram Holati</th>
+                  <th style="width:145px;text-align:center;">YouTube Holati</th>
+                  <th style="width:140px;text-align:center;">Amallar</th>
                 </tr>
               </thead>
               <tbody>
@@ -6658,65 +6734,53 @@ const ATLAS = {
                   const isTgSent = item.status === 'SENT';
                   const isTgProcessing = item.status === 'PROCESSING';
                   const isYtUploaded = item.youtube_uploaded == 1 || item.youtube_uploaded === true || item.youtube_uploaded === '1' || Boolean(item.youtube_url);
+                  const validSched = (item.scheduled_time && item.scheduled_time !== '—' && !item.scheduled_time.includes('?')) ? item.scheduled_time : 'Hozir (Navbatda)';
 
                   let tgBadge = '';
                   if (isTgSent) {
-                    tgBadge = `<span class="badge" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                    tgBadge = `<span class="badge status-badge-interactive" style="background:rgba(16,185,129,0.14);color:#34d399;border:1px solid rgba(16,185,129,0.3);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;font-size:11.5px;font-weight:700;border-radius:7px;" title="Telegramga yuborilgan vaqti: ${item.sent_at || 'Yuborildi'}">
                       <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> TG: Yuborildi
                     </span>`;
                   } else if (isTgProcessing) {
-                    tgBadge = `<span class="badge" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                    tgBadge = `<span class="badge status-badge-interactive" style="background:rgba(56,189,248,0.14);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;font-size:11.5px;font-weight:700;border-radius:7px;" title="Navbatdagi 1-o'rindagi aktiv post! Rejadagi vaqti: ${validSched}">
                       <svg style="width:12px;height:12px;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> TG: Jarayonda
                     </span>`;
                   } else if (item.status === 'FAILED') {
-                    tgBadge = `<span class="badge" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;" title="${item.error_msg || ''}">
+                    tgBadge = `<span class="badge status-badge-interactive" style="background:rgba(239,68,68,0.14);color:#f87171;border:1px solid rgba(239,68,68,0.3);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;font-size:11.5px;font-weight:700;border-radius:7px;" title="Xatolik: ${(item.error_msg || '').replace(/"/g, '&quot;')}">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> TG: Xatolik
                     </span>`;
                   } else {
-                    tgBadge = `<span class="badge" style="background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                    tgBadge = `<span class="badge status-badge-interactive" style="background:rgba(245,158,11,0.14);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;font-size:11.5px;font-weight:700;border-radius:7px;" title="Rejalashtirilgan vaqt: ${validSched}">
                       <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> TG: Kutilmoqda
                     </span>`;
                   }
 
                   let ytBadge = '';
                   if (isYtUploaded) {
-                    ytBadge = `<a href="${item.youtube_url || 'https://www.youtube.com'}" target="_blank" class="badge" style="background:rgba(244,63,94,0.12);color:#fb7185;border:1px solid rgba(244,63,94,0.25);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;" title="YouTube Shorts da ko'rish">
+                    ytBadge = `<a href="${item.youtube_url || 'https://www.youtube.com'}" target="_blank" class="badge status-badge-interactive" style="background:rgba(244,63,94,0.14);color:#fb7185;border:1px solid rgba(244,63,94,0.3);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;font-size:11.5px;font-weight:700;border-radius:7px;" title="YouTube Shorts ga yuklangan (Shortsda ochish ↗)">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> YT: Yuklandi
                     </a>`;
                   } else {
-                    ytBadge = `<span class="badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px;">
+                    ytBadge = `<span class="badge status-badge-interactive" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.12);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;font-size:11.5px;font-weight:700;border-radius:7px;" title="YouTube Shorts rek vaqtlari bo'yicha navbatda">
                       <svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT: Kutilmoqda
                     </span>`;
                   }
-
-                  const validSched = (item.scheduled_time && item.scheduled_time !== '—' && !item.scheduled_time.includes('?')) ? item.scheduled_time : 'Hozir (Navbatda)';
-                  const scheduleHtml = item.status === 'SENT' 
-                    ? `<div style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#34d399;font-weight:700;font-family:'JetBrains Mono',monospace;"><svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${item.sent_at}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">(Telegramga chiqdi)</div>`
-                    : (item.status === 'FAILED'
-                       ? `<div style="display:inline-flex;align-items:center;gap:4px;color:#f87171;font-weight:700;font-size:11px;"><svg style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Xatolik</div>`
-                       : `<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);padding:3px 7px;border-radius:6px;color:#38bdf8;font-weight:700;font-size:11px;font-family:'JetBrains Mono',monospace;"><svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${validSched}</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">Asl joylangan: ${item.post_date || '—'}</div>`
-                    );
 
                   return `
                     <tr>
                       <td class="mono" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.45);">${idx + 1}</td>
                       <td style="text-align:center;">
-                        <a href="${item.post_url}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);color:#ffffff;box-shadow:0 2px 6px rgba(220,39,67,0.3);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Instagramda ko'rish (${item.shortcode})">
-                          <svg style="width:15px;height:15px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        <a href="${item.post_url}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);color:#ffffff;box-shadow:0 2px 6px rgba(220,39,67,0.3);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Instagramda ko'rish (${item.shortcode})">
+                          <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                         </a>
                       </td>
                       <td>
-                        <div style="font-size:12px;color:rgba(255,255,255,0.9);max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;" title="${(item.caption || '').replace(/"/g, '&quot;')}">
+                        <div style="font-size:12.5px;color:rgba(255,255,255,0.92);max-width:440px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;" title="${(item.caption || '').replace(/"/g, '&quot;')}">
                           ${item.caption ? item.caption : '<span style="color:rgba(255,255,255,0.3);font-style:italic;">(Matnsiz)</span>'}
                         </div>
                       </td>
                       <td style="text-align:center;">${tgBadge}</td>
                       <td style="text-align:center;">${ytBadge}</td>
-                      <td>
-                        <div style="font-size:11px;font-family:'JetBrains Mono',monospace;">
-                          ${scheduleHtml}
-                        </div>
-                      </td>
                       <td style="text-align:center;">
                         <div style="display:inline-flex;gap:6px;align-items:center;justify-content:center;">
                           ${isTgSent ? `
