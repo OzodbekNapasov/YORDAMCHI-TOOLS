@@ -1454,7 +1454,7 @@ def _download_hd_video_ytdlp(post_url):
         
         ydl_opts = {
             "outtmpl": out_filename,
-            "format": "best[ext=mp4]/best",
+            "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best",
             "quiet": True,
             "no_warnings": True,
             "socket_timeout": 30
