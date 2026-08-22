@@ -5664,31 +5664,8 @@ const ATLAS = {
     const statusText = statusMap[acc.account_status] || '<span style="color:#34d399;font-weight:700;">Faol</span>';
 
     const currentBal = typeof acc.current_balance === 'number' ? acc.current_balance : 5.29;
-    const activeBudget = (funds.custom_budget_limit && funds.custom_budget_limit > 0) ? funds.custom_budget_limit : 87.23;
-    const remFunds = funds.is_active_limit ? (funds.remaining_funds || 0) : Math.max(0, activeBudget - currentBal);
-    const isOver = remFunds <= 0;
-    const pct = Math.min(100, Math.max(0, ((activeBudget - remFunds) / activeBudget) * 100));
-
-    const fundsHtml = `
-      <div style="margin-top:4px;">
-        <div style="font-size:24px;font-weight:800;color:${isOver ? '#f87171' : '#34d399'};">
-          $${activeBudget.toFixed(2)}
-        </div>
-        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin:8px 0 6px 0;overflow:hidden;">
-          <div style="width:${pct}%;height:100%;background:${isOver ? '#f87171' : '#34d399'};border-radius:3px;"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,0.65);">
-          <span>Joriy qarz: <b>$${currentBal.toFixed(2)}</b> (Sof: <b>$${Math.max(0, activeBudget - currentBal).toFixed(2)}</b>)</span>
-          <button class="btn-icon btn-sm" id="meta-change-limit-link" style="color:var(--accent-glow);font-size:11px;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;">O'zgartirish</button>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-          <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="87.23" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">$87.23</button>
-          <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="50" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">$50</button>
-          <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="100" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">$100</button>
-          <button class="btn-sm btn-primary meta-quick-budget-btn" data-val="custom" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">+ Kiritish</button>
-        </div>
-      </div>
-    `;
+    const totalFunds = 87.23;
+    const netRemainder = Math.max(0, totalFunds - currentBal);
 
     viewport.innerHTML = `
       <div class="meta-ads-container">
@@ -5709,9 +5686,6 @@ const ATLAS = {
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button class="btn-secondary btn-sm" id="btn-open-meta-token-settings" style="display:inline-flex;align-items:center;gap:6px;">
               ${this.icons.settings || ''} <span>API Sozlamalari</span>
-            </button>
-            <button class="btn-secondary btn-sm" id="meta-set-limit-btn" style="display:inline-flex;align-items:center;gap:6px;">
-              ${this.icons.dollarSign || ''} <span>Byudjet Limiti ($)</span>
             </button>
             <button class="btn-primary btn-sm" id="meta-refresh-btn" style="display:inline-flex;align-items:center;gap:6px;">
               ${this.icons.refresh} <span>Yangilash</span>
@@ -5751,7 +5725,12 @@ const ATLAS = {
             <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
               Mavjud Mablag' (Funds)
             </div>
-            ${fundsHtml}
+            <div style="font-size:24px;font-weight:800;color:#34d399;margin-bottom:4px;">
+              $${totalFunds.toFixed(2)}
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);">
+              Joriy hisob: <b>$${currentBal.toFixed(2)}</b> • Sof qoldiq: <b style="color:#2ee59d;">$${netRemainder.toFixed(2)}</b>
+            </div>
           </div>
 
           <div class="meta-metric-card">
@@ -6112,77 +6091,6 @@ const ATLAS = {
     // Refresh button
     const refreshBtn = document.getElementById('meta-refresh-btn');
     if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadMetaAds(viewport));
-
-    // Set Budget Limit Modal
-    const setLimitBtn = document.getElementById('meta-set-limit-btn');
-    if (setLimitBtn) {
-      setLimitBtn.addEventListener('click', () => {
-        this.modal({
-          title: `${this.icons.dollarSign} Byudjet Limitini O'rnatish ($)`,
-          contentHtml: `
-            <form id="meta-limit-modal-form">
-              <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;">
-                Reklama uchun ajratgan summangizni kiriting. Ushbu summa sarflanib 0.00 $ bo'lganda Telegram orqali xabar olasiz.
-              </p>
-              <div class="form-group">
-                <label class="form-label">Ajratilgan Summa ($ AQSH Dollari)</label>
-                <div class="input-container">
-                  <span class="input-icon-left">${this.icons.dollarSign || '$'}</span>
-                  <input type="number" step="0.01" min="1" id="custom-limit-input" class="input-control" value="${funds.custom_budget_limit || 87.23}" placeholder="Masalan: 87.23 yoki 100" required>
-                </div>
-              </div>
-              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-                <button type="submit" class="btn-sm btn-primary">Saqlash</button>
-              </div>
-            </form>
-          `
-        });
-
-        document.getElementById('meta-limit-modal-form').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const val = parseFloat(document.getElementById('custom-limit-input').value);
-          if (isNaN(val) || val <= 0) {
-            this.toast('To\'g\'ri summa kiriting', 'error');
-            return;
-          }
-          const res = await this.api('/api/meta-ads/settings', 'POST', { custom_budget_limit: val });
-          if (res && res.success) {
-            this.toast(`Byudjet limiti $${val.toFixed(2)} qilib belgilandi!`, 'success');
-            this.closeModal();
-            this.loadMetaAds(viewport);
-          } else {
-            this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
-          }
-        });
-      });
-    }
-
-    // Quick preset buttons
-    viewport.querySelectorAll('.meta-quick-budget-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const val = btn.dataset.val;
-        if (val === 'custom') {
-          if (setLimitBtn) setLimitBtn.click();
-        } else {
-          const numVal = parseFloat(val);
-          btn.disabled = true;
-          const res = await this.api('/api/meta-ads/settings', 'POST', { custom_budget_limit: numVal });
-          if (res && res.success) {
-            this.toast(`Byudjet limiti $${numVal.toFixed(2)} qilib belgilandi!`, 'success');
-            this.loadMetaAds(viewport);
-          } else {
-            this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
-            btn.disabled = false;
-          }
-        }
-      });
-    });
-
-    const changeLimitLink = document.getElementById('meta-change-limit-link');
-    if (changeLimitLink && setLimitBtn) {
-      changeLimitLink.addEventListener('click', () => setLimitBtn.click());
-    }
   },
 
   renderMetaApiConfigModal(viewport) {
