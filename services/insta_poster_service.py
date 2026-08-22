@@ -112,7 +112,7 @@ def mark_youtube_uploaded_in_cloud(shortcode: str, yt_url: str):
 
 
 def notify_admin_post_published(platform, item_info):
-    """Post Telegram yoki YouTube ga chiqqanda adminga (ID: 8135594558) avtomatik bildirishnoma yuborish"""
+    """Post Telegram yoki YouTube ga chiqqanda adminga (ID: 8135594558) avtomatik inline tugmali bildirishnoma yuborish"""
     try:
         admin_id = 8135594558
         bot_tokens = [
@@ -121,6 +121,7 @@ def notify_admin_post_published(platform, item_info):
         ]
         
         now_formatted = get_uzb_now().strftime("%H:%M:%S (%d.%m.%Y)")
+        markup = telebot.types.InlineKeyboardMarkup(row_width=1)
         
         if platform == "telegram":
             caption_preview = (item_info.get("caption") or "").strip()
@@ -132,16 +133,38 @@ def notify_admin_post_published(platform, item_info):
                 f"🎬 <b>Reels:</b> <code>{item_info.get('shortcode', '')}</code>\n"
                 f"📝 <b>Matn:</b> {caption_preview if caption_preview else '(Matnsiz)'}\n"
                 f"🔗 <b>Instagram:</b> {item_info.get('post_url', '')}\n"
-                f"⏰ <b>Vaqt:</b> {now_formatted}"
+                f"⏰ <b>Vaqt:</b> {now_formatted}\n\n"
+                f"<i>Quyidagi inline tugmalar orqali to‘g‘ridan-to‘g‘ri postni ko‘rishingiz mumkin:</i>"
             )
+            
+            tg_msg_id = item_info.get("msg_id") or item_info.get("telegram_msg_id")
+            target_chat = str(item_info.get("target_chat_id") or get_setting("target_chat_id", DEFAULT_TARGET_CHAT_ID))
+            if tg_msg_id:
+                if target_chat.startswith("@"):
+                    tg_link = f"https://t.me/{target_chat.lstrip('@')}/{tg_msg_id}"
+                else:
+                    cid_clean = target_chat.replace("-100", "").replace("-", "")
+                    tg_link = f"https://t.me/c/{cid_clean}/{tg_msg_id}"
+                markup.add(telebot.types.InlineKeyboardButton("🔵 Telegram Kanalda Ko‘rish ↗️", url=tg_link))
+                
+            if item_info.get("post_url"):
+                markup.add(telebot.types.InlineKeyboardButton("📸 Instagram Postini Ochish ↗️", url=item_info.get("post_url")))
+            markup.add(telebot.types.InlineKeyboardButton("🌐 ATLAS Boshqaruv Paneli ↗️", url="https://atlas-my-tools.vercel.app"))
+            
         elif platform == "youtube":
             text = (
                 f"🎬 <b>YouTube Shorts ga Yangi Video Yuklandi!</b>\n\n"
                 f"📌 <b>Sarlavha:</b> {item_info.get('title', '')}\n"
-                f"🔗 <b>YouTube Havola:</b> {item_info.get('url', '')}\n"
-                f"📸 <b>Instagram Asli:</b> {item_info.get('post_url', '')}\n"
-                f"⏰ <b>Vaqt:</b> {now_formatted}"
+                f"🔗 <b>YouTube:</b> {item_info.get('url', '')}\n"
+                f"📸 <b>Instagram:</b> {item_info.get('post_url', '')}\n"
+                f"⏰ <b>Vaqt:</b> {now_formatted}\n\n"
+                f"<i>Quyidagi inline tugmalar orqali Shorts videoni tomosha qilishingiz mumkin:</i>"
             )
+            if item_info.get("url"):
+                markup.add(telebot.types.InlineKeyboardButton("🔴 YouTubeda Ko‘rish (Shorts) ↗️", url=item_info.get("url")))
+            if item_info.get("post_url"):
+                markup.add(telebot.types.InlineKeyboardButton("📸 Instagram Asl Posti ↗️", url=item_info.get("post_url")))
+            markup.add(telebot.types.InlineKeyboardButton("🌐 ATLAS Boshqaruv Paneli ↗️", url="https://atlas-my-tools.vercel.app"))
         else:
             return
             
@@ -149,7 +172,7 @@ def notify_admin_post_published(platform, item_info):
             if not tok: continue
             try:
                 t_bot = telebot.TeleBot(tok)
-                t_bot.send_message(admin_id, text, parse_mode="HTML")
+                t_bot.send_message(admin_id, text, parse_mode="HTML", reply_markup=markup)
                 break
             except Exception as _e:
                 print(f"[Notify Admin Err with tok {tok[:10]}]: {_e}")
@@ -1677,7 +1700,9 @@ def post_next_queued_item(chat_id=None, bot_token=None):
             "post_id": post_id,
             "shortcode": shortcode,
             "post_url": post_url,
-            "caption": clean_caption
+            "caption": clean_caption,
+            "msg_id": msg_id_val,
+            "target_chat_id": chat_id
         })
         
         return {
@@ -2312,7 +2337,9 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
             "post_id": post_id,
             "shortcode": shortcode,
             "post_url": post_url,
-            "caption": clean_caption
+            "caption": clean_caption,
+            "msg_id": msg_id_val,
+            "target_chat_id": chat_id
         })
         
         return {
