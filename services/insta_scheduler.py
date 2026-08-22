@@ -131,16 +131,22 @@ def run_scheduler_tick():
                 if not is_night:
                     slot_key = f"{today_date}_{current_hour_str}"
 
-                    # ATOMIC CLAIM: Supabase orqali cross-process lock
-                    claimed = _supabase_atomic_claim_slot(slot_key, "tg_last_posted_slot")
-                    if claimed:
-                        print(f"[Telegram Scheduler]: Soat ({current_hour_str}) sloti claim qilindi! Post yuborilmoqda...")
-                        tg_res = post_next_queued_item()
-                        results["tg_posted"] = True
-                        results["tg_res"] = tg_res
-                        return results  # YouTube keyingi tick da bajariladi
+                    # VAQT OYNASI: faqat soat boshida :00-:10 oralig'ida ishlaydi
+                    # :11 dan keyin eski slotni qayta trigger qilmaydi!
+                    now_minute = now.minute
+                    if now_minute > 10:
+                        results["tg_skipped"] = f"Trigger oynasi yopiq ({now_hm}, faqat :00-:10 da ishlaydi)"
                     else:
-                        results["tg_skipped"] = f"Slot {slot_key} allaqachon band"
+                        # ATOMIC CLAIM: Supabase orqali cross-process lock
+                        claimed = _supabase_atomic_claim_slot(slot_key, "tg_last_posted_slot")
+                        if claimed:
+                            print(f"[Telegram Scheduler]: Soat ({current_hour_str}) sloti claim qilindi! Post yuborilmoqda...")
+                            tg_res = post_next_queued_item()
+                            results["tg_posted"] = True
+                            results["tg_res"] = tg_res
+                            return results  # YouTube keyingi tick da bajariladi
+                        else:
+                            results["tg_skipped"] = f"Slot {slot_key} allaqachon band"
         except Exception as e:
             results["tg_error"] = str(e)
             print(f"[Telegram Scheduler Error]: {e}")
@@ -155,17 +161,31 @@ def run_scheduler_tick():
             if yt_sched_enabled and yt_auto_upload:
                 target_times = get_youtube_schedule_times()
                 for target_t in target_times:
-                    if target_t <= now_hm:
-                        slot_key = f"{today_date}_{target_t}"
+                    # VAQT OYNASI: faqat target vaqtdan keyin 10 daqiqa ichida ishlaydi
+                    # Masalan: 12:00 schedule uchun faqat 12:00-12:10 da trigger bo'ladi
+                    # 12:22 da eski slotni trigger QILMAYDI!
+                    try:
+                        t_h, t_m = map(int, target_t.split(":"))
+                        target_total = t_h * 60 + t_m
+                        now_total = now.hour * 60 + now.minute
+                        diff_minutes = now_total - target_total
+                    except Exception:
+                        diff_minutes = 0
 
-                        # ATOMIC CLAIM: YouTube slot uchun ham cross-process lock
-                        claimed = _supabase_atomic_claim_slot(slot_key, "youtube_last_posted_slot")
-                        if claimed:
-                            print(f"[YouTube Scheduler]: Rek vaqti ({target_t}) claim qilindi! Yuklanmoqda...")
-                            yt_res = post_next_youtube_video()
-                            results["yt_posted"] = True
-                            results["yt_res"] = yt_res
-                            break
+                    # Faqat vaqt oynasida (0 dan 10 daqiqa ichida) trigger
+                    if not (0 <= diff_minutes <= 10):
+                        continue  # Bu vaqt oynasida emas — o'tkazib yuborish
+
+                    slot_key = f"{today_date}_{target_t}"
+
+                    # ATOMIC CLAIM: YouTube slot uchun ham cross-process lock
+                    claimed = _supabase_atomic_claim_slot(slot_key, "youtube_last_posted_slot")
+                    if claimed:
+                        print(f"[YouTube Scheduler]: Rek vaqti ({target_t}) claim qilindi! Yuklanmoqda...")
+                        yt_res = post_next_youtube_video()
+                        results["yt_posted"] = True
+                        results["yt_res"] = yt_res
+                        break
         except Exception as e:
             results["yt_error"] = str(e)
             print(f"[YouTube Scheduler Error]: {e}")
