@@ -5621,18 +5621,32 @@ const ATLAS = {
     ]);
 
     if (!accData || !accData.success) {
+      const errMsg = (accData && accData.error) || "Meta hisob ma'lumotlarini yuklab bo'lmadi.";
       viewport.innerHTML = `
-        <div class="card" style="text-align:center;padding:40px 20px;">
-          <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
-          <h3 style="margin-bottom:8px;color:#f87171;">Meta Ads API Ulanishida Xatolik</h3>
-          <p style="color:rgba(255,255,255,0.7);max-width:500px;margin:0 auto 20px auto;">
-            ${(accData && accData.error) || "Meta hisob ma'lumotlarini yuklab bo'lmadi. Token yoki Ad Account ID ni tekshiring."}
+        <div class="glass-card" style="text-align:center;padding:48px 24px;max-width:620px;margin:30px auto;">
+          <div style="width:54px;height:54px;border-radius:14px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 16px auto;color:#f87171;">
+            <svg style="width:28px;height:28px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          </div>
+          <h3 style="margin-bottom:8px;color:#f87171;font-size:18px;font-weight:800;">Meta Ads API Ulanishida Xatolik</h3>
+          <p style="color:rgba(255,255,255,0.75);font-size:13px;line-height:1.5;max-width:520px;margin:0 auto 20px auto;">
+            <b>Xatolik:</b> <code style="color:#fb7185;background:rgba(244,63,94,0.12);padding:3px 8px;border-radius:6px;">${errMsg}</code><br><br>
+            Facebook Developer hisobingizdagi Access Token muddati tugagan yoki Meta Developers konsolida ilovaga ruxsat cheklangan. Quyidagi tugma orqali yangi tokenni kiritib yangilashingiz mumkin.
           </p>
-          <button class="btn-primary" onclick="ATLAS.loadMetaAds(document.getElementById('content-viewport'))">
-            ${this.icons.refresh} Qayta urinib ko'rish
-          </button>
+
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn-sm btn-primary" id="btn-open-meta-token-modal" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;">
+              ${this.icons.settings} <span>API Token & Ad Account Sozlash</span>
+            </button>
+            <button class="btn-sm btn-secondary" onclick="ATLAS.loadMetaAds(document.getElementById('content-viewport'))" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;">
+              ${this.icons.refresh} <span>Qayta urinib ko'rish</span>
+            </button>
+          </div>
         </div>
       `;
+
+      document.getElementById('btn-open-meta-token-modal')?.addEventListener('click', () => {
+        this.renderMetaApiConfigModal(viewport);
+      });
       return;
     }
 
@@ -6128,6 +6142,62 @@ const ATLAS = {
     if (changeLimitLink && setLimitBtn) {
       changeLimitLink.addEventListener('click', () => setLimitBtn.click());
     }
+  },
+
+  renderMetaApiConfigModal(viewport) {
+    this.modal({
+      title: `${this.icons.target || '⚙️'} Meta Ads API Sozlamalari`,
+      maxWidth: '540px',
+      contentHtml: `
+        <form id="form-save-meta-api-keys">
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label" style="font-weight:700;font-size:12.5px;">Meta Access Token (Graph API / System User Token)</label>
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.6);margin-bottom:6px;">
+              developers.facebook.com -> Graph API Explorer yoki Business Manager -> System Users orqali olingan token
+            </div>
+            <textarea id="input-meta-access-token" class="input-control font-mono" rows="4" style="width:100%;font-size:11.5px;resize:vertical;" placeholder="EAAlEZBNpYmJc..." required></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label" style="font-weight:700;font-size:12.5px;">Ad Account ID</label>
+            <input type="text" id="input-meta-ad-account-id" class="input-control font-mono" placeholder="act_962957616739265" value="act_962957616739265" required style="width:100%;">
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button type="button" class="btn-sm btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+            <button type="submit" class="btn-sm btn-primary" id="btn-save-meta-keys-submit">
+              ${this.icons.check} <span>Saqlash va Ulanish</span>
+            </button>
+          </div>
+        </form>
+      `
+    });
+
+    document.getElementById('form-save-meta-api-keys')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tokenVal = document.getElementById('input-meta-access-token').value.trim();
+      const accVal = document.getElementById('input-meta-ad-account-id').value.trim();
+      if (!tokenVal || !accVal) return;
+
+      const submitBtn = document.getElementById('btn-save-meta-keys-submit');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-sm"></span> Saqlanmoqda...`;
+      }
+
+      const res = await this.api('/api/meta-ads/settings', 'POST', {
+        meta_access_token: tokenVal,
+        ad_account_id: accVal
+      });
+
+      this.closeModal();
+      if (res && res.success) {
+        this.toast("Meta API kalitlari muvaffaqiyatli saqlandi!", "success");
+        this.loadMetaAds(viewport);
+      } else {
+        this.toast((res && res.error) || "Kalitlarni saqlashda xatolik", "error");
+      }
+    });
   },
 
   // ============================================================

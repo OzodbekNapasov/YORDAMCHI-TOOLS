@@ -6,8 +6,20 @@ except ImportError:
 
 class MetaAdsManager:
     def __init__(self, token=None, account_id=None):
+        if not token or not account_id:
+            try:
+                from meta_ads_bot.scheduler import load_settings
+                sett = load_settings()
+                if not token and sett.get("meta_access_token"):
+                    token = sett.get("meta_access_token")
+                if not account_id and sett.get("ad_account_id"):
+                    account_id = sett.get("ad_account_id")
+            except Exception:
+                pass
         self.token = token or META_ACCESS_TOKEN
         self.account_id = account_id or AD_ACCOUNT_ID
+        if self.account_id and not str(self.account_id).startswith("act_"):
+            self.account_id = f"act_{self.account_id}"
         self.base_url = META_GRAPH_URL
 
     def _get(self, endpoint, params=None):

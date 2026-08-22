@@ -2178,7 +2178,7 @@ def api_meta_ads_settings():
         if request.method == "POST":
             data = request.get_json(silent=True) or {}
             settings = load_settings()
-            for k in ["auto_schedule_enabled", "pause_time", "resume_time", "daily_report_enabled", "daily_report_time", "budget_monitor_enabled", "custom_budget_limit"]:
+            for k in ["meta_access_token", "ad_account_id", "auto_schedule_enabled", "pause_time", "resume_time", "daily_report_enabled", "daily_report_time", "budget_monitor_enabled", "custom_budget_limit"]:
                 if k in data:
                     if k == "custom_budget_limit":
                         val = float(data[k])
@@ -2189,6 +2189,10 @@ def api_meta_ads_settings():
                             settings["initial_spent_base"] = float(bal.get("amount_spent", 0))
                             settings["alert_threshold_sent"] = False
                         settings["custom_budget_limit"] = val
+                    elif k == "meta_access_token" or k == "ad_account_id":
+                        val_str = str(data[k]).strip()
+                        if val_str:
+                            settings[k] = val_str
                     else:
                         settings[k] = data[k]
             save_settings(settings)
