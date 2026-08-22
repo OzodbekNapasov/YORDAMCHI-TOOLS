@@ -20,8 +20,8 @@ except ImportError:
     from config import BASE_DIR, ALLOWED_USER_ID
 
 import tempfile
+import requests
 
-TEMP_SETTINGS_FILE = Path(tempfile.gettempdir()) / "schedule_settings.json"
 LOCAL_SETTINGS_FILE = BASE_DIR / "schedule_settings.json"
 
 DEFAULT_SETTINGS = {
@@ -37,7 +37,7 @@ DEFAULT_SETTINGS = {
     
     # Byudjet monitoringi va 0 ga yetganda ogohlantirish (Hech narsa to'xtatilmaydi!)
     "budget_monitor_enabled": True,
-    "custom_budget_limit": 0.0,        # Masalan: 50.0 ($)
+    "custom_budget_limit": 87.23,       # Foydalanuvchi hisobidagi mavjud mablag' ($)
     "initial_spent_base": 0.0,         # Limit o'rnatilgandagi boshlang'ich sarf
     "daily_budget_limit": 0.0,         # Bugungi xarajat chegarasi
     "alert_threshold_sent": False,     # 0 ga tushganda xabar ketganmi
@@ -46,9 +46,35 @@ DEFAULT_SETTINGS = {
 
 _MEMORY_SETTINGS = DEFAULT_SETTINGS.copy()
 
+def _get_supabase_config():
+    import os
+    url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+    key = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzcnJya2twdmZqeWZuemlraWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDg3NDEsImV4cCI6MjA4NjMyNDc0MX0.F8sM531lZ5r_T27fP_t7L08oQ63-i5_13o2Z285FjF4")
+    return url, key
+
 def load_settings():
     global _MEMORY_SETTINGS
-    for sfile in [TEMP_SETTINGS_FILE, LOCAL_SETTINGS_FILE]:
+    # 1. Supabase Cloud Sync
+    try:
+        sb_url, sb_key = _get_supabase_config()
+        headers = {"apikey": sb_key, "Authorization": f"Bearer {sb_key}"}
+        resp = requests.get(f"{sb_url}/rest/v1/atlas_settings?key=eq.meta_ads_settings", headers=headers, timeout=5)
+        if resp.status_code == 200 and resp.json():
+            val = resp.json()[0].get("value")
+            if val:
+                data = json.loads(val) if isinstance(val, str) else val
+                for k, v in DEFAULT_SETTINGS.items():
+                    if k not in data:
+                        data[k] = v
+                _MEMORY_SETTINGS = data
+                return _MEMORY_SETTINGS.copy()
+    except Exception:
+        pass
+
+    # 2. Local Fallback
+    import os
+    safe_tmp = "/tmp" if os.name != "nt" else tempfile.gettempdir()
+    for sfile in [Path(safe_tmp) / "schedule_settings.json", LOCAL_SETTINGS_FILE]:
         if sfile.exists():
             try:
                 with open(sfile, "r", encoding="utf-8") as f:
@@ -65,7 +91,20 @@ def load_settings():
 def save_settings(settings):
     global _MEMORY_SETTINGS
     _MEMORY_SETTINGS = settings.copy()
-    for sfile in [TEMP_SETTINGS_FILE, LOCAL_SETTINGS_FILE]:
+
+    # 1. Save to Supabase Cloud
+    try:
+        sb_url, sb_key = _get_supabase_config()
+        headers = {"apikey": sb_key, "Authorization": f"Bearer {sb_key}", "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"}
+        payload = {"key": "meta_ads_settings", "value": json.dumps(settings, ensure_ascii=False)}
+        requests.post(f"{sb_url}/rest/v1/atlas_settings", headers=headers, json=payload, timeout=5)
+    except Exception:
+        pass
+
+    # 2. Local Fallback
+    import os
+    safe_tmp = "/tmp" if os.name != "nt" else tempfile.gettempdir()
+    for sfile in [Path(safe_tmp) / "schedule_settings.json", LOCAL_SETTINGS_FILE]:
         try:
             with open(sfile, "w", encoding="utf-8") as f:
                 json.dump(settings, f, indent=4, ensure_ascii=False)

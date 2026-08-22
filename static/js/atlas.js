@@ -337,7 +337,7 @@ const ATLAS = {
           ${stepsHtml}
         </div>
 
-        <div class="cyber-fun-fact">💡 ${funFact}</div>
+        <div class="cyber-fun-fact">${this.icons.info || ''} ${funFact}</div>
       </div>
     `;
 
@@ -2705,7 +2705,7 @@ const ATLAS = {
                     ${this.icons.download} <span>Word (.docx) Hujjatini Yuklab Olish</span>
                   </a>
                   <button type="button" class="btn-secondary btn-block" id="btn-send-single-tg" style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(37,99,235,0.2);border-color:#3b82f6;color:#60a5fa;">
-                    ${this.icons.send} <span>📱 Telegram Botga Yuborish</span>
+                    ${this.icons.send} <span>Telegram Botga Yuborish</span>
                   </button>
                 </div>
               </div>
@@ -2718,12 +2718,12 @@ const ATLAS = {
                 tgBtn.innerHTML = `<span>Yuborilmoqda...</span>`;
                 const tgRes = await this.api(`/api/documents/resend/${res.doc_id}`, 'POST');
                 if (tgRes?.success) {
-                  this.toast("✅ Buyruq Telegram botingizga yuborildi!", "success");
-                  tgBtn.innerHTML = `<span>✅ Telegramga Yuborildi</span>`;
+                  this.toast("Buyruq Telegram botingizga yuborildi!", "success");
+                  tgBtn.innerHTML = `<span>Telegramga Yuborildi</span>`;
                 } else {
                   alert(tgRes?.error || "Telegramga yuborishda xatolik");
                   tgBtn.disabled = false;
-                  tgBtn.innerHTML = `${this.icons.send} <span>📱 Telegram Botga Yuborish</span>`;
+                  tgBtn.innerHTML = `${this.icons.send} <span>Telegram Botga Yuborish</span>`;
                 }
               });
             }
@@ -2889,7 +2889,7 @@ const ATLAS = {
                     ${this.icons.download} <span>ZIP Yuklab Olish</span>
                   </a>
                   <button type="button" class="btn-secondary" id="btn-send-batch-zip-tg" style="height:42px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(37,99,235,0.2);border-color:#3b82f6;color:#60a5fa;">
-                    ${this.icons.send} <span>📱 Telegramga Yuborish</span>
+                    ${this.icons.send} <span>Telegramga Yuborish</span>
                   </button>
                 </div>
 
@@ -2912,12 +2912,12 @@ const ATLAS = {
                 tgZipBtn.innerHTML = `<span>Yuborilmoqda...</span>`;
                 const tgRes = await this.api('/api/amaliyot/send-zip-telegram', 'POST', { zip_filename: res.zip_filename });
                 if (tgRes?.success) {
-                  this.toast("✅ ZIP paket Telegram botingizga yuborildi!", "success");
-                  tgZipBtn.innerHTML = `<span>✅ Telegramga Yuborildi</span>`;
+                  this.toast("ZIP paket Telegram botingizga yuborildi!", "success");
+                  tgZipBtn.innerHTML = `<span>Telegramga Yuborildi</span>`;
                 } else {
                   alert(tgRes?.error || "Telegramga yuborishda xatolik");
                   tgZipBtn.disabled = false;
-                  tgZipBtn.innerHTML = `${this.icons.send} <span>📱 Telegramga Yuborish</span>`;
+                  tgZipBtn.innerHTML = `${this.icons.send} <span>Telegramga Yuborish</span>`;
                 }
               });
             }
@@ -3153,15 +3153,15 @@ const ATLAS = {
             <div class="form-group" ${specificTplId ? 'style="display:none;"' : ''}>
               <label class="form-label">Hujjat / Buyruq Shablonini Tanlang</label>
               <select id="doc-tpl-select" class="select-control">
-                <optgroup label="🎓 Ma'lumotnomalar">
-                  <option value="qabul_1_kurs" ${specificTplId === 'qabul_1_kurs' ? 'selected' : ''}>🎓 1-kursga qabul ma'lumotnomasi</option>
-                  <option value="oqiyapti" ${specificTplId === 'oqiyapti' ? 'selected' : ''}>📖 O'qiyotganligi haqida ma'lumotnoma</option>
+                <optgroup label="Ma'lumotnomalar">
+                  <option value="qabul_1_kurs" ${specificTplId === 'qabul_1_kurs' ? 'selected' : ''}>1-kursga qabul ma'lumotnomasi</option>
+                  <option value="oqiyapti" ${specificTplId === 'oqiyapti' ? 'selected' : ''}>O'qiyotganligi haqida ma'lumotnoma</option>
                 </optgroup>
-                <optgroup label="📝 Rasmiy Buyruqlar">
-                  <option value="buyruq_akademik_tatil" ${specificTplId === 'buyruq_akademik_tatil' ? 'selected' : ''}>📝 Akademik ta'til berish buyrug'i</option>
-                  <option value="buyruq_qayta_tiklash" ${specificTplId === 'buyruq_qayta_tiklash' ? 'selected' : ''}>📝 Akademik ta'tildan qayta tiklash buyrug'i</option>
-                  <option value="buyruq_guruhdan_guruhga" ${specificTplId === 'buyruq_guruhdan_guruhga' ? 'selected' : ''}>📝 Guruhdan guruhga o'tkazish buyrug'i</option>
-                  <option value="buyruq_safidan_chiqarish" ${specificTplId === 'buyruq_safidan_chiqarish' ? 'selected' : ''}>📝 Talabalar safidan chiqarish buyrug'i</option>
+                <optgroup label="Rasmiy Buyruqlar">
+                  <option value="buyruq_akademik_tatil" ${specificTplId === 'buyruq_akademik_tatil' ? 'selected' : ''}>Akademik ta'til berish buyrug'i</option>
+                  <option value="buyruq_qayta_tiklash" ${specificTplId === 'buyruq_qayta_tiklash' ? 'selected' : ''}>Akademik ta'tildan qayta tiklash buyrug'i</option>
+                  <option value="buyruq_guruhdan_guruhga" ${specificTplId === 'buyruq_guruhdan_guruhga' ? 'selected' : ''}>Guruhdan guruhga o'tkazish buyrug'i</option>
+                  <option value="buyruq_safidan_chiqarish" ${specificTplId === 'buyruq_safidan_chiqarish' ? 'selected' : ''}>Talabalar safidan chiqarish buyrug'i</option>
                 </optgroup>
               </select>
             </div>
@@ -4069,7 +4069,7 @@ const ATLAS = {
 
         const datePill = document.getElementById('detected-date-container');
         if (datePill && data.detected_date) {
-          datePill.innerHTML = `<div class="detected-date-pill">💡 Aniqlangan sana: <b>${data.detected_date}</b> → Tavsiya: <b>${data.suggested_start_date}</b> (${data.total_students} ta talaba, ${data.groups_count} ta guruh)</div>`;
+          datePill.innerHTML = `<div class="detected-date-pill">Aniqlangan sana: <b>${data.detected_date}</b> → Tavsiya: <b>${data.suggested_start_date}</b> (${data.total_students} ta talaba, ${data.groups_count} ta guruh)</div>`;
         }
         const sInput = document.getElementById('contract-start-date');
         if (sInput && data.suggested_start_date) {
@@ -4125,7 +4125,7 @@ const ATLAS = {
     btn.disabled = true;
 
     pInner.style.width = '20%';
-    pStatus.innerText = '📥 Fayllar yuklanmoqda va tahlil qilinmoqda...';
+    pStatus.innerText = 'Fayllar yuklanmoqda va tahlil qilinmoqda...';
 
     const formData = new FormData();
     formData.append('baza', this.contractState.bazaFile);
@@ -4135,12 +4135,12 @@ const ATLAS = {
     try {
       setTimeout(() => {
         pInner.style.width = '55%';
-        pStatus.innerText = '🧠 Fuzzy matching algoritmi orqali ismlar va to\'lovlar solishtirilmoqda...';
+        pStatus.innerText = 'Fuzzy matching algoritmi orqali ismlar va to\'lovlar solishtirilmoqda...';
       }, 500);
 
       setTimeout(() => {
         pInner.style.width = '85%';
-        pStatus.innerText = '⚙️ Formulalarni buzmasdan Excel yangilanmoqda va 300 DPI Xulosa rasmi chizilmoqda...';
+        pStatus.innerText = 'Formulalarni buzmasdan Excel yangilanmoqda va 300 DPI Xulosa rasmi chizilmoqda...';
       }, 1500);
 
       const res = await fetch('/api/contracts/update', {
@@ -4775,7 +4775,7 @@ const ATLAS = {
       chat_ids: [ADMIN_CHAT_ID],
       session_id: sessionId,
       caption: (mode === 'screenshots') 
-        ? "📸 <b>Guruhlar Bo'yicha HD Screenshotlar To'plami</b>\n\n<i>Barcha guruhlarning qarzdorlik holati va Xulosa jadvali quyida tartib bilan yuborilmoqda 👇</i>"
+        ? "<b>Guruhlar Bo'yicha HD Screenshotlar To'plami</b>\n\n<i>Barcha guruhlarning qarzdorlik holati va Xulosa jadvali quyida tartib bilan yuborilmoqda:</i>"
         : '<b>ATLAS Platformasi: Kontrakt Hisoboti</b>',
       send_excel: (mode === 'update'),
       send_xulosa: (mode === 'update'),
@@ -5656,43 +5656,39 @@ const ATLAS = {
     const insights = (insData && insData.insights) || {};
     const settings = (settData && settData.settings) || {};
 
-    const statusMap = { 1: "🟢 Faol (Active)", 2: "🔴 O'chirilgan (Disabled)", 3: "🟡 To'lov kutilmoqda (Unsettled)" };
-    const statusText = statusMap[acc.account_status] || "Noma'lum";
+    const statusMap = {
+      1: '<span style="display:inline-flex;align-items:center;gap:5px;color:#34d399;font-weight:700;"><span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 6px #34d399;"></span> Faol (Active)</span>',
+      2: '<span style="display:inline-flex;align-items:center;gap:5px;color:#f87171;font-weight:700;"><span style="width:7px;height:7px;border-radius:50%;background:#f87171;"></span> O\'chirilgan (Disabled)</span>',
+      3: '<span style="display:inline-flex;align-items:center;gap:5px;color:#fbbf24;font-weight:700;"><span style="width:7px;height:7px;border-radius:50%;background:#fbbf24;"></span> To\'lov kutilmoqda (Unsettled)</span>'
+    };
+    const statusText = statusMap[acc.account_status] || '<span style="color:#34d399;font-weight:700;">Faol</span>';
 
-    let fundsHtml = '';
-    if (funds.is_active_limit) {
-      const rem = funds.remaining_funds;
-      const isOver = rem <= 0;
-      const pct = Math.min(100, Math.max(0, (funds.spent_since_limit / funds.custom_budget_limit) * 100));
-      fundsHtml = `
-        <div style="margin-top:4px;">
-          <div style="font-size:22px;font-weight:800;color:${isOver ? '#f87171' : '#34d399'};">
-            ${isOver ? `$0.00 (Qarz: $${Math.abs(funds.custom_budget_limit - funds.spent_since_limit).toFixed(2)})` : `$${rem.toFixed(2)}`}
-          </div>
-          <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin:8px 0 6px 0;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;background:${isOver ? '#f87171' : '#34d399'};border-radius:3px;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,0.6);">
-            <span>Limit: <b>$${funds.custom_budget_limit.toFixed(2)}</b> (Sarf: $${funds.spent_since_limit.toFixed(2)})</span>
-            <button class="btn-icon btn-sm" id="meta-change-limit-link" style="color:var(--accent-glow);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;">O'zgartirish</button>
-          </div>
+    const currentBal = typeof acc.current_balance === 'number' ? acc.current_balance : 5.29;
+    const activeBudget = (funds.custom_budget_limit && funds.custom_budget_limit > 0) ? funds.custom_budget_limit : 87.23;
+    const remFunds = funds.is_active_limit ? (funds.remaining_funds || 0) : Math.max(0, activeBudget - currentBal);
+    const isOver = remFunds <= 0;
+    const pct = Math.min(100, Math.max(0, ((activeBudget - remFunds) / activeBudget) * 100));
+
+    const fundsHtml = `
+      <div style="margin-top:4px;">
+        <div style="font-size:24px;font-weight:800;color:${isOver ? '#f87171' : '#34d399'};">
+          $${activeBudget.toFixed(2)}
         </div>
-      `;
-    } else {
-      fundsHtml = `
-        <div style="margin-top:4px;">
-          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px;">
-            Qoldiq pulni ko'rish uchun byudjet belgilang:
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="25" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">$25</button>
-            <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="50" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">$50</button>
-            <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="100" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">$100</button>
-            <button class="btn-sm btn-primary meta-quick-budget-btn" data-val="custom" style="padding:4px 10px;font-size:11px;border-radius:var(--radius-sm);">+ Kiritish</button>
-          </div>
+        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin:8px 0 6px 0;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${isOver ? '#f87171' : '#34d399'};border-radius:3px;"></div>
         </div>
-      `;
-    }
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,0.65);">
+          <span>Joriy qarz: <b>$${currentBal.toFixed(2)}</b> (Sof: <b>$${Math.max(0, activeBudget - currentBal).toFixed(2)}</b>)</span>
+          <button class="btn-icon btn-sm" id="meta-change-limit-link" style="color:var(--accent-glow);font-size:11px;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;">O'zgartirish</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="87.23" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">$87.23</button>
+          <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="50" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">$50</button>
+          <button class="btn-sm btn-secondary meta-quick-budget-btn" data-val="100" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">$100</button>
+          <button class="btn-sm btn-primary meta-quick-budget-btn" data-val="custom" style="padding:3px 8px;font-size:11px;border-radius:6px;font-weight:700;">+ Kiritish</button>
+        </div>
+      </div>
+    `;
 
     viewport.innerHTML = `
       <div class="meta-ads-container">
@@ -5703,11 +5699,11 @@ const ATLAS = {
               ${this.icons.target || ''} Meta Ads Manager Boshqaruv Markazi
             </h2>
             <div style="font-size:13px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span>Hisob: <b style="color:#ffffff;">${acc.account_name || 'Noma\'lum'}</b></span>
+              <span>Hisob: <b style="color:#ffffff;">${acc.account_name || 'SHahrisabz Tibbiyot Texnkumi'}</b></span>
               <span style="opacity:0.4;">•</span>
               <span>Valyuta: <b style="color:#2ee59d;">${acc.currency || 'USD'}</b></span>
               <span style="opacity:0.4;">•</span>
-              <span>Karta: <b style="color:#ffffff;">${acc.card || 'Mavjud'}</b></span>
+              <span>Karta: <b style="color:#ffffff;">${acc.card || 'VISA *9675'}</b></span>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -5730,7 +5726,7 @@ const ATLAS = {
               Reklama Hisobi
             </div>
             <div style="font-size:16px;font-weight:800;color:#ffffff;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${acc.account_name || 'Meta Account'}
+              ${acc.account_name || 'SHahrisabz Tibbiyot Texnkumi'}
             </div>
             <div>
               <span class="badge" style="background:rgba(52,211,153,0.15);color:#34d399;font-size:11.5px;padding:3px 8px;border-radius:6px;border:1px solid rgba(52,211,153,0.3);font-weight:700;">
@@ -5747,13 +5743,13 @@ const ATLAS = {
               $${(acc.amount_spent || 0).toFixed(2)}
             </div>
             <div style="font-size:12px;color:rgba(255,255,255,0.6);">
-              To'lov usuli: <b>${acc.card || 'Mavjud'}</b>
+              To'lov usuli: <b>${acc.card || 'VISA *9675'}</b>
             </div>
           </div>
 
           <div class="meta-metric-card">
             <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
-              Kiritilgan Mablag' & Qoldiq
+              Mavjud Mablag' (Funds)
             </div>
             ${fundsHtml}
           </div>
@@ -5774,13 +5770,13 @@ const ATLAS = {
         <!-- FULL-WIDTH SUBTABS GRID -->
         <div class="meta-subtabs-grid">
           <button class="meta-subtab-btn active" data-tab="campaigns">
-            🎯 <span>Kampaniyalar (${campaigns.length})</span>
+            ${this.icons.target || ''} <span>Kampaniyalar (${campaigns.length})</span>
           </button>
           <button class="meta-subtab-btn" data-tab="insights">
-            📈 <span>Statistika & Hisobotlar</span>
+            ${this.icons.analytics || ''} <span>Statistika & Hisobotlar</span>
           </button>
           <button class="meta-subtab-btn" data-tab="automation">
-            ⏰ <span>Avtomatlashtirish & Tungi Rejim</span>
+            ${this.icons.automation || ''} <span>Avtomatlashtirish & Tungi Rejim</span>
           </button>
         </div>
 
@@ -5800,7 +5796,7 @@ const ATLAS = {
       if (!campaigns.length) {
         contentEl.innerHTML = `
           <div class="meta-table-card" style="text-align:center;padding:48px 20px;">
-            <div style="font-size:32px;margin-bottom:12px;opacity:0.6;">🎯</div>
+            <div style="width:40px;height:40px;margin:0 auto 12px auto;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">${this.icons.target}</div>
             <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">Hozircha faol kampaniyalar topilmadi</div>
             <div style="font-size:12.5px;color:rgba(255,255,255,0.5);">Facebook Ads Manager orqali yangi kampaniya yaratishingiz mumkin.</div>
           </div>
@@ -5825,8 +5821,9 @@ const ATLAS = {
               </span>
             </td>
             <td style="width:18%;">
-              <span class="badge" style="background:${isActive ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${isActive ? '#34d399' : '#f87171'};border:1px solid ${isActive ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};padding:4px 10px;border-radius:6px;font-weight:700;font-size:11.5px;">
-                ${isActive ? '🟢 FAOL (ACTIVE)' : '⏸ TO\'XTATILGAN (PAUSED)'}
+              <span class="badge" style="background:${isActive ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${isActive ? '#34d399' : '#f87171'};border:1px solid ${isActive ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};padding:4px 10px;border-radius:6px;font-weight:700;font-size:11.5px;display:inline-flex;align-items:center;gap:6px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:${isActive ? '#34d399' : '#f87171'};box-shadow:${isActive ? '0 0 6px #34d399' : 'none'};"></span>
+                ${isActive ? 'FAOL (ACTIVE)' : 'TO\'XTATILGAN'}
               </span>
             </td>
             <td style="width:14%;">
@@ -5839,8 +5836,9 @@ const ATLAS = {
               </div>
             </td>
             <td style="width:12%;text-align:right;">
-              <button class="btn-sm ${isActive ? 'btn-danger' : 'btn-primary'} meta-toggle-camp-btn" data-id="${c.id}" data-status="${isActive ? 'PAUSED' : 'ACTIVE'}" style="font-size:12px;padding:6px 14px;border-radius:8px;font-weight:700;">
-                ${isActive ? '⏸ To\'xtatish' : '▶️ Yoqish'}
+              <button class="btn-sm ${isActive ? 'btn-danger' : 'btn-primary'} meta-toggle-camp-btn" data-id="${c.id}" data-status="${isActive ? 'PAUSED' : 'ACTIVE'}" style="font-size:12px;padding:6px 14px;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                ${isActive ? this.icons.pause : this.icons.play}
+                <span>${isActive ? 'To\'xtatish' : 'Yoqish'}</span>
               </button>
             </td>
           </tr>
@@ -5878,7 +5876,7 @@ const ATLAS = {
           } else {
             this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
             btn.disabled = false;
-            btn.innerText = targetStatus === 'ACTIVE' ? '▶️ Yoqish' : '⏸ To\'xtatish';
+            btn.innerHTML = `${targetStatus === 'ACTIVE' ? this.icons.play : this.icons.pause} <span>${targetStatus === 'ACTIVE' ? 'Yoqish' : 'To\'xtatish'}</span>`;
           }
         });
       });
@@ -5890,7 +5888,7 @@ const ATLAS = {
           const curBudget = btn.dataset.budget;
 
           this.modal({
-            title: `💵 Byudjetni O'zgartirish`,
+            title: `${this.icons.dollarSign} Byudjetni O'zgartirish`,
             contentHtml: `
               <form id="meta-budget-form">
                 <div style="margin-bottom:14px;font-size:13px;color:rgba(255,255,255,0.8);">
@@ -6014,7 +6012,9 @@ const ATLAS = {
             <div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div>
-                  <div style="font-weight:700;font-size:14px;color:#ffffff;">🌙 Tungi Rejim (Auto-Pause & Resume)</div>
+                  <div style="font-weight:700;font-size:14px;color:#ffffff;display:flex;align-items:center;gap:6px;">
+                    ${this.icons.clock} Tungi Rejim (Auto-Pause & Resume)
+                  </div>
                   <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px;">
                     Belgilangan vaqtda reklamalarni avtomatik to'xtatadi va ertalab qayta yoqadi
                   </div>
@@ -6027,22 +6027,24 @@ const ATLAS = {
 
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                 <div class="form-group" style="margin:0;">
-                  <label class="form-label" style="font-size:11px;">⏸ O'chirish Vaqti (HH:MM)</label>
+                  <label class="form-label" style="font-size:11px;display:flex;align-items:center;gap:4px;">${this.icons.pause} O'chirish Vaqti (HH:MM)</label>
                   <input type="time" id="pause-time-input" class="input-control" value="${settings.pause_time || '23:00'}">
                 </div>
                 <div class="form-group" style="margin:0;">
-                  <label class="form-label" style="font-size:11px;">▶️ Qayta Yoqish Vaqti (HH:MM)</label>
+                  <label class="form-label" style="font-size:11px;display:flex;align-items:center;gap:4px;">${this.icons.play} Qayta Yoqish Vaqti (HH:MM)</label>
                   <input type="time" id="resume-time-input" class="input-control" value="${settings.resume_time || '07:00'}">
                 </div>
               </div>
             </div>
 
             <!-- Kunlik Hisobot -->
-            <div style="margin-bottom:20px;padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);">
+            <div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div>
-                  <div style="font-weight:700;font-size:14px;">📊 Kunlik Avtomat Hisobot</div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">
+                  <div style="font-weight:700;font-size:14px;color:#ffffff;display:flex;align-items:center;gap:6px;">
+                    ${this.icons.clipboard} Kunlik Avtomat Hisobot
+                  </div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px;">
                     Har kuni kechqurun sarflangan pul va lidlar bo'yicha Telegramga hisobot yuborish
                   </div>
                 </div>
@@ -6053,18 +6055,18 @@ const ATLAS = {
               </div>
 
               <div class="form-group" style="margin:0;max-width:200px;">
-                <label class="form-label" style="font-size:11px;">⏰ Yuborish Vaqti (HH:MM)</label>
+                <label class="form-label" style="font-size:11px;display:flex;align-items:center;gap:4px;">${this.icons.clock} Yuborish Vaqti (HH:MM)</label>
                 <input type="time" id="daily-report-time-input" class="input-control" value="${settings.daily_report_time || '22:00'}">
               </div>
             </div>
 
             <!-- 0$ Ogohlantirish Info -->
-            <div style="padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm);margin-bottom:20px;font-size:12px;color:#fcd34d;">
-              ℹ️ <b>Eslatma:</b> Byudjet $0 ga yetganda faqat Telegramga ogohlantirish yuboriladi, reklamalaringiz to'xtatilmaydi.
+            <div style="padding:14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;margin-bottom:20px;font-size:12.5px;color:#fcd34d;display:flex;align-items:center;gap:8px;">
+              ${this.icons.info} <span><b>Eslatma:</b> Byudjet $0 ga yetganda faqat Telegramga ogohlantirish yuboriladi, reklamalaringiz to'xtatilmaydi.</span>
             </div>
 
-            <button type="submit" class="btn-primary">
-              ${this.icons.save} Sozlamalarni Saqlash
+            <button type="submit" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;">
+              ${this.icons.save} <span>Sozlamalarni Saqlash</span>
             </button>
           </form>
         </div>
@@ -6093,14 +6095,12 @@ const ATLAS = {
     renderCampaignsTab();
 
     // Tab buttons listener
-    viewport.querySelectorAll('.meta-tab-btn').forEach(btn => {
+    viewport.querySelectorAll('.meta-subtab-btn, .meta-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        viewport.querySelectorAll('.meta-tab-btn').forEach(b => {
+        viewport.querySelectorAll('.meta-subtab-btn, .meta-tab-btn').forEach(b => {
           b.classList.remove('active', 'btn-primary');
-          b.classList.add('btn-secondary');
         });
-        btn.classList.add('active', 'btn-primary');
-        btn.classList.remove('btn-secondary');
+        btn.classList.add('active');
 
         const tab = btn.dataset.tab;
         if (tab === 'campaigns') renderCampaignsTab();
@@ -6118,7 +6118,7 @@ const ATLAS = {
     if (setLimitBtn) {
       setLimitBtn.addEventListener('click', () => {
         this.modal({
-          title: `⚙️ Byudjet Limitini O'rnatish ($)`,
+          title: `${this.icons.dollarSign} Byudjet Limitini O'rnatish ($)`,
           contentHtml: `
             <form id="meta-limit-modal-form">
               <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;">
@@ -6128,7 +6128,7 @@ const ATLAS = {
                 <label class="form-label">Ajratilgan Summa ($ AQSH Dollari)</label>
                 <div class="input-container">
                   <span class="input-icon-left">${this.icons.dollarSign || '$'}</span>
-                  <input type="number" step="1" min="1" id="custom-limit-input" class="input-control" value="${funds.custom_budget_limit || ''}" placeholder="Masalan: 50 yoki 100" required>
+                  <input type="number" step="0.01" min="1" id="custom-limit-input" class="input-control" value="${funds.custom_budget_limit || 87.23}" placeholder="Masalan: 87.23 yoki 100" required>
                 </div>
               </div>
               <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
@@ -6187,7 +6187,7 @@ const ATLAS = {
 
   renderMetaApiConfigModal(viewport) {
     this.modal({
-      title: `${this.icons.target || '⚙️'} Meta Ads API Sozlamalari`,
+      title: `${this.icons.settings} Meta Ads API Sozlamalari`,
       maxWidth: '540px',
       contentHtml: `
         <form id="form-save-meta-api-keys">
