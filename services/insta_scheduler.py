@@ -22,6 +22,82 @@ _SCHEDULER_THREAD = None
 _IS_RUNNING = False
 _SCHEDULER_LOCK = threading.Lock()
 
+def _supabase_atomic_claim_slot(slot_key: str, setting_key: str) -> bool:
+    """
+    Supabase da slot ni atomik ravishda band qilish.
+    Serverless muhitda threading.Lock() ishlamaydi — faqat Supabase da lock ishlaydi.
+    Agar slot allaqachon band bo'lsa — False qaytaradi (boshqa jarayon oldi).
+    """
+    from services.insta_poster_service import _get_supabase_headers, load_insta_cloud_state
+    import requests, json, time
+
+    try:
+        supa_url, headers = _get_supabase_headers()
+        if not supa_url or not headers:
+            # Supabase yo'q — faqat local check (single-server uchun)
+            from services.insta_poster_service import get_setting
+            return get_setting(setting_key, "") != slot_key
+
+        # 1. Hozirgi holatni o'qish
+        r = requests.get(
+            f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state",
+            headers=headers, timeout=5
+        )
+        if r.status_code == 200 and r.json():
+            try:
+                cloud_state = json.loads(r.json()[0].get("value") or "{}")
+            except Exception:
+                cloud_state = {}
+        else:
+            cloud_state = {}
+
+        settings = cloud_state.get("settings", {})
+
+        # 2. Allaqachon band qilinganmi?
+        if settings.get(setting_key) == slot_key:
+            print(f"[Scheduler Duplicate Guard]: {setting_key}={slot_key} allaqachon band. Skip.")
+            return False  # Boshqa jarayon oldi
+
+        # 3. Claim: yozib qo'yish
+        settings[setting_key] = slot_key
+        settings["last_post_time"] = get_uzb_now().strftime("%Y-%m-%d %H:%M:%S")
+        cloud_state["settings"] = settings
+
+        payload = {
+            "key": "insta_poster_state",
+            "value": json.dumps(cloud_state),
+            "category": "instagram",
+            "description": "Instagram & YouTube AutoPoster persistent cloud state"
+        }
+        wr = requests.post(
+            f"{supa_url}/rest/v1/atlas_settings",
+            headers=headers, json=payload, timeout=5
+        )
+
+        # 4. Race condition tekshirish: 0.5s kutib qayta o'qish
+        time.sleep(0.5)
+        r2 = requests.get(
+            f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state",
+            headers=headers, timeout=5
+        )
+        if r2.status_code == 200 and r2.json():
+            try:
+                verify_state = json.loads(r2.json()[0].get("value") or "{}")
+            except Exception:
+                verify_state = {}
+            if verify_state.get("settings", {}).get(setting_key) != slot_key:
+                print(f"[Scheduler Race Condition]: {setting_key} boshqa jarayon tomonidan o'zgartirildi. Skip.")
+                return False
+
+        return True  # Muvaffaqiyatli claim qilindi
+
+    except Exception as e:
+        print(f"[Supabase Atomic Claim Error]: {e}")
+        # Fallback: local check
+        from services.insta_poster_service import get_setting
+        return get_setting(setting_key, "") != slot_key
+
+
 def run_scheduler_tick():
     """Telegram va YouTube jadvalini tekshirib, vaqti kelgan bo'lsa post chiqarish"""
     if not _SCHEDULER_LOCK.acquire(blocking=False):
@@ -54,19 +130,17 @@ def run_scheduler_tick():
 
                 if not is_night:
                     slot_key = f"{today_date}_{current_hour_str}"
-                    last_slot = get_setting("tg_last_posted_slot", "")
 
-                    if last_slot != slot_key:
-                        print(f"[Telegram Scheduler]: Soat ({current_hour_str}) sloti keldi! Rejali post Telegramga yuborilmoqda...")
-                        # Avval slotni saqlash (batch = 1 ta Supabase so'rovi)
-                        set_settings_batch({
-                            "tg_last_posted_slot": slot_key,
-                            "last_post_time": now.strftime("%Y-%m-%d %H:%M:%S")
-                        })
+                    # ATOMIC CLAIM: Supabase orqali cross-process lock
+                    claimed = _supabase_atomic_claim_slot(slot_key, "tg_last_posted_slot")
+                    if claimed:
+                        print(f"[Telegram Scheduler]: Soat ({current_hour_str}) sloti claim qilindi! Post yuborilmoqda...")
                         tg_res = post_next_queued_item()
                         results["tg_posted"] = True
                         results["tg_res"] = tg_res
                         return results  # YouTube keyingi tick da bajariladi
+                    else:
+                        results["tg_skipped"] = f"Slot {slot_key} allaqachon band"
         except Exception as e:
             results["tg_error"] = str(e)
             print(f"[Telegram Scheduler Error]: {e}")
@@ -83,16 +157,11 @@ def run_scheduler_tick():
                 for target_t in target_times:
                     if target_t <= now_hm:
                         slot_key = f"{today_date}_{target_t}"
-                        slot_done = get_setting(f"yt_slot_{slot_key}", "")
-                        global_last = get_setting("youtube_last_posted_slot", "")
 
-                        if slot_done != "1" and global_last != slot_key:
-                            print(f"[YouTube Scheduler]: Rek vaqti ({target_t}) keldi! YouTube Shorts ga yuklanmoqda...")
-                            # Avval slotni saqlash (batch = 1 ta Supabase so'rovi)
-                            set_settings_batch({
-                                f"yt_slot_{slot_key}": "1",
-                                "youtube_last_posted_slot": slot_key
-                            })
+                        # ATOMIC CLAIM: YouTube slot uchun ham cross-process lock
+                        claimed = _supabase_atomic_claim_slot(slot_key, "youtube_last_posted_slot")
+                        if claimed:
+                            print(f"[YouTube Scheduler]: Rek vaqti ({target_t}) claim qilindi! Yuklanmoqda...")
                             yt_res = post_next_youtube_video()
                             results["yt_posted"] = True
                             results["yt_res"] = yt_res
@@ -104,6 +173,8 @@ def run_scheduler_tick():
         return results
     finally:
         _SCHEDULER_LOCK.release()
+
+
 
 
 
