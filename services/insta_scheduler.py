@@ -7,6 +7,7 @@ import time
 import threading
 from datetime import datetime, timedelta
 from services.insta_poster_service import (
+    init_insta_tables,
     get_setting,
     set_setting,
     post_next_queued_item,
@@ -26,6 +27,7 @@ def run_scheduler_tick():
         return {"checked_at": get_uzb_now().strftime("%Y-%m-%d %H:%M:%S"), "skipped": True, "message": "Avvalgi tekshiruv hali davom etmoqda"}
         
     try:
+        init_insta_tables()
         now = get_uzb_now()
         now_hm = now.strftime("%H:%M")
         today_date = now.strftime("%Y-%m-%d")

@@ -947,12 +947,11 @@ def init_insta_tables():
         for sc, yt_url in yt_dict.items():
             cursor.execute("UPDATE insta_posts_queue SET youtube_uploaded = 1, youtube_url = ? WHERE shortcode = ?", (yt_url, sc))
 
-        # 5.5 Barcha mavjud postlar matnidagi username prefiksini tozalash
-        cursor.execute("SELECT id, caption FROM insta_posts_queue WHERE caption IS NOT NULL AND caption != ''")
-        for q_row in cursor.fetchall():
-            c_cleaned = clean_caption_text(q_row["caption"])
-            if c_cleaned != q_row["caption"]:
-                cursor.execute("UPDATE insta_posts_queue SET caption = ? WHERE id = ?", (c_cleaned, q_row["id"]))
+        # 5.6 Sozlamalar va slot holatlarini sinxronlash
+        cloud_settings = cloud_state.get("settings", {})
+        for sk, sv in cloud_settings.items():
+            if sv is not None:
+                cursor.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)", (sk, str(sv)))
     except Exception as _ce:
         print(f"[Init Cloud Sync Err]: {_ce}")
 
@@ -961,31 +960,50 @@ def init_insta_tables():
 
 
 def get_setting(key, default=""):
-    """Sozlamani olish"""
+    """Sozlamani olish (Supabase Cloud + Local SQLite)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT value FROM insta_settings WHERE key = ?", (key,))
         row = cursor.fetchone()
         conn.close()
-        if row:
+        if row and row["value"] is not None:
             return row["value"]
-    except Exception as e:
-        print(f"[Insta Settings Error]: {e}")
+    except Exception:
+        pass
+        
+    try:
+        cloud_state = load_insta_cloud_state()
+        cloud_settings = cloud_state.get("settings", {})
+        if key in cloud_settings and cloud_settings[key] is not None:
+            return cloud_settings[key]
+    except Exception:
+        pass
+        
     return default
 
 
 def set_setting(key, value):
-    """Sozlamani yangilash"""
+    """Sozlamani yangilash (Supabase Cloud + Local SQLite)"""
+    val_str = str(value) if value is not None else ""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)", (key, str(value)))
+        cursor.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)", (key, val_str))
         conn.commit()
         conn.close()
+    except Exception:
+        pass
+        
+    try:
+        cloud_state = load_insta_cloud_state()
+        if "settings" not in cloud_state:
+            cloud_state["settings"] = {}
+        cloud_state["settings"][key] = val_str
+        save_insta_cloud_state(cloud_state)
         return True
     except Exception as e:
-        print(f"[Insta Set Setting Error]: {e}")
+        print(f"[Insta Set Setting Cloud Error]: {e}")
         return False
 
 
@@ -997,7 +1015,17 @@ def get_all_settings():
         cursor.execute("SELECT key, value FROM insta_settings")
         rows = cursor.fetchall()
         conn.close()
-        return {r["key"]: r["value"] for r in rows}
+        res = {r["key"]: r["value"] for r in rows}
+        
+        # Bulut sozlamalari bilan birlashtirish
+        try:
+            cloud_state = load_insta_cloud_state()
+            for ck, cv in cloud_state.get("settings", {}).items():
+                if ck not in res:
+                    res[ck] = cv
+        except Exception:
+            pass
+        return res
     except Exception as e:
         print(f"[Insta Get All Settings Error]: {e}")
         return {}
