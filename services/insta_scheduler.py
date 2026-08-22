@@ -120,6 +120,9 @@ def _scheduler_loop():
 def start_insta_scheduler():
     """Avto-jadval fon jarayonini ishga tushirish"""
     global _SCHEDULER_THREAD, _IS_RUNNING
+    import os
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return
     if _SCHEDULER_THREAD and _SCHEDULER_THREAD.is_alive():
         return
         

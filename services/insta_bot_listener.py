@@ -3,6 +3,7 @@
 #  Instagram Bot Callbacks & Likes Listener (Daemon Thread)
 # ============================================================
 
+import os
 import time
 import threading
 import telebot
@@ -22,6 +23,9 @@ def start_insta_bot_listener():
     """Instagram botining o'zi uchun polling tinglovchini fonda ishga tushirish"""
     global _LISTENER_THREAD, _LISTENER_BOT, _IS_RUNNING
     
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return
+        
     if _IS_RUNNING:
         return
         

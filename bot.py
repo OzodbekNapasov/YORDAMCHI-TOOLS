@@ -233,11 +233,13 @@ bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Flask(__name__, static_folder="static", template_folder="templates")
 init_db()
 init_insta_tables()
-try:
-    start_insta_scheduler()
-    start_insta_bot_listener()
-except Exception as _sched_err:
-    print(f"[Insta Scheduler/Listener Startup Warn]: {_sched_err}")
+is_serverless_env = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+if not is_serverless_env:
+    try:
+        start_insta_scheduler()
+        start_insta_bot_listener()
+    except Exception as _sched_err:
+        print(f"[Insta Scheduler/Listener Startup Warn]: {_sched_err}")
 app.register_blueprint(atlas_api)
 user_data = {}
 
