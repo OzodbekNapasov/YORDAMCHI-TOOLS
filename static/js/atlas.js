@@ -284,6 +284,97 @@ const ATLAS = {
     }
   },
 
+  // Cyber Action Loader & Live Progress System
+  showActionLoader({
+    title = "Jarayon Bajarilmoqda...",
+    subtitle = "Iltimos kuting, tizim so'rovingizni bajarmoqda",
+    icon = null,
+    steps = [
+      "Fayl ma'lumotlari aniqlanmoqda",
+      "HD video serverga yuklab olinmoqda",
+      "Kanalga yuborilmoqda",
+      "Baza va statistika yangilanmoqda"
+    ],
+    funFact = "ATLAS tizimi har bir postni eng yuqori HD sifatda kanallarga yetkazadi."
+  } = {}) {
+    let overlay = document.getElementById('cyber-action-loader-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'cyber-action-loader-overlay';
+      overlay.className = 'cyber-action-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    const defaultIcon = `
+      <svg style="width:28px;height:28px;fill:currentColor;" viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+      </svg>
+    `;
+
+    const stepsHtml = steps.map((s, idx) => `
+      <div class="cyber-step-item ${idx === 0 ? 'active' : ''}" id="cyber-step-${idx}">
+        <div class="cyber-step-dot"></div>
+        <span>${s}</span>
+      </div>
+    `).join('');
+
+    overlay.innerHTML = `
+      <div class="cyber-action-card">
+        <div class="cyber-loader-spinner-box">
+          <div class="cyber-loader-glow-ring"></div>
+          <div class="cyber-loader-inner-core">
+            ${icon || defaultIcon}
+          </div>
+        </div>
+        <div class="cyber-loader-title">${title}</div>
+        <div class="cyber-loader-subtitle">${subtitle}</div>
+        
+        <div class="cyber-loader-bar-wrap">
+          <div class="cyber-loader-bar-fill" id="cyber-loader-progress-bar"></div>
+        </div>
+
+        <div class="cyber-steps-list">
+          ${stepsHtml}
+        </div>
+
+        <div class="cyber-fun-fact">💡 ${funFact}</div>
+      </div>
+    `;
+
+    requestAnimationFrame(() => overlay.classList.add('active'));
+
+    if (this._stepInterval) clearInterval(this._stepInterval);
+    let currentStep = 0;
+    this._stepInterval = setInterval(() => {
+      currentStep++;
+      if (currentStep < steps.length) {
+        const prevEl = document.getElementById(`cyber-step-${currentStep - 1}`);
+        const nextEl = document.getElementById(`cyber-step-${currentStep}`);
+        if (prevEl) {
+          prevEl.classList.remove('active');
+          prevEl.classList.add('done');
+        }
+        if (nextEl) {
+          nextEl.classList.add('active');
+        }
+      }
+    }, 1600);
+  },
+
+  hideActionLoader() {
+    if (this._stepInterval) {
+      clearInterval(this._stepInterval);
+      this._stepInterval = null;
+    }
+    const overlay = document.getElementById('cyber-action-loader-overlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }, 320);
+    }
+  },
+
   confirmModal({ title, message, confirmText = "O'chirish", onConfirm }) {
     this.modal({
       title: `<span style="color:#f87171;">⚠️ ${title || 'Tasdiqlash'}</span>`,
@@ -6413,30 +6504,65 @@ const ATLAS = {
       document.getElementById('btn-post-next-tg')?.addEventListener('click', async () => {
         const btn = document.getElementById('btn-post-next-tg');
         btn.disabled = true;
-        btn.innerHTML = `<span class="spinner-sm"></span> Yuborilmoqda...`;
-        const res = await this.api('/api/instagram/post_next', 'POST');
-        if (res && res.success) {
-          this.toast(`Post muvaffaqiyatli Telegramga yuborildi! [${res.shortcode}]`, 'success');
-          this.loadInstagram(viewport);
-        } else {
-          this.toast((res && res.error) || (res && res.message) || 'Post yuborishda xatolik', 'error');
+        this.showActionLoader({
+          title: "Telegramga Yuborilmoqda...",
+          subtitle: "Navbatdagi reel yuklanib, Telegram kanalingizga yuborilmoqda",
+          icon: this.icons.send,
+          steps: [
+            "Post ma'lumotlari aniqlanmoqda",
+            "HD video serverga yuklab olinmoqda",
+            "Telegram kanalga video va caption yuborilmoqda",
+            "Baza va statistika yangilanmoqda"
+          ],
+          funFact: "ATLAS har bir postni eng yuqori HD sifatda kanallarga yetkazadi."
+        });
+        try {
+          const res = await this.api('/api/instagram/post_next', 'POST');
+          this.hideActionLoader();
+          if (res && res.success) {
+            this.toast(`Post muvaffaqiyatli Telegramga yuborildi! [${res.shortcode}]`, 'success');
+            this.loadInstagram(viewport);
+          } else {
+            this.toast((res && res.error) || (res && res.message) || 'Post yuborishda xatolik', 'error');
+            btn.disabled = false;
+          }
+        } catch (e) {
+          this.hideActionLoader();
+          this.toast('Yuborishda xatolik yuz berdi', 'error');
           btn.disabled = false;
-          btn.innerHTML = `${this.icons.send} <span>1 ta TG ga</span>`;
         }
       });
 
       document.getElementById('btn-post-next-yt')?.addEventListener('click', async () => {
         const btn = document.getElementById('btn-post-next-yt');
         btn.disabled = true;
-        btn.innerHTML = `<span class="spinner-sm"></span> Yuklanmoqda...`;
-        const res = await this.api('/api/instagram/post_youtube', 'POST');
-        if (res && res.success) {
-          this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
-          this.loadInstagram(viewport);
-        } else {
-          this.toast((res && res.error) || (res && res.message) || 'YouTube yuklashda xatolik', 'error');
+        this.showActionLoader({
+          title: "YouTube Shorts ga Yuklanmoqda...",
+          subtitle: "Video YouTube v3 API orqali Shorts formatida yuklanmoqda",
+          icon: this.icons.youtube,
+          steps: [
+            "Video fayl manbasi olinmoqda",
+            "HD video serverga yuklab olinmoqda",
+            "YouTube v3 API bilan avtorizatsiya tasdiqlanmoqda",
+            "Shorts sarlavha va hashtaglar bilan yuklanmoqda",
+            "Bulut statistikasi sinxronlanmoqda"
+          ],
+          funFact: "Shorts videolari rek vaqtlari bo‘yicha algoritmik ko‘rishlarni oshiradi."
+        });
+        try {
+          const res = await this.api('/api/instagram/post_youtube', 'POST');
+          this.hideActionLoader();
+          if (res && res.success) {
+            this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
+            this.loadInstagram(viewport);
+          } else {
+            this.toast((res && res.error) || (res && res.message) || 'YouTube yuklashda xatolik', 'error');
+            btn.disabled = false;
+          }
+        } catch (e) {
+          this.hideActionLoader();
+          this.toast('YouTube yuklashda xatolik', 'error');
           btn.disabled = false;
-          btn.innerHTML = `${this.icons.youtube} <span>1 ta YT ga</span>`;
         }
       });
 
@@ -6642,13 +6768,31 @@ const ATLAS = {
           btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             btn.disabled = true;
-            this.toast(`Post yuborilmoqda (ID: ${id})...`, 'info');
-            const res = await this.api(`/api/instagram/post_single/${id}`, 'POST');
-            if (res && res.success) {
-              this.toast(`Post muvaffaqiyatli Telegramga yuborildi!`, 'success');
-              this.loadInstagram(viewport);
-            } else {
-              this.toast((res && res.error) || 'Yuborishda xatolik yuz berdi', 'error');
+            this.showActionLoader({
+              title: "Tanlangan Post Yuborilmoqda...",
+              subtitle: `Post ID #${id} Telegram kanalga yuborilmoqda`,
+              icon: this.icons.send,
+              steps: [
+                "Post ma'lumotlari tekshirilmoqda",
+                "HD sifatdagi video yuklanmoqda",
+                "Telegram kanalga joylanmoqda",
+                "Hisobot yuborilmoqda"
+              ],
+              funFact: "ATLAS kanalingizga har bir postni inline tugmalar bilan yetkazadi."
+            });
+            try {
+              const res = await this.api(`/api/instagram/post_single/${id}`, 'POST');
+              this.hideActionLoader();
+              if (res && res.success) {
+                this.toast(`Post muvaffaqiyatli Telegramga yuborildi!`, 'success');
+                this.loadInstagram(viewport);
+              } else {
+                this.toast((res && res.error) || 'Yuborishda xatolik yuz berdi', 'error');
+                btn.disabled = false;
+              }
+            } catch (e) {
+              this.hideActionLoader();
+              this.toast('Xatolik yuz berdi', 'error');
               btn.disabled = false;
             }
           });
@@ -6658,16 +6802,32 @@ const ATLAS = {
           btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-sm"></span> YT...`;
-            this.toast(`Video YouTube Shorts ga yuklanmoqda (ID: ${id})...`, 'info');
-            const res = await this.api(`/api/instagram/post_single_youtube/${id}`, 'POST');
-            if (res && res.success) {
-              this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
-              this.loadInstagram(viewport);
-            } else {
-              this.toast((res && res.error) || 'YouTube yuklashda xatolik yuz berdi', 'error');
+            this.showActionLoader({
+              title: "YouTube Shorts Yuklanmoqda...",
+              subtitle: `Post ID #${id} YouTube kanalga Shorts qilib yuklanmoqda`,
+              icon: this.icons.youtube,
+              steps: [
+                "Video manbasi tekshirilmoqda",
+                "HD video yuklab olinmoqda",
+                "YouTube Shorts formatida joylanmoqda",
+                "Hisobot yuborilmoqda"
+              ],
+              funFact: "Shorts videolari kanalingiz obunachilarini tabiiy oshirishga yordam beradi."
+            });
+            try {
+              const res = await this.api(`/api/instagram/post_single_youtube/${id}`, 'POST');
+              this.hideActionLoader();
+              if (res && res.success) {
+                this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
+                this.loadInstagram(viewport);
+              } else {
+                this.toast((res && res.error) || 'YouTube yuklashda xatolik yuz berdi', 'error');
+                btn.disabled = false;
+              }
+            } catch (e) {
+              this.hideActionLoader();
+              this.toast('Xatolik yuz berdi', 'error');
               btn.disabled = false;
-              btn.innerHTML = `${this.icons.youtube} <span>YT</span>`;
             }
           });
         });
@@ -6913,15 +7073,33 @@ const ATLAS = {
       document.getElementById('btn-manual-yt-upload')?.addEventListener('click', async () => {
         const btn = document.getElementById('btn-manual-yt-upload');
         btn.disabled = true;
-        btn.innerHTML = `<span class="spinner-sm"></span> YouTube Shorts yuklanmoqda...`;
-        const res = await this.api('/api/instagram/post_youtube', 'POST');
-        if (res && res.success) {
-          this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
-          this.loadInstagram(viewport, 'youtube');
-        } else {
-          this.toast((res && res.error) || (res && res.message) || 'Yuklashda xatolik', 'error');
+        this.showActionLoader({
+          title: "YouTube Shorts ga Yuklanmoqda...",
+          subtitle: "Navbatdagi video YouTube v3 API orqali Shorts formatida yuklanmoqda",
+          icon: this.icons.youtube,
+          steps: [
+            "Video fayl manbasi olinmoqda",
+            "HD video serverga yuklab olinmoqda",
+            "YouTube v3 API bilan avtorizatsiya tasdiqlanmoqda",
+            "Shorts sarlavha va hashtaglar bilan yuklanmoqda",
+            "Bulut statistikasi sinxronlanmoqda"
+          ],
+          funFact: "Shorts videolari rek vaqtlari bo‘yicha algoritmik ko‘rishlarni oshiradi."
+        });
+        try {
+          const res = await this.api('/api/instagram/post_youtube', 'POST');
+          this.hideActionLoader();
+          if (res && res.success) {
+            this.toast(`Video YouTube Shorts ga muvaffaqiyatli yuklandi!`, 'success');
+            this.loadInstagram(viewport, 'youtube');
+          } else {
+            this.toast((res && res.error) || (res && res.message) || 'Yuklashda xatolik', 'error');
+            btn.disabled = false;
+          }
+        } catch (e) {
+          this.hideActionLoader();
+          this.toast('Yuklashda xatolik', 'error');
           btn.disabled = false;
-          btn.innerHTML = `${this.icons.youtube} <span>Hozir Navbatdagi 1 ta Videoni Yuklash</span>`;
         }
       });
     };

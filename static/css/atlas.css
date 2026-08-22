@@ -2877,5 +2877,206 @@ body.hub-cursor-active * {
   }
 }
 
+/* ============================================================ */
+/* CYBER ACTION LOADER & LIVE PROGRESS OVERLAY                  */
+/* ============================================================ */
+.cyber-action-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 10, 14, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+}
+
+.cyber-action-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cyber-action-card {
+  width: 90%;
+  max-width: 460px;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(18, 32, 44, 0.96) 0%, rgba(4, 12, 18, 0.98) 100%);
+  border: 1px solid rgba(0, 203, 169, 0.4);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 203, 169, 0.25);
+  border-radius: 22px;
+  padding: 32px 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cyber-action-overlay.active .cyber-action-card {
+  transform: scale(1) translateY(0);
+}
+
+.cyber-loader-spinner-box {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cyber-loader-glow-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3.5px solid transparent;
+  border-top-color: #00cba9;
+  border-right-color: #38bdf8;
+  border-bottom-color: #f43f5e;
+  animation: cyberSpin 1.1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+  filter: drop-shadow(0 0 12px rgba(0, 203, 169, 0.7));
+}
+
+.cyber-loader-inner-core {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(0, 203, 169, 0.14);
+  border: 1px solid rgba(0, 203, 169, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00cba9;
+  animation: cyberPulse 2s ease-in-out infinite;
+}
+
+.cyber-loader-inner-core svg {
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.cyber-loader-title {
+  font-size: 18.5px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.cyber-loader-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.45;
+  margin-bottom: 22px;
+}
+
+.cyber-loader-bar-wrap {
+  width: 100%;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.cyber-loader-bar-fill {
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, #00cba9, #38bdf8, #818cf8, #f43f5e, #00cba9);
+  background-size: 200% 100%;
+  border-radius: 999px;
+  animation: cyberGradientMove 2s linear infinite, cyberProgressAnim 10s ease-out infinite;
+  box-shadow: 0 0 14px rgba(0, 203, 169, 0.6);
+  transition: width 0.3s ease;
+}
+
+.cyber-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.cyber-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.45);
+  transition: all 0.3s ease;
+}
+
+.cyber-step-item.active {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.cyber-step-item.done {
+  color: #34d399;
+}
+
+.cyber-step-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cyber-step-item.active .cyber-step-dot {
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: cyberDotPulse 1s infinite alternate;
+}
+
+.cyber-step-item.done .cyber-step-dot {
+  background: #34d399;
+  box-shadow: 0 0 6px #34d399;
+}
+
+.cyber-fun-fact {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
+}
+
+@keyframes cyberSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes cyberPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(0, 203, 169, 0.4)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 14px rgba(0, 203, 169, 0.8)); }
+}
+
+@keyframes cyberGradientMove {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes cyberProgressAnim {
+  0% { width: 15%; }
+  25% { width: 45%; }
+  50% { width: 75%; }
+  85% { width: 92%; }
+  100% { width: 98%; }
+}
+
+@keyframes cyberDotPulse {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+
 
 
