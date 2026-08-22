@@ -6273,9 +6273,13 @@ const ATLAS = {
       // Hero Start / Pause Schedule Toggle
       document.getElementById('btn-hero-toggle-schedule')?.addEventListener('click', async () => {
         const newVal = tgAuto ? '0' : '1';
-        const res = await this.api('/api/instagram/settings', 'POST', { auto_schedule_enabled: newVal });
+        const res = await this.api('/api/instagram/settings', 'POST', {
+          auto_schedule_enabled: newVal,
+          youtube_auto_upload: newVal,
+          youtube_schedule_enabled: newVal
+        });
         if (res && res.success) {
-          this.toast(`Telegram avto-yuborish ${newVal === '1' ? 'boshlandi (START)' : 'to‘xtatildi (PAUSE)'}`, 'success');
+          this.toast(`Avto-yuborish jarayoni ${newVal === '1' ? 'boshlandi (START)' : 'to‘xtatildi (PAUSE)'}`, 'success');
           this.loadInstagram(viewport, activeTab);
         } else {
           this.toast((res && res.error) || 'Xatolik', 'error');
@@ -6887,7 +6891,10 @@ const ATLAS = {
       // Toggles
       document.getElementById('toggle-yt-auto-btn')?.addEventListener('click', async () => {
         const newVal = ytAuto ? '0' : '1';
-        const res = await this.api('/api/instagram/settings', 'POST', { youtube_auto_upload: newVal });
+        const res = await this.api('/api/instagram/settings', 'POST', {
+          youtube_auto_upload: newVal,
+          youtube_schedule_enabled: newVal
+        });
         if (res && res.success) {
           this.toast(`YouTube avto-yuklash ${newVal === '1' ? 'yoqildi' : 'o\'chirildi'}`, 'success');
           this.loadInstagram(viewport, 'youtube');
@@ -7064,6 +7071,7 @@ const ATLAS = {
           interval_minutes: document.getElementById('sett-interval').value.trim(),
           auto_schedule_enabled: document.getElementById('sett-tg-auto-chk').checked ? '1' : '0',
           youtube_auto_upload: document.getElementById('sett-yt-auto-chk').checked ? '1' : '0',
+          youtube_schedule_enabled: document.getElementById('sett-yt-auto-chk').checked ? '1' : '0',
           night_mode_enabled: document.getElementById('sett-night-mode-chk').checked ? '1' : '0',
           night_mode_start: document.getElementById('sett-night-start').value.trim() || '00:00',
           night_mode_end: document.getElementById('sett-night-end').value.trim() || '07:00'

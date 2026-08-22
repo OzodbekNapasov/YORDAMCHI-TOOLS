@@ -21,7 +21,7 @@ _IS_RUNNING = False
 _SCHEDULER_LOCK = threading.Lock()
 
 def run_scheduler_tick():
-    """Telegram va YouTube jadvalini 1 marta tekshirib, vaqti kelgan bo'lsa post chiqarish"""
+    """Telegram va YouTube jadvalini tekshirib, vaqti kelgan bo'lsa post chiqarish"""
     if not _SCHEDULER_LOCK.acquire(blocking=False):
         return {"checked_at": get_uzb_now().strftime("%Y-%m-%d %H:%M:%S"), "skipped": True, "message": "Avvalgi tekshiruv hali davom etmoqda"}
         
@@ -29,13 +29,14 @@ def run_scheduler_tick():
         now = get_uzb_now()
         now_hm = now.strftime("%H:%M")
         today_date = now.strftime("%Y-%m-%d")
+        current_hour_str = now.strftime("%H:00")
         results = {"checked_at": now.strftime("%Y-%m-%d %H:%M:%S"), "tg_posted": False, "yt_posted": False}
         
         # ------------------------------------------------------------
         # 1. Telegram Rejali Yuborish (Har soat boshida :00 da + Tungi rejim)
         # ------------------------------------------------------------
         try:
-            tg_enabled = get_setting("auto_schedule_enabled", "0") == "1"
+            tg_enabled = get_setting("auto_schedule_enabled", "1") == "1"
             if tg_enabled:
                 night_mode_on = get_setting("night_mode_enabled", "1") == "1"
                 night_start = get_setting("night_mode_start", "00:00")
@@ -49,16 +50,12 @@ def run_scheduler_tick():
                         is_night = (now_hm >= night_start or now_hm < night_end)
 
                 if not is_night:
-                    slot_key = f"{today_date}_{now.strftime('%H:00')}"
+                    slot_key = f"{today_date}_{current_hour_str}"
                     last_slot = get_setting("tg_last_posted_slot", "")
                     
-                    should_post_tg = False
-                    # Har soat boshida (:00 da yoki dastlabki 2 daqiqada) 1 marta chiqarish
-                    if now.minute <= 2 and last_slot != slot_key:
-                        should_post_tg = True
-                        
-                    if should_post_tg:
-                        print(f"[Telegram Scheduler]: Soat boshi ({now.strftime('%H:00')}) keldi! Rejali post chiqarilmoqda...")
+                    # Agar joriy soat uchun hali post yuborilmagan bo'lsa
+                    if last_slot != slot_key:
+                        print(f"[Telegram Scheduler]: Soat ({current_hour_str}) sloti keldi! Rejali post Telegramga yuborilmoqda...")
                         set_setting("tg_last_posted_slot", slot_key)
                         set_setting("last_post_time", now.strftime("%Y-%m-%d %H:%M:%S"))
                         tg_res = post_next_queued_item()
@@ -76,17 +73,21 @@ def run_scheduler_tick():
             yt_auto_upload = get_setting("youtube_auto_upload", "1") == "1"
             
             if yt_sched_enabled and yt_auto_upload:
-                target_times = get_youtube_schedule_times()
-                if now_hm in target_times:
-                    slot_key = f"{today_date}_{now_hm}"
-                    last_slot = get_setting("youtube_last_posted_slot", "")
-                    
-                    if last_slot != slot_key:
-                        print(f"[YouTube Scheduler]: Rek vaqti keldi ({now_hm})! YouTube Shorts yuklanmoqda...")
-                        set_setting("youtube_last_posted_slot", slot_key)
-                        yt_res = post_next_youtube_video()
-                        results["yt_posted"] = True
-                        results["yt_res"] = yt_res
+                target_times = get_youtube_schedule_times() # Masalan: ["09:00", "12:00", "15:00", "18:30", "21:00"]
+                for target_t in target_times:
+                    if target_t <= now_hm:
+                        slot_key = f"{today_date}_{target_t}"
+                        slot_done = get_setting(f"yt_slot_{slot_key}", "")
+                        global_last = get_setting("youtube_last_posted_slot", "")
+                        
+                        if slot_done != "1" and global_last != slot_key:
+                            print(f"[YouTube Scheduler]: Rek vaqti ({target_t}) keldi! YouTube Shorts ga yuklanmoqda...")
+                            set_setting(f"yt_slot_{slot_key}", "1")
+                            set_setting("youtube_last_posted_slot", slot_key)
+                            yt_res = post_next_youtube_video()
+                            results["yt_posted"] = True
+                            results["yt_res"] = yt_res
+                            break
         except Exception as e:
             results["yt_error"] = str(e)
             print(f"[YouTube Scheduler Error]: {e}")
