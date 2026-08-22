@@ -5697,63 +5697,90 @@ const ATLAS = {
     viewport.innerHTML = `
       <div class="meta-ads-container">
         <!-- HEADER ACTIONS -->
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div class="meta-header-card">
           <div>
-            <h2 style="font-size:20px;font-weight:700;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">
+            <h2 style="font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;align-items:center;gap:8px;color:#ffffff;">
               ${this.icons.target || ''} Meta Ads Manager Boshqaruv Markazi
             </h2>
-            <div style="font-size:13px;color:rgba(255,255,255,0.6);">
-              Hisob: <b>${acc.account_name}</b> • Valyuta: <b>${acc.currency}</b> • Karta: <b>${acc.card}</b>
+            <div style="font-size:13px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span>Hisob: <b style="color:#ffffff;">${acc.account_name || 'Noma\'lum'}</b></span>
+              <span style="opacity:0.4;">•</span>
+              <span>Valyuta: <b style="color:#2ee59d;">${acc.currency || 'USD'}</b></span>
+              <span style="opacity:0.4;">•</span>
+              <span>Karta: <b style="color:#ffffff;">${acc.card || 'Mavjud'}</b></span>
             </div>
           </div>
-          <div style="display:flex;gap:10px;">
-            <button class="btn-secondary btn-sm" id="meta-set-limit-btn">
-              ${this.icons.dollarSign || ''} Byudjet Limitini O'rnatish ($)
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-secondary btn-sm" id="btn-open-meta-token-settings" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.settings || ''} <span>API Sozlamalari</span>
             </button>
-            <button class="btn-primary btn-sm" id="meta-refresh-btn">
-              ${this.icons.refresh} Yangilash
+            <button class="btn-secondary btn-sm" id="meta-set-limit-btn" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.dollarSign || ''} <span>Byudjet Limiti ($)</span>
+            </button>
+            <button class="btn-primary btn-sm" id="meta-refresh-btn" style="display:inline-flex;align-items:center;gap:6px;">
+              ${this.icons.refresh} <span>Yangilash</span>
             </button>
           </div>
         </div>
 
         <!-- TOP METRICS GRID -->
-        <div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-bottom:24px;">
-          <div class="card" style="padding:16px;">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Reklama Hisobi</div>
-            <div style="font-size:16px;font-weight:700;margin-bottom:4px;">${acc.account_name}</div>
-            <div style="font-size:12px;color:#34d399;">${statusText}</div>
+        <div class="meta-metrics-grid">
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
+              Reklama Hisobi
+            </div>
+            <div style="font-size:16px;font-weight:800;color:#ffffff;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${acc.account_name || 'Meta Account'}
+            </div>
+            <div>
+              <span class="badge" style="background:rgba(52,211,153,0.15);color:#34d399;font-size:11.5px;padding:3px 8px;border-radius:6px;border:1px solid rgba(52,211,153,0.3);font-weight:700;">
+                ${statusText}
+              </span>
+            </div>
           </div>
 
-          <div class="card" style="padding:16px;">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Jami Hisob Xarajati</div>
-            <div style="font-size:22px;font-weight:800;color:#60a5fa;">$${acc.amount_spent.toFixed(2)}</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">To'lov usuli: ${acc.card}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
+              Jami Hisob Xarajati
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#60a5fa;margin-bottom:4px;">
+              $${(acc.amount_spent || 0).toFixed(2)}
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);">
+              To'lov usuli: <b>${acc.card || 'Mavjud'}</b>
+            </div>
           </div>
 
-          <div class="card" style="padding:16px;">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Kiritilgan Mablag' & Qoldiq Pul</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
+              Kiritilgan Mablag' & Qoldiq
+            </div>
             ${fundsHtml}
           </div>
 
-          <div class="card" style="padding:16px;">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Bugungi Xarajat & Natijalar</div>
-            <div style="font-size:22px;font-weight:800;color:#34d399;">$${insights.spend || '0.00'}</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;">
-              Lidlar: <b>${insights.leads || '0'} ta</b> (${insights.cpl || '—'}/lid)
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">
+              Bugungi Xarajat & Natijalar
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#34d399;margin-bottom:4px;">
+              $${insights.spend || '0.00'}
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.75);">
+              Lidlar: <b style="color:#ffffff;">${insights.leads || '0'} ta</b> <span style="opacity:0.6;">(${insights.cpl || '—'}/lid)</span>
             </div>
           </div>
         </div>
 
-        <!-- TABS BAR -->
-        <div class="tab-bar" style="display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:20px;padding-bottom:10px;">
-          <button class="btn-sm btn-primary meta-tab-btn active" data-tab="campaigns" style="border-radius:var(--radius-sm);">
-            🎯 Kampaniyalar (${campaigns.length})
+        <!-- FULL-WIDTH SUBTABS GRID -->
+        <div class="meta-subtabs-grid">
+          <button class="meta-subtab-btn active" data-tab="campaigns">
+            🎯 <span>Kampaniyalar (${campaigns.length})</span>
           </button>
-          <button class="btn-sm btn-secondary meta-tab-btn" data-tab="insights" style="border-radius:var(--radius-sm);">
-            📈 Statistika & Hisobotlar
+          <button class="meta-subtab-btn" data-tab="insights">
+            📈 <span>Statistika & Hisobotlar</span>
           </button>
-          <button class="btn-sm btn-secondary meta-tab-btn" data-tab="automation" style="border-radius:var(--radius-sm);">
-            ⏰ Avtomatlashtirish & Tungi Rejim
+          <button class="meta-subtab-btn" data-tab="automation">
+            ⏰ <span>Avtomatlashtirish & Tungi Rejim</span>
           </button>
         </div>
 
@@ -5762,12 +5789,22 @@ const ATLAS = {
       </div>
     `;
 
+    document.getElementById('btn-open-meta-token-settings')?.addEventListener('click', () => {
+      this.renderMetaApiConfigModal(viewport);
+    });
+
     const renderCampaignsTab = () => {
       const contentEl = document.getElementById('meta-tab-content');
       if (!contentEl) return;
 
       if (!campaigns.length) {
-        contentEl.innerHTML = `<div class="card" style="text-align:center;padding:30px;">Hozircha hech qanday kampaniya mavjud emas.</div>`;
+        contentEl.innerHTML = `
+          <div class="meta-table-card" style="text-align:center;padding:48px 20px;">
+            <div style="font-size:32px;margin-bottom:12px;opacity:0.6;">🎯</div>
+            <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">Hozircha faol kampaniyalar topilmadi</div>
+            <div style="font-size:12.5px;color:rgba(255,255,255,0.5);">Facebook Ads Manager orqali yangi kampaniya yaratishingiz mumkin.</div>
+          </div>
+        `;
         return;
       }
 
@@ -5776,29 +5813,33 @@ const ATLAS = {
         const budgetDollars = c.daily_budget ? (parseFloat(c.daily_budget) / 100).toFixed(2) : '0.00';
         return `
           <tr>
-            <td>
-              <div style="font-weight:600;font-size:14px;">${c.name}</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4);font-family:monospace;">ID: ${c.id}</div>
+            <td style="width:38%;">
+              <div style="font-weight:700;font-size:14px;color:#ffffff;margin-bottom:3px;">${c.name}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.45);font-family:monospace;display:inline-block;background:rgba(255,255,255,0.04);padding:1px 6px;border-radius:4px;">
+                ID: ${c.id}
+              </div>
             </td>
-            <td>
-              <span class="badge" style="font-size:11px;background:rgba(255,255,255,0.06);">${c.objective || "Noma'lum"}</span>
-            </td>
-            <td>
-              <span class="badge" style="background:${isActive ? 'rgba(52,211,153,0.15)' : 'rgba(239,68,68,0.15)'};color:${isActive ? '#34d399' : '#f87171'};font-weight:700;">
-                ${isActive ? '🟢 Faol (ACTIVE)' : '🔴 To\'xtatilgan (PAUSED)'}
+            <td style="width:18%;">
+              <span class="badge" style="font-size:11.5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:4px 8px;border-radius:6px;color:rgba(255,255,255,0.85);font-weight:600;">
+                ${c.objective || "OUTCOME_LEADS"}
               </span>
             </td>
-            <td>
+            <td style="width:18%;">
+              <span class="badge" style="background:${isActive ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${isActive ? '#34d399' : '#f87171'};border:1px solid ${isActive ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};padding:4px 10px;border-radius:6px;font-weight:700;font-size:11.5px;">
+                ${isActive ? '🟢 FAOL (ACTIVE)' : '⏸ TO\'XTATILGAN (PAUSED)'}
+              </span>
+            </td>
+            <td style="width:14%;">
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-weight:700;font-size:13.5px;">$${budgetDollars}</span>
-                <span style="font-size:11px;color:rgba(255,255,255,0.5);">/kun</span>
-                <button class="btn-icon btn-sm meta-edit-budget-btn" data-id="${c.id}" data-name="${c.name}" data-budget="${budgetDollars}" title="Byudjetni o'zgartirish" style="margin-left:4px;">
+                <span style="font-weight:800;font-size:14px;color:#ffffff;">$${budgetDollars}</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.45);">/kun</span>
+                <button class="btn-icon btn-sm meta-edit-budget-btn" data-id="${c.id}" data-name="${c.name}" data-budget="${budgetDollars}" title="Byudjetni o'zgartirish" style="width:26px;height:26px;border-radius:6px;margin-left:2px;">
                   ${this.icons.edit}
                 </button>
               </div>
             </td>
-            <td style="text-align:right;">
-              <button class="btn-sm ${isActive ? 'btn-danger' : 'btn-primary'} meta-toggle-camp-btn" data-id="${c.id}" data-status="${isActive ? 'PAUSED' : 'ACTIVE'}" style="font-size:12px;padding:5px 12px;">
+            <td style="width:12%;text-align:right;">
+              <button class="btn-sm ${isActive ? 'btn-danger' : 'btn-primary'} meta-toggle-camp-btn" data-id="${c.id}" data-status="${isActive ? 'PAUSED' : 'ACTIVE'}" style="font-size:12px;padding:6px 14px;border-radius:8px;font-weight:700;">
                 ${isActive ? '⏸ To\'xtatish' : '▶️ Yoqish'}
               </button>
             </td>
@@ -5807,15 +5848,15 @@ const ATLAS = {
       }).join('');
 
       contentEl.innerHTML = `
-        <div class="card" style="padding:0;overflow:hidden;">
-          <table class="data-table">
+        <div class="meta-table-card">
+          <table class="meta-table">
             <thead>
               <tr>
-                <th>Kampaniya Nomi</th>
-                <th>Maqsad (Objective)</th>
-                <th>Holat</th>
-                <th>Kunlik Byudjet</th>
-                <th style="text-align:right;">Boshqaruv</th>
+                <th style="width:38%;">Kampaniya Nomi & ID</th>
+                <th style="width:18%;">Maqsad (Objective)</th>
+                <th style="width:18%;">Holat</th>
+                <th style="width:14%;">Kunlik Byudjet</th>
+                <th style="width:12%;text-align:right;">Boshqaruv</th>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
@@ -5899,54 +5940,54 @@ const ATLAS = {
       const data = (insRes && insRes.insights) || {};
 
       contentEl.innerHTML = `
-        <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
           ${['today:Bugun', 'yesterday:Kecha', 'last_7d:Oxirgi 7 kun', 'this_month:Shu oy'].map(item => {
             const [pKey, pLabel] = item.split(':');
             const isActive = period === pKey;
             return `
-              <button class="btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'} meta-period-btn" data-period="${pKey}">
+              <button class="btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'} meta-period-btn" data-period="${pKey}" style="font-weight:700;border-radius:8px;padding:6px 16px;">
                 ${pLabel}
               </button>
             `;
           }).join('')}
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;">
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Xarajat (Spend)</div>
-            <div style="font-size:22px;font-weight:800;color:#60a5fa;margin-top:4px;">$${data.spend || '0.00'}</div>
+        <div class="meta-metrics-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:20px;">
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">Xarajat (Spend)</div>
+            <div style="font-size:24px;font-weight:800;color:#60a5fa;margin-top:6px;">$${data.spend || '0.00'}</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Lidlar Soni</div>
-            <div style="font-size:22px;font-weight:800;color:#34d399;margin-top:4px;">${data.leads || '0'} ta</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">Lidlar Soni</div>
+            <div style="font-size:24px;font-weight:800;color:#34d399;margin-top:6px;">${data.leads || '0'} ta</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">1 ta Lid Narxi (CPL)</div>
-            <div style="font-size:22px;font-weight:800;color:#fbbf24;margin-top:4px;">${data.cpl || '—'}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">1 ta Lid Narxi (CPL)</div>
+            <div style="font-size:24px;font-weight:800;color:#fbbf24;margin-top:6px;">${data.cpl || '—'}</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Ko'rishlar (Impressions)</div>
-            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.impressions || '0'}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">Ko'rishlar (Impressions)</div>
+            <div style="font-size:24px;font-weight:800;color:#ffffff;margin-top:6px;">${data.impressions || '0'}</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Kliklar (Clicks)</div>
-            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.clicks || '0'}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">Kliklar (Clicks)</div>
+            <div style="font-size:24px;font-weight:800;color:#ffffff;margin-top:6px;">${data.clicks || '0'}</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">CTR (Ko'rish/Klik)</div>
-            <div style="font-size:22px;font-weight:800;color:#a78bfa;margin-top:4px;">${data.ctr || '0.00%'}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">CTR (Klik darajasi)</div>
+            <div style="font-size:24px;font-weight:800;color:#a78bfa;margin-top:6px;">${data.ctr || '0.00%'}</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">CPC (Klik Narxi)</div>
-            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.cpc || '$0.00'}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">CPC (Klik Narxi)</div>
+            <div style="font-size:24px;font-weight:800;color:#ffffff;margin-top:6px;">${data.cpc || '$0.00'}</div>
           </div>
-          <div class="card" style="padding:16px;">
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;">CPM (1000 Ko'rish)</div>
-            <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px;">${data.cpm || '$0.00'}</div>
+          <div class="meta-metric-card">
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">CPM (1000 Ko'rish)</div>
+            <div style="font-size:24px;font-weight:800;color:#ffffff;margin-top:6px;">${data.cpm || '$0.00'}</div>
           </div>
         </div>
 
-        <div style="font-size:12px;color:rgba(255,255,255,0.4);text-align:right;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);text-align:right;font-family:monospace;">
           Sana oralig'i: ${data.date_start || ''} — ${data.date_stop || ''}
         </div>
       `;
@@ -5963,18 +6004,18 @@ const ATLAS = {
       if (!contentEl) return;
 
       contentEl.innerHTML = `
-        <div class="card" style="max-width:650px;padding:24px;">
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+        <div class="meta-table-card" style="max-width:680px;padding:28px;margin:0 auto;">
+          <h3 style="font-size:17px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:#ffffff;">
             ${this.icons.automation || ''} Avtomatlashtirish & Xavfsizlik Sozlamalari
           </h3>
 
           <form id="meta-automation-form">
             <!-- Tungi Rejim -->
-            <div style="margin-bottom:20px;padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);">
+            <div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div>
-                  <div style="font-weight:700;font-size:14px;">🌙 Tungi Rejim (Auto-Pause & Resume)</div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">
+                  <div style="font-weight:700;font-size:14px;color:#ffffff;">🌙 Tungi Rejim (Auto-Pause & Resume)</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px;">
                     Belgilangan vaqtda reklamalarni avtomatik to'xtatadi va ertalab qayta yoqadi
                   </div>
                 </div>

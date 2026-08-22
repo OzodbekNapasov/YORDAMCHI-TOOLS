@@ -3131,6 +3131,160 @@ body.hub-cursor-active * {
   filter: brightness(1.2) drop-shadow(0 2px 8px rgba(0, 203, 169, 0.3));
 }
 
+/* ============================================================ */
+/* META ADS MANAGER — MODERN CYBER GLASS STYLING               */
+/* ============================================================ */
+.meta-ads-container {
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.meta-header-card {
+  background: rgba(8, 28, 30, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.meta-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.meta-metric-card {
+  background: rgba(8, 28, 30, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.meta-metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 203, 169, 0.35);
+  box-shadow: 0 8px 28px rgba(0, 203, 169, 0.12);
+}
+
+.meta-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 203, 169, 0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.meta-metric-card:hover::before {
+  opacity: 1;
+}
+
+.meta-subtabs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+  width: 100%;
+}
+
+.meta-subtab-btn {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 28, 30, 0.6);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.meta-subtab-btn:hover {
+  background: rgba(0, 203, 169, 0.12);
+  color: #2ee59d;
+  border-color: rgba(0, 203, 169, 0.3);
+}
+
+.meta-subtab-btn.active {
+  background: linear-gradient(135deg, rgba(46, 229, 157, 0.2) 0%, rgba(0, 203, 169, 0.25) 100%);
+  color: #ffffff;
+  border-color: rgba(46, 229, 157, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 203, 169, 0.2);
+}
+
+.meta-table-card {
+  background: rgba(8, 28, 30, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.meta-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.meta-table thead tr {
+  background: rgba(4, 20, 22, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.meta-table th {
+  padding: 14px 18px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+.meta-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.meta-table tbody tr:hover {
+  background: rgba(0, 203, 169, 0.05);
+}
+
+.meta-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.meta-table td {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  vertical-align: middle;
+}
+
 
 
 
