@@ -131,11 +131,11 @@ def run_scheduler_tick():
                 if not is_night:
                     slot_key = f"{today_date}_{current_hour_str}"
 
-                    # VAQT OYNASI: faqat soat boshida :00-:10 oralig'ida ishlaydi
-                    # :11 dan keyin eski slotni qayta trigger qilmaydi!
+                    # VAQT OYNASI: soat boshidan 30 daqiqa ichida ishlaydi
+                    # (30 daqiqa = cron kech kelsa ham ishlaydi, atomic claim duplicate ni oldini oladi)
                     now_minute = now.minute
-                    if now_minute > 10:
-                        results["tg_skipped"] = f"Trigger oynasi yopiq ({now_hm}, faqat :00-:10 da ishlaydi)"
+                    if now_minute > 30:
+                        results["tg_skipped"] = f"Trigger oynasi yopiq ({now_hm}, faqat :00-:30 da ishlaydi)"
                     else:
                         # ATOMIC CLAIM: Supabase orqali cross-process lock
                         claimed = _supabase_atomic_claim_slot(slot_key, "tg_last_posted_slot")
@@ -161,9 +161,9 @@ def run_scheduler_tick():
             if yt_sched_enabled and yt_auto_upload:
                 target_times = get_youtube_schedule_times()
                 for target_t in target_times:
-                    # VAQT OYNASI: faqat target vaqtdan keyin 10 daqiqa ichida ishlaydi
-                    # Masalan: 12:00 schedule uchun faqat 12:00-12:10 da trigger bo'ladi
-                    # 12:22 da eski slotni trigger QILMAYDI!
+                    # VAQT OYNASI: target vaqtdan keyin 30 daqiqa ichida ishlaydi
+                    # 30 daqiqa = cron kech kelsa ham ishlaydi, atomic claim duplicate ni oldini oladi
+                    # Masalan: 12:00 schedule uchun 12:00-12:30 da trigger bo'ladi
                     try:
                         t_h, t_m = map(int, target_t.split(":"))
                         target_total = t_h * 60 + t_m
@@ -172,8 +172,8 @@ def run_scheduler_tick():
                     except Exception:
                         diff_minutes = 0
 
-                    # Faqat vaqt oynasida (0 dan 10 daqiqa ichida) trigger
-                    if not (0 <= diff_minutes <= 10):
+                    # Faqat vaqt oynasida (0 dan 30 daqiqa ichida) trigger
+                    if not (0 <= diff_minutes <= 30):
                         continue  # Bu vaqt oynasida emas — o'tkazib yuborish
 
                     slot_key = f"{today_date}_{target_t}"
