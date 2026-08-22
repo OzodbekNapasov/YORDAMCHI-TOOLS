@@ -95,14 +95,17 @@ def save_insta_cloud_state(state: dict):
 
 
 def mark_post_sent_in_cloud(shortcode: str, sent_at_str: str):
-    """Post Telegramga yuborilganda bulut holatiga yozish"""
+    """Post Telegramga yuborilganda bulut holatiga yozish (set_setting CHAQIRILMAYDI - tez)"""
     try:
         state = load_insta_cloud_state()
         if "sent_shortcodes" not in state:
             state["sent_shortcodes"] = {}
         state["sent_shortcodes"][shortcode] = sent_at_str
         state["last_post_time"] = sent_at_str
-        save_insta_cloud_state(state)
+        if "settings" not in state:
+            state["settings"] = {}
+        state["settings"]["last_post_time"] = sent_at_str
+        save_insta_cloud_state(state)  # 1 ta Supabase so'rovi
     except Exception as e:
         print(f"[Cloud Mark Sent Err]: {e}")
 
@@ -1706,7 +1709,14 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         conn.close()
         return {"success": False, "message": "Post ayni vaqtda boshqa so'rov orqali yuborilmoqda."}
         
-    set_setting("last_post_time", now_claim_str)
+    # Local DB ga yozish (Supabase ga YUKLAMAYDI - mark_post_sent_in_cloud da yoziladi)
+    try:
+        _conn = get_db_connection()
+        _conn.execute("INSERT OR REPLACE INTO insta_settings (key, value) VALUES (?, ?)", ("last_post_time", now_claim_str))
+        _conn.commit()
+        _conn.close()
+    except Exception:
+        pass
     
     bot = telebot.TeleBot(bot_token)
     
@@ -1820,9 +1830,9 @@ def post_next_queued_item(chat_id=None, bot_token=None):
         """, (now_str, clean_caption, msg_id_val, post_id))
         conn.commit()
         
-        mark_post_sent_in_cloud(shortcode, now_str)
-        set_setting("last_post_time", now_str)
+        mark_post_sent_in_cloud(shortcode, now_str)  # Bu last_post_time ni ham cloud ga yozadi
         conn.close()
+
         
         notify_admin_post_published("telegram", {
             "post_id": post_id,
