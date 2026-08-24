@@ -688,12 +688,12 @@ const ATLAS = {
         <header class="hub-header">
           <div class="hub-brand-block">
             <div class="hub-logo-symbol" title="ATLAS Universal Platform">
-              ${this.icons.brandLogo}
+              <img src="/static/img/icon-ice.png" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(56,189,248,0.85));" alt="ATLAS">
             </div>
             <div>
               <div class="hub-title-text">
                 <span>ATLAS</span>
-                <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(46,229,157,0.15);color:#2ee59d;border:1px solid rgba(46,229,157,0.3);letter-spacing:0.5px;">MUNDARIJA</span>
+                <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);letter-spacing:0.5px;">MUNDARIJA</span>
               </div>
               <div class="hub-subtitle-text">
                 Barcha bot xizmatlari va avtomatlashtirish modullari katalogi
@@ -703,7 +703,7 @@ const ATLAS = {
 
           <div class="hub-header-actions">
             <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;color:rgba(255,255,255,0.85);">
-              <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;"></span>
+              <span style="width:7px;height:7px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;"></span>
               <span>Administrator: <b style="color:#ffffff;">${this.user?.full_name || 'Ozodbek'}</b></span>
             </div>
             <button class="btn-sm btn-secondary" id="hub-quick-logout" title="Tizimdan chiqish" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:6px;cursor:pointer;">
@@ -716,11 +716,7 @@ const ATLAS = {
         <div class="hub-grid">
           ${services.map(s => `
             <div class="hub-card" data-route="${s.id}" style="--card-color:${s.color};--card-glow:${s.glow};">
-              <div class="hub-card-corner-tab">
-                <span>${s.num}</span>
-              </div>
-
-              <div class="hub-card-icon-circle">
+              <div class="hub-card-glowing-emblem">
                 ${s.icon}
               </div>
 
@@ -729,12 +725,31 @@ const ATLAS = {
                 <div class="hub-card-desc">${s.subtitle}</div>
               </div>
 
-              <div class="hub-card-footer">
-                <span class="hub-card-category">${s.category}</span>
-                <span class="hub-card-cta">
-                  <span>Kirish</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                </span>
+              <div class="hub-card-spec-panel">
+                <div class="hub-spec-row">
+                  <span class="hub-spec-label">SPEED</span>
+                  <div class="hub-spec-bars">
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                  </div>
+                </div>
+                <div class="hub-spec-row">
+                  <span class="hub-spec-label">INTELLIGENCE</span>
+                  <div class="hub-spec-bars">
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                    <span class="bar on"></span>
+                    <span class="bar ${['contracts', 'ai_chat', 'pc_control', 'analytics'].includes(s.id) ? 'on' : ''}"></span>
+                  </div>
+                </div>
+                <div class="hub-spec-row">
+                  <span class="hub-spec-label">CATEGORY</span>
+                  <span class="hub-spec-category">${s.category}</span>
+                </div>
               </div>
             </div>
           `).join('')}
@@ -746,7 +761,7 @@ const ATLAS = {
             ATLAS Universal Engine &bull; Barcha xizmatlar xavfsiz Cloud OAuth2 bilan integratsiyalangan
           </div>
           <div style="font-family:'JetBrains Mono',monospace;">
-            Qisqa tugma: <span style="color:#ffffff;">Ctrl + K</span> (Qidiruv) &bull; Versiya: <span style="color:#2ee59d;">v2.5.2</span>
+            Qisqa tugma: <span style="color:#ffffff;">Ctrl + K</span> (Qidiruv) &bull; Versiya: <span style="color:#38bdf8;">v2.5.2</span>
           </div>
         </footer>
       </div>

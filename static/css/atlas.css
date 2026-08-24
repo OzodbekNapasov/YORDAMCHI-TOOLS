@@ -2604,21 +2604,19 @@ body.hub-cursor-active * {
 .hub-logo-symbol {
   width: 44px;
   height: 44px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(46, 229, 157, 0.3);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 16px rgba(46, 229, 157, 0.25);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
 }
 
-.hub-logo-symbol svg {
-  width: 28px !important;
-  height: 28px !important;
-  max-width: 28px !important;
-  max-height: 28px !important;
-  color: #34d399;
+.hub-logo-symbol img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .hub-title-text {
@@ -2643,29 +2641,44 @@ body.hub-cursor-active * {
   gap: 12px;
 }
 
-/* 4x2 Grid (Filling Screen) */
+/* 4-column responsive grid */
 .hub-grid {
   width: 100%;
   max-width: 1440px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 18px;
+  gap: 20px;
   margin: 12px 0;
   flex: 1;
   box-sizing: border-box;
 }
 
-/* User Image 1 Style Cards — Modern Carousel / Bold Keynote Style */
+@media (max-width: 1200px) {
+  .hub-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 850px) {
+  .hub-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 550px) {
+  .hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* EXACT REFERENCE IMAGE STYLE: Glowing Dark Aura Glass Cards */
 .hub-card {
-  background: radial-gradient(circle at 100% 0%, var(--card-glow, rgba(0, 203, 169, 0.15)) 0%, rgba(7, 24, 27, 0.88) 55%), rgba(6, 20, 23, 0.85);
+  background: radial-gradient(ellipse 110% 60% at 50% -8%, var(--card-glow, rgba(56, 189, 248, 0.4)) 0%, rgba(13, 19, 33, 0.75) 55%), #060913;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   color: #ffffff;
-  border-radius: 22px;
-  padding: 22px 24px 18px 24px;
-  cursor: none !important;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
+  border-radius: 26px;
+  padding: 30px 24px 22px 24px;
+  cursor: pointer;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.32s ease, border-color 0.32s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -2673,153 +2686,137 @@ body.hub-cursor-active * {
   overflow: hidden;
   box-sizing: border-box;
   user-select: none;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  box-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 45px -12px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+
+.hub-card::before {
+  content: '';
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 150px;
+  background: var(--card-color, #38bdf8);
+  filter: blur(50px);
+  opacity: 0.38;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 .hub-card:hover {
-  transform: translateY(-6px);
-  background: radial-gradient(circle at 100% 0%, var(--card-glow, rgba(0, 203, 169, 0.25)) 0%, rgba(10, 36, 40, 0.94) 60%), rgba(8, 28, 32, 0.95);
-  border-color: var(--card-color, #00cba9);
-  box-shadow: 0 22px 48px -10px var(--card-glow, rgba(0, 203, 169, 0.45)), 0 0 30px var(--card-glow, rgba(0, 203, 169, 0.35)), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translateY(-8px);
+  border-color: var(--card-color, #38bdf8);
+  box-shadow: 0 26px 60px -10px var(--card-glow, rgba(0, 0, 0, 0.85)), 0 0 35px var(--card-glow, rgba(56, 189, 248, 0.45)), inset 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
-/* Right-Side Colored Corner Tab with Number */
-.hub-card-corner-tab {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 48px;
-  height: 56px;
-  background: var(--card-color, #10b981);
-  border-top-right-radius: 21px;
-  border-bottom-left-radius: 16px;
+.hub-card:hover::before {
+  opacity: 0.65;
+  transform: translateX(-50%) scale(1.2);
+}
+
+/* Glowing Top Emblem */
+.hub-card-glowing-emblem {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px auto;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 19px;
-  font-weight: 900;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  box-shadow: -3px 3px 14px rgba(0, 0, 0, 0.4);
-  transition: height 0.25s ease, box-shadow 0.25s ease;
+  filter: drop-shadow(0 0 14px var(--card-color, #38bdf8)) drop-shadow(0 0 30px var(--card-glow, rgba(56, 189, 248, 0.5)));
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), filter 0.32s ease;
 }
 
-.hub-card:hover .hub-card-corner-tab {
-  height: 62px;
-  box-shadow: -4px 5px 18px var(--card-glow, rgba(0, 0, 0, 0.5));
+.hub-card-glowing-emblem svg {
+  width: 44px !important;
+  height: 44px !important;
+  max-width: 44px !important;
+  max-height: 44px !important;
+  stroke-width: 2.2 !important;
 }
 
-.hub-card-icon-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--card-color, #10b981);
-  margin-bottom: 8px;
-  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.hub-card-icon-circle svg {
-  width: 24px !important;
-  height: 24px !important;
-  max-width: 24px !important;
-  max-height: 24px !important;
-}
-
-.hub-card:hover .hub-card-icon-circle {
+.hub-card:hover .hub-card-glowing-emblem {
   transform: scale(1.1);
-  background: var(--card-color, #10b981);
-  color: #031214;
-  border-color: var(--card-color, #10b981);
-  box-shadow: 0 0 20px var(--card-glow, rgba(0, 203, 169, 0.6));
+  filter: drop-shadow(0 0 20px var(--card-color, #38bdf8)) drop-shadow(0 0 45px var(--card-glow, rgba(56, 189, 248, 0.7)));
 }
 
 .hub-card-body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  margin: 6px 0;
+  justify-content: flex-start;
+  margin: 4px 0 12px 0;
 }
 
 .hub-card-title {
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.01em;
   text-transform: uppercase;
-  margin-bottom: 8px;
-  line-height: 1.3;
+  margin-bottom: 6px;
+  line-height: 1.35;
 }
 
 .hub-card-desc {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.78);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.62);
   line-height: 1.55;
-  font-weight: 450;
+  font-weight: 400;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.hub-card-footer {
+/* Bottom Spec & Segment Bars Panel (Matching Reference Image) */
+.hub-card-spec-panel {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.hub-spec-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-}
-
-.hub-card-category {
-  font-size: 10.5px;
-  color: var(--card-color, #10b981);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  padding: 4px 9px;
-  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: 'JetBrains Mono', monospace, sans-serif;
 }
 
-.hub-card-cta {
-  font-size: 12px;
-  font-weight: 800;
-  color: #ffffff;
+.hub-spec-bars {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: all 0.22s ease;
+  gap: 3.5px;
 }
 
-.hub-card-cta svg {
-  width: 13px !important;
-  height: 13px !important;
-  max-width: 13px !important;
-  max-height: 13px !important;
-  transition: transform 0.2s ease;
+.hub-spec-bars .bar {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
 }
 
-.hub-card:hover .hub-card-cta {
-  background: var(--card-color, #10b981);
-  color: #031214;
-  border-color: var(--card-color, #10b981);
-  box-shadow: 0 0 14px var(--card-glow, rgba(0, 203, 169, 0.4));
+.hub-spec-bars .bar.on {
+  background: var(--card-color, #38bdf8);
+  box-shadow: 0 0 6px var(--card-color, #38bdf8);
 }
 
-.hub-card:hover .hub-card-cta svg {
-  transform: translateX(3px);
+.hub-spec-category {
+  color: var(--card-color, #38bdf8);
+  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
 }
 
 .hub-footer {
