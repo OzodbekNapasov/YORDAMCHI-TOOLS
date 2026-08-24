@@ -83,6 +83,7 @@ const ATLAS = {
       category: 'Moliya & Hujjatlar',
       color: '#10b981',
       glow: 'rgba(16, 185, 129, 0.45)',
+      hideSpec: true,
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`
     },
     {
@@ -93,6 +94,7 @@ const ATLAS = {
       category: 'O\'quv Bo\'limi',
       color: '#0ea5e9',
       glow: 'rgba(14, 165, 233, 0.45)',
+      hideSpec: true,
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`
     },
     {
@@ -136,28 +138,8 @@ const ATLAS = {
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`
     },
     {
-      id: 'dashboard',
-      num: '7',
-      title: 'BOSHQARUV PANEL',
-      subtitle: 'Telegram bot faoliyati, foydalanuvchilar va guruhlar markaziy nazorati',
-      category: 'Boshqaruv',
-      color: '#06b6d4',
-      glow: 'rgba(6, 182, 212, 0.45)',
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`
-    },
-    {
-      id: 'analytics',
-      num: '8',
-      title: 'STATISTIKA & TAHLIL',
-      subtitle: 'Barcha xizmatlar bo\'yicha dinamik grafiklar, konversiya va audit hisobotlari',
-      category: 'Monitoring',
-      color: '#f59e0b',
-      glow: 'rgba(245, 158, 11, 0.45)',
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`
-    },
-    {
       id: 'pc_control',
-      num: '9',
+      num: '7',
       title: 'KOMPYUTER BOSHQARUVI',
       subtitle: 'Windows monitoring, ko\'p monitorli skrinshot, veb-kamera, Sunshine va quvvat',
       category: 'Masofaviy Boshqaruv',
@@ -167,7 +149,7 @@ const ATLAS = {
     },
     {
       id: 'ai_chat',
-      num: '10',
+      num: '8',
       title: 'AI PC AGENT CHAT',
       subtitle: 'Kompyuterni boshqaruvchi o\'zbek tilidagi aqlli AI suhbatdosh va assistent',
       category: 'Sun\'iy Intellekt',
@@ -177,7 +159,7 @@ const ATLAS = {
     },
     {
       id: 'mtf_converter',
-      num: '11',
+      num: '9',
       title: 'MTF & TEST GENERATOR',
       subtitle: 'MyTestX (.mtf / .xml) testlarini 2-ustunli PDF kitobcha, DOCX va online testga o‘girish',
       category: 'O\'quv & Testlar',
@@ -728,6 +710,7 @@ const ATLAS = {
                 <div class="hub-card-desc">${s.subtitle}</div>
               </div>
 
+              ${!s.hideSpec ? `
               <div class="hub-card-spec-panel">
                 <div class="hub-spec-row">
                   <span class="hub-spec-label">SPEED</span>
@@ -746,14 +729,14 @@ const ATLAS = {
                     <span class="bar on"></span>
                     <span class="bar on"></span>
                     <span class="bar on"></span>
-                    <span class="bar ${['contracts', 'ai_chat', 'pc_control', 'analytics'].includes(s.id) ? 'on' : ''}"></span>
+                    <span class="bar ${['ai_chat', 'pc_control'].includes(s.id) ? 'on' : ''}"></span>
                   </div>
                 </div>
                 <div class="hub-spec-row">
                   <span class="hub-spec-label">CATEGORY</span>
                   <span class="hub-spec-category">${s.category}</span>
                 </div>
-              </div>
+              </div>` : ''}
             </div>
           `).join('')}
         </div>
