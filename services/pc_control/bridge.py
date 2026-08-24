@@ -511,10 +511,9 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
                 "questions_count": res.get("questions_count", 0),
                 "pdf_url": pdf_url,
                 "docx_url": docx_url,
-                "pdf_base64": f"data:application/pdf;base64,{pdf_b64}" if pdf_b64 else None,
-                "docx_base64": f"data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_b64}" if docx_b64 else None,
                 "questions_summary": res.get("questions_summary", [])
             }
+
 
 
         elif action == "list_local_tests":
