@@ -34,6 +34,7 @@ def get_pc_control_keyboard():
     btn_power = KeyboardButton("⚡ Quvvat Boshqaruvi")
     btn_media = KeyboardButton("🔊 Ovoz & Yorqinlik")
     btn_clean = KeyboardButton("🧹 Kesh & Korzina Tozalash")
+    btn_sunshine = KeyboardButton("☀️ Sunshine / Moonlight PIN")
     btn_ai = KeyboardButton("🧠 AI Yordamchi (PC Agent)")
     btn_back = KeyboardButton("🔙 Asosiy menyuga qaytish")
 
@@ -41,7 +42,8 @@ def get_pc_control_keyboard():
     markup.add(btn_cam, btn_files)
     markup.add(btn_apps, btn_cmd)
     markup.add(btn_power, btn_media)
-    markup.add(btn_clean, btn_ai)
+    markup.add(btn_clean, btn_sunshine)
+    markup.add(btn_ai)
     markup.add(btn_back)
     return markup
 

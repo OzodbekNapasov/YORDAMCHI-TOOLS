@@ -2885,5 +2885,23 @@ def api_pc_ai():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@atlas_api.route("/pc/sunshine", methods=["POST"])
+@admin_required
+def api_pc_sunshine():
+    """Sunshine / Moonlight PIN Pairing"""
+    try:
+        from services.pc_control.system_tools import pair_sunshine_pin
+        data = request.get_json(silent=True) or {}
+        pin = str(data.get("pin", "")).strip()
+        if not pin:
+            return jsonify({"success": False, "error": "PIN kiritilmadi."}), 400
+
+        res = pair_sunshine_pin(pin)
+        return jsonify({"success": True, "message": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 
 

@@ -7674,15 +7674,29 @@ const ATLAS = {
           </div>
         </div>
 
+        <!-- INFO BANNER -->
+        <div style="background:rgba(0,242,254,0.05);border:1px solid rgba(0,242,254,0.2);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;color:rgba(255,255,255,0.85);display:flex;align-items:center;gap:8px;">
+            <span style="font-size:16px;">💡</span>
+            <span><b>Kompyuterni bevosita boshqarish:</b> Kompyuteringizda bot yoki lokal server ishlab turganda barcha amallar (skrinshot, veb-kamera, dasturlar) 100% real vaqtda bajariladi.</span>
+          </div>
+          <button class="btn-secondary btn-sm" id="btn-pc-sunshine-pin" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b;font-weight:700;padding:6px 14px;border-radius:8px;cursor:pointer;">
+            ☀️ <span>Sunshine PIN Ulanish</span>
+          </button>
+        </div>
+
         <!-- QUICK CONTROL ACTIONS GRID -->
         <div style="margin-bottom:24px;">
           <h3 style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:12px;">⚡ Tezkor Boshqaruv Buyruqlari</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;">
             <button class="btn-secondary" id="btn-pc-take-screenshot" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(0,242,254,0.08);border:1px solid rgba(0,242,254,0.3);color:#00f2fe;font-weight:700;border-radius:10px;cursor:pointer;">
               📸 <span>Skrinshot Olish</span>
             </button>
             <button class="btn-secondary" id="btn-pc-take-webcam" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.3);color:#ec4899;font-weight:700;border-radius:10px;cursor:pointer;">
               📷 <span>Veb-kamera Surat</span>
+            </button>
+            <button class="btn-secondary" id="btn-pc-sunshine-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-weight:700;border-radius:10px;cursor:pointer;">
+              ☀️ <span>Sunshine / Moonlight</span>
             </button>
             <button class="btn-secondary" id="btn-pc-show-desktop" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;font-weight:700;border-radius:10px;cursor:pointer;">
               🖥 <span>Ish Stoli (Win+D)</span>
@@ -7694,7 +7708,7 @@ const ATLAS = {
               🗑 <span>Korzinani Tozalash</span>
             </button>
             <button class="btn-secondary" id="btn-pc-power-menu" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-weight:700;border-radius:10px;cursor:pointer;">
-              ⚡ <span>Quvvat (O'chirish/Restart)</span>
+              ⚡ <span>Quvvat Menyusi</span>
             </button>
           </div>
         </div>
@@ -7827,6 +7841,59 @@ C:\\Users\\user> Tayyor.
       await this.api('/api/pc/media', 'POST', { action: 'desktop' });
       this.toast('Ish stoli ko‘rsatildi (Win+D)', 'success');
     });
+
+    // Sunshine PIN Pairing Modal
+    const openSunshineModal = () => {
+      this.modal({
+        title: '☀️ Sunshine / Moonlight PIN Ulanish',
+        maxWidth: '480px',
+        contentHtml: `
+          <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">
+            Moonlight ilovasida chiqqan <b>4 xonali PIN kodni</b> kiriting. Bot yoki veb panel uni kompyuteringizdagi Sunshine serveriga avtomatik kiritadi va ulaydi:
+          </p>
+          <form id="form-sunshine-pin">
+            <div class="form-group" style="margin-bottom:16px;">
+              <input type="text" id="input-sunshine-pin" class="input-control" placeholder="Masalan: 1234" maxlength="4" style="font-size:20px;text-align:center;letter-spacing:6px;font-weight:800;color:#f59e0b;" required autofocus>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+              <button type="submit" class="btn-primary" id="btn-submit-sunshine-pin" style="background:#f59e0b;color:#000;font-weight:700;">
+                ☀️ <span>PIN Ulanish</span>
+              </button>
+            </div>
+          </form>
+        `
+      });
+
+      document.getElementById('form-sunshine-pin')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pin = document.getElementById('input-sunshine-pin').value.trim();
+        if (!pin || pin.length !== 4) {
+          this.toast('4 xonali PIN kod kiriting', 'error');
+          return;
+        }
+        const btn = document.getElementById('btn-submit-sunshine-pin');
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = `<span class="spinner-sm"></span> Ulanmoqda...`;
+        }
+        const res = await this.api('/api/pc/sunshine', 'POST', { pin });
+        this.closeModal();
+        if (res && res.success) {
+          this.toast('Sunshine PIN kodi yuborildi!', 'success');
+          this.modal({
+            title: '☀️ Sunshine Natijasi',
+            maxWidth: '500px',
+            contentHtml: `<div style="font-size:13px;line-height:1.6;color:#fff;">${res.message}</div>`
+          });
+        } else {
+          this.toast((res && res.error) || 'Sunshine ulanishda xatolik', 'error');
+        }
+      });
+    };
+
+    document.getElementById('btn-pc-sunshine-pin')?.addEventListener('click', openSunshineModal);
+    document.getElementById('btn-pc-sunshine-btn')?.addEventListener('click', openSunshineModal);
 
     // Cleanup Temp
     document.getElementById('btn-pc-clean-temp')?.addEventListener('click', async () => {

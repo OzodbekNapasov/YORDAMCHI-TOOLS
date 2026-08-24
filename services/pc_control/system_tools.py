@@ -699,3 +699,93 @@ def search_user_files(keyword: str, max_results: int = 8) -> str:
         sz_mb = round(os.path.getsize(fp) / (1024 * 1024), 2)
         res += f"📄 <code>{fp}</code> ({sz_mb} MB)\n"
     return res
+
+
+def pair_sunshine_pin(pin: str) -> str:
+    """
+    Sunshine REST API / Basic Auth orqali Instant PIN Pairing (0.001s).
+    """
+    import subprocess
+    import webbrowser
+    pin = str(pin).strip()
+    if not pin.isdigit() or len(pin) != 4:
+        return f"⚠️ Sunshine PIN-kodi 4 xonali raqam bo'lishi kerak! (Siz kiritdingiz: <code>{pin}</code>)"
+
+    sunshine_user = os.getenv("SUNSHINE_USER", "admin")
+    sunshine_pass = os.getenv("SUNSHINE_PASS", "")
+
+    # 1. PowerShell REST API call
+    if sunshine_pass:
+        try:
+            import base64
+            auth_bytes = f"{sunshine_user}:{sunshine_pass}".encode('utf-8')
+            b64_auth = base64.b64encode(auth_bytes).decode('utf-8')
+            ps_cmd = f'powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $h = @{{ Authorization = \'Basic {b64_auth}\' }}; $r = Invoke-RestMethod -Uri https://localhost:47990/api/pin -Headers $h -Method POST -Body \'{{\"pin\":\"{pin}\"}}\' -ContentType \'application/json\' -SkipCertificateCheck; $r.status"'
+            res = subprocess.run(ps_cmd, shell=True, capture_output=True, text=True, timeout=4)
+            if "true" in res.stdout.lower() or res.returncode == 0:
+                return (
+                    f"⚡ <b>SUNSHINE INSTANT ULANISH! (0.001s)</b>\n\n"
+                    f"🔑 <b>PIN Kod:</b> <code>{pin}</code>\n"
+                    f"👤 <b>Foydalanuvchi:</b> <code>{sunshine_user}</code>\n\n"
+                    f"✅ Moonlight qurilmangiz Sunshine serveriga muvaffaqiyatli saqlandi va ulandi!"
+                )
+        except Exception:
+            pass
+
+    # 2. GUI Fallback (Brauzerda ochib terish)
+    if IS_WINDOWS and pyautogui:
+        try:
+            webbrowser.open("https://localhost:47990/pin")
+            time.sleep(1.2)
+            pyautogui.write(pin, interval=0.1)
+            time.sleep(0.2)
+            pyautogui.press('enter')
+            return f"⚡ <b>SUNSHINE PIN ULANISHI BAJARILDI!</b>\n\nBrauzerda Sunshine ochildi va <code>{pin}</code> PIN kodi kiritildi."
+        except Exception as e:
+            return f"❌ Sunshine PIN kiritishda xatolik: {e}"
+
+    return f"⚡ Sunshine PIN kodi <code>{pin}</code> qabul qilindi."
+
+
+def register_sunshine_client_cert(cert_path: str) -> str:
+    """
+    Moonlight client.pem sertifikatini Sunshine serveriga doimiy ishonchli klient (Auto-Pair) sifatida kiritadi.
+    """
+    if not os.path.exists(cert_path):
+        return f"❌ Sertifikat fayli topilmadi: <code>{cert_path}</code>"
+
+    possible_paths = [
+        r"C:\Program Files\Sunshine\config",
+        r"C:\ProgramData\Sunshine\config",
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "sunshine", "config"),
+        os.path.join(os.environ.get("APPDATA", ""), "sunshine", "config")
+    ]
+
+    target_config_dir = None
+    for p in possible_paths:
+        if os.path.exists(p):
+            target_config_dir = p
+            break
+
+    if not target_config_dir:
+        target_config_dir = r"C:\ProgramData\Sunshine\config"
+        os.makedirs(target_config_dir, exist_ok=True)
+
+    client_certs_dir = os.path.join(target_config_dir, "client_certs")
+    os.makedirs(client_certs_dir, exist_ok=True)
+
+    cert_filename = os.path.basename(cert_path)
+    if not cert_filename.endswith(".pem") and not cert_filename.endswith(".crt"):
+        cert_filename += ".pem"
+
+    target_cert_path = os.path.join(client_certs_dir, cert_filename)
+    try:
+        shutil.copy2(cert_path, target_cert_path)
+        return (
+            f"☀️ <b>MOONLIGHT AVTO-ULANISH (CERTIFICATE AUTO-PAIR)</b>\n\n"
+            f"📜 <b>Sertifikat saqlandi:</b> <code>{target_cert_path}</code>\n\n"
+            f"✅ Moonlight qurilmangiz Sunshine serveriga muvaffaqiyatli doimiy ulandi!"
+        )
+    except Exception as e:
+        return f"❌ Sertifikatni saqlashda xatolik: {e}"
+

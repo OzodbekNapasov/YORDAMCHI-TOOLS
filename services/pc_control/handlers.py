@@ -21,6 +21,8 @@ from .system_tools import (
     set_mute,
     list_directory_info,
     search_user_files,
+    pair_sunshine_pin,
+    register_sunshine_client_cert,
     is_system_compatible
 )
 from .keyboards import (
@@ -352,7 +354,41 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
         res = search_user_files(kw)
         bot.edit_message_text(res, message.chat.id, load_msg.message_id, parse_mode="HTML")
 
-    # 18. /ai <prompt>
+    # 18. Sunshine / Moonlight PIN Ulanish
+    @bot.message_handler(func=lambda msg: msg.text == "☀️ Sunshine / Moonlight PIN")
+    def handle_sunshine_menu_prompt(message: Message):
+        if not is_authorized_admin(message.from_user.id):
+            return
+
+        text = (
+            "☀️ <b>SUNSHINE / MOONLIGHT PIN ULANISH</b>\n\n"
+            "Moonlight ilovasida chiqqan 4 xonali PIN kodni quyidagicha yuboring:\n"
+            "👉 <code>/sunshine &lt;4_xonali_pin&gt;</code>\n\n"
+            "<b>Misol:</b> <code>/sunshine 1234</code>\n\n"
+            "<i>Bot ushbu PIN kodni kompyuteringizdagi Sunshine serveriga lahzada kiritib beradi!</i>"
+        )
+        bot.send_message(message.chat.id, text, parse_mode="HTML")
+
+    @bot.message_handler(commands=["sunshine"])
+    def handle_sunshine_command(message: Message):
+        if not is_authorized_admin(message.from_user.id):
+            return
+
+        parts = message.text.split(maxsplit=1)
+        if len(parts) < 2 or not parts[1].strip():
+            bot.send_message(
+                message.chat.id,
+                "⚠️ <b>Ishlatish:</b> <code>/sunshine &lt;4_xonali_pin&gt;</code>\nMasalan: <code>/sunshine 1234</code>",
+                parse_mode="HTML"
+            )
+            return
+
+        pin = parts[1].strip()
+        load_msg = bot.send_message(message.chat.id, f"⚡ <code>{pin}</code> PIN kodi Sunshine serveriga kiritilmoqda...", parse_mode="HTML")
+        res = pair_sunshine_pin(pin)
+        bot.edit_message_text(res, message.chat.id, load_msg.message_id, parse_mode="HTML")
+
+    # 19. /ai <prompt>
     @bot.message_handler(commands=["ai"])
     def handle_ai_command(message: Message):
         if not is_authorized_admin(message.from_user.id):
