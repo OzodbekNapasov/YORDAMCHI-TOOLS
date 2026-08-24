@@ -8611,8 +8611,9 @@ const ATLAS = {
         const allInCatSelected = filteredFiles.every(f => selectedLocalPaths.has(f.path));
 
         return `
-          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;flex-shrink:0;">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.06);">
+
               <div style="display:flex;align-items:center;gap:8px;">
                 <input type="checkbox" data-cat-idx="${catIdx}" class="mtf-cat-select" style="width:16px;height:16px;accent-color:#38bdf8;" ${allInCatSelected ? 'checked' : ''}>
                 <span style="font-size:13px;font-weight:700;color:#38bdf8;">📁 ${cat.folder}</span>
@@ -9017,6 +9018,14 @@ const ATLAS = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => ATLAS.init());
+window.ATLAS = ATLAS;
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => ATLAS.init());
+} else {
+  ATLAS.init();
+}
+
+
 
 
