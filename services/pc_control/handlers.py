@@ -88,7 +88,25 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
             return
 
         load_msg = bot.send_message(message.chat.id, "⏳ <i>Tizim ma'lumotlari yig'ilmoqda...</i>", parse_mode="HTML")
-        status_info = get_system_status()
+        if not is_system_compatible():
+            from .bridge import dispatch_bridge_command
+            res = dispatch_bridge_command("status", {}, timeout=8.0)
+            if res.get("success") and res.get("data"):
+                d = res["data"]
+                status_info = (
+                    f"📊 <b>KOMPYUTER MONITORINGI (REAL-TIME)</b>\n\n"
+                    f"🖥️ <b>Host:</b> <code>{d.get('hostname', 'Windows PC')}</code>\n"
+                    f"🟢 <b>CPU Yuklanishi:</b> <code>{d.get('cpu_percent', 0)}%</code> ({d.get('cpu_cores', 4)} ta yadro)\n"
+                    f"🧠 <b>RAM Xotira:</b> <code>{d.get('ram_percent', 0)}%</code> ({d.get('ram_used_gb', 0)}/{d.get('ram_total_gb', 0)} GB)\n"
+                    f"💽 <b>Asosiy Disk (C:):</b> <code>{d.get('disks', [{}])[0].get('percent', 0)}%</code>\n"
+                    f"⏱ <b>Uptime:</b> <code>{d.get('uptime_str', '3 soat')}</code>\n"
+                    f"🔌 <b>Quvvat:</b> {d.get('battery_status', 'Stasionar')}\n\n"
+                    f"<i>✅ Kompyuter onlayn va bog'langan!</i>"
+                )
+            else:
+                status_info = "⚠️ Kompyuterdan javob kelmadi (Bridge offline). Iltimos, kompyuteringizda bridge ishlayotganini tekshiring."
+        else:
+            status_info = get_system_status()
         bot.edit_message_text(status_info, message.chat.id, load_msg.message_id, parse_mode="HTML")
 
     # 3. Skrinshot olish (Multi-monitor qo'llab-quvvatlanadi)
@@ -98,6 +116,41 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
             return
 
         load_msg = bot.send_message(message.chat.id, "📸 <i>Ekran tasviri olinmoqda...</i>", parse_mode="HTML")
+
+        # Agar Vercel muhitida ishlayotgan bo'lsa - Supabase Bridge orqali kompyuterdan olish
+        if not is_system_compatible():
+            from .bridge import dispatch_bridge_command
+            res = dispatch_bridge_command("screenshot", {}, timeout=20.0)
+            if res.get("success") and res.get("screenshots"):
+                for s in res["screenshots"]:
+                    raw_b64 = s.get("image_base64", "")
+                    if "," in raw_b64:
+                        raw_b64 = raw_b64.split(",", 1)[1]
+                    import base64
+                    b = base64.b64decode(raw_b64)
+                    bio = io.BytesIO(b)
+                    bio.name = "screenshot.png"
+                    bot.send_photo(message.chat.id, bio, caption=f"🖥️ <b>{s.get('name', 'Monitor')}</b>", parse_mode="HTML")
+                try: bot.delete_message(message.chat.id, load_msg.message_id)
+                except Exception: pass
+                return
+            elif res.get("success") and res.get("image_base64"):
+                raw_b64 = res["image_base64"]
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                import base64
+                b = base64.b64decode(raw_b64)
+                bio = io.BytesIO(b)
+                bio.name = "screenshot.png"
+                bot.send_photo(message.chat.id, bio, caption="🖼 <b>Kompyuter ekran tasviri</b>", parse_mode="HTML")
+                try: bot.delete_message(message.chat.id, load_msg.message_id)
+                except Exception: pass
+                return
+            else:
+                err_m = res.get("error") or res.get("message") or "Kompyuter oflayn (Bridge ulanmagan)."
+                bot.edit_message_text(f"❌ Screenshot olishda xatolik:\n{err_m}", message.chat.id, load_msg.message_id)
+                return
+
         temp_dir = tempfile.gettempdir()
         mons = get_monitors_list()
 
@@ -160,6 +213,26 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
             return
 
         load_msg = bot.send_message(message.chat.id, "📷 <i>Veb-kamera surati olinmoqda...</i>", parse_mode="HTML")
+
+        if not is_system_compatible():
+            from .bridge import dispatch_bridge_command
+            res = dispatch_bridge_command("webcam", {}, timeout=15.0)
+            if res.get("success") and res.get("image_base64"):
+                raw_b64 = res["image_base64"]
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                import base64
+                b = base64.b64decode(raw_b64)
+                bio = io.BytesIO(b)
+                bio.name = "webcam.jpg"
+                bot.send_photo(message.chat.id, bio, caption="📷 <b>Veb-kamera surati</b>", parse_mode="HTML")
+                try: bot.delete_message(message.chat.id, load_msg.message_id)
+                except Exception: pass
+                return
+            else:
+                bot.edit_message_text(f"❌ Veb-kamera tasvirini olishda xatolik:\n{res.get('error') or res.get('message') or 'Kompyuter oflayn'}", message.chat.id, load_msg.message_id)
+                return
+
         temp_dir = tempfile.gettempdir()
         filepath = os.path.join(temp_dir, f"webcam_{int(message.date)}.jpg")
 
@@ -199,6 +272,21 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
             return
 
         load_msg = bot.send_message(message.chat.id, "🔄 <i>Dasturlar ro'yxati olinmoqda...</i>", parse_mode="HTML")
+
+        if not is_system_compatible():
+            from .bridge import dispatch_bridge_command
+            res = dispatch_bridge_command("apps", {}, timeout=8.0)
+            if res.get("success") and res.get("apps"):
+                apps = res["apps"]
+                txt = "🎮 <b>FAOL DASTURLAR (TOP RAM):</b>\n\n"
+                for a in apps[:15]:
+                    txt += f"▫️ <b>{a.get('name')}</b> (PID: <code>{a.get('pid')}</code>) — <code>{a.get('memory_mb')} MB</code>\n"
+                txt += "\n<i>To'xtatish uchun: /kill &lt;PID yoki Nom&gt;</i>"
+                bot.edit_message_text(txt, message.chat.id, load_msg.message_id, parse_mode="HTML")
+            else:
+                bot.edit_message_text("⚠️ Dasturlar ro'yxatini olib bo'lmadi (Bridge offline).", message.chat.id, load_msg.message_id, parse_mode="HTML")
+            return
+
         apps_info = get_running_apps()
         bot.edit_message_text(apps_info, message.chat.id, load_msg.message_id, parse_mode="HTML")
 
@@ -421,6 +509,14 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
 
         pin = parts[1].strip()
         load_msg = bot.send_message(message.chat.id, f"⚡ <code>{pin}</code> PIN kodi Sunshine serveriga kiritilmoqda...", parse_mode="HTML")
+
+        if not is_system_compatible():
+            from .bridge import dispatch_bridge_command
+            res = dispatch_bridge_command("sunshine", {"pin": pin}, timeout=8.0)
+            msg_txt = res.get("message") or res.get("error") or "Sunshine buyrug'i yuborildi."
+            bot.edit_message_text(msg_txt, message.chat.id, load_msg.message_id, parse_mode="HTML")
+            return
+
         res = pair_sunshine_pin(pin)
         bot.edit_message_text(res, message.chat.id, load_msg.message_id, parse_mode="HTML")
 
@@ -432,6 +528,13 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
 
         parts = message.text.split(maxsplit=1)
         pwd = parts[1].strip() if len(parts) > 1 else None
+
+        if not is_system_compatible():
+            from .bridge import dispatch_bridge_command
+            res = dispatch_bridge_command("unlock", {"password": pwd}, timeout=8.0)
+            bot.send_message(message.chat.id, res.get("message") or res.get("error") or "Buyruq yuborildi.", parse_mode="HTML")
+            return
+
         res = wake_and_unlock_pc(pwd)
         bot.send_message(message.chat.id, res, parse_mode="HTML")
 

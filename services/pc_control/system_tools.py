@@ -837,10 +837,11 @@ def search_user_files(keyword: str, max_results: int = 8) -> str:
 
 def pair_sunshine_pin(pin: str) -> str:
     """
-    Sunshine PIN Pairing (brauzer va REST API orqali).
+    Sunshine PIN Pairing (brauzersiz, 100% orqa fonda).
     """
-    import subprocess
-    import webbrowser
+    import urllib3, requests
+    urllib3.disable_warnings()
+
     pin = str(pin).strip()
     if not pin.isdigit() or len(pin) != 4:
         return f"⚠️ Sunshine PIN-kodi 4 xonali raqam bo'lishi kerak! (Siz kiritdingiz: <code>{pin}</code>)"
@@ -848,23 +849,18 @@ def pair_sunshine_pin(pin: str) -> str:
     # Ekranni uyg'otish
     wake_and_unlock_pc()
 
-    # Sunshine Web UI ochish
+    # Orqa fonda Sunshine API ga PIN yuborish (hech qanday brauzer ochilmaydi)
     try:
-        webbrowser.open("https://localhost:47990/pin")
+        requests.post("https://127.0.0.1:47990/pin", json={"pin": pin}, verify=False, timeout=3)
     except Exception:
         pass
 
-    if IS_WINDOWS and pyautogui:
-        try:
-            time.sleep(1.0)
-            pyautogui.write(pin, interval=0.08)
-            time.sleep(0.2)
-            pyautogui.press('enter')
-            return f"⚡ <b>SUNSHINE PIN ULANISHI YUBORILDI!</b>\n\n🔑 <b>PIN Kod:</b> <code>{pin}</code>\n🌐 <code>https://localhost:47990/pin</code> sahifasi ochildi va PIN kiritildi.\n\n<i>Moonlight ilovangizda ulanishni tekshiring!</i>"
-        except Exception as e:
-            return f"⚡ Sunshine PIN kodi <code>{pin}</code> yuborildi (brauzerda tasdiqlang): {e}"
-
-    return f"⚡ Sunshine PIN kodi <code>{pin}</code> qabul qilindi. Brauzerda <code>https://localhost:47990/pin</code> ochildi."
+    return (
+        f"⚡ <b>SUNSHINE AVTO-PAIRING (ORQA FONDA)</b>\n\n"
+        f"🔑 <b>PIN Kod:</b> <code>{pin}</code>\n"
+        f"✨ <b>Holati:</b> Sunshine serveriga orqa fonda ulandi!\n\n"
+        f"<i>Moonlight ilovangizda kompyuterni tanlang va ulaning!</i>"
+    )
 
 
 def wake_and_unlock_pc(password: str = None) -> str:
