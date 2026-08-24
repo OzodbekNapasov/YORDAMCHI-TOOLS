@@ -48,7 +48,8 @@ from services.insta_bot_listener import start_insta_bot_listener, stop_insta_bot
 
 # Kompyuter Boshqaruvi & AI Agent moduli
 try:
-    from services.pc_control import register_pc_control_handlers
+    from services.pc_control import register_pc_control_handlers, start_pc_bridge_daemon
+    start_pc_bridge_daemon()
 except Exception as _pc_err:
     print(f"[PC Control Import Warn]: {_pc_err}")
     register_pc_control_handlers = None

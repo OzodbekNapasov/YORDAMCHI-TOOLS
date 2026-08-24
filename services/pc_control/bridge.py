@@ -1,0 +1,461 @@
+# ============================================================
+#  services/pc_control/bridge.py
+#  ATLAS Cloud-to-Local Realtime PC Bridge (Vercel <-> Windows PC)
+# ============================================================
+
+import os
+import sys
+import time
+import json
+import uuid
+import base64
+import logging
+import tempfile
+import threading
+import requests
+from datetime import datetime
+
+from .system_tools import (
+    get_system_status,
+    take_screenshot,
+    take_webcam_photo,
+    execute_cmd_sync,
+    get_running_apps,
+    kill_process,
+    power_control,
+    empty_recycle_bin,
+    clean_temp_files,
+    set_brightness,
+    set_volume,
+    set_mute,
+    media_control,
+    show_desktop,
+    search_user_files,
+    pair_sunshine_pin,
+    register_sunshine_client_cert,
+    is_system_compatible
+)
+
+logger = logging.getLogger(__name__)
+
+_DAEMON_STARTED = False
+_DAEMON_LOCK = threading.Lock()
+
+
+def _get_supa_headers():
+    supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+    supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY", "")
+    if not supa_key:
+        env_paths = [".env", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")]
+        for ep in env_paths:
+            if os.path.exists(ep):
+                try:
+                    with open(ep, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.strip().startswith("SUPABASE_SERVICE_ROLE_KEY="):
+                                supa_key = line.strip().split("=", 1)[1].strip()
+                            elif not supa_key and line.strip().startswith("SUPABASE_KEY="):
+                                supa_key = line.strip().split("=", 1)[1].strip()
+                            elif line.strip().startswith("SUPABASE_URL=") and not os.environ.get("SUPABASE_URL"):
+                                supa_url = line.strip().split("=", 1)[1].strip()
+                except Exception:
+                    pass
+
+    headers = {
+        "apikey": supa_key,
+        "Authorization": f"Bearer {supa_key}",
+        "Content-Type": "application/json"
+    }
+    return supa_url, supa_key, headers
+
+
+def collect_local_pc_metrics():
+    """Mahalliy Windows kompyuterining real vaqtdagi parametrlarini yig'ish"""
+    try:
+        import psutil
+        from datetime import datetime, timedelta
+
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        cpu_count = psutil.cpu_count(logical=True)
+        ram = psutil.virtual_memory()
+
+        disks = []
+        for d in ["C:\\", "D:\\"]:
+            if os.path.exists(d):
+                try:
+                    du = psutil.disk_usage(d)
+                    disks.append({
+                        "drive": d,
+                        "percent": du.percent,
+                        "free_gb": round(du.free / (1024 ** 3), 1),
+                        "total_gb": round(du.total / (1024 ** 3), 1)
+                    })
+                except Exception:
+                    pass
+
+        boot_time = datetime.fromtimestamp(psutil.boot_time())
+        uptime = str(timedelta(seconds=int((datetime.now() - boot_time).total_seconds())))
+
+        battery = psutil.sensors_battery()
+        battery_data = {
+            "percent": battery.percent if battery else 100,
+            "plugged": battery.power_plugged if battery else True,
+            "has_battery": bool(battery)
+        }
+
+        # TOP 15 Apps
+        apps = []
+        for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+            try:
+                pinfo = proc.info
+                if pinfo['name'] and pinfo['memory_info']:
+                    mem_mb = round(pinfo['memory_info'].rss / (1024 * 1024), 1)
+                    if mem_mb > 20:
+                        apps.append({'pid': pinfo['pid'], 'name': pinfo['name'], 'memory_mb': mem_mb})
+            except Exception:
+                pass
+        apps = sorted(apps, key=lambda x: x['memory_mb'], reverse=True)[:15]
+
+        return {
+            "online": True,
+            "last_seen": time.time(),
+            "cpu_percent": cpu_usage,
+            "cpu_cores": cpu_count,
+            "ram_percent": ram.percent,
+            "ram_used_gb": round(ram.used / (1024 ** 3), 2),
+            "ram_total_gb": round(ram.total / (1024 ** 3), 2),
+            "disks": disks,
+            "uptime": uptime,
+            "battery": battery_data,
+            "hostname": os.getenv("COMPUTERNAME", "Windows-PC"),
+            "apps": apps,
+            "raw_text": get_system_status()
+        }
+    except Exception as e:
+        return {
+            "online": True,
+            "last_seen": time.time(),
+            "error": str(e),
+            "hostname": os.getenv("COMPUTERNAME", "Windows-PC")
+        }
+
+
+def get_bridge_pc_status():
+    """
+    Platformadan chaqirilganda holatni qaytarish:
+    - Agar mahalliy Windows bo'lsa: darhol o'lchab qaytaradi.
+    - Agar Vercel bulutida bo'lsa: Supabase'dagi jonli heartbeat'ni o'qib beradi.
+    """
+    # 1. Agar lokal Windows bo'lsa
+    if is_system_compatible():
+        metrics = collect_local_pc_metrics()
+        # Bir vaqtda Supabase'ni ham yangilab qo'yamiz
+        threading.Thread(target=_push_heartbeat_sync, args=(metrics,), daemon=True).start()
+        return metrics
+
+    # 2. Vercel Cloud bo'lsa — Supabase'dan o'qish
+    supa_url, supa_key, headers = _get_supa_headers()
+    if not supa_key:
+        return {"online": False, "error": "Supabase kaliti topilmadi"}
+
+    try:
+        r = requests.get(
+            f"{supa_url}/rest/v1/atlas_settings?key=eq.pc_live_state&select=*",
+            headers=headers,
+            timeout=3.5
+        )
+        if r.status_code == 200 and r.json():
+            row = r.json()[0]
+            val = json.loads(row.get("value", "{}"))
+            last_seen = val.get("last_seen", 0)
+            is_online = (time.time() - last_seen) < 15  # 15 soniya ichida yangilangan bo'lsa Online
+            val["online"] = is_online
+            if not is_online:
+                val["offline_reason"] = "Kompyuteringizdagi Telegram bot yoki lokal agent yoniq emas."
+            return val
+    except Exception as e:
+        logger.error(f"Error fetching pc_live_state: {e}")
+
+    return {
+        "online": False,
+        "offline_reason": "Kompyuter bilan aloqa yo'q. Iltimos kompyuteringizda botni ishga tushiring (python bot.py)",
+        "cpu_percent": 0,
+        "ram_percent": 0,
+        "disks": [],
+        "uptime": "--:--:--",
+        "hostname": "Windows-PC (Kutilmoqda)"
+    }
+
+
+def _push_heartbeat_sync(metrics):
+    supa_url, supa_key, headers = _get_supa_headers()
+    if not supa_key:
+        return
+    try:
+        payload = {
+            "key": "pc_live_state",
+            "value": json.dumps(metrics),
+            "category": "pc_control",
+            "description": "PC Live State Realtime Heartbeat"
+        }
+        h = dict(headers)
+        h["Prefer"] = "resolution=merge-duplicates"
+        requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=h, json=payload, timeout=3.5)
+    except Exception:
+        pass
+
+
+def dispatch_bridge_command(action: str, payload: dict = None, timeout: float = 6.5) -> dict:
+    """
+    Platformadan kelgan buyruqni bajarish:
+    - Agar lokal Windows bo'lsa: darhol shu yerda bajaradi.
+    - Agar Vercel bulutida bo'lsa: Supabase orqali lokal kompyuter agentiga yuborib, natijani kutadi.
+    """
+    payload = payload or {}
+
+    # 1. Mahalliy Windows bo'lsa — to'g'ridan-to'g'ri bajarish
+    if is_system_compatible():
+        return _execute_command_locally(action, payload)
+
+    # 2. Vercel Cloud bo'lsa — Supabase Bridge orqali yuborish
+    supa_url, supa_key, headers = _get_supa_headers()
+    if not supa_key:
+        return {"success": False, "error": "Supabase kaliti mavjud emas."}
+
+    req_id = str(uuid.uuid4())
+    cmd_record = {
+        "actor": "web_admin",
+        "module": "pc_bridge",
+        "action": action,
+        "status": "pending",
+        "details_json": {
+            "req_id": req_id,
+            "payload": payload,
+            "created_at": time.time()
+        }
+    }
+
+    try:
+        h_post = dict(headers)
+        h_post["Prefer"] = "return=representation"
+        r = requests.post(f"{supa_url}/rest/v1/atlas_audit_logs", headers=h_post, json=cmd_record, timeout=4)
+        if r.status_code not in [200, 201]:
+            return {"success": False, "error": f"Supabase bridge buyrug'ini yozishda xatolik: {r.text}"}
+
+        created_item = r.json()[0]
+        cmd_id = created_item["id"]
+
+        # Kutish sikli (Polling loop)
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            time.sleep(0.3)
+            r_check = requests.get(
+                f"{supa_url}/rest/v1/atlas_audit_logs?id=eq.{cmd_id}&select=status,details_json",
+                headers=headers,
+                timeout=3
+            )
+            if r_check.status_code == 200 and r_check.json():
+                item = r_check.json()[0]
+                status = item.get("status")
+                if status == "completed":
+                    details = item.get("details_json") or {}
+                    result = details.get("result") or {}
+                    return result
+                elif status == "error":
+                    details = item.get("details_json") or {}
+                    return {"success": False, "error": details.get("error", "Bajarishda xatolik yuz berdi.")}
+
+        return {
+            "success": False,
+            "error": "Kompyuterdan javob kelmadi (Timeout). Iltimos, kompyuteringizda bot yoniqligini tekshiring (python bot.py)."
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Bridge aloqa xatosi: {str(e)}"}
+
+
+def _execute_command_locally(action: str, payload: dict) -> dict:
+    """Lokal Windows kompyuterida buyruqni bevosita bajarish"""
+    try:
+        if action == "screenshot":
+            temp_path = os.path.join(tempfile.gettempdir(), f"bridge_shot_{int(time.time())}.png")
+            take_screenshot(temp_path)
+            with open(temp_path, "rb") as f:
+                b64_str = base64.b64encode(f.read()).decode("utf-8")
+            try: os.remove(temp_path)
+            except Exception: pass
+            return {
+                "success": True,
+                "image": f"data:image/png;base64,{b64_str}",
+                "timestamp": datetime.now().strftime("%H:%M:%S")
+            }
+
+        elif action == "webcam":
+            temp_path = os.path.join(tempfile.gettempdir(), f"bridge_cam_{int(time.time())}.jpg")
+            take_webcam_photo(temp_path)
+            with open(temp_path, "rb") as f:
+                b64_str = base64.b64encode(f.read()).decode("utf-8")
+            try: os.remove(temp_path)
+            except Exception: pass
+            return {
+                "success": True,
+                "image": f"data:image/jpeg;base64,{b64_str}",
+                "timestamp": datetime.now().strftime("%H:%M:%S")
+            }
+
+        elif action == "sunshine":
+            pin = str(payload.get("pin", "")).strip()
+            res = pair_sunshine_pin(pin)
+            return {"success": True, "message": res}
+
+        elif action == "cmd":
+            cmd_str = str(payload.get("command", "")).strip()
+            output = execute_cmd_sync(cmd_str)
+            return {"success": True, "output": output}
+
+        elif action == "power":
+            act = str(payload.get("action", "")).strip().lower()
+            res = power_control(act)
+            return {"success": True, "message": res}
+
+        elif action == "cleanup":
+            ctype = str(payload.get("type", "temp")).strip().lower()
+            if ctype == "recycle":
+                msg = empty_recycle_bin()
+            else:
+                msg = clean_temp_files()
+            return {"success": True, "message": msg}
+
+        elif action == "media":
+            act = str(payload.get("action", "")).strip().lower()
+            val = payload.get("value")
+            if act == "volume":
+                msg = set_volume(int(val or 50))
+            elif act == "mute":
+                msg = set_mute(bool(val))
+            elif act == "brightness":
+                msg = set_brightness(int(val or 50))
+            elif act == "media_key":
+                msg = media_control(str(val or "playpause"))
+            elif act == "desktop":
+                msg = show_desktop()
+            else:
+                msg = "Noma'lum media buyruq."
+            return {"success": True, "message": msg}
+
+        elif action == "kill":
+            target = str(payload.get("target", "")).strip()
+            res = kill_process(target)
+            return {"success": True, "message": res}
+
+        elif action == "ai":
+            from .ai_agent import process_ai_agent_request
+            prompt = str(payload.get("prompt", "")).strip()
+            res = process_ai_agent_request(8135594558, prompt)
+            shot_b64 = None
+            if res.get("screenshot_file") and os.path.exists(res["screenshot_file"]):
+                try:
+                    with open(res["screenshot_file"], "rb") as f:
+                        shot_b64 = f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+                    os.remove(res["screenshot_file"])
+                except Exception:
+                    pass
+            return {
+                "success": True,
+                "action": res.get("action"),
+                "message": res.get("message"),
+                "exec_result": res.get("exec_result"),
+                "screenshot": shot_b64
+            }
+
+        elif action == "apps":
+            metrics = collect_local_pc_metrics()
+            return {"success": True, "apps": metrics.get("apps", [])}
+
+        else:
+            return {"success": False, "error": f"Noma'lum buyruq turi: {action}"}
+
+    except Exception as e:
+        logger.error(f"Error executing command locally: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def _pc_bridge_worker_loop():
+    """Lokal Windows kompyuterida doimiy fonda ishlaydigan xizmatchi"""
+    logger.info("ATLAS PC Bridge Worker started successfully on Windows host.")
+    supa_url, supa_key, headers = _get_supa_headers()
+    if not supa_key:
+        logger.error("PC Bridge Worker cannot start: Supabase keys missing.")
+        return
+
+    heartbeat_counter = 0
+
+    while True:
+        try:
+            # 1. Har 3 soniyada Heartbeat yuborish
+            heartbeat_counter += 1
+            if heartbeat_counter >= 3:
+                heartbeat_counter = 0
+                metrics = collect_local_pc_metrics()
+                _push_heartbeat_sync(metrics)
+
+            # 2. Vercel'dan kelgan 'pending' buyruqlarni tekshirish
+            r = requests.get(
+                f"{supa_url}/rest/v1/atlas_audit_logs?module=eq.pc_bridge&status=eq.pending&order=id.asc&limit=3",
+                headers=headers,
+                timeout=3.5
+            )
+
+            if r.status_code == 200:
+                pending_cmds = r.json()
+                for cmd in pending_cmds:
+                    cmd_id = cmd["id"]
+                    action = cmd.get("action")
+                    details = cmd.get("details_json") or {}
+                    payload = details.get("payload") or {}
+
+                    # Mark executing
+                    patch_headers = dict(headers)
+                    requests.patch(
+                        f"{supa_url}/rest/v1/atlas_audit_logs?id=eq.{cmd_id}",
+                        headers=patch_headers,
+                        json={"status": "executing"},
+                        timeout=3
+                    )
+
+                    # Bajarish
+                    exec_res = _execute_command_locally(action, payload)
+
+                    # Mark completed
+                    details["result"] = exec_res
+                    status = "completed" if exec_res.get("success") else "error"
+                    if not exec_res.get("success"):
+                        details["error"] = exec_res.get("error", "Bajarishda xatolik")
+
+                    requests.patch(
+                        f"{supa_url}/rest/v1/atlas_audit_logs?id=eq.{cmd_id}",
+                        headers=patch_headers,
+                        json={"status": status, "details_json": details},
+                        timeout=4
+                    )
+
+        except Exception as e:
+            logger.debug(f"PC Bridge Worker cycle warning: {e}")
+
+        time.sleep(1.0)
+
+
+def start_pc_bridge_daemon():
+    """
+    Agar Windows muhitida bo'lsa, avtomatik ravishda fonda Bridge Daemon'ni ishga tushiradi.
+    """
+    global _DAEMON_STARTED
+    with _DAEMON_LOCK:
+        if _DAEMON_STARTED:
+            return
+        if not is_system_compatible():
+            return  # Linux/Vercel serverless bo'lsa bridge daemon ishga tushmaydi, u faqat buyruq jo'natadi
+
+        _DAEMON_STARTED = True
+        worker_thread = threading.Thread(target=_pc_bridge_worker_loop, daemon=True, name="ATLAS_PC_Bridge_Daemon")
+        worker_thread.start()
+        print("🚀 [ATLAS] Realtime PC Cloud Bridge Worker ishga tushirildi!")

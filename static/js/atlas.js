@@ -7619,7 +7619,7 @@ const ATLAS = {
             <div>
               <h2 style="margin:0 0 4px 0;font-size:20px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px;">
                 <span style="color:#00f2fe;">💻</span> Kompyuter Boshqaruvi & AI Agent
-                <span class="badge" style="background:rgba(0,242,254,0.15);color:#00f2fe;border:1px solid rgba(0,242,254,0.3);font-size:11px;">PC AGENT v2.3</span>
+                <span class="badge" id="pc-connection-badge" style="background:rgba(0,242,254,0.15);color:#00f2fe;border:1px solid rgba(0,242,254,0.3);font-size:11px;">PC AGENT v2.3</span>
               </h2>
               <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.6);">
                 Shaxsiy Windows kompyuteringizni masofadan to'liq boshqarish, monitoring qilish va AI agenti
@@ -8024,14 +8024,29 @@ C:\\Users\\user> Tayyor.
       const elUptime = document.getElementById('pc-val-uptime');
       const elBattery = document.getElementById('pc-val-battery');
       const elHost = document.getElementById('pc-val-host');
+      const badge = document.getElementById('pc-connection-badge');
 
-      if (elCpu) elCpu.innerText = `${d.cpu_percent}%`;
-      if (elCpuCores) elCpuCores.innerText = `${d.cpu_cores} ta yadro`;
-      if (elBarCpu) elBarCpu.style.width = `${Math.min(100, d.cpu_percent)}%`;
+      if (badge) {
+        if (d.online) {
+          badge.innerHTML = `🟢 ULANGAN (REALTIME ONLINE)`;
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          badge.style.color = '#10b981';
+          badge.style.borderColor = 'rgba(16,185,129,0.3)';
+        } else {
+          badge.innerHTML = `🟡 KUTILMOQDA (BOT YONIQMI?)`;
+          badge.style.background = 'rgba(245,158,11,0.15)';
+          badge.style.color = '#f59e0b';
+          badge.style.borderColor = 'rgba(245,158,11,0.3)';
+        }
+      }
 
-      if (elRam) elRam.innerText = `${d.ram_percent}%`;
-      if (elRamGb) elRamGb.innerText = `${d.ram_used_gb} / ${d.ram_total_gb} GB`;
-      if (elBarRam) elBarRam.style.width = `${Math.min(100, d.ram_percent)}%`;
+      if (elCpu) elCpu.innerText = `${d.cpu_percent || 0}%`;
+      if (elCpuCores) elCpuCores.innerText = `${d.cpu_cores || 4} ta yadro`;
+      if (elBarCpu) elBarCpu.style.width = `${Math.min(100, d.cpu_percent || 0)}%`;
+
+      if (elRam) elRam.innerText = `${d.ram_percent || 0}%`;
+      if (elRamGb) elRamGb.innerText = `${d.ram_used_gb || 0} / ${d.ram_total_gb || 0} GB`;
+      if (elBarRam) elBarRam.style.width = `${Math.min(100, d.ram_percent || 0)}%`;
 
       if (d.disks && d.disks.length > 0) {
         const cDisk = d.disks[0];
