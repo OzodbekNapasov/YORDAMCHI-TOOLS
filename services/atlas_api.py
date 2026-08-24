@@ -2913,6 +2913,7 @@ def api_mtf_job_status():
         return jsonify({"success": False, "error": "job_id yoki cmd_id kiritilmadi"}), 400
 
     try:
+        import requests
         from services.pc_control.bridge import _get_supa_headers
         supa_url, supa_key, headers = _get_supa_headers()
 
