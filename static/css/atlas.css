@@ -268,9 +268,7 @@ body {
   height: 48px;
   max-width: 48px;
   max-height: 48px;
-  fill: #ffffff;
-  margin-bottom: 8px;
-  filter: drop-shadow(0 4px 10px rgba(46, 229, 157, 0.4));
+  filter: drop-shadow(0 4px 14px rgba(56, 189, 248, 0.6));
 }
 .auth-logo-text {
   font-size: 20px;
