@@ -83,7 +83,6 @@ const ATLAS = {
       category: 'Moliya & Hujjatlar',
       color: '#10b981',
       glow: 'rgba(16, 185, 129, 0.45)',
-      hideSpec: true,
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`
     },
     {
@@ -94,7 +93,6 @@ const ATLAS = {
       category: 'O\'quv Bo\'limi',
       color: '#0ea5e9',
       glow: 'rgba(14, 165, 233, 0.45)',
-      hideSpec: true,
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`
     },
     {
@@ -709,34 +707,6 @@ const ATLAS = {
                 <div class="hub-card-title">${s.title}</div>
                 <div class="hub-card-desc">${s.subtitle}</div>
               </div>
-
-              ${!s.hideSpec ? `
-              <div class="hub-card-spec-panel">
-                <div class="hub-spec-row">
-                  <span class="hub-spec-label">SPEED</span>
-                  <div class="hub-spec-bars">
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                  </div>
-                </div>
-                <div class="hub-spec-row">
-                  <span class="hub-spec-label">INTELLIGENCE</span>
-                  <div class="hub-spec-bars">
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                    <span class="bar on"></span>
-                    <span class="bar ${['ai_chat', 'pc_control'].includes(s.id) ? 'on' : ''}"></span>
-                  </div>
-                </div>
-                <div class="hub-spec-row">
-                  <span class="hub-spec-label">CATEGORY</span>
-                  <span class="hub-spec-category">${s.category}</span>
-                </div>
-              </div>` : ''}
             </div>
           `).join('')}
         </div>
