@@ -308,8 +308,11 @@ def dispatch_bridge_command(action: str, payload: dict = None, timeout: float = 
 
 def _execute_command_locally(action: str, payload: dict) -> dict:
     """Lokal Windows kompyuterida buyruqni bevosita bajarish"""
+    action = (action or "").strip().lower()
+    logger.info(f"[_execute_command_locally] action='{action}'")
     try:
         if action == "screenshot":
+
             mon_param = payload.get("monitor")
             all_monitors = take_all_monitors_screenshots()
             primary_image = all_monitors[0]["image"] if all_monitors else ""
