@@ -1,0 +1,67 @@
+# =============================================
+# .vercelignore - Vercel deploy'ga yuklanmaydigan fayllar
+# =============================================
+
+# Ma'lumotlar bazalari (juda katta)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+atlas.db
+contracts.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Media fayllar
+*.mp4
+*.m4a
+*.webm
+*.mkv
+*.wav
+*.gif
+
+# Test va temp fayllar
+temp/
+tmp/
+scratch/
+saved_documents/*
+!saved_documents/.gitkeep
+
+# Rasmlar (faqat templates'dan tashqari)
+*.png
+!templates/*.png
+!templates/stamps/*
+
+# Excel fayllar
+*.xlsx
+*.xls
+
+# Test hujjatlar
+test_filled.docx
+test_long_cert.png
+test_perfect_cert.png
+test_render_final.png
+
+# Credentials (Vercel env vars orqali o'rnatiladi)
+.env
+.env.local
+.env*
+client_secrets.json
+youtube_token.json
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
