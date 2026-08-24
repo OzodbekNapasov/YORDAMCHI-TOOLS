@@ -171,6 +171,16 @@ const ATLAS = {
       color: '#a855f7',
       glow: 'rgba(168, 85, 247, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`
+    },
+    {
+      id: 'mtf_converter',
+      num: '11',
+      title: 'MTF & TEST GENERATOR',
+      subtitle: 'MyTestX (.mtf / .xml) testlarini 2-ustunli PDF kitobcha, DOCX va online testga o‘girish',
+      category: 'O\'quv & Testlar',
+      color: '#3b82f6',
+      glow: 'rgba(59, 130, 246, 0.45)',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`
     }
   ],
 
@@ -625,7 +635,9 @@ const ATLAS = {
         logs: 'Tizim Loglari',
         settings: 'Bot va Tizim Sozlamalari',
         modules: 'Modullar Boshqaruvi',
-        pc_control: 'Kompyuter Boshqaruvi & Gemini AI Agent'
+        pc_control: 'Kompyuter Boshqaruvi & Realtime Monitoring',
+        ai_chat: 'AI PC Agent Chat (Aqlli Assistent)',
+        mtf_converter: 'MTF & Test Generator (PDF / DOCX Konvertor)'
       };
       pageTitle.innerText = titles[route] || 'ATLAS Boshqaruv Markazi';
     }
@@ -645,6 +657,7 @@ const ATLAS = {
       case 'orders': this.loadOrders(viewport); break;
       case 'certificates': this.loadCertificates(viewport); break;
       case 'amaliyot': this.loadAmaliyot(viewport); break;
+      case 'mtf_converter': this.loadMtfConverter(viewport); break;
       case 'meta_ads': this.loadMetaAds(viewport); break;
       case 'instagram': this.loadInstagram(viewport); break;
       case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
@@ -939,6 +952,9 @@ const ATLAS = {
             </div>
             <div class="nav-item" data-route="orders">
               ${this.icons.clipboard} <span>Rasmiy Buyruqlar</span>
+            </div>
+            <div class="nav-item" data-route="mtf_converter">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> <span>MTF & Test PDF</span>
             </div>
 
             <div class="sidebar-group-title">Marketing & Reklama</div>
@@ -8366,8 +8382,321 @@ const ATLAS = {
     } else {
       this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
     }
+  },
+
+  // ============================================================
+  // MTF & TEST CONVERTER (MYTESTX -> PDF / DOCX)
+  // ============================================================
+  loadMtfConverter(viewport) {
+    viewport.innerHTML = `
+      <div style="max-width:1100px;margin:0 auto;padding-bottom:50px;">
+        <!-- HEADER -->
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+          <div>
+            <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px 0;display:flex;align-items:center;gap:10px;">
+              <span>🎓 MTF & Test Generator (PDF / DOCX)</span>
+              <span style="font-size:11px;font-weight:800;background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);padding:2px 10px;border-radius:20px;">MYTESTX CONVERTER</span>
+            </h2>
+            <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0;">
+              MyTestX (<code>.mtf</code> va <code>.xml</code>) testlarini yuqori sifatli 2-ustunli PDF kitobcha, Word (.docx) va online test formatlariga o'girish.
+            </p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-secondary btn-sm" id="btn-mtf-refresh" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;">
+              ${this.icons.refresh} <span>Yangilash</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:20px;margin-bottom:24px;">
+          <!-- UPLOAD & SETTINGS CARD -->
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;">
+            <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0 0 16px 0;display:flex;align-items:center;gap:8px;">
+              📁 <span>Test Faylini Yuklash</span>
+            </h3>
+
+            <!-- DRAG & DROP ZONE -->
+            <div id="mtf-drop-zone" style="border:2px dashed rgba(59,130,246,0.4);background:rgba(59,130,246,0.03);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:18px;">
+              <input type="file" id="mtf-file-input" accept=".mtf,.xml" style="display:none;">
+              <div style="font-size:36px;margin-bottom:10px;">📤</div>
+              <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:6px;" id="mtf-file-name-label">
+                MTF yoki XML faylni bu yerga tashlang yoki bosing
+              </div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);">
+                Faqat <code>.mtf</code> va <code>.xml</code> formatlari qo'llab-quvvatlanadi
+              </div>
+            </div>
+
+            <!-- OPTIONS FORM -->
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
+                  📄 PDF Tartibi (Layout):
+                </label>
+                <select id="mtf-opt-layout" class="input-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:10px;width:100%;">
+                  <option value="2col" selected>2-ustunli (Ixcham kitobcha — Qog'oz tejovchi, A4)</option>
+                  <option value="1col">1-ustunli (Keng format — Standart A4)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
+                  🔑 To'g'ri javoblar belgisi (*):
+                </label>
+                <select id="mtf-opt-answers" class="input-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:10px;width:100%;">
+                  <option value="true" selected>To'g'ri javoblarni yulduzcha (*) bilan belgilash</option>
+                  <option value="false">Faqat savollar (Javobsiz test — Imtihon uchun)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
+                  🏷 Fan yoki Test Sarlavhasi (Ixtiyoriy):
+                </label>
+                <input type="text" id="mtf-opt-title" class="input-control" placeholder="Masalan: Tibbiyot psixologiyasi" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:10px;width:100%;">
+              </div>
+
+              <button class="btn-primary" id="btn-mtf-convert" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8);color:#fff;font-weight:700;padding:14px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;box-shadow:0 4px 14px rgba(59,130,246,0.35);">
+                ⚡ <span>PDF & DOCX Generatsiya Qilish</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- RESULT & PREVIEW CARD -->
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;display:flex;flex-direction:column;">
+            <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0 0 16px 0;display:flex;align-items:center;gap:8px;">
+              📊 <span>Konvertatsiya Natijasi</span>
+            </h3>
+
+            <div id="mtf-result-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:30px 20px;color:rgba(255,255,255,0.4);">
+              <div style="font-size:42px;margin-bottom:12px;">📑</div>
+              <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Hozircha test konvert qilinmadi</div>
+              <div style="font-size:12px;">Chapdagi bo'limdan <code>.mtf</code> faylni tanlang va tugmani bosing.</div>
+            </div>
+
+            <div id="mtf-result-content" style="display:none;flex-direction:column;gap:16px;">
+              <!-- METRICS BOX -->
+              <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">
+                <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:14px;text-align:center;">
+                  <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:4px;">Jami Savollar</div>
+                  <div style="font-size:24px;font-weight:800;color:#3b82f6;" id="mtf-res-qcount">0 ta</div>
+                </div>
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;text-align:center;">
+                  <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:4px;">Holati</div>
+                  <div style="font-size:20px;font-weight:800;color:#10b981;">✅ Tayyor</div>
+                </div>
+              </div>
+
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px;">Fan Sarlavhasi:</div>
+                <div style="font-size:15px;font-weight:700;color:#fff;" id="mtf-res-title">-</div>
+              </div>
+
+              <!-- DOWNLOAD BUTTONS -->
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <a id="mtf-btn-download-pdf" href="#" download="test.pdf" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#ef4444;color:#fff;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+                  📥 <span>PDF Kitobchani Yuklab Olish (.pdf)</span>
+                </a>
+                <a id="mtf-btn-download-docx" href="#" download="test.docx" class="btn-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.35);color:#60a5fa;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;">
+                  📥 <span>Word Hujjatini Yuklab Olish (.docx)</span>
+                </a>
+              </div>
+
+              <!-- SAMPLE QUESTIONS PREVIEW -->
+              <div style="margin-top:10px;">
+                <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:8px;">Savollardan Namunalar:</div>
+                <div id="mtf-res-preview-list" style="max-height:180px;overflow-y:auto;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;font-size:12px;display:flex;flex-direction:column;gap:8px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INTEGRATION PROMO: ONLINE MYTESTX PLATFORM -->
+        <div class="card" style="background:linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.08));border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+          <div style="flex:1;min-width:280px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="font-size:24px;">🌐</span>
+              <h3 style="font-size:16px;font-weight:800;color:#fff;margin:0;">Online MyTestX — Texnikum Onlayn Test Platformasi</h3>
+              <span style="font-size:10px;font-weight:800;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:2px 8px;border-radius:6px;">INTEGRATSIYA</span>
+            </div>
+            <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.5;">
+              <code>D:\\01. Antigravity\\online mytestx</code> joylashuvidagi to'liq talaba va admin platformasi. Realtime WebSocket monitoring, nusxa ko'chirishdan himoya, taymer va Google Sheets integratsiyasi.
+            </p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-secondary" onclick="ATLAS.openOnlineTestPlatform()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);color:#fff;font-weight:700;padding:10px 18px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              🚀 <span>Platformani Ishga Tushirish</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Dropzone & File Input Logic
+    const dropZone = document.getElementById('mtf-drop-zone');
+    const fileInput = document.getElementById('mtf-file-input');
+    const nameLabel = document.getElementById('mtf-file-name-label');
+    let selectedFile = null;
+
+    dropZone?.addEventListener('click', () => fileInput?.click());
+
+    fileInput?.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        selectedFile = e.target.files[0];
+        nameLabel.innerHTML = `📄 <b style="color:#60a5fa;">${selectedFile.name}</b> (${Math.round(selectedFile.size / 1024)} KB)`;
+        dropZone.style.borderColor = '#3b82f6';
+        dropZone.style.background = 'rgba(59,130,246,0.1)';
+        
+        // Auto-fill title
+        const autoTitle = selectedFile.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
+        const titleInput = document.getElementById('mtf-opt-title');
+        if (titleInput && !titleInput.value) {
+          titleInput.value = autoTitle;
+        }
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone?.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.style.borderColor = '#10b981';
+        dropZone.style.background = 'rgba(16,185,129,0.12)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone?.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.style.borderColor = 'rgba(59,130,246,0.4)';
+        dropZone.style.background = 'rgba(59,130,246,0.03)';
+      }, false);
+    });
+
+    dropZone?.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt.files && dt.files.length > 0) {
+        selectedFile = dt.files[0];
+        nameLabel.innerHTML = `📄 <b style="color:#60a5fa;">${selectedFile.name}</b> (${Math.round(selectedFile.size / 1024)} KB)`;
+        const autoTitle = selectedFile.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
+        const titleInput = document.getElementById('mtf-opt-title');
+        if (titleInput && !titleInput.value) {
+          titleInput.value = autoTitle;
+        }
+      }
+    });
+
+    // Convert Button
+    document.getElementById('btn-mtf-convert')?.addEventListener('click', async () => {
+      if (!selectedFile) {
+        this.toast('Iltimos, avval .mtf yoki .xml faylni yuklang', 'error');
+        return;
+      }
+
+      const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
+      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
+      const fanName = document.getElementById('mtf-opt-title')?.value || '';
+
+      const btn = document.getElementById('btn-mtf-convert');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-sm"></span> <span>Konvertatsiya qilinmoqda...</span>`;
+
+      try {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64Data = reader.result;
+          const res = await this.api('/api/mtf/convert', 'POST', {
+            filename: selectedFile.name,
+            file_base64: base64Data,
+            layout: layout,
+            with_answers: withAnswers === 'true',
+            fan_name: fanName
+          });
+
+          btn.disabled = false;
+          btn.innerHTML = `⚡ <span>PDF & DOCX Generatsiya Qilish</span>`;
+
+          if (res && res.success) {
+            this.toast(`Muvaffaqiyatli! ${res.questions_count} ta savol konvert qilindi.`, 'success');
+            
+            document.getElementById('mtf-result-placeholder').style.display = 'none';
+            const resultBox = document.getElementById('mtf-result-content');
+            resultBox.style.display = 'flex';
+
+            document.getElementById('mtf-res-qcount').innerText = `${res.questions_count} ta`;
+            document.getElementById('mtf-res-title').innerText = res.title || selectedFile.name;
+
+            // Set download links
+            const btnPdf = document.getElementById('mtf-btn-download-pdf');
+            if (btnPdf && res.pdf_base64) {
+              btnPdf.href = res.pdf_base64;
+              btnPdf.download = `${res.title || 'test'}.pdf`;
+            }
+
+            const btnDocx = document.getElementById('mtf-btn-download-docx');
+            if (btnDocx && res.docx_base64) {
+              btnDocx.href = res.docx_base64;
+              btnDocx.download = `${res.title || 'test'}.docx`;
+            }
+
+            // Render Preview List
+            const previewList = document.getElementById('mtf-res-preview-list');
+            if (previewList && res.questions_summary) {
+              previewList.innerHTML = res.questions_summary.map(q => `
+                <div style="border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <div style="font-weight:700;color:#fff;">${q.index}. ${q.text}</div>
+                  <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px;">
+                    Variantlar: ${q.variants_count} ta | To'g'ri javob: <span style="color:#10b981;font-weight:600;">${q.correct_answers.join(', ') || 'Noma\'lum'}</span>
+                  </div>
+                </div>
+              `).join('');
+            }
+          } else {
+            this.toast((res && res.error) || 'Konvertatsiyada xatolik', 'error');
+          }
+        };
+        reader.readAsDataURL(selectedFile);
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = `⚡ <span>PDF & DOCX Generatsiya Qilish</span>`;
+        this.toast('Xatolik: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('btn-mtf-refresh')?.addEventListener('click', () => {
+      this.loadMtfConverter(viewport);
+    });
+  },
+
+  async openOnlineTestPlatform() {
+    this.modal({
+      title: '🎓 Online MyTestX Platformasi Boshqaruvi',
+      maxWidth: '520px',
+      contentHtml: `
+        <div style="font-size:13px;line-height:1.6;color:#fff;">
+          <p style="margin-bottom:12px;color:rgba(255,255,255,0.8);">
+            <b>Online MyTestX</b> platformasi kompyuteringizdagi <code>D:\\01. Antigravity\\online mytestx</code> manzilida joylashgan.
+          </p>
+          <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#34d399;">
+            cd "D:\\01. Antigravity\\online mytestx"<br>
+            npm run dev
+          </div>
+          <p style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:16px;">
+            Port: <code>http://localhost:5173</code> yoki <code>http://localhost:3000</code>
+          </p>
+          <div style="display:flex;justify-content:flex-end;gap:8px;">
+            <button class="btn-secondary" onclick="ATLAS.closeModal()">Yopish</button>
+            <a href="http://localhost:5173" target="_blank" class="btn-primary" style="background:#3b82f6;color:#fff;text-decoration:none;font-weight:700;padding:8px 16px;border-radius:6px;">
+              🌐 Brauzerda Ochish
+            </a>
+          </div>
+        </div>
+      `
+    });
   }
 };
 
 document.addEventListener('DOMContentLoaded', () => ATLAS.init());
+
 

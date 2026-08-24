@@ -460,6 +460,54 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
 
         _execute_ai_task_sync(message.text, message, bot)
 
+    # 20. MTF / XML fayl kelganda avtomatik PDF & DOCX ga o'girish
+    @bot.message_handler(content_types=['document'], func=lambda msg: msg.document and (msg.document.file_name or '').lower().endswith(('.mtf', '.xml')))
+    def handle_mtf_document_upload(message: Message):
+        if not is_authorized_admin(message.from_user.id):
+            return
+
+        doc = message.document
+        filename = doc.file_name
+        load_msg = bot.send_message(message.chat.id, f"⚡ <code>{filename}</code> fayli qabul qilindi. 2-ustunli PDF kitobcha tayyorlanmoqda...", parse_mode="HTML")
+
+        try:
+            from services.mtf_converter import process_mtf_to_pdf
+            file_info = bot.get_file(doc.file_id)
+            file_bytes = bot.download_file(file_info.file_path)
+
+            res = process_mtf_to_pdf(file_bytes, filename, layout="2col", with_answers=True)
+            if not res.get("success"):
+                bot.edit_message_text("❌ Konvertatsiyada xatolik yuz berdi.", message.chat.id, load_msg.message_id)
+                return
+
+            caption = (
+                f"🎓 <b>FAN TESTI (PDF KITOBCHA)</b>\n\n"
+                f"📖 <b>Fan:</b> <code>{res.get('title')}</code>\n"
+                f"📊 <b>Jami savollar:</b> <b>{res.get('questions_count')} ta</b>\n"
+                f"📄 <b>Format:</b> 2-ustunli ixcham kitobcha (A4)\n"
+                f"🔑 <b>Javoblar:</b> To'g'ri javoblar yulduzcha (*) bilan belgilangan"
+            )
+
+            # Send PDF
+            if res.get("pdf_bytes"):
+                pdf_io = io.BytesIO(res["pdf_bytes"])
+                pdf_io.name = f"{res.get('title', 'test')}.pdf"
+                bot.send_document(message.chat.id, pdf_io, caption=caption, parse_mode="HTML")
+
+            # Send DOCX
+            if res.get("docx_bytes"):
+                docx_io = io.BytesIO(res["docx_bytes"])
+                docx_io.name = f"{res.get('title', 'test')}.docx"
+                bot.send_document(message.chat.id, docx_io, caption=f"📝 <b>Word varianti:</b> <code>{res.get('title')}.docx</code>", parse_mode="HTML")
+
+            try:
+                bot.delete_message(message.chat.id, load_msg.message_id)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.error(f"MTF Bot convert error: {e}")
+            bot.edit_message_text(f"❌ Faylni konvert qilishda xatolik: {e}", message.chat.id, load_msg.message_id, parse_mode="HTML")
+
     # --- CALLBACK QUERY HANDLERS ---
 
     # File Explorer Open

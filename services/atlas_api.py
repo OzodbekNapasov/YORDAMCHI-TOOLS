@@ -2792,6 +2792,61 @@ def api_pc_unlock():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@atlas_api.route("/mtf/convert", methods=["POST"])
+@admin_required
+def api_mtf_convert():
+    """MTF / XML test faylini PDF va DOCX formatlariga o'girish"""
+    try:
+        import base64
+        from services.mtf_converter import process_mtf_to_pdf
+
+        file_obj = request.files.get("file")
+        layout = request.form.get("layout", "2col")
+        with_answers = request.form.get("with_answers", "true").lower() in ["true", "1", "yes"]
+        fan_name = request.form.get("fan_name", "").strip() or None
+
+        if file_obj and file_obj.filename:
+            filename = file_obj.filename
+            file_bytes = file_obj.read()
+        else:
+            data = request.get_json(silent=True) or {}
+            filename = data.get("filename", "test.mtf")
+            raw_b64 = data.get("file_base64", "")
+            if not raw_b64:
+                return jsonify({"success": False, "error": "Fayl yuborilmadi."}), 400
+            if "," in raw_b64:
+                raw_b64 = raw_b64.split(",", 1)[1]
+            file_bytes = base64.b64decode(raw_b64)
+            layout = data.get("layout", "2col")
+            with_answers = bool(data.get("with_answers", True))
+            fan_name = data.get("fan_name") or None
+
+        res = process_mtf_to_pdf(
+            mtf_bytes=file_bytes,
+            filename=filename,
+            layout=layout,
+            with_answers=with_answers,
+            fan_name=fan_name
+        )
+
+        pdf_b64 = base64.b64encode(res["pdf_bytes"]).decode("utf-8") if res.get("pdf_bytes") else None
+        docx_b64 = base64.b64encode(res["docx_bytes"]).decode("utf-8") if res.get("docx_bytes") else None
+
+        return jsonify({
+            "success": True,
+            "filename": res.get("filename"),
+            "title": res.get("title"),
+            "questions_count": res.get("questions_count"),
+            "pdf_base64": f"data:application/pdf;base64,{pdf_b64}" if pdf_b64 else None,
+            "docx_base64": f"data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_b64}" if docx_b64 else None,
+            "questions_summary": res.get("questions_summary", [])
+        })
+    except Exception as e:
+        logger.error(f"MTF Convert error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 
 
 
