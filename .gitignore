@@ -42,3 +42,6 @@ ai_shot_*.png
 services/pc_control/local_settings.json
 services/pc_control/__pycache__/
 
+
+.vercel
+.env*

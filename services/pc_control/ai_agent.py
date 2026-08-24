@@ -29,9 +29,37 @@ from .system_tools import (
 
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+def _get_openrouter_key():
+    k = os.getenv("OPENROUTER_API_KEY", "").strip()
+    if not k:
+        env_paths = [".env", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")]
+        for ep in env_paths:
+            if os.path.exists(ep):
+                try:
+                    with open(ep, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.strip().startswith("OPENROUTER_API_KEY="):
+                                k = line.strip().split("=", 1)[1].strip()
+                                break
+                except Exception:
+                    pass
+            if k:
+                break
+    return k
+
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# OpenRouter uchun eng optimal, arzon va o'zbek tilida aniq ishlovchi modellar:
+# 1. deepseek/deepseek-chat (DeepSeek V3: $0.14/M token - eng aqlli va o'ta arzon)
+# 2. meta-llama/llama-3.1-8b-instruct ($0.05/M token - eng tezkor)
+# 3. openai/gpt-4o-mini ($0.15/M token - barqaror zaxira)
+# 4. meta-llama/llama-3.3-70b-instruct ($0.12/M token - chuqur mantiqiy)
+OPENROUTER_MODELS = [
+    "deepseek/deepseek-chat",
+    "meta-llama/llama-3.1-8b-instruct",
+    "openai/gpt-4o-mini",
+    "meta-llama/llama-3.3-70b-instruct",
+]
 
 # Foydalanuvchilar chat tarixini saqlash uchun xotira
 CHAT_HISTORIES: Dict[int, List[Dict[str, str]]] = {}
@@ -140,26 +168,40 @@ def call_gemini_api_sync(messages: list, api_key: str) -> str | None:
     return None
 
 
-def call_openrouter_api_sync(messages: list, api_key: str) -> str | None:
+def call_openrouter_api_sync(messages: list, api_key: str, model: str = None) -> str | None:
+    """OpenRouter API orqali so'rov yuborish (model avtomatik tanlanadi)"""
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Antigravity",
-        "X-Title": "ATLAS Bot PC Control"
+        "HTTP-Referer": "https://atlas-my-tools.vercel.app",
+        "X-Title": "ATLAS PC AI Agent"
     }
-    payload = {
-        "model": "google/gemini-2.0-flash-001",
-        "messages": messages,
-        "temperature": 0.1,
-        "response_format": {"type": "json_object"}
-    }
-    try:
-        resp = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=30)
-        data = resp.json()
-        if resp.status_code == 200 and "choices" in data and len(data["choices"]) > 0:
-            return data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        logger.error(f"OpenRouter error: {e}")
+
+    # Model tanlov: birinchi bepul modellarni sinab ko'radi
+    models_to_try = [model] if model else OPENROUTER_MODELS
+
+    for m in models_to_try:
+        payload = {
+            "model": m,
+            "messages": messages,
+            "temperature": 0.1,
+            "max_tokens": 512,
+            "response_format": {"type": "json_object"}
+        }
+        try:
+            resp = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=25)
+            data = resp.json()
+            if resp.status_code == 200 and "choices" in data and data["choices"]:
+                content = data["choices"][0]["message"]["content"]
+                if content and content.strip():
+                    logger.info(f"[OpenRouter] Model: {m} -> OK")
+                    return content.strip()
+            # Model mavjud emas yoki kredit yetarli emas -> keyingisiga o'tish
+            err = data.get("error", {}).get("message", "")
+            logger.warning(f"[OpenRouter] Model {m} failed: {err}")
+        except Exception as e:
+            logger.warning(f"[OpenRouter] {m} exception: {e}")
+
     return None
 
 
@@ -167,13 +209,13 @@ def process_ai_agent_request(user_id: int, user_prompt: str) -> dict:
     """
     Foydalanuvchi so'rovini AI orqali tahlil qilib kompyuterda bajaradi.
     """
-    api_key_gemini = os.getenv("GEMINI_API_KEY", "").strip() or GEMINI_API_KEY
-    api_key_openrouter = os.getenv("OPENROUTER_API_KEY", "").strip() or OPENROUTER_API_KEY
+    api_key_openrouter = _get_openrouter_key()
+    api_key_gemini = os.getenv("GEMINI_API_KEY", "").strip()
 
-    if not api_key_gemini and not api_key_openrouter:
+    if not api_key_openrouter and not api_key_gemini:
         return {
             "status": "error",
-            "message": "⚠️ <b>GEMINI_API_KEY</b> yoki <b>OPENROUTER_API_KEY</b> topilmadi! Iltimos, .env faylida API kalitni ko'rsating."
+            "message": "OPENROUTER_API_KEY topilmadi! .env faylida API kalitni ko'rsating."
         }
 
     # Tarixni tayyorlash
@@ -182,12 +224,12 @@ def process_ai_agent_request(user_id: int, user_prompt: str) -> dict:
 
     CHAT_HISTORIES[user_id].append({"role": "user", "content": user_prompt})
 
-    # AI javobini olish
+    # AI javobini olish (OpenRouter avval, keyin Gemini)
     ai_raw = None
-    if api_key_gemini:
-        ai_raw = call_gemini_api_sync(CHAT_HISTORIES[user_id], api_key_gemini)
-    if not ai_raw and api_key_openrouter:
+    if api_key_openrouter:
         ai_raw = call_openrouter_api_sync(CHAT_HISTORIES[user_id], api_key_openrouter)
+    if not ai_raw and api_key_gemini:
+        ai_raw = call_gemini_api_sync(CHAT_HISTORIES[user_id], api_key_gemini)
 
     if not ai_raw:
         return {

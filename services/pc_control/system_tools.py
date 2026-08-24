@@ -109,31 +109,42 @@ def get_system_status() -> str:
 
 def take_screenshot(filepath: str) -> str:
     """
-    Ekran tasvirini (screenshot) olib ko'rsatilgan yo'lga saqlaydi (Fail-safe Win32 + ImageGrab).
+    Ekran tasvirini (screenshot) olib ko'rsatilgan yo'lga saqlaydi (Fail-safe Win32 Desktop DC + ImageGrab).
     """
-    if ImageGrab:
-        try:
-            screenshot = ImageGrab.grab()
-            screenshot.save(filepath, "PNG")
-            return filepath
-        except Exception:
-            pass
-
     if IS_WINDOWS and ctypes and Image:
         try:
             user32 = ctypes.windll.user32
             gdi32 = ctypes.windll.gdi32
 
-            w = user32.GetSystemMetrics(0)
-            h = user32.GetSystemMetrics(1)
+            # DPI awareness
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(2)
+            except Exception:
+                try:
+                    ctypes.windll.user32.SetProcessDPIAware()
+                except Exception:
+                    pass
 
-            hwnd = user32.GetDesktopWindow()
-            hdc = user32.GetWindowDC(hwnd)
+            # Active Input Desktop'ga ulanish
+            try:
+                hdesk = user32.OpenInputDesktop(0, False, 0x01FF)
+                if hdesk:
+                    user32.SetThreadDesktop(hdesk)
+            except Exception:
+                pass
+
+            hdc = user32.GetDC(0)
+            w = user32.GetSystemMetrics(0)  # SM_CXSCREEN
+            h = user32.GetSystemMetrics(1)  # SM_CYSCREEN
+            if w <= 0 or h <= 0:
+                w, h = 1920, 1080
+
             memdc = gdi32.CreateCompatibleDC(hdc)
             bmp = gdi32.CreateCompatibleBitmap(hdc, w, h)
-            gdi32.SelectObject(memdc, bmp)
+            oldbmp = gdi32.SelectObject(memdc, bmp)
 
-            gdi32.BitBlt(memdc, 0, 0, w, h, hdc, 0, 0, 0x00CC0020)
+            # SRCCOPY = 0x00CC0020, CAPTUREBLT = 0x40000000
+            gdi32.BitBlt(memdc, 0, 0, w, h, hdc, 0, 0, 0x00CC0020 | 0x40000000)
 
             class BITMAPINFOHEADER(ctypes.Structure):
                 _fields_ = [
@@ -161,17 +172,25 @@ def take_screenshot(filepath: str) -> str:
             buffer = ctypes.create_string_buffer(w * h * 4)
             gdi32.GetDIBits(hdc, bmp, 0, h, buffer, ctypes.byref(bmi), 0)
 
+            gdi32.SelectObject(memdc, oldbmp)
             gdi32.DeleteObject(bmp)
             gdi32.DeleteDC(memdc)
-            user32.ReleaseDC(hwnd, hdc)
+            user32.ReleaseDC(0, hdc)
 
             img = Image.frombuffer('RGBA', (w, h), buffer.raw, 'raw', 'BGRA', 0, 1)
             img = img.convert('RGB')
             img.save(filepath, "PNG")
             return filepath
         except Exception as e:
-            logger.error(f"Screenshot Win32 error: {e}")
-            raise e
+            logger.warning(f"Win32 Direct GDI Screenshot failed, falling back: {e}")
+
+    if ImageGrab:
+        try:
+            screenshot = ImageGrab.grab(all_screens=True)
+            screenshot.save(filepath, "PNG")
+            return filepath
+        except Exception as e:
+            logger.warning(f"ImageGrab failed: {e}")
 
     raise Exception("Screenshot olish imkonsiz: Pillow yoki Windows GUI mavjud emas.")
 
