@@ -445,13 +445,31 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
             fan_name = payload.get("fan_name") or None
 
             file_bytes = None
-            if file_path and os.path.exists(file_path):
-                try:
-                    with open(file_path, "rb") as f:
-                        file_bytes = f.read()
-                    filename = os.path.basename(file_path)
-                except Exception as e:
-                    logger.warning(f"Failed to read local file_path {file_path}: {e}")
+            if file_path:
+                file_path = os.path.normpath(file_path)
+                if not os.path.isabs(file_path):
+                    file_path = os.path.join(r"D:\MyTestX\tests", file_path)
+                if not os.path.exists(file_path):
+                    for root, _, files in os.walk(r"D:\MyTestX\tests"):
+                        if filename in files:
+                            file_path = os.path.join(root, filename)
+                            break
+                if os.path.exists(file_path):
+                    try:
+                        with open(file_path, "rb") as f:
+                            file_bytes = f.read()
+                        filename = os.path.basename(file_path)
+                    except Exception as e:
+                        logger.warning(f"Failed to read local file_path {file_path}: {e}")
+
+            if not file_bytes and not file_path:
+                for root, _, files in os.walk(r"D:\MyTestX\tests"):
+                    if filename in files:
+                        file_path = os.path.join(root, filename)
+                        with open(file_path, "rb") as f:
+                            file_bytes = f.read()
+                        break
+
 
             if not file_bytes and input_url:
                 try:
