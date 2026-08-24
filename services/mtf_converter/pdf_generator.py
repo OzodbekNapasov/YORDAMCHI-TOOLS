@@ -97,8 +97,19 @@ def add_image_shadow(img: Image.Image, shadow_offset=(3, 3), blur_radius=4, shad
 def render_image_bytes(raw_bytes: bytes) -> Image.Image:
     """
     Rasm baytlarini PIL Image ob'ektiga o'tkazadi.
-    UTF-8 ko'p baytli o'zgarishlarni aniqlab, 100% tiniq va xatosiz tiklaydi.
+    Katta rasmlarni avtomatik kichraytiradi (max 1200px).
     """
+    MAX_DIM = 10000  # Accept up to this size
+    RESIZE_TO = 1200  # Downscale to this if larger
+
+    def _downscale_if_needed(img: Image.Image) -> Image.Image:
+        w, h = img.size
+        if w > RESIZE_TO or h > RESIZE_TO:
+            scale = RESIZE_TO / max(w, h)
+            new_w, new_h = int(w * scale), int(h * scale)
+            img = img.resize((new_w, new_h), Image.LANCZOS)
+        return img
+
     # BMP va UTF-8 multi-byte buzilishini tekshirish
     needs_utf8_recovery = False
     if raw_bytes.startswith(b'BM') and len(raw_bytes) >= 54:
@@ -119,14 +130,17 @@ def render_image_bytes(raw_bytes: bytes) -> Image.Image:
                 if len(single_bytes) < exp_len:
                     single_bytes += b'\x00' * (exp_len - len(single_bytes))
                 img = Image.open(io.BytesIO(single_bytes))
+                img = _downscale_if_needed(img)
                 return add_image_shadow(img)
         except Exception:
             pass
 
-    # 2. Oddiy PIL o'qish
+    # 2. Oddiy PIL o'qish (katta rasmlarni ham qabul qiladi)
     try:
         img = Image.open(io.BytesIO(raw_bytes))
-        if 0 < img.size[0] < 4000 and 0 < img.size[1] < 4000:
+        w, h = img.size
+        if 0 < w < MAX_DIM and 0 < h < MAX_DIM:
+            img = _downscale_if_needed(img)
             return add_image_shadow(img)
     except Exception:
         pass
@@ -142,6 +156,7 @@ def render_image_bytes(raw_bytes: bytes) -> Image.Image:
             if len(single_bytes) < exp_len:
                 single_bytes += b'\x00' * (exp_len - len(single_bytes))
             img = Image.open(io.BytesIO(single_bytes))
+            img = _downscale_if_needed(img)
             return add_image_shadow(img)
     except Exception:
         pass
@@ -165,7 +180,7 @@ def render_image_bytes(raw_bytes: bytes) -> Image.Image:
                             gdiplus.GdipGetImageWidth(p_image, ctypes.byref(w))
                             gdiplus.GdipGetImageHeight(p_image, ctypes.byref(h))
 
-                            if w.value > 0 and h.value > 0 and w.value < 5000 and h.value < 5000:
+                            if w.value > 0 and h.value > 0 and w.value < MAX_DIM and h.value < MAX_DIM:
                                 p_bitmap = ctypes.c_void_p()
                                 gdiplus.GdipCreateBitmapFromScan0(w.value, h.value, 0, 0x26200A, None, ctypes.byref(p_bitmap))
 
@@ -193,6 +208,7 @@ def render_image_bytes(raw_bytes: bytes) -> Image.Image:
                                 gdiplus.GdipDisposeImage(p_image)
 
                                 img = Image.open(io.BytesIO(png_bytes))
+                                img = _downscale_if_needed(img)
                                 return add_image_shadow(img)
         except Exception:
             pass
