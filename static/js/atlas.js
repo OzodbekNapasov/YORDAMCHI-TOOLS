@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 //  static/js/atlas.js
 //  ATLAS Universal Bot Platform — Single Page Application Engine
 //  Shaxsiy Markaziy Boshqaruv & Hujjatlar Arxiv Tizimi
@@ -8362,17 +8362,17 @@ const ATLAS = {
   // ============================================================
   loadMtfConverter(viewport) {
     viewport.innerHTML = `
-      <div style="max-width:1100px;margin:0 auto;padding-bottom:50px;">
+      <div style="max-width:1200px;margin:0 auto;padding-bottom:50px;">
         <!-- HEADER -->
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
           <div>
             <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px 0;display:flex;align-items:center;gap:10px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:24px;height:24px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               <span>MTF & Test Generator (PDF / DOCX)</span>
-              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">MYTESTX CONVERTER</span>
+              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">BATCH CONVERTER</span>
             </h2>
             <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0;">
-              MyTestX (<code>.mtf</code> va <code>.xml</code>) testlarini yuqori sifatli 2-ustunli PDF kitobcha, Word (.docx) va online test formatlariga o'girish.
+              MyTestX (<code>.mtf</code> va <code>.xml</code>) testlarini yuqori sifatli PDF va Word formatiga o'girish — bir vaqtda bir nechta fayl!
             </p>
           </div>
           <div style="display:flex;gap:10px;">
@@ -8382,265 +8382,266 @@ const ATLAS = {
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:20px;margin-bottom:24px;">
-          <!-- UPLOAD & SETTINGS CARD -->
-          <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;">
-            <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0 0 16px 0;display:flex;align-items:center;gap:8px;">
-              ${this.icons.upload} <span>Test Faylini Yuklash</span>
-            </h3>
-
-            <!-- DRAG & DROP ZONE -->
-            <div id="mtf-drop-zone" style="border:2px dashed rgba(56,189,248,0.35);background:rgba(56,189,248,0.03);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:18px;">
-              <input type="file" id="mtf-file-input" accept=".mtf,.xml" style="display:none;">
-              <div style="margin-bottom:10px;color:#38bdf8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:36px;height:36px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              </div>
-              <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:6px;" id="mtf-file-name-label">
-                MTF yoki XML faylni bu yerga tashlang yoki bosing
-              </div>
-              <div style="font-size:12px;color:rgba(255,255,255,0.5);">
-                Faqat <code>.mtf</code> va <code>.xml</code> formatlari qo'llab-quvvatlanadi
-              </div>
+        <!-- SETTINGS BAR -->
+        <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-items:end;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">PDF Tartibi:</label>
+              <select id="mtf-opt-layout" class="select-control">
+                <option value="2col" selected>2-ustunli (Ixcham, A4)</option>
+                <option value="1col">1-ustunli (Keng, A4)</option>
+              </select>
             </div>
-
-            <!-- OPTIONS FORM -->
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <div>
-                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
-                  PDF Tartibi (Layout):
-                </label>
-                <select id="mtf-opt-layout" class="select-control">
-                  <option value="2col" selected>2-ustunli (Ixcham kitobcha — Qog'oz tejovchi, A4)</option>
-                  <option value="1col">1-ustunli (Keng format — Standart A4)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
-                  To'g'ri javoblar belgisi (*):
-                </label>
-                <select id="mtf-opt-answers" class="select-control">
-                  <option value="true" selected>To'g'ri javoblarni yulduzcha (*) bilan belgilash</option>
-                  <option value="false">Faqat savollar (Javobsiz test — Imtihon uchun)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
-                  Fan yoki Test Sarlavhasi (Ixtiyoriy):
-                </label>
-                <input type="text" id="mtf-opt-title" class="input-control" placeholder="Masalan: Tibbiyot psixologiyasi">
-              </div>
-
-              <button class="btn-primary" id="btn-mtf-convert" style="padding:14px;border-radius:10px;margin-top:6px;width:100%;">
-                ${this.icons.zap} <span>PDF & DOCX Generatsiya Qilish</span>
-              </button>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Javoblar belgisi (*):</label>
+              <select id="mtf-opt-answers" class="select-control">
+                <option value="true" selected>To'g'ri javoblarni (*) belgilash</option>
+                <option value="false">Faqat savollar (Imtihon)</option>
+              </select>
             </div>
-          </div>
-
-          <!-- RESULT & PREVIEW CARD -->
-          <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;display:flex;flex-direction:column;">
-            <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0 0 16px 0;display:flex;align-items:center;gap:8px;">
-              ${this.icons.clipboard} <span>Konvertatsiya Natijasi</span>
-            </h3>
-
-            <div id="mtf-result-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:30px 20px;color:rgba(255,255,255,0.4);">
-              <div style="margin-bottom:12px;color:rgba(255,255,255,0.3);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              </div>
-              <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Hozircha test konvert qilinmadi</div>
-              <div style="font-size:12px;">Chapdagi bo'limdan <code>.mtf</code> faylni tanlang va tugmani bosing.</div>
-            </div>
-
-            <div id="mtf-result-content" style="display:none;flex-direction:column;gap:16px;">
-              <!-- METRICS BOX -->
-              <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">
-                <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:14px;text-align:center;">
-                  <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:4px;">Jami Savollar</div>
-                  <div style="font-size:24px;font-weight:800;color:#38bdf8;" id="mtf-res-qcount">0 ta</div>
-                </div>
-                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;text-align:center;">
-                  <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:4px;">Holati</div>
-                  <div style="font-size:18px;font-weight:800;color:#10b981;display:flex;align-items:center;justify-content:center;gap:4px;">
-                    ${this.icons.check} <span>Tayyor</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
-                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px;">Fan Sarlavhasi:</div>
-                <div style="font-size:15px;font-weight:700;color:#fff;" id="mtf-res-title">-</div>
-              </div>
-
-              <!-- DOWNLOAD BUTTONS -->
-              <div style="display:flex;flex-direction:column;gap:10px;">
-                <a id="mtf-btn-download-pdf" href="#" download="test.pdf" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:linear-gradient(135deg, #ef4444, #dc2626);color:#fff;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.35);">
-                  ${this.icons.download} <span>PDF Kitobchani Yuklab Olish (.pdf)</span>
-                </a>
-                <a id="mtf-btn-download-docx" href="#" download="test.docx" class="btn-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;">
-                  ${this.icons.download} <span>Word Hujjatini Yuklab Olish (.docx)</span>
-                </a>
-              </div>
-
-              <!-- SAMPLE QUESTIONS PREVIEW -->
-              <div style="margin-top:10px;">
-                <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:8px;">Savollardan Namunalar:</div>
-                <div id="mtf-res-preview-list" style="max-height:180px;overflow-y:auto;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;font-size:12px;display:flex;flex-direction:column;gap:8px;"></div>
-              </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Fan Sarlavhasi (ixtiyoriy):</label>
+              <input type="text" id="mtf-opt-title" class="input-control" placeholder="Fayl nomidan avtomatik olinadi">
             </div>
           </div>
         </div>
 
-        <!-- INTEGRATION PROMO: ONLINE MYTESTX PLATFORM -->
-        <div class="card" style="background:linear-gradient(135deg, rgba(15,23,42,0.85), rgba(30,41,59,0.75));border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+        <!-- BATCH DROP ZONE -->
+        <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;margin-bottom:20px;">
+          <div id="mtf-drop-zone" style="border:2px dashed rgba(56,189,248,0.35);background:rgba(56,189,248,0.03);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;">
+            <input type="file" id="mtf-file-input" accept=".mtf,.xml" multiple style="display:none;">
+            <div style="margin-bottom:12px;color:#38bdf8;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;" id="mtf-file-name-label">
+              MTF yoki XML fayllarni bu yerga tashlang yoki bosing
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);">
+              <code>.mtf</code> va <code>.xml</code> — bir vaqtda bir nechta fayl tanlash mumkin
+            </div>
+          </div>
+
+          <!-- FILE QUEUE -->
+          <div id="mtf-file-queue" style="margin-top:16px;display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);" id="mtf-queue-label">0 ta fayl tanlandi</span>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-secondary btn-sm" id="btn-mtf-clear" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Tozalash</button>
+                <button class="btn-primary" id="btn-mtf-convert" style="padding:8px 20px;font-weight:700;display:flex;align-items:center;gap:6px;">
+                  ${this.icons.zap} <span>Barchasini Konvert Qilish</span>
+                </button>
+              </div>
+            </div>
+            <div id="mtf-file-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- INTEGRATION PROMO -->
+        <div class="card" style="background:linear-gradient(135deg, rgba(15,23,42,0.85), rgba(30,41,59,0.75));border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
           <div style="flex:1;min-width:280px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:22px;height:22px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              <h3 style="font-size:16px;font-weight:800;color:#fff;margin:0;">Online MyTestX — Texnikum Onlayn Test Platformasi</h3>
-              <span style="font-size:10px;font-weight:800;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 8px;border-radius:6px;">INTEGRATSIYA</span>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:20px;height:20px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <h3 style="font-size:15px;font-weight:800;color:#fff;margin:0;">Online MyTestX — Onlayn Test Platformasi</h3>
             </div>
             <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.5;">
-              <code>D:\\01. Antigravity\\online mytestx</code> joylashuvidagi to'liq talaba va admin platformasi. Realtime WebSocket monitoring, nusxa ko'chirishdan himoya, taymer va Google Sheets integratsiyasi.
+              Realtime WebSocket monitoring, nusxa ko'chirishdan himoya, taymer va Google Sheets integratsiyasi.
             </p>
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn-secondary" onclick="ATLAS.openOnlineTestPlatform()" style="font-weight:700;display:flex;align-items:center;gap:6px;">
-              ${this.icons.externalLink} <span>Platformani Ishga Tushirish</span>
-            </button>
-          </div>
+          <button class="btn-secondary" onclick="ATLAS.openOnlineTestPlatform()" style="font-weight:700;display:flex;align-items:center;gap:6px;">
+            ${this.icons.externalLink} <span>Platformani Ishga Tushirish</span>
+          </button>
         </div>
       </div>
     `;
 
-    // Dropzone & File Input Logic
-    const dropZone = document.getElementById('mtf-drop-zone');
-    const fileInput = document.getElementById('mtf-file-input');
-    const nameLabel = document.getElementById('mtf-file-name-label');
-    let selectedFile = null;
+    // ── State ────────────────────────────────────────────────
+    const dropZone   = document.getElementById('mtf-drop-zone');
+    const fileInput  = document.getElementById('mtf-file-input');
+    const nameLabel  = document.getElementById('mtf-file-name-label');
+    const fileQueue  = document.getElementById('mtf-file-queue');
+    const fileList   = document.getElementById('mtf-file-list');
+    const queueLabel = document.getElementById('mtf-queue-label');
+    let selectedFiles = [];   // Array of File objects
 
+    // ── Helpers ──────────────────────────────────────────────
+    const sizeStr = bytes => bytes < 1024*1024
+      ? `${(bytes/1024).toFixed(0)} KB`
+      : `${(bytes/1024/1024).toFixed(1)} MB`;
+
+    const statusIcon = status => ({
+      waiting:    '⏳',
+      converting: '<span class="spinner-sm" style="display:inline-block;width:14px;height:14px;"></span>',
+      done:       '✅',
+      error:      '❌',
+    }[status] || '⏳');
+
+    const addFiles = (files) => {
+      const arr = Array.from(files).filter(f => /\.(mtf|xml)$/i.test(f.name));
+      if (!arr.length) { this.toast('Faqat .mtf va .xml fayllar qabul qilinadi', 'error'); return; }
+      // Deduplicate by name
+      const existing = new Set(selectedFiles.map(f => f.name));
+      arr.forEach(f => { if (!existing.has(f.name)) { selectedFiles.push(f); existing.add(f.name); } });
+      renderQueue();
+    };
+
+    const removeFile = (idx) => {
+      selectedFiles.splice(idx, 1);
+      renderQueue();
+    };
+
+    const renderQueue = () => {
+      if (!selectedFiles.length) {
+        fileQueue.style.display = 'none';
+        nameLabel.innerHTML = 'MTF yoki XML fayllarni bu yerga tashlang yoki bosing';
+        dropZone.style.borderColor = 'rgba(56,189,248,0.35)';
+        dropZone.style.background  = 'rgba(56,189,248,0.03)';
+        return;
+      }
+      fileQueue.style.display = 'block';
+      queueLabel.textContent = `${selectedFiles.length} ta fayl tanlandi`;
+      nameLabel.innerHTML = `📂 <b style="color:#60a5fa;">${selectedFiles.length} ta fayl</b> tanlandi`;
+
+      fileList.innerHTML = selectedFiles.map((f, i) => `
+        <div id="file-row-${i}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px;">
+            <span id="file-icon-${i}" style="font-size:18px;">${statusIcon('waiting')}</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#fff;">${f.name}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.5);">${sizeStr(f.size)}</div>
+            </div>
+          </div>
+          <div id="file-downloads-${i}" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          <div id="file-msg-${i}" style="font-size:11px;color:rgba(255,255,255,0.5);width:100%;display:none;"></div>
+          <button onclick="ATLAS._mtfRemoveFile(${i})" id="file-btn-del-${i}" style="background:none;border:none;color:rgba(239,68,68,0.7);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;" title="O'chirish">✕</button>
+        </div>
+      `).join('');
+
+      window.ATLAS._mtfRemoveFile = removeFile;
+    };
+
+    // ── Drop / Click ─────────────────────────────────────────
     dropZone?.addEventListener('click', () => fileInput?.click());
 
     fileInput?.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length > 0) {
-        selectedFile = e.target.files[0];
-        nameLabel.innerHTML = `📄 <b style="color:#60a5fa;">${selectedFile.name}</b> (${Math.round(selectedFile.size / 1024)} KB)`;
-        dropZone.style.borderColor = '#3b82f6';
-        dropZone.style.background = 'rgba(59,130,246,0.1)';
-        
-        // Auto-fill title
-        const autoTitle = selectedFile.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
-        const titleInput = document.getElementById('mtf-opt-title');
-        if (titleInput && !titleInput.value) {
-          titleInput.value = autoTitle;
-        }
-      }
+      if (e.target.files?.length) addFiles(e.target.files);
+      fileInput.value = '';
     });
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropZone?.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    ['dragenter', 'dragover'].forEach(ev => {
+      dropZone?.addEventListener(ev, e => {
+        e.preventDefault(); e.stopPropagation();
         dropZone.style.borderColor = '#10b981';
-        dropZone.style.background = 'rgba(16,185,129,0.12)';
-      }, false);
+        dropZone.style.background  = 'rgba(16,185,129,0.12)';
+      });
     });
 
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropZone?.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.style.borderColor = 'rgba(59,130,246,0.4)';
-        dropZone.style.background = 'rgba(59,130,246,0.03)';
-      }, false);
+    ['dragleave', 'drop'].forEach(ev => {
+      dropZone?.addEventListener(ev, e => {
+        e.preventDefault(); e.stopPropagation();
+        dropZone.style.borderColor = 'rgba(56,189,248,0.35)';
+        dropZone.style.background  = 'rgba(56,189,248,0.03)';
+      });
     });
 
-    dropZone?.addEventListener('drop', (e) => {
-      const dt = e.dataTransfer;
-      if (dt.files && dt.files.length > 0) {
-        selectedFile = dt.files[0];
-        nameLabel.innerHTML = `📄 <b style="color:#60a5fa;">${selectedFile.name}</b> (${Math.round(selectedFile.size / 1024)} KB)`;
-        const autoTitle = selectedFile.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
-        const titleInput = document.getElementById('mtf-opt-title');
-        if (titleInput && !titleInput.value) {
-          titleInput.value = autoTitle;
-        }
-      }
+    dropZone?.addEventListener('drop', e => {
+      if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
     });
 
-    // Convert Button
+    // ── Clear ────────────────────────────────────────────────
+    document.getElementById('btn-mtf-clear')?.addEventListener('click', () => {
+      selectedFiles = [];
+      renderQueue();
+    });
+
+    // ── Convert All ──────────────────────────────────────────
     document.getElementById('btn-mtf-convert')?.addEventListener('click', async () => {
-      if (!selectedFile) {
-        this.toast('Iltimos, avval .mtf yoki .xml faylni yuklang', 'error');
-        return;
-      }
+      if (!selectedFiles.length) { this.toast('Iltimos, avval fayl tanlang', 'error'); return; }
 
-      const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
-      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
-      const fanName = document.getElementById('mtf-opt-title')?.value || '';
+      const layout      = document.getElementById('mtf-opt-layout')?.value  || '2col';
+      const withAnswers = document.getElementById('mtf-opt-answers')?.value  || 'true';
+      const globalTitle = document.getElementById('mtf-opt-title')?.value.trim() || '';
 
       const btn = document.getElementById('btn-mtf-convert');
       btn.disabled = true;
       btn.innerHTML = `<span class="spinner-sm"></span> <span>Konvertatsiya qilinmoqda...</span>`;
 
-      try {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64Data = reader.result;
-          const res = await this.api('/api/mtf/convert', 'POST', {
-            filename: selectedFile.name,
-            file_base64: base64Data,
-            layout: layout,
-            with_answers: withAnswers === 'true',
-            fan_name: fanName
+      let doneCount = 0, errCount = 0;
+
+      // Process each file sequentially (server is single-threaded)
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const f = selectedFiles[i];
+        const iconEl    = document.getElementById(`file-icon-${i}`);
+        const dlEl      = document.getElementById(`file-downloads-${i}`);
+        const msgEl     = document.getElementById(`file-msg-${i}`);
+        const delBtn    = document.getElementById(`file-btn-del-${i}`);
+        const rowEl     = document.getElementById(`file-row-${i}`);
+
+        if (iconEl) iconEl.innerHTML = statusIcon('converting');
+        if (delBtn) delBtn.style.display = 'none';
+        if (msgEl)  { msgEl.style.display = 'block'; msgEl.textContent = 'Konvertatsiya qilinmoqda...'; }
+
+        try {
+          const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(f);
           });
 
-          btn.disabled = false;
-          btn.innerHTML = `⚡ <span>PDF & DOCX Generatsiya Qilish</span>`;
+          const fanName = globalTitle || f.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
+
+          const res = await this.api('/api/mtf/convert', 'POST', {
+            filename:     f.name,
+            file_base64:  base64Data,
+            layout,
+            with_answers: withAnswers === 'true',
+            fan_name:     fanName,
+          });
 
           if (res && res.success) {
-            this.toast(`Muvaffaqiyatli! ${res.questions_count} ta savol konvert qilindi.`, 'success');
-            
-            document.getElementById('mtf-result-placeholder').style.display = 'none';
-            const resultBox = document.getElementById('mtf-result-content');
-            resultBox.style.display = 'flex';
+            doneCount++;
+            if (iconEl) iconEl.innerHTML = statusIcon('done');
+            if (rowEl)  rowEl.style.borderColor = 'rgba(16,185,129,0.4)';
+            if (msgEl)  { msgEl.textContent = `✅ ${res.questions_count} ta savol • ${res.title}`; msgEl.style.color = '#10b981'; }
 
-            document.getElementById('mtf-res-qcount').innerText = `${res.questions_count} ta`;
-            document.getElementById('mtf-res-title').innerText = res.title || selectedFile.name;
-
-            // Set download links
-            const btnPdf = document.getElementById('mtf-btn-download-pdf');
-            if (btnPdf && res.pdf_base64) {
-              btnPdf.href = res.pdf_base64;
-              btnPdf.download = `${res.title || 'test'}.pdf`;
+            const stem = f.name.replace(/\.(mtf|xml)$/i, '');
+            let dlHtml = '';
+            if (res.pdf_base64) {
+              dlHtml += `<a href="${res.pdf_base64}" download="${stem}.pdf" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                📄 PDF
+              </a>`;
             }
-
-            const btnDocx = document.getElementById('mtf-btn-download-docx');
-            if (btnDocx && res.docx_base64) {
-              btnDocx.href = res.docx_base64;
-              btnDocx.download = `${res.title || 'test'}.docx`;
+            if (res.docx_base64) {
+              dlHtml += `<a href="${res.docx_base64}" download="${stem}.docx" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                📝 DOCX
+              </a>`;
             }
-
-            // Render Preview List
-            const previewList = document.getElementById('mtf-res-preview-list');
-            if (previewList && res.questions_summary) {
-              previewList.innerHTML = res.questions_summary.map(q => `
-                <div style="border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
-                  <div style="font-weight:700;color:#fff;">${q.index}. ${q.text}</div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px;">
-                    Variantlar: ${q.variants_count} ta | To'g'ri javob: <span style="color:#10b981;font-weight:600;">${q.correct_answers.join(', ') || 'Noma\'lum'}</span>
-                  </div>
-                </div>
-              `).join('');
-            }
+            if (dlEl) dlEl.innerHTML = dlHtml;
           } else {
-            this.toast((res && res.error) || 'Konvertatsiyada xatolik', 'error');
+            errCount++;
+            if (iconEl) iconEl.innerHTML = statusIcon('error');
+            if (rowEl)  rowEl.style.borderColor = 'rgba(239,68,68,0.4)';
+            if (msgEl)  { msgEl.textContent = (res && res.error) || 'Xatolik yuz berdi'; msgEl.style.color = '#ef4444'; }
+            if (delBtn) delBtn.style.display = '';
           }
-        };
-        reader.readAsDataURL(selectedFile);
-      } catch (err) {
-        btn.disabled = false;
-        btn.innerHTML = `⚡ <span>PDF & DOCX Generatsiya Qilish</span>`;
-        this.toast('Xatolik: ' + err.message, 'error');
+        } catch (err) {
+          errCount++;
+          if (iconEl) iconEl.innerHTML = statusIcon('error');
+          if (rowEl)  rowEl.style.borderColor = 'rgba(239,68,68,0.4)';
+          if (msgEl)  { msgEl.textContent = err.message || 'Tarmoq xatosi'; msgEl.style.color = '#ef4444'; }
+          if (delBtn) delBtn.style.display = '';
+        }
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = `${this.icons.zap} <span>Barchasini Konvert Qilish</span>`;
+
+      if (doneCount > 0 && errCount === 0) {
+        this.toast(`🎉 Barcha ${doneCount} ta fayl muvaffaqiyatli konvert qilindi!`, 'success');
+      } else if (doneCount > 0) {
+        this.toast(`✅ ${doneCount} ta tayyor, ❌ ${errCount} ta xato`, 'warning');
+      } else {
+        this.toast(`Konvertatsiyada xatolik yuz berdi`, 'error');
       }
     });
 
@@ -8648,6 +8649,7 @@ const ATLAS = {
       this.loadMtfConverter(viewport);
     });
   },
+
 
   async openOnlineTestPlatform() {
     this.modal({
