@@ -2613,4 +2613,277 @@ def api_instagram_cron_tick():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# ============================================================
+# 8. PC CONTROL & SYSTEM AGENT REST API ENDPOINTS
+# ============================================================
+
+@atlas_api.route("/pc/status", methods=["GET"])
+@admin_required
+def api_pc_status():
+    """Kompyuter tizim holati (CPU, RAM, Disk, Uptime)"""
+    try:
+        import psutil
+        from datetime import datetime, timedelta
+        from services.pc_control.system_tools import get_system_status
+
+        cpu_usage = psutil.cpu_percent(interval=0.3)
+        cpu_count = psutil.cpu_count(logical=True)
+        ram = psutil.virtual_memory()
+        
+        disks = []
+        for d in ["C:\\", "D:\\"]:
+            if os.path.exists(d):
+                try:
+                    du = psutil.disk_usage(d)
+                    disks.append({
+                        "drive": d,
+                        "percent": du.percent,
+                        "free_gb": round(du.free / (1024 ** 3), 1),
+                        "total_gb": round(du.total / (1024 ** 3), 1)
+                    })
+                except Exception:
+                    pass
+
+        boot_time = datetime.fromtimestamp(psutil.boot_time())
+        uptime = str(timedelta(seconds=int((datetime.now() - boot_time).total_seconds())))
+
+        battery = psutil.sensors_battery()
+        battery_data = {
+            "percent": battery.percent if battery else 100,
+            "plugged": battery.power_plugged if battery else True,
+            "has_battery": bool(battery)
+        }
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "cpu_percent": cpu_usage,
+                "cpu_cores": cpu_count,
+                "ram_percent": ram.percent,
+                "ram_used_gb": round(ram.used / (1024 ** 3), 2),
+                "ram_total_gb": round(ram.total / (1024 ** 3), 2),
+                "disks": disks,
+                "uptime": uptime,
+                "battery": battery_data,
+                "hostname": os.getenv("COMPUTERNAME", "Windows-PC"),
+                "raw_text": get_system_status()
+            }
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/screenshot", methods=["POST"])
+@admin_required
+def api_pc_screenshot():
+    """Ekran skrinshotini olib base64 formatda qaytarish"""
+    try:
+        import base64
+        import tempfile
+        from services.pc_control.system_tools import take_screenshot
+
+        temp_path = os.path.join(tempfile.gettempdir(), f"web_shot_{int(time.time())}.png")
+        take_screenshot(temp_path)
+
+        with open(temp_path, "rb") as f:
+            b64_str = base64.b64encode(f.read()).decode("utf-8")
+
+        if os.path.exists(temp_path):
+            try: os.remove(temp_path)
+            except Exception: pass
+
+        return jsonify({
+            "success": True,
+            "image": f"data:image/png;base64,{b64_str}",
+            "timestamp": datetime.now().strftime("%H:%M:%S")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/webcam", methods=["POST"])
+@admin_required
+def api_pc_webcam():
+    """Veb-kamera suratini olib base64 formatda qaytarish"""
+    try:
+        import base64
+        import tempfile
+        from services.pc_control.system_tools import take_webcam_photo
+
+        temp_path = os.path.join(tempfile.gettempdir(), f"web_cam_{int(time.time())}.jpg")
+        take_webcam_photo(temp_path)
+
+        with open(temp_path, "rb") as f:
+            b64_str = base64.b64encode(f.read()).decode("utf-8")
+
+        if os.path.exists(temp_path):
+            try: os.remove(temp_path)
+            except Exception: pass
+
+        return jsonify({
+            "success": True,
+            "image": f"data:image/jpeg;base64,{b64_str}",
+            "timestamp": datetime.now().strftime("%H:%M:%S")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/power", methods=["POST"])
+@admin_required
+def api_pc_power():
+    """Quvvatni boshqarish (shutdown, restart, sleep, lock, cancel)"""
+    try:
+        from services.pc_control.system_tools import power_control
+        data = request.get_json(silent=True) or {}
+        action = str(data.get("action", "")).strip().lower()
+        res = power_control(action)
+        return jsonify({"success": True, "message": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/apps", methods=["GET"])
+@admin_required
+def api_pc_apps():
+    """Ishlayotgan dasturlar ro'yxatini olish"""
+    try:
+        import psutil
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'memory_info', 'cpu_percent']):
+            try:
+                pinfo = proc.info
+                if pinfo['name'] and pinfo['memory_info']:
+                    mem_mb = round(pinfo['memory_info'].rss / (1024 * 1024), 1)
+                    if mem_mb > 15:
+                        processes.append({
+                            'pid': pinfo['pid'],
+                            'name': pinfo['name'],
+                            'memory_mb': mem_mb
+                        })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        processes = sorted(processes, key=lambda x: x['memory_mb'], reverse=True)[:25]
+        return jsonify({"success": True, "apps": processes})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/kill", methods=["POST"])
+@admin_required
+def api_pc_kill():
+    """Dasturni PID yoki nomi bo'yicha to'xtatish"""
+    try:
+        from services.pc_control.system_tools import kill_process
+        data = request.get_json(silent=True) or {}
+        target = str(data.get("target", "")).strip()
+        if not target:
+            return jsonify({"success": False, "error": "Target ko'rsatilmadi."}), 400
+
+        res = kill_process(target)
+        return jsonify({"success": True, "message": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/cmd", methods=["POST"])
+@admin_required
+def api_pc_cmd():
+    """Windows CMD buyrug'ini bajarish"""
+    try:
+        from services.pc_control.system_tools import execute_cmd_sync
+        data = request.get_json(silent=True) or {}
+        cmd = str(data.get("command", "")).strip()
+        if not cmd:
+            return jsonify({"success": False, "error": "Buyruq kiritilmadi."}), 400
+
+        output = execute_cmd_sync(cmd)
+        return jsonify({"success": True, "output": output})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/cleanup", methods=["POST"])
+@admin_required
+def api_pc_cleanup():
+    """Korzina yoki Temp keshni tozalash"""
+    try:
+        from services.pc_control.system_tools import empty_recycle_bin, clean_temp_files
+        data = request.get_json(silent=True) or {}
+        clean_type = str(data.get("type", "temp")).strip().lower()
+
+        if clean_type == "recycle":
+            msg = empty_recycle_bin()
+        else:
+            msg = clean_temp_files()
+
+        return jsonify({"success": True, "message": msg})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/media", methods=["POST"])
+@admin_required
+def api_pc_media():
+    """Ovoz, yorqinlik va media boshqaruvi"""
+    try:
+        from services.pc_control.system_tools import set_volume, set_mute, set_brightness, media_control, show_desktop
+        data = request.get_json(silent=True) or {}
+        act = str(data.get("action", "")).strip().lower()
+        val = data.get("value")
+
+        if act == "volume":
+            msg = set_volume(int(val or 50))
+        elif act == "mute":
+            msg = set_mute(bool(val))
+        elif act == "brightness":
+            msg = set_brightness(int(val or 50))
+        elif act == "media_key":
+            msg = media_control(str(val or "playpause"))
+        elif act == "desktop":
+            msg = show_desktop()
+        else:
+            msg = "Noma'lum media buyruq."
+
+        return jsonify({"success": True, "message": msg})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/pc/ai", methods=["POST"])
+@admin_required
+def api_pc_ai():
+    """Gemini AI PC Agent so'rovini bajarish"""
+    try:
+        import base64
+        from services.pc_control.ai_agent import process_ai_agent_request
+        data = request.get_json(silent=True) or {}
+        prompt = str(data.get("prompt", "")).strip()
+        if not prompt:
+            return jsonify({"success": False, "error": "Prompt kiritilmadi."}), 400
+
+        res = process_ai_agent_request(8135594558, prompt)
+
+        shot_b64 = None
+        if res.get("screenshot_file") and os.path.exists(res["screenshot_file"]):
+            try:
+                with open(res["screenshot_file"], "rb") as f:
+                    shot_b64 = f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+                os.remove(res["screenshot_file"])
+            except Exception:
+                pass
+
+        return jsonify({
+            "success": True,
+            "action": res.get("action"),
+            "message": res.get("message"),
+            "exec_result": res.get("exec_result"),
+            "screenshot": shot_b64
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 

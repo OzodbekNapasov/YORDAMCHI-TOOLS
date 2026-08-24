@@ -151,6 +151,16 @@ const ATLAS = {
       color: '#f59e0b',
       glow: 'rgba(245, 158, 11, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`
+    },
+    {
+      id: 'pc_control',
+      num: '9',
+      title: 'KOMPYUTER & PC AGENT',
+      subtitle: 'Windows monitoring, ekran skrinshoti, veb-kamera, quvvat va Gemini AI Agent',
+      category: 'Masofaviy Boshqaruv',
+      color: '#00f2fe',
+      glow: 'rgba(0, 242, 254, 0.45)',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
     }
   ],
 
@@ -404,7 +414,7 @@ const ATLAS = {
   async init() {
     this.bindGlobalEvents();
     const hash = (window.location.hash || '').replace(/^#\/?/, '').trim();
-    if (hash && ['hub', 'contracts', 'orders', 'certificates', 'amaliyot', 'meta_ads', 'instagram', 'academic_groups', 'groups', 'dashboard', 'analytics', 'logs', 'settings'].includes(hash)) {
+    if (hash && ['hub', 'contracts', 'orders', 'certificates', 'amaliyot', 'meta_ads', 'instagram', 'academic_groups', 'groups', 'dashboard', 'analytics', 'logs', 'settings', 'pc_control'].includes(hash)) {
       this.currentRoute = hash;
     } else {
       this.currentRoute = 'hub';
@@ -604,7 +614,8 @@ const ATLAS = {
         analytics: 'Statistika va Tahlil',
         logs: 'Tizim Loglari',
         settings: 'Bot va Tizim Sozlamalari',
-        modules: 'Modullar Boshqaruvi'
+        modules: 'Modullar Boshqaruvi',
+        pc_control: 'Kompyuter Boshqaruvi & Gemini AI Agent'
       };
       pageTitle.innerText = titles[route] || 'ATLAS Boshqaruv Markazi';
     }
@@ -629,6 +640,7 @@ const ATLAS = {
       case 'academic_groups': this.loadGroups(viewport, 'academic'); break;
       case 'groups': this.loadGroups(viewport, 'telegram'); break;
       case 'dashboard': this.loadDashboard(viewport); break;
+      case 'pc_control': this.loadPcControl(viewport); break;
       case 'users': this.loadUsers(viewport); break;
       case 'messages': this.loadMessages(viewport); break;
       case 'automation': this.loadAutomation(viewport); break;
@@ -932,6 +944,9 @@ const ATLAS = {
             </div>
 
             <div class="sidebar-group-title">Monitoring & Tizim</div>
+            <div class="nav-item" data-route="pc_control">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> <span>Kompyuter Boshqaruvi</span>
+            </div>
             <div class="nav-item" data-route="analytics">
               ${this.icons.analytics} <span>Statistika & Tahlil</span>
             </div>
@@ -7590,7 +7605,438 @@ const ATLAS = {
         }
       }
     });
+  },
+
+  // ============================================================
+  // 9. KOMPYUTER & PC AGENT VIEW
+  // ============================================================
+  async loadPcControl(viewport) {
+    viewport.innerHTML = `
+      <div class="contracts-page">
+        <!-- HEADER -->
+        <div class="content-header-card" style="background:linear-gradient(135deg, rgba(0, 242, 254, 0.08) 0%, rgba(13, 17, 23, 0.95) 100%);border:1px solid rgba(0, 242, 254, 0.2);padding:20px;border-radius:12px;margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h2 style="margin:0 0 4px 0;font-size:20px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px;">
+                <span style="color:#00f2fe;">💻</span> Kompyuter Boshqaruvi & AI Agent
+                <span class="badge" style="background:rgba(0,242,254,0.15);color:#00f2fe;border:1px solid rgba(0,242,254,0.3);font-size:11px;">PC AGENT v2.3</span>
+              </h2>
+              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.6);">
+                Shaxsiy Windows kompyuteringizni masofadan to'liq boshqarish, monitoring qilish va AI agenti
+              </p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn-secondary btn-sm" id="btn-refresh-pc-status" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;">
+                ${this.icons.refresh} <span>Yangilash</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE SYSTEM GAUGES & METRICS -->
+        <div id="pc-metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;margin:20px 0;">
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);padding:16px;border-radius:12px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;display:flex;justify-content:space-between;">
+              <span>CPU Yuklanishi</span> <span id="pc-val-cpu-cores">4 yadro</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#00f2fe;" id="pc-val-cpu">--%</div>
+            <div style="background:rgba(255,255,255,0.1);height:6px;border-radius:3px;margin-top:10px;overflow:hidden;">
+              <div id="pc-bar-cpu" style="background:#00f2fe;height:100%;width:0%;transition:width 0.4s;"></div>
+            </div>
+          </div>
+
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);padding:16px;border-radius:12px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;display:flex;justify-content:space-between;">
+              <span>RAM Xotira</span> <span id="pc-val-ram-gb">-- / -- GB</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#10b981;" id="pc-val-ram">--%</div>
+            <div style="background:rgba(255,255,255,0.1);height:6px;border-radius:3px;margin-top:10px;overflow:hidden;">
+              <div id="pc-bar-ram" style="background:#10b981;height:100%;width:0%;transition:width 0.4s;"></div>
+            </div>
+          </div>
+
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);padding:16px;border-radius:12px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;display:flex;justify-content:space-between;">
+              <span>C: Diski</span> <span id="pc-val-disk-c-gb">-- GB bo'sh</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#f59e0b;" id="pc-val-disk-c">--%</div>
+            <div style="background:rgba(255,255,255,0.1);height:6px;border-radius:3px;margin-top:10px;overflow:hidden;">
+              <div id="pc-bar-disk-c" style="background:#f59e0b;height:100%;width:0%;transition:width 0.4s;"></div>
+            </div>
+          </div>
+
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);padding:16px;border-radius:12px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;display:flex;justify-content:space-between;">
+              <span>Uptime & Quvvat</span> <span id="pc-val-host">Windows-PC</span>
+            </div>
+            <div style="font-size:18px;font-weight:700;color:#a78bfa;margin-top:4px;" id="pc-val-uptime">--:--:--</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;" id="pc-val-battery">🔌 Tarmoqqa ulangan</div>
+          </div>
+        </div>
+
+        <!-- QUICK CONTROL ACTIONS GRID -->
+        <div style="margin-bottom:24px;">
+          <h3 style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:12px;">⚡ Tezkor Boshqaruv Buyruqlari</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;">
+            <button class="btn-secondary" id="btn-pc-take-screenshot" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(0,242,254,0.08);border:1px solid rgba(0,242,254,0.3);color:#00f2fe;font-weight:700;border-radius:10px;cursor:pointer;">
+              📸 <span>Skrinshot Olish</span>
+            </button>
+            <button class="btn-secondary" id="btn-pc-take-webcam" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.3);color:#ec4899;font-weight:700;border-radius:10px;cursor:pointer;">
+              📷 <span>Veb-kamera Surat</span>
+            </button>
+            <button class="btn-secondary" id="btn-pc-show-desktop" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;font-weight:700;border-radius:10px;cursor:pointer;">
+              🖥 <span>Ish Stoli (Win+D)</span>
+            </button>
+            <button class="btn-secondary" id="btn-pc-clean-temp" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-weight:700;border-radius:10px;cursor:pointer;">
+              🧹 <span>Temp Kesh Tozalash</span>
+            </button>
+            <button class="btn-secondary" id="btn-pc-clean-recycle" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-weight:700;border-radius:10px;cursor:pointer;">
+              🗑 <span>Korzinani Tozalash</span>
+            </button>
+            <button class="btn-secondary" id="btn-pc-power-menu" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-weight:700;border-radius:10px;cursor:pointer;">
+              ⚡ <span>Quvvat (O'chirish/Restart)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MAIN 2-COLUMN SECTION: APPS & TERMINAL / AI -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:20px;margin-bottom:24px;">
+          <!-- COLUMN 1: RUNNING APPS -->
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h3 style="margin:0;font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
+                🎮 Faol Dasturlar (TOP RAM)
+              </h3>
+              <button class="btn-secondary btn-sm" id="btn-refresh-apps" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;cursor:pointer;">
+                ${this.icons.refresh} <span>Yangilash</span>
+              </button>
+            </div>
+            <div id="pc-apps-list-wrap" style="flex:1;max-height:360px;overflow-y:auto;font-size:13px;">
+              <div style="display:flex;align-items:center;justify-content:center;height:120px;"><div class="spinner-sm"></div></div>
+            </div>
+          </div>
+
+          <!-- COLUMN 2: CMD TERMINAL & AI AGENT -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <!-- CMD TERMINAL -->
+            <div class="card" style="background:rgba(13,17,23,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h4 style="margin:0;font-size:14px;font-weight:700;color:#00f2fe;display:flex;align-items:center;gap:6px;">
+                  <span>💻</span> Windows CMD Terminal
+                </h4>
+                <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;">CMD / PowerShell</span>
+              </div>
+              <div id="pc-terminal-output" style="background:#000;border:1px solid #222;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a7f3d0;min-height:110px;max-height:160px;overflow-y:auto;white-space:pre-wrap;margin-bottom:10px;">
+Microsoft Windows [Version 10.0]
+(c) Microsoft Corporation. All rights reserved.
+C:\\Users\\user> Tayyor.
+              </div>
+              <form id="form-pc-cmd" style="display:flex;gap:8px;">
+                <input type="text" id="input-pc-cmd" class="input-control" placeholder="Buyruq yozing (masalan: ipconfig, dir, ping...)" style="font-family:'JetBrains Mono',monospace;font-size:12px;flex:1;" required>
+                <button type="submit" class="btn-primary btn-sm" id="btn-run-cmd" style="padding:0 16px;">Bajarish</button>
+              </form>
+            </div>
+
+            <!-- GEMINI AI PC AGENT -->
+            <div class="card" style="background:linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(13,17,23,0.95) 100%);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h4 style="margin:0;font-size:14px;font-weight:700;color:#a78bfa;display:flex;align-items:center;gap:6px;">
+                  <span>🧠</span> Gemini AI PC Agent
+                </h4>
+                <span class="badge" style="background:rgba(99,102,241,0.2);color:#a78bfa;font-size:10px;padding:2px 8px;border-radius:4px;">GEMINI 2.0 FLASH</span>
+              </div>
+              <div id="pc-ai-chat-output" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;font-size:13px;color:#fff;min-height:100px;max-height:160px;overflow-y:auto;margin-bottom:10px;line-height:1.4;">
+                <div style="color:rgba(255,255,255,0.6);font-style:italic;">AI Agent tayyor. Istalgan tabiiy buyruq yozishingiz mumkin (masalan: "Ekrandan rasm olib ko'rsat", "Kalkulyatorni och", "Temp fayllarni tozalab ber").</div>
+              </div>
+              <form id="form-pc-ai" style="display:flex;gap:8px;">
+                <input type="text" id="input-pc-ai" class="input-control" placeholder="AI Agentga topshiriq bering..." style="font-size:13px;flex:1;" required>
+                <button type="submit" class="btn-primary btn-sm" id="btn-send-ai" style="background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);border:none;padding:0 16px;">Yuborish</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Fetch initial status and apps
+    this.refreshPcStatus();
+    this.refreshPcApps();
+
+    // Event Listeners
+    document.getElementById('btn-refresh-pc-status')?.addEventListener('click', () => this.refreshPcStatus());
+    document.getElementById('btn-refresh-apps')?.addEventListener('click', () => this.refreshPcApps());
+
+    // Screenshot
+    document.getElementById('btn-pc-take-screenshot')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-pc-take-screenshot');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-sm"></span> <span>Olinmoqda...</span>`;
+      const res = await this.api('/api/pc/screenshot', 'POST');
+      btn.disabled = false;
+      btn.innerHTML = `📸 <span>Skrinshot Olish</span>`;
+
+      if (res && res.success && res.image) {
+        this.modal({
+          title: `🖼 Kompyuter Ekran Tasviri (${res.timestamp})`,
+          maxWidth: '850px',
+          contentHtml: `
+            <div style="text-align:center;">
+              <img src="${res.image}" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-bottom:14px;" />
+              <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <a href="${res.image}" download="screenshot_${Date.now()}.png" class="btn-primary btn-sm">Yuklab olish</a>
+                <button class="btn-secondary btn-sm" onclick="ATLAS.closeModal()">Yopish</button>
+              </div>
+            </div>
+          `
+        });
+      } else {
+        this.toast((res && res.error) || 'Screenshot olishda xatolik', 'error');
+      }
+    });
+
+    // Webcam
+    document.getElementById('btn-pc-take-webcam')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-pc-take-webcam');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-sm"></span> <span>Olinmoqda...</span>`;
+      const res = await this.api('/api/pc/webcam', 'POST');
+      btn.disabled = false;
+      btn.innerHTML = `📷 <span>Veb-kamera Surat</span>`;
+
+      if (res && res.success && res.image) {
+        this.modal({
+          title: `📷 Veb-kamera Surati (${res.timestamp})`,
+          maxWidth: '650px',
+          contentHtml: `
+            <div style="text-align:center;">
+              <img src="${res.image}" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-bottom:14px;" />
+              <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <a href="${res.image}" download="webcam_${Date.now()}.jpg" class="btn-primary btn-sm">Yuklab olish</a>
+                <button class="btn-secondary btn-sm" onclick="ATLAS.closeModal()">Yopish</button>
+              </div>
+            </div>
+          `
+        });
+      } else {
+        this.toast((res && res.error) || 'Veb-kamera tasvirini olishda xatolik', 'error');
+      }
+    });
+
+    // Desktop
+    document.getElementById('btn-pc-show-desktop')?.addEventListener('click', async () => {
+      await this.api('/api/pc/media', 'POST', { action: 'desktop' });
+      this.toast('Ish stoli ko‘rsatildi (Win+D)', 'success');
+    });
+
+    // Cleanup Temp
+    document.getElementById('btn-pc-clean-temp')?.addEventListener('click', async () => {
+      const res = await this.api('/api/pc/cleanup', 'POST', { type: 'temp' });
+      this.toast((res && res.message) || 'Temp kesh tozalandi', 'success');
+      this.refreshPcStatus();
+    });
+
+    // Cleanup Recycle
+    document.getElementById('btn-pc-clean-recycle')?.addEventListener('click', async () => {
+      const res = await this.api('/api/pc/cleanup', 'POST', { type: 'recycle' });
+      this.toast((res && res.message) || 'Korzina tozalandi', 'success');
+    });
+
+    // Power Menu Modal
+    document.getElementById('btn-pc-power-menu')?.addEventListener('click', () => {
+      this.modal({
+        title: '⚡ Kompyuter Quvvatini Boshqarish',
+        maxWidth: '480px',
+        contentHtml: `
+          <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:16px;">
+            Quyidagi quvvat amallaridan birini tanlang:
+          </p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn-danger" id="modal-btn-power-shutdown" style="padding:10px;text-align:left;font-weight:700;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;">⚡ Kompyuterni O'chirish (Shutdown)</button>
+            <button class="btn-secondary" id="modal-btn-power-restart" style="padding:10px;text-align:left;font-weight:700;color:#f59e0b;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;cursor:pointer;">🔄 Qayta Yuklash (Restart)</button>
+            <button class="btn-secondary" id="modal-btn-power-sleep" style="padding:10px;text-align:left;font-weight:700;color:#00f2fe;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;cursor:pointer;">🌙 Uyqu Rejimi (Sleep)</button>
+            <button class="btn-secondary" id="modal-btn-power-lock" style="padding:10px;text-align:left;font-weight:700;color:#a78bfa;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;cursor:pointer;">🔒 Ekranni Qulflash (Lock)</button>
+            <button class="btn-secondary" id="modal-btn-power-cancel" style="padding:10px;text-align:left;font-weight:700;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;cursor:pointer;">❌ Rejalashtirilgan o'chirishni bekor qilish</button>
+          </div>
+        `
+      });
+
+      const handlePowerAction = async (action, confirmMsg) => {
+        if (confirmMsg && !confirm(confirmMsg)) return;
+        const res = await this.api('/api/pc/power', 'POST', { action });
+        this.closeModal();
+        this.toast((res && res.message) || 'Amal bajarildi', 'info');
+      };
+
+      document.getElementById('modal-btn-power-shutdown')?.addEventListener('click', () => handlePowerAction('shutdown', 'Haqiqatdan ham kompyuterni o‘chirmoqchimisiz?'));
+      document.getElementById('modal-btn-power-restart')?.addEventListener('click', () => handlePowerAction('restart', 'Kompyuterni qayta yuklamoqchimisiz?'));
+      document.getElementById('modal-btn-power-sleep')?.addEventListener('click', () => handlePowerAction('sleep'));
+      document.getElementById('modal-btn-power-lock')?.addEventListener('click', () => handlePowerAction('lock'));
+      document.getElementById('modal-btn-power-cancel')?.addEventListener('click', () => handlePowerAction('cancel'));
+    });
+
+    // CMD Form
+    document.getElementById('form-pc-cmd')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('input-pc-cmd');
+      const cmd = input.value.trim();
+      if (!cmd) return;
+
+      const outputEl = document.getElementById('pc-terminal-output');
+      outputEl.innerHTML += `\n\nC:\\Users\\user> ${cmd}\n[Bajarilmoqda...]`;
+      outputEl.scrollTop = outputEl.scrollHeight;
+
+      input.value = '';
+      const res = await this.api('/api/pc/cmd', 'POST', { command: cmd });
+      if (res && res.success) {
+        outputEl.innerHTML += `\n${res.output || 'Bajarildi.'}`;
+      } else {
+        outputEl.innerHTML += `\n❌ Xatolik: ${(res && res.error) || 'Xatolik yuz berdi'}`;
+      }
+      outputEl.scrollTop = outputEl.scrollHeight;
+    });
+
+    // AI Agent Form
+    document.getElementById('form-pc-ai')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('input-pc-ai');
+      const prompt = input.value.trim();
+      if (!prompt) return;
+
+      const chatEl = document.getElementById('pc-ai-chat-output');
+      chatEl.innerHTML += `
+        <div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;">
+          <b>Siz:</b> ${prompt}
+        </div>
+        <div id="ai-loading-indicator" style="margin-top:6px;font-size:12px;color:#a78bfa;display:flex;align-items:center;gap:6px;">
+          <span class="spinner-sm"></span> AI Agent vazifani tahlil qilmoqda...
+        </div>
+      `;
+      chatEl.scrollTop = chatEl.scrollHeight;
+      input.value = '';
+
+      const res = await this.api('/api/pc/ai', 'POST', { prompt: prompt });
+      document.getElementById('ai-loading-indicator')?.remove();
+
+      if (res && res.success) {
+        let shotHtml = '';
+        if (res.screenshot) {
+          shotHtml = `<div style="margin-top:8px;"><img src="${res.screenshot}" style="max-width:100%;border-radius:6px;" /></div>`;
+        }
+        chatEl.innerHTML += `
+          <div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#fff;">
+            <div style="font-weight:700;color:#a78bfa;margin-bottom:4px;">🤖 AI Agent:</div>
+            <div>${res.message || 'Topshiriq bajarildi.'}</div>
+            ${res.exec_result ? `<div style="font-size:11px;color:#34d399;margin-top:4px;">⚙️ ${res.exec_result}</div>` : ''}
+            ${shotHtml}
+          </div>
+        `;
+      } else {
+        chatEl.innerHTML += `
+          <div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;">
+            ❌ ${(res && res.error) || 'AI topshirig‘ini bajarishda xatolik yuz berdi'}
+          </div>
+        `;
+      }
+      chatEl.scrollTop = chatEl.scrollHeight;
+    });
+  },
+
+  async refreshPcStatus() {
+    const res = await this.api('/api/pc/status', 'GET');
+    if (res && res.success && res.data) {
+      const d = res.data;
+      const elCpu = document.getElementById('pc-val-cpu');
+      const elRam = document.getElementById('pc-val-ram');
+      const elRamGb = document.getElementById('pc-val-ram-gb');
+      const elBarCpu = document.getElementById('pc-bar-cpu');
+      const elBarRam = document.getElementById('pc-bar-ram');
+      const elCpuCores = document.getElementById('pc-val-cpu-cores');
+      const elDiskC = document.getElementById('pc-val-disk-c');
+      const elDiskCGb = document.getElementById('pc-val-disk-c-gb');
+      const elBarDiskC = document.getElementById('pc-bar-disk-c');
+      const elUptime = document.getElementById('pc-val-uptime');
+      const elBattery = document.getElementById('pc-val-battery');
+      const elHost = document.getElementById('pc-val-host');
+
+      if (elCpu) elCpu.innerText = `${d.cpu_percent}%`;
+      if (elCpuCores) elCpuCores.innerText = `${d.cpu_cores} ta yadro`;
+      if (elBarCpu) elBarCpu.style.width = `${Math.min(100, d.cpu_percent)}%`;
+
+      if (elRam) elRam.innerText = `${d.ram_percent}%`;
+      if (elRamGb) elRamGb.innerText = `${d.ram_used_gb} / ${d.ram_total_gb} GB`;
+      if (elBarRam) elBarRam.style.width = `${Math.min(100, d.ram_percent)}%`;
+
+      if (d.disks && d.disks.length > 0) {
+        const cDisk = d.disks[0];
+        if (elDiskC) elDiskC.innerText = `${cDisk.percent}%`;
+        if (elDiskCGb) elDiskCGb.innerText = `${cDisk.free_gb} GB bo'sh`;
+        if (elBarDiskC) elBarDiskC.style.width = `${Math.min(100, cDisk.percent)}%`;
+      }
+
+      if (elUptime) elUptime.innerText = d.uptime || '0:00:00';
+      if (elHost) elHost.innerText = d.hostname || 'Windows-PC';
+      if (elBattery) {
+        const b = d.battery;
+        if (b && b.has_battery) {
+          elBattery.innerText = `🔋 ${b.percent}% (${b.plugged ? 'Tarmoqda' : 'Batareyada'})`;
+        } else {
+          elBattery.innerText = `🔌 Stasionar PC (Tarmoqda)`;
+        }
+      }
+    }
+  },
+
+  async refreshPcApps() {
+    const wrap = document.getElementById('pc-apps-list-wrap');
+    if (!wrap) return;
+
+    const res = await this.api('/api/pc/apps', 'GET');
+    if (res && res.success && res.apps) {
+      if (res.apps.length === 0) {
+        wrap.innerHTML = `<div style="color:rgba(255,255,255,0.5);text-align:center;padding:20px;">Dasturlar topilmadi.</div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);font-size:11px;text-align:left;">
+              <th style="padding:6px;">Dastur nomi</th>
+              <th style="padding:6px;">PID</th>
+              <th style="padding:6px;">RAM</th>
+              <th style="padding:6px;text-align:right;">Amal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${res.apps.map(a => `
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.2s;">
+                <td style="padding:6px;font-weight:600;color:#fff;">${a.name}</td>
+                <td style="padding:6px;color:rgba(255,255,255,0.5);font-family:'JetBrains Mono',monospace;">${a.pid}</td>
+                <td style="padding:6px;color:#10b981;font-weight:700;">${a.memory_mb} MB</td>
+                <td style="padding:6px;text-align:right;">
+                  <button class="btn-danger btn-sm" onclick="ATLAS.killPcApp('${a.pid}', '${a.name}')" style="padding:2px 8px;font-size:11px;background:#ef4444;color:#fff;border:none;border-radius:4px;cursor:pointer;">Kill</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } else {
+      wrap.innerHTML = `<div style="color:#f87171;text-align:center;padding:20px;">Dasturlar ro‘yxatini olib bo‘lmadi</div>`;
+    }
+  },
+
+  async killPcApp(pid, name) {
+    if (!confirm(`Haqiqatan ham "${name}" (PID: ${pid}) dasturini majburiy to'xtatmoqchimisiz?`)) return;
+    const res = await this.api('/api/pc/kill', 'POST', { target: pid });
+    if (res && res.success) {
+      this.toast(res.message || 'Jarayon to‘xtatildi', 'success');
+      this.refreshPcApps();
+    } else {
+      this.toast((res && res.error) || 'Xatolik yuz berdi', 'error');
+    }
   }
 };
 
 document.addEventListener('DOMContentLoaded', () => ATLAS.init());
+
