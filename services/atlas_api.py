@@ -2806,10 +2806,12 @@ def api_pc_unlock():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@atlas_api.route("/mtf/convert", methods=["POST"])
-@admin_required
+@atlas_api.route("/mtf/convert", methods=["POST", "OPTIONS"])
 def api_mtf_convert():
     """MTF / XML test faylini PDF va DOCX formatlariga o'girish"""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+
     try:
         import os
         import base64
