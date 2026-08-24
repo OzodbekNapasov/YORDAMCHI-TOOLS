@@ -1,5 +1,10 @@
-<svg viewBox="0 0 350 215" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Exact Logo Vector from User Image -->
-  <path fill-rule="evenodd" clip-rule="evenodd" d="M105 10 L10 201 L334 51 L161 114 L105 10 Z M105 71 L129 120 L77 141 Z" fill="currentColor"/>
-  <path d="M155 174 L182 160 L192 180 L155 180 Z" fill="currentColor"/>
+<svg viewBox="0 0 320 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="atlas_logo_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 276 L320 276 L160 1 L68 159 L134 159 L160 117 L218 218 L33 218 Z" fill="url(#atlas_logo_grad)"/>
 </svg>

@@ -42,7 +42,7 @@ const ATLAS = {
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
-    brandLogo: `<svg viewBox="0 0 350 215" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M105 10 L10 201 L334 51 L161 114 L105 10 Z M105 71 L129 120 L77 141 Z" fill="currentColor"/><path d="M155 174 L182 160 L192 180 L155 180 Z" fill="currentColor"/></svg>`,
+    brandLogo: `<svg viewBox="0 0 320 280" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="atlas_brand_grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="50%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#2563eb"/></linearGradient></defs><path d="M0 276 L320 276 L160 1 L68 159 L134 159 L160 117 L218 218 L33 218 Z" fill="url(#atlas_brand_grad)"/></svg>`,
     folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
     calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
     activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
@@ -1004,7 +1004,7 @@ const ATLAS = {
           </div>
 
           <div class="sidebar-footer">
-            <div class="user-avatar-badge">${(this.user?.full_name || 'A').charAt(0)}</div>
+            <img src="/static/img/avatar-v1.png" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:1.5px solid rgba(56,189,248,0.4);box-shadow:0 0 10px rgba(56,189,248,0.25);" alt="Avatar">
             <div class="user-info">
               <div class="user-name">${this.user?.full_name || 'Bosh Administrator'}</div>
               <div class="user-role">Shaxsiy Boshqaruv</div>
@@ -8394,15 +8394,16 @@ const ATLAS = {
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
           <div>
             <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px 0;display:flex;align-items:center;gap:10px;">
-              <span>🎓 MTF & Test Generator (PDF / DOCX)</span>
-              <span style="font-size:11px;font-weight:800;background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);padding:2px 10px;border-radius:20px;">MYTESTX CONVERTER</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:24px;height:24px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <span>MTF & Test Generator (PDF / DOCX)</span>
+              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">MYTESTX CONVERTER</span>
             </h2>
             <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0;">
               MyTestX (<code>.mtf</code> va <code>.xml</code>) testlarini yuqori sifatli 2-ustunli PDF kitobcha, Word (.docx) va online test formatlariga o'girish.
             </p>
           </div>
           <div style="display:flex;gap:10px;">
-            <button class="btn-secondary btn-sm" id="btn-mtf-refresh" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;">
+            <button class="btn-secondary btn-sm" id="btn-mtf-refresh" style="display:flex;align-items:center;gap:6px;">
               ${this.icons.refresh} <span>Yangilash</span>
             </button>
           </div>
@@ -8410,15 +8411,17 @@ const ATLAS = {
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:20px;margin-bottom:24px;">
           <!-- UPLOAD & SETTINGS CARD -->
-          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;">
+          <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;">
             <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0 0 16px 0;display:flex;align-items:center;gap:8px;">
-              📁 <span>Test Faylini Yuklash</span>
+              ${this.icons.upload} <span>Test Faylini Yuklash</span>
             </h3>
 
             <!-- DRAG & DROP ZONE -->
-            <div id="mtf-drop-zone" style="border:2px dashed rgba(59,130,246,0.4);background:rgba(59,130,246,0.03);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:18px;">
+            <div id="mtf-drop-zone" style="border:2px dashed rgba(56,189,248,0.35);background:rgba(56,189,248,0.03);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:18px;">
               <input type="file" id="mtf-file-input" accept=".mtf,.xml" style="display:none;">
-              <div style="font-size:36px;margin-bottom:10px;">📤</div>
+              <div style="margin-bottom:10px;color:#38bdf8;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:36px;height:36px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
               <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:6px;" id="mtf-file-name-label">
                 MTF yoki XML faylni bu yerga tashlang yoki bosing
               </div>
@@ -8431,9 +8434,9 @@ const ATLAS = {
             <div style="display:flex;flex-direction:column;gap:14px;">
               <div>
                 <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
-                  📄 PDF Tartibi (Layout):
+                  PDF Tartibi (Layout):
                 </label>
-                <select id="mtf-opt-layout" class="input-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:10px;width:100%;">
+                <select id="mtf-opt-layout" class="select-control">
                   <option value="2col" selected>2-ustunli (Ixcham kitobcha — Qog'oz tejovchi, A4)</option>
                   <option value="1col">1-ustunli (Keng format — Standart A4)</option>
                 </select>
@@ -8441,9 +8444,9 @@ const ATLAS = {
 
               <div>
                 <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
-                  🔑 To'g'ri javoblar belgisi (*):
+                  To'g'ri javoblar belgisi (*):
                 </label>
-                <select id="mtf-opt-answers" class="input-control" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:10px;width:100%;">
+                <select id="mtf-opt-answers" class="select-control">
                   <option value="true" selected>To'g'ri javoblarni yulduzcha (*) bilan belgilash</option>
                   <option value="false">Faqat savollar (Javobsiz test — Imtihon uchun)</option>
                 </select>
@@ -8451,25 +8454,27 @@ const ATLAS = {
 
               <div>
                 <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">
-                  🏷 Fan yoki Test Sarlavhasi (Ixtiyoriy):
+                  Fan yoki Test Sarlavhasi (Ixtiyoriy):
                 </label>
-                <input type="text" id="mtf-opt-title" class="input-control" placeholder="Masalan: Tibbiyot psixologiyasi" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:10px;width:100%;">
+                <input type="text" id="mtf-opt-title" class="input-control" placeholder="Masalan: Tibbiyot psixologiyasi">
               </div>
 
-              <button class="btn-primary" id="btn-mtf-convert" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8);color:#fff;font-weight:700;padding:14px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;box-shadow:0 4px 14px rgba(59,130,246,0.35);">
-                ⚡ <span>PDF & DOCX Generatsiya Qilish</span>
+              <button class="btn-primary" id="btn-mtf-convert" style="padding:14px;border-radius:10px;margin-top:6px;width:100%;">
+                ${this.icons.zap} <span>PDF & DOCX Generatsiya Qilish</span>
               </button>
             </div>
           </div>
 
           <!-- RESULT & PREVIEW CARD -->
-          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;display:flex;flex-direction:column;">
+          <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;display:flex;flex-direction:column;">
             <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0 0 16px 0;display:flex;align-items:center;gap:8px;">
-              📊 <span>Konvertatsiya Natijasi</span>
+              ${this.icons.clipboard} <span>Konvertatsiya Natijasi</span>
             </h3>
 
             <div id="mtf-result-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:30px 20px;color:rgba(255,255,255,0.4);">
-              <div style="font-size:42px;margin-bottom:12px;">📑</div>
+              <div style="margin-bottom:12px;color:rgba(255,255,255,0.3);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
               <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Hozircha test konvert qilinmadi</div>
               <div style="font-size:12px;">Chapdagi bo'limdan <code>.mtf</code> faylni tanlang va tugmani bosing.</div>
             </div>
@@ -8477,13 +8482,15 @@ const ATLAS = {
             <div id="mtf-result-content" style="display:none;flex-direction:column;gap:16px;">
               <!-- METRICS BOX -->
               <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">
-                <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:14px;text-align:center;">
+                <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:14px;text-align:center;">
                   <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:4px;">Jami Savollar</div>
-                  <div style="font-size:24px;font-weight:800;color:#3b82f6;" id="mtf-res-qcount">0 ta</div>
+                  <div style="font-size:24px;font-weight:800;color:#38bdf8;" id="mtf-res-qcount">0 ta</div>
                 </div>
                 <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;text-align:center;">
                   <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:4px;">Holati</div>
-                  <div style="font-size:20px;font-weight:800;color:#10b981;">✅ Tayyor</div>
+                  <div style="font-size:18px;font-weight:800;color:#10b981;display:flex;align-items:center;justify-content:center;gap:4px;">
+                    ${this.icons.check} <span>Tayyor</span>
+                  </div>
                 </div>
               </div>
 
@@ -8494,38 +8501,38 @@ const ATLAS = {
 
               <!-- DOWNLOAD BUTTONS -->
               <div style="display:flex;flex-direction:column;gap:10px;">
-                <a id="mtf-btn-download-pdf" href="#" download="test.pdf" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#ef4444;color:#fff;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.3);">
-                  📥 <span>PDF Kitobchani Yuklab Olish (.pdf)</span>
+                <a id="mtf-btn-download-pdf" href="#" download="test.pdf" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:linear-gradient(135deg, #ef4444, #dc2626);color:#fff;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.35);">
+                  ${this.icons.download} <span>PDF Kitobchani Yuklab Olish (.pdf)</span>
                 </a>
-                <a id="mtf-btn-download-docx" href="#" download="test.docx" class="btn-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.35);color:#60a5fa;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;">
-                  📥 <span>Word Hujjatini Yuklab Olish (.docx)</span>
+                <a id="mtf-btn-download-docx" href="#" download="test.docx" class="btn-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;font-weight:700;border-radius:8px;text-decoration:none;cursor:pointer;">
+                  ${this.icons.download} <span>Word Hujjatini Yuklab Olish (.docx)</span>
                 </a>
               </div>
 
               <!-- SAMPLE QUESTIONS PREVIEW -->
               <div style="margin-top:10px;">
                 <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:8px;">Savollardan Namunalar:</div>
-                <div id="mtf-res-preview-list" style="max-height:180px;overflow-y:auto;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;font-size:12px;display:flex;flex-direction:column;gap:8px;"></div>
+                <div id="mtf-res-preview-list" style="max-height:180px;overflow-y:auto;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;font-size:12px;display:flex;flex-direction:column;gap:8px;"></div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- INTEGRATION PROMO: ONLINE MYTESTX PLATFORM -->
-        <div class="card" style="background:linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.08));border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+        <div class="card" style="background:linear-gradient(135deg, rgba(15,23,42,0.85), rgba(30,41,59,0.75));border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
           <div style="flex:1;min-width:280px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <span style="font-size:24px;">🌐</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:22px;height:22px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               <h3 style="font-size:16px;font-weight:800;color:#fff;margin:0;">Online MyTestX — Texnikum Onlayn Test Platformasi</h3>
-              <span style="font-size:10px;font-weight:800;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:2px 8px;border-radius:6px;">INTEGRATSIYA</span>
+              <span style="font-size:10px;font-weight:800;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 8px;border-radius:6px;">INTEGRATSIYA</span>
             </div>
             <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.5;">
               <code>D:\\01. Antigravity\\online mytestx</code> joylashuvidagi to'liq talaba va admin platformasi. Realtime WebSocket monitoring, nusxa ko'chirishdan himoya, taymer va Google Sheets integratsiyasi.
             </p>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn-secondary" onclick="ATLAS.openOnlineTestPlatform()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);color:#fff;font-weight:700;padding:10px 18px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-              🚀 <span>Platformani Ishga Tushirish</span>
+            <button class="btn-secondary" onclick="ATLAS.openOnlineTestPlatform()" style="font-weight:700;display:flex;align-items:center;gap:6px;">
+              ${this.icons.externalLink} <span>Platformani Ishga Tushirish</span>
             </button>
           </div>
         </div>
