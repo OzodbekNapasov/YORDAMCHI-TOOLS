@@ -7626,6 +7626,10 @@ const ATLAS = {
               </p>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
+              <span class="badge" id="pc-auto-refresh-badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);font-size:11px;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;">
+                <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span>
+                <span>Avto-yangilanish: 5s</span>
+              </span>
               <button class="btn-secondary btn-sm" id="btn-refresh-pc-status" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;">
                 ${this.icons.refresh} <span>Yangilash</span>
               </button>
@@ -7772,9 +7776,21 @@ C:\\Users\\user> Tayyor.
       </div>
     `;
 
+    // Clear previous timer
+    if (this._pcAutoRefreshTimer) clearInterval(this._pcAutoRefreshTimer);
+
     // Fetch initial status and apps
     this.refreshPcStatus();
     this.refreshPcApps();
+
+    // Auto-refresh timer
+    this._pcAutoRefreshTimer = setInterval(() => {
+      if (document.getElementById('pc-metrics-grid')) {
+        this.refreshPcStatus();
+      } else {
+        clearInterval(this._pcAutoRefreshTimer);
+      }
+    }, 5000);
 
     // Event Listeners
     document.getElementById('btn-refresh-pc-status')?.addEventListener('click', () => this.refreshPcStatus());
