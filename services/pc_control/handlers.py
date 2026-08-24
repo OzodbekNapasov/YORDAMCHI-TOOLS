@@ -24,6 +24,7 @@ from .system_tools import (
     pair_sunshine_pin,
     register_sunshine_client_cert,
     get_monitors_list,
+    wake_and_unlock_pc,
     is_system_compatible
 )
 from .keyboards import (
@@ -422,6 +423,17 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
         load_msg = bot.send_message(message.chat.id, f"⚡ <code>{pin}</code> PIN kodi Sunshine serveriga kiritilmoqda...", parse_mode="HTML")
         res = pair_sunshine_pin(pin)
         bot.edit_message_text(res, message.chat.id, load_msg.message_id, parse_mode="HTML")
+
+    # 18.5. Ekranni uyg'otish / Windows Lockdan chiqarish
+    @bot.message_handler(func=lambda msg: (msg.text and (msg.text == "🔓 Ekranni uyg'otish / Qulfdan chiqarish" or msg.text.startswith("/unlock") or msg.text.startswith("/wake"))))
+    def handle_unlock_command(message: Message):
+        if not is_authorized_admin(message.from_user.id):
+            return
+
+        parts = message.text.split(maxsplit=1)
+        pwd = parts[1].strip() if len(parts) > 1 else None
+        res = wake_and_unlock_pc(pwd)
+        bot.send_message(message.chat.id, res, parse_mode="HTML")
 
     # 19. /ai <prompt>
     @bot.message_handler(commands=["ai"])

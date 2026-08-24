@@ -34,6 +34,7 @@ from .system_tools import (
     pair_sunshine_pin,
     register_sunshine_client_cert,
     take_all_monitors_screenshots,
+    wake_and_unlock_pc,
     is_system_compatible
 )
 
@@ -345,6 +346,11 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
         elif action == "sunshine":
             pin = str(payload.get("pin", "")).strip()
             res = pair_sunshine_pin(pin)
+            return {"success": True, "message": res}
+
+        elif action == "unlock":
+            pwd = payload.get("password")
+            res = wake_and_unlock_pc(pwd)
             return {"success": True, "message": res}
 
         elif action == "cmd":

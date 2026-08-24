@@ -2779,6 +2779,20 @@ def api_pc_sunshine():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@atlas_api.route("/pc/unlock", methods=["POST"])
+@admin_required
+def api_pc_unlock():
+    """Ekranni uyg'otish va Windows Lock Screen'dan chiqarish"""
+    try:
+        from services.pc_control.bridge import dispatch_bridge_command
+        data = request.get_json(silent=True) or {}
+        res = dispatch_bridge_command("unlock", data, timeout=6.0)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 
 
 

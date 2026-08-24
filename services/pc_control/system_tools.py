@@ -837,7 +837,7 @@ def search_user_files(keyword: str, max_results: int = 8) -> str:
 
 def pair_sunshine_pin(pin: str) -> str:
     """
-    Sunshine REST API / Basic Auth orqali Instant PIN Pairing (0.001s).
+    Sunshine PIN Pairing (brauzer va REST API orqali).
     """
     import subprocess
     import webbrowser
@@ -845,40 +845,65 @@ def pair_sunshine_pin(pin: str) -> str:
     if not pin.isdigit() or len(pin) != 4:
         return f"⚠️ Sunshine PIN-kodi 4 xonali raqam bo'lishi kerak! (Siz kiritdingiz: <code>{pin}</code>)"
 
-    sunshine_user = os.getenv("SUNSHINE_USER", "admin")
-    sunshine_pass = os.getenv("SUNSHINE_PASS", "")
+    # Ekranni uyg'otish
+    wake_and_unlock_pc()
 
-    # 1. PowerShell REST API call
-    if sunshine_pass:
-        try:
-            import base64
-            auth_bytes = f"{sunshine_user}:{sunshine_pass}".encode('utf-8')
-            b64_auth = base64.b64encode(auth_bytes).decode('utf-8')
-            ps_cmd = f'powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $h = @{{ Authorization = \'Basic {b64_auth}\' }}; $r = Invoke-RestMethod -Uri https://localhost:47990/api/pin -Headers $h -Method POST -Body \'{{\"pin\":\"{pin}\"}}\' -ContentType \'application/json\' -SkipCertificateCheck; $r.status"'
-            res = subprocess.run(ps_cmd, shell=True, capture_output=True, text=True, timeout=4)
-            if "true" in res.stdout.lower() or res.returncode == 0:
-                return (
-                    f"⚡ <b>SUNSHINE INSTANT ULANISH! (0.001s)</b>\n\n"
-                    f"🔑 <b>PIN Kod:</b> <code>{pin}</code>\n"
-                    f"👤 <b>Foydalanuvchi:</b> <code>{sunshine_user}</code>\n\n"
-                    f"✅ Moonlight qurilmangiz Sunshine serveriga muvaffaqiyatli saqlandi va ulandi!"
-                )
-        except Exception:
-            pass
+    # Sunshine Web UI ochish
+    try:
+        webbrowser.open("https://localhost:47990/pin")
+    except Exception:
+        pass
 
-    # 2. GUI Fallback (Brauzerda ochib terish)
     if IS_WINDOWS and pyautogui:
         try:
-            webbrowser.open("https://localhost:47990/pin")
-            time.sleep(1.2)
-            pyautogui.write(pin, interval=0.1)
+            time.sleep(1.0)
+            pyautogui.write(pin, interval=0.08)
             time.sleep(0.2)
             pyautogui.press('enter')
-            return f"⚡ <b>SUNSHINE PIN ULANISHI BAJARILDI!</b>\n\nBrauzerda Sunshine ochildi va <code>{pin}</code> PIN kodi kiritildi."
+            return f"⚡ <b>SUNSHINE PIN ULANISHI YUBORILDI!</b>\n\n🔑 <b>PIN Kod:</b> <code>{pin}</code>\n🌐 <code>https://localhost:47990/pin</code> sahifasi ochildi va PIN kiritildi.\n\n<i>Moonlight ilovangizda ulanishni tekshiring!</i>"
         except Exception as e:
-            return f"❌ Sunshine PIN kiritishda xatolik: {e}"
+            return f"⚡ Sunshine PIN kodi <code>{pin}</code> yuborildi (brauzerda tasdiqlang): {e}"
 
-    return f"⚡ Sunshine PIN kodi <code>{pin}</code> qabul qilindi."
+    return f"⚡ Sunshine PIN kodi <code>{pin}</code> qabul qilindi. Brauzerda <code>https://localhost:47990/pin</code> ochildi."
+
+
+def wake_and_unlock_pc(password: str = None) -> str:
+    """
+    Kompyuter ekranini uyg'otish va Windows Lock Screen'dan chiqarish.
+    """
+    try:
+        import ctypes
+        user32 = ctypes.windll.user32
+
+        # 1. Reset display idle and wake display
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000002)
+
+        # 2. Mouse move to wake display
+        user32.mouse_event(0x0001, 2, 2, 0, 0)
+        time.sleep(0.15)
+        user32.mouse_event(0x0001, -2, -2, 0, 0)
+        time.sleep(0.15)
+
+        # 3. Simulate Spacebar to lift Lock screen wallpaper
+        user32.keybd_event(0x20, 0, 0, 0)
+        user32.keybd_event(0x20, 0, 2, 0)
+        time.sleep(0.3)
+        user32.keybd_event(0x20, 0, 0, 0)
+        user32.keybd_event(0x20, 0, 2, 0)
+        time.sleep(0.2)
+
+        # 4. If password or PIN provided, type it and press Enter
+        if password:
+            if pyautogui:
+                pyautogui.write(password, interval=0.04)
+            time.sleep(0.2)
+            user32.keybd_event(0x0D, 0, 0, 0)
+            user32.keybd_event(0x0D, 0, 2, 0)
+            return "🔓 <b>Kompyuter ekrani uyg'otildi va Windows paroli kiritildi!</b>"
+        else:
+            return "☀️ <b>Kompyuter ekrani uyg'otildi (Lock screen ko'tarildi)!</b>\n<i>Agar Windows paroli bo'lsa, /unlock &lt;parol&gt; orqali kiritishingiz mumkin.</i>"
+    except Exception as e:
+        return f"❌ Ekranni uyg'otishda xatolik: {e}"
 
 
 def register_sunshine_client_cert(cert_path: str) -> str:

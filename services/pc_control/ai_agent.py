@@ -25,7 +25,8 @@ from .system_tools import (
     set_volume,
     set_mute,
     media_control,
-    get_anydesk_id
+    get_anydesk_id,
+    wake_and_unlock_pc
 )
 
 logger = logging.getLogger(__name__)
@@ -121,7 +122,9 @@ ACTION_TYPE turlari:
    params: {"target": "chrome.exe"}
 20. "anydesk_id": AnyDesk dasturini ochish va AnyDesk ID raqamini aniqlab berish.
    params: {}
-21. "chat": Kompyuterda hech narsa bajarmasdan, shunchaki foydalanuvchi savoliga o'zbek tilida javob berish.
+21. "unlock": Kompyuter ekranini uyg'otish, Lock ekrandan chiqarish (Spacebar) yoki parolni terish.
+   params: {"password": ""}
+22. "chat": Kompyuterda hech narsa bajarmasdan, shunchaki foydalanuvchi savoliga o'zbek tilida javob berish.
    params: {}
 """
 
@@ -330,6 +333,9 @@ def process_ai_agent_request(user_id: int, user_prompt: str) -> dict:
             open_app("anydesk")
             aid = get_anydesk_id()
             exec_result = f"⚡ <b>AnyDesk ID:</b> <code>{aid}</code>\n<i>AnyDesk dasturi ishga tushirildi.</i>"
+        elif action in ["unlock", "wake", "wake_pc", "unlock_pc"]:
+            pwd = params.get("password")
+            exec_result = wake_and_unlock_pc(pwd)
         elif action == "chat":
             exec_result = ""
         else:

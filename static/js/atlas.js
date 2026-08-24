@@ -7725,6 +7725,9 @@ const ATLAS = {
             <button class="btn-secondary" id="btn-pc-clean-recycle" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-weight:700;border-radius:10px;cursor:pointer;">
               🗑 <span>Korzinani Tozalash</span>
             </button>
+            <button class="btn-secondary" id="btn-pc-unlock-screen" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;border-radius:10px;cursor:pointer;">
+              🔓 <span>Ekranni Uyg'otish / Qulfdan Chiqarish</span>
+            </button>
             <button class="btn-secondary" id="btn-pc-power-menu" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-weight:700;border-radius:10px;cursor:pointer;">
               ⚡ <span>Quvvat Menyusi</span>
             </button>
@@ -7895,20 +7898,25 @@ const ATLAS = {
     const openSunshineModal = () => {
       this.modal({
         title: '☀️ Sunshine / Moonlight PIN Ulanish',
-        maxWidth: '480px',
+        maxWidth: '520px',
         contentHtml: `
           <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">
-            Moonlight ilovasida chiqqan <b>4 xonali PIN kodni</b> kiriting. Bot yoki veb panel uni kompyuteringizdagi Sunshine serveriga avtomatik kiritadi va ulaydi:
+            Moonlight ilovasida chiqqan <b>4 xonali PIN kodni</b> kiriting. Shuningdek, Sunshine Web UI'ni brauzerda ochib ulanishingiz ham mumkin:
           </p>
           <form id="form-sunshine-pin">
-            <div class="form-group" style="margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:14px;">
               <input type="text" id="input-sunshine-pin" class="input-control" placeholder="Masalan: 1234" maxlength="4" style="font-size:20px;text-align:center;letter-spacing:6px;font-weight:800;color:#f59e0b;" required autofocus>
             </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;">
-              <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
-              <button type="submit" class="btn-primary" id="btn-submit-sunshine-pin" style="background:#f59e0b;color:#000;font-weight:700;">
-                ☀️ <span>PIN Ulanish</span>
-              </button>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+              <a href="https://localhost:47990/pin" target="_blank" class="btn-secondary btn-sm" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:12px;display:flex;align-items:center;gap:6px;">
+                🌐 <span>Sunshine Web UI Ochish</span>
+              </a>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+                <button type="submit" class="btn-primary" id="btn-submit-sunshine-pin" style="background:#f59e0b;color:#000;font-weight:700;">
+                  ☀️ <span>PIN Ulanish</span>
+                </button>
+              </div>
             </div>
           </form>
         `
@@ -7943,6 +7951,52 @@ const ATLAS = {
 
     document.getElementById('btn-pc-sunshine-pin')?.addEventListener('click', openSunshineModal);
     document.getElementById('btn-pc-sunshine-btn')?.addEventListener('click', openSunshineModal);
+
+    // Unlock Screen Modal
+    const openUnlockModal = () => {
+      this.modal({
+        title: '🔓 Kompyuter Ekranini Uyg\'otish & Qulfdan Chiqarish',
+        maxWidth: '480px',
+        contentHtml: `
+          <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:14px;line-height:1.5;">
+            Kompyuteringiz Lock ekranida (qulfda) turganda yoki monitor o'chgan bo'lsa, uni masofadan uyg'otish va parolni kiritish mumkin:
+          </p>
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button type="button" class="btn-secondary btn-block" id="btn-quick-wake-display" style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34d399;font-weight:700;padding:10px;cursor:pointer;">
+              ☀️ <span>Faqat Ekranni Uyg'otish (Spacebar)</span>
+            </button>
+          </div>
+          <form id="form-pc-unlock-pass">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:6px;display:block;">Windows Paroli yoki PIN (ixtiyoriy):</label>
+              <input type="password" id="input-unlock-password" class="input-control" placeholder="Windows kirish paroli..." style="font-size:14px;color:#fff;">
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="btn-secondary" onclick="ATLAS.closeModal()">Bekor qilish</button>
+              <button type="submit" class="btn-primary" id="btn-submit-unlock" style="background:#34d399;color:#000;font-weight:700;cursor:pointer;">
+                🔓 <span>Qulfdan Chiqarish</span>
+              </button>
+            </div>
+          </form>
+        `
+      });
+
+      document.getElementById('btn-quick-wake-display')?.addEventListener('click', async () => {
+        const res = await this.api('/api/pc/unlock', 'POST', {});
+        this.closeModal();
+        this.toast((res && res.message) || 'Ekran uyg\'otildi', 'success');
+      });
+
+      document.getElementById('form-pc-unlock-pass')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pwd = document.getElementById('input-unlock-password').value;
+        const res = await this.api('/api/pc/unlock', 'POST', { password: pwd });
+        this.closeModal();
+        this.toast((res && res.message) || 'Buyruq yuborildi', 'success');
+      });
+    };
+
+    document.getElementById('btn-pc-unlock-screen')?.addEventListener('click', openUnlockModal);
 
     // Cleanup Temp
     document.getElementById('btn-pc-clean-temp')?.addEventListener('click', async () => {
