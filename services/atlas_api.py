@@ -2949,6 +2949,116 @@ def api_mtf_job_status():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@atlas_api.route("/mtf/local_tests", methods=["GET", "OPTIONS"])
+def api_mtf_local_tests():
+    """D:\\MyTestX\\tests papkasidagi barcha testlar katalogini qaytaradi"""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+
+    try:
+        import os
+        import json
+        import requests
+        from services.pc_control.system_tools import scan_mytestx_tests_dir
+        if os.name == "nt":
+            res = scan_mytestx_tests_dir()
+            return jsonify(res)
+        else:
+            # Vercel: Supabase'dagi jonli katalogdan o'qish
+            from services.pc_control.bridge import _get_supa_headers
+            supa_url, supa_key, headers = _get_supa_headers()
+            r = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=eq.mytestx_catalog&select=*", headers=headers, timeout=3.5)
+            if r.status_code == 200 and r.json():
+                val = json.loads(r.json()[0].get("value", "{}"))
+                return jsonify(val)
+            return jsonify({"success": False, "error": "Kompyuter bilan bog'lanilmadi", "categories": [], "total_files": 0})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/mtf/send_telegram", methods=["POST", "OPTIONS"])
+def api_mtf_send_telegram():
+    """Konvert qilingan PDF va DOCX fayllarni admin Telegram chatiga yuborish"""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+
+    try:
+        import base64
+        import requests
+        import io
+        from pathlib import Path
+        from bot import bot, PRIMARY_ADMIN_ID
+
+        data = request.get_json(silent=True) or {}
+        title = data.get("title", "Test Hujjati")
+        filename = data.get("filename", "test")
+        clean_stem = Path(filename).stem
+        pdf_url = data.get("pdf_url")
+        docx_url = data.get("docx_url")
+        pdf_b64 = data.get("pdf_base64")
+        docx_b64 = data.get("docx_base64")
+        target_chat_id = data.get("chat_id") or PRIMARY_ADMIN_ID
+
+        sent_count = 0
+
+        # 1. Send PDF
+        pdf_data = None
+        if pdf_b64:
+            if "," in pdf_b64:
+                pdf_b64 = pdf_b64.split(",", 1)[1]
+            pdf_data = base64.b64decode(pdf_b64)
+        elif pdf_url:
+            r_pdf = requests.get(pdf_url, timeout=25)
+            if r_pdf.status_code == 200:
+                pdf_data = r_pdf.content
+
+        if pdf_data:
+            bio = io.BytesIO(pdf_data)
+            bio.name = f"{clean_stem}.pdf"
+            bot.send_document(
+                target_chat_id,
+                bio,
+                caption=f"📄 <b>{title}</b>\n<i>PDF format (2 ustunli kitobcha)</i>",
+                parse_mode="HTML"
+            )
+            sent_count += 1
+
+        # 2. Send DOCX
+        docx_data = None
+        if docx_b64:
+            if "," in docx_b64:
+                docx_b64 = docx_b64.split(",", 1)[1]
+            docx_data = base64.b64decode(docx_b64)
+        elif docx_url:
+            r_docx = requests.get(docx_url, timeout=25)
+            if r_docx.status_code == 200:
+                docx_data = r_docx.content
+
+        if docx_data:
+            bio = io.BytesIO(docx_data)
+            bio.name = f"{clean_stem}.docx"
+            bot.send_document(
+                target_chat_id,
+                bio,
+                caption=f"📝 <b>{title}</b>\n<i>Word (.docx) formati</i>",
+                parse_mode="HTML"
+            )
+            sent_count += 1
+
+        if sent_count == 0:
+            return jsonify({"success": False, "error": "Yuborish uchun PDF yoki Word fayl topilmadi"}), 400
+
+        return jsonify({
+            "success": True,
+            "message": f"Telegramga {sent_count} ta fayl muvaffaqiyatli yuborildi!",
+            "chat_id": target_chat_id
+        })
+    except Exception as e:
+        logger.error(f"Send telegram error: {e}")
+        return jsonify({"success": False, "error": f"Telegramga yuborishda xatolik: {str(e)}"}), 500
+
+
+
 
 
 

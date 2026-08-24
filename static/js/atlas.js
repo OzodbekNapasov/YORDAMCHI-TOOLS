@@ -8372,21 +8372,21 @@ const ATLAS = {
   },
 
   // ============================================================
-  // MTF & TEST CONVERTER (MYTESTX -> PDF / DOCX)
+  // MTF & TEST CONVERTER (MYTESTX -> PDF / DOCX + D:\MyTestX\tests + TELEGRAM)
   // ============================================================
   loadMtfConverter(viewport) {
     viewport.innerHTML = `
-      <div style="max-width:1200px;margin:0 auto;padding-bottom:50px;">
+      <div style="max-width:1240px;margin:0 auto;padding-bottom:50px;">
         <!-- HEADER -->
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:20px;">
           <div>
             <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px 0;display:flex;align-items:center;gap:10px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:24px;height:24px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               <span>MTF & Test Generator (PDF / DOCX)</span>
-              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">BATCH CONVERTER</span>
+              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">MYTESTX ⚡ TELEGRAM</span>
             </h2>
             <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0;">
-              MyTestX (<code>.mtf</code> va <code>.xml</code>) testlarini yuqori sifatli PDF va Word formatiga o'girish — bir vaqtda bir nechta fayl!
+              <code>D:\\MyTestX\\tests</code> papkasidagi yoki yuklangan testlarni yuqori sifatli PDF, Word (.docx) ga o'girish va to'g'ridan-to'g'ri Telegramga yuborish.
             </p>
           </div>
           <div style="display:flex;gap:10px;">
@@ -8396,32 +8396,69 @@ const ATLAS = {
           </div>
         </div>
 
-        <!-- SETTINGS BAR -->
-        <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px;">
+        <!-- SETTINGS & TELEGRAM BAR -->
+        <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;margin-bottom:20px;">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-items:end;">
             <div>
               <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">PDF Tartibi:</label>
               <select id="mtf-opt-layout" class="select-control">
-                <option value="2col" selected>2-ustunli (Ixcham, A4)</option>
-                <option value="1col">1-ustunli (Keng, A4)</option>
+                <option value="2col" selected>2-ustunli (Ixcham kitobcha, A4)</option>
+                <option value="1col">1-ustunli (Keng format, A4)</option>
               </select>
             </div>
             <div>
               <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Javoblar belgisi (*):</label>
               <select id="mtf-opt-answers" class="select-control">
                 <option value="true" selected>To'g'ri javoblarni (*) belgilash</option>
-                <option value="false">Faqat savollar (Imtihon)</option>
+                <option value="false">Faqat savollar (Imtihon uchun)</option>
               </select>
             </div>
             <div>
-              <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Fan Sarlavhasi (ixtiyoriy):</label>
-              <input type="text" id="mtf-opt-title" class="input-control" placeholder="Fayl nomidan avtomatik olinadi">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#38bdf8;cursor:pointer;padding-bottom:10px;">
+                <input type="checkbox" id="mtf-opt-send-tg" style="width:18px;height:18px;accent-color:#38bdf8;" checked>
+                <span>📲 Natijalarni Telegramga ham yuborish</span>
+              </label>
             </div>
           </div>
         </div>
 
-        <!-- BATCH DROP ZONE -->
-        <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;margin-bottom:20px;">
+        <!-- SOURCE TABS -->
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <button id="mtf-tab-btn-local" class="btn-primary" style="padding:10px 20px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>📂 D:\\MyTestX\\tests Papkasi</span>
+            <span id="mtf-local-badge" style="font-size:11px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px;">Yuklanmoqda...</span>
+          </button>
+          <button id="mtf-tab-btn-upload" class="btn-secondary" style="padding:10px 20px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>⬆️ Fayl Yuklash (Drag & Drop)</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: D:\MyTestX\tests EXPLORER -->
+        <div id="mtf-tab-local" class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:22px;margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <div style="flex:1;min-width:280px;position:relative;">
+              <input type="text" id="mtf-local-search" class="input-control" placeholder="🔍 Test nomini qidirish (masalan: TAT, Anatomiya, Akusherlik)..." style="padding-left:14px;">
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <button class="btn-secondary btn-sm" id="btn-mtf-select-all">Hammasini tanlash</button>
+              <button class="btn-secondary btn-sm" id="btn-mtf-deselect-all">Bekor qilish</button>
+              <button class="btn-primary" id="btn-mtf-convert-local" style="padding:8px 22px;font-weight:800;display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#38bdf8,#0284c7);">
+                ${this.icons.zap} <span>Tanlanganlarni Konvert Qilish</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="mtf-local-list-container" style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px;">
+            <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">
+              <span class="spinner-sm"></span> D:\\MyTestX\\tests papkasi skanerlanmoqda...
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: MANUAL DRAG & DROP -->
+        <div id="mtf-tab-upload" class="card" style="display:none;background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;margin-bottom:20px;">
           <div id="mtf-drop-zone" style="border:2px dashed rgba(56,189,248,0.35);background:rgba(56,189,248,0.03);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;">
             <input type="file" id="mtf-file-input" accept=".mtf,.xml" multiple style="display:none;">
             <div style="margin-bottom:12px;color:#38bdf8;">
@@ -8435,7 +8472,6 @@ const ATLAS = {
             </div>
           </div>
 
-          <!-- FILE QUEUE -->
           <div id="mtf-file-queue" style="margin-top:16px;display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
               <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);" id="mtf-queue-label">0 ta fayl tanlandi</span>
@@ -8448,6 +8484,17 @@ const ATLAS = {
             </div>
             <div id="mtf-file-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;"></div>
           </div>
+        </div>
+
+        <!-- PROGRESS & CONVERTED RESULTS PANEL -->
+        <div id="mtf-results-card" class="card" style="display:none;background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:22px;margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="font-size:16px;font-weight:800;color:#fff;margin:0;display:flex;align-items:center;gap:8px;">
+              ${this.icons.check} <span>Konvertatsiya Natijalari</span>
+            </h3>
+            <span id="mtf-results-status" style="font-size:12px;color:rgba(255,255,255,0.6);"></span>
+          </div>
+          <div id="mtf-results-list" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
 
         <!-- INTEGRATION PROMO -->
@@ -8468,229 +8515,479 @@ const ATLAS = {
       </div>
     `;
 
-    // ── State ────────────────────────────────────────────────
+    // ── Elements & State ─────────────────────────────────────
+    const tabBtnLocal   = document.getElementById('mtf-tab-btn-local');
+    const tabBtnUpload  = document.getElementById('mtf-tab-btn-upload');
+    const tabLocal      = document.getElementById('mtf-tab-local');
+    const tabUpload     = document.getElementById('mtf-tab-upload');
+    const localBadge    = document.getElementById('mtf-local-badge');
+    const localSearch   = document.getElementById('mtf-local-search');
+    const localListCont = document.getElementById('mtf-local-list-container');
+    const resultsCard   = document.getElementById('mtf-results-card');
+    const resultsList   = document.getElementById('mtf-results-list');
+    const resultsStatus = document.getElementById('mtf-results-status');
+
+    let localCategories = [];
+    let selectedLocalPaths = new Set();
+    let uploadFiles = [];
+
+    // ── Tab Switch ───────────────────────────────────────────
+    tabBtnLocal.addEventListener('click', () => {
+      tabBtnLocal.className = 'btn-primary';
+      tabBtnUpload.className = 'btn-secondary';
+      tabLocal.style.display = 'block';
+      tabUpload.style.display = 'none';
+    });
+
+    tabBtnUpload.addEventListener('click', () => {
+      tabBtnUpload.className = 'btn-primary';
+      tabBtnLocal.className = 'btn-secondary';
+      tabUpload.style.display = 'block';
+      tabLocal.style.display = 'none';
+    });
+
+    // ── Helper: Send to Telegram ─────────────────────────────
+    window.ATLAS._mtfSendTelegram = async (btn, title, filename, pdfUrl, docxUrl, pdfB64, docxB64) => {
+      btn.disabled = true;
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<span class="spinner-sm" style="width:12px;height:12px;"></span> <span>Yuborilmoqda...</span>`;
+
+      try {
+        const res = await this.api('/api/mtf/send_telegram', 'POST', {
+          title,
+          filename,
+          pdf_url: pdfUrl || null,
+          docx_url: docxUrl || null,
+          pdf_base64: pdfB64 || null,
+          docx_base64: docxB64 || null
+        });
+
+        if (res && res.success) {
+          btn.innerHTML = `✅ <span>Telegramga Yuborildi</span>`;
+          btn.style.background = 'rgba(16,185,129,0.2)';
+          btn.style.borderColor = '#10b981';
+          btn.style.color = '#10b981';
+          this.toast(`📲 "${title}" Telegramga muvaffaqiyatli yuborildi!`, 'success');
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+          this.toast((res && res.error) || 'Telegramga yuborishda xatolik', 'error');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        this.toast('Xatolik: ' + err.message, 'error');
+      }
+    };
+
+    // ── Load D:\MyTestX\tests Catalog ────────────────────────
+    const loadLocalTests = async () => {
+      localListCont.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);"><span class="spinner-sm"></span> D:\\MyTestX\\tests papkasi skanerlanmoqda...</div>`;
+      try {
+        const res = await this.api('/api/mtf/local_tests', 'GET');
+        if (res && res.success && res.categories) {
+          localCategories = res.categories;
+          localBadge.textContent = `${res.total_files} ta test`;
+          renderLocalTests();
+        } else {
+          localListCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ ${res?.error || 'Testlar ro'yxatini olib bo'lmadi'}</div>`;
+        }
+      } catch (err) {
+        localListCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ Xatolik: ${err.message}</div>`;
+      }
+    };
+
+    const renderLocalTests = () => {
+      const q = (localSearch.value || '').trim().toLowerCase();
+      let matchedCount = 0;
+
+      const html = localCategories.map((cat, catIdx) => {
+        const filteredFiles = cat.files.filter(f => !q || f.name.toLowerCase().includes(q) || cat.folder.toLowerCase().includes(q));
+        if (!filteredFiles.length) return '';
+        matchedCount += filteredFiles.length;
+
+        const allInCatSelected = filteredFiles.every(f => selectedLocalPaths.has(f.path));
+
+        return `
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.06);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" data-cat-idx="${catIdx}" class="mtf-cat-select" style="width:16px;height:16px;accent-color:#38bdf8;" ${allInCatSelected ? 'checked' : ''}>
+                <span style="font-size:13px;font-weight:700;color:#38bdf8;">📁 ${cat.folder}</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${filteredFiles.length} ta)</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;padding:10px;">
+              ${filteredFiles.map(f => {
+                const isSel = selectedLocalPaths.has(f.path);
+                return `
+                  <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:${isSel ? 'rgba(56,189,248,0.12)' : 'rgba(0,0,0,0.2)'};border:1px solid ${isSel ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.04)'};cursor:pointer;transition:all 0.15s;">
+                    <input type="checkbox" value="${f.path}" class="mtf-file-checkbox" style="width:15px;height:15px;accent-color:#38bdf8;" ${isSel ? 'checked' : ''}>
+                    <div style="flex:1;overflow:hidden;">
+                      <div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${f.name}">${f.name}</div>
+                      <div style="font-size:10px;color:rgba(255,255,255,0.4);">${f.size_str} • ${f.mtime_str}</div>
+                    </div>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).filter(Boolean).join('');
+
+      if (!matchedCount) {
+        localListCont.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Qidiruv bo'yicha testlar topilmadi</div>`;
+      } else {
+        localListCont.innerHTML = html;
+      }
+
+      // Attach file checkbox listeners
+      localListCont.querySelectorAll('.mtf-file-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          if (e.target.checked) selectedLocalPaths.add(e.target.value);
+          else selectedLocalPaths.delete(e.target.value);
+          renderLocalTests();
+        });
+      });
+
+      // Attach category select all listeners
+      localListCont.querySelectorAll('.mtf-cat-select').forEach(catCb => {
+        catCb.addEventListener('change', (e) => {
+          const catIdx = parseInt(e.target.getAttribute('data-cat-idx'));
+          const cat = localCategories[catIdx];
+          if (cat) {
+            cat.files.forEach(f => {
+              if (e.target.checked) selectedLocalPaths.add(f.path);
+              else selectedLocalPaths.delete(f.path);
+            });
+          }
+          renderLocalTests();
+        });
+      });
+    };
+
+    localSearch?.addEventListener('input', () => renderLocalTests());
+
+    document.getElementById('btn-mtf-select-all')?.addEventListener('click', () => {
+      localCategories.forEach(cat => cat.files.forEach(f => selectedLocalPaths.add(f.path)));
+      renderLocalTests();
+    });
+
+    document.getElementById('btn-mtf-deselect-all')?.addEventListener('click', () => {
+      selectedLocalPaths.clear();
+      renderLocalTests();
+    });
+
+    // ── Execute Conversion for Local Files ────────────────────
+    document.getElementById('btn-mtf-convert-local')?.addEventListener('click', async () => {
+      if (!selectedLocalPaths.size) {
+        this.toast('Iltimos, avval ro'yxatdan kamida bitta testni tanlang', 'error');
+        return;
+      }
+
+      const paths = Array.from(selectedLocalPaths);
+      const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
+      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
+      const autoSendTg = document.getElementById('mtf-opt-send-tg')?.checked || false;
+
+      resultsCard.style.display = 'block';
+      resultsStatus.textContent = `${paths.length} ta test konvertatsiya qilinmoqda...`;
+      resultsList.innerHTML = paths.map((p, idx) => {
+        const fn = p.split(/[\\/]/).pop();
+        return `
+          <div id="res-row-${idx}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;gap:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px;">
+              <span id="res-icon-${idx}">⏳</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#fff;">${fn}</div>
+                <div id="res-msg-${idx}" style="font-size:11px;color:rgba(255,255,255,0.5);">Navbatga yuklanmoqda...</div>
+              </div>
+            </div>
+            <div id="res-actions-${idx}" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+          </div>
+        `;
+      }).join('');
+
+      let successCount = 0;
+
+      for (let i = 0; i < paths.length; i++) {
+        const filePath = paths[i];
+        const fileName = filePath.split(/[\\/]/).pop();
+        const iconEl = document.getElementById(`res-icon-${i}`);
+        const msgEl  = document.getElementById(`res-msg-${i}`);
+        const actsEl = document.getElementById(`res-actions-${i}`);
+
+        if (iconEl) iconEl.innerHTML = `<span class="spinner-sm"></span>`;
+        if (msgEl)  msgEl.textContent = 'Kompyuterda tahlil qilinmoqda...';
+
+        try {
+          const submitRes = await this.api('/api/mtf/submit_job', 'POST', {
+            filename: fileName,
+            file_base64: null,
+            input_url: null,
+            file_path: filePath,
+            layout,
+            with_answers: withAnswers === 'true',
+            fan_name: fileName.replace(/\.(mtf|xml)$/i, '')
+          });
+
+          if (!submitRes || !submitRes.success) {
+            throw new Error(submitRes?.error || 'Xatolik');
+          }
+
+          const cmdId = submitRes.cmd_id;
+          const jobId = submitRes.job_id;
+
+          let pollDone = false;
+          const startT = Date.now();
+          while (Date.now() - startT < 180000) {
+            await new Promise(r => setTimeout(r, 1500));
+            const stat = await this.api(`/api/mtf/job_status?cmd_id=${cmdId}&job_id=${jobId}`, 'GET');
+            if (!stat) continue;
+
+            if (stat.status === 'completed') {
+              pollDone = true;
+              successCount++;
+              if (iconEl) iconEl.textContent = '✅';
+              if (msgEl) {
+                msgEl.textContent = `✅ ${stat.questions_count} ta savol • ${stat.title || fileName}`;
+                msgEl.style.color = '#10b981';
+              }
+
+              const stem = fileName.replace(/\.(mtf|xml)$/i, '');
+              let actHtml = '';
+              const pdfUrl = stat.pdf_url || stat.pdf_base64;
+              if (pdfUrl) {
+                actHtml += `<a href="${pdfUrl}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📄 PDF</a>`;
+              }
+              const docxUrl = stat.docx_url || stat.docx_base64;
+              if (docxUrl) {
+                actHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 DOCX</a>`;
+              }
+
+              // Telegram button
+              actHtml += `
+                <button onclick="ATLAS._mtfSendTelegram(this, '${(stat.title || fileName).replace(/'/g, "\\'")}', '${fileName}', '${stat.pdf_url || ''}', '${stat.docx_url || ''}', '${stat.pdf_base64 || ''}', '${stat.docx_base64 || ''}')" style="padding:6px 12px;background:rgba(37,99,235,0.18);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                  📲 Telegramga Yuborish
+                </button>
+              `;
+              if (actsEl) actsEl.innerHTML = actHtml;
+
+              // Auto send to Telegram if checked
+              if (autoSendTg) {
+                this.api('/api/mtf/send_telegram', 'POST', {
+                  title: stat.title || fileName,
+                  filename: fileName,
+                  pdf_url: stat.pdf_url,
+                  docx_url: stat.docx_url,
+                  pdf_base64: stat.pdf_base64,
+                  docx_base64: stat.docx_base64
+                }).catch(() => {});
+              }
+
+              break;
+            } else if (stat.status === 'error') {
+              throw new Error(stat.error || 'Xatolik yuz berdi');
+            } else {
+              if (msgEl) msgEl.textContent = stat.message || 'Tahlil qilinmoqda...';
+            }
+          }
+
+          if (!pollDone) throw new Error('Vaqt tugadi');
+
+        } catch (err) {
+          if (iconEl) iconEl.textContent = '❌';
+          if (msgEl) {
+            msgEl.textContent = err.message || 'Xatolik';
+            msgEl.style.color = '#ef4444';
+          }
+        }
+      }
+
+      resultsStatus.textContent = `Bajarildi: ${successCount} / ${paths.length} ta tayyor`;
+      this.toast(`🎉 ${successCount} ta test muvaffaqiyatli konvert qilindi!`, 'success');
+    });
+
+    // ── Drag & Drop Queue Logic ──────────────────────────────
     const dropZone   = document.getElementById('mtf-drop-zone');
     const fileInput  = document.getElementById('mtf-file-input');
     const nameLabel  = document.getElementById('mtf-file-name-label');
     const fileQueue  = document.getElementById('mtf-file-queue');
     const fileList   = document.getElementById('mtf-file-list');
     const queueLabel = document.getElementById('mtf-queue-label');
-    let selectedFiles = [];   // Array of File objects
 
-    // ── Helpers ──────────────────────────────────────────────
     const sizeStr = bytes => bytes < 1024*1024
       ? `${(bytes/1024).toFixed(0)} KB`
       : `${(bytes/1024/1024).toFixed(1)} MB`;
 
-    const statusIcon = status => ({
-      waiting:    '⏳',
-      converting: '<span class="spinner-sm" style="display:inline-block;width:14px;height:14px;"></span>',
-      done:       '✅',
-      error:      '❌',
-    }[status] || '⏳');
-
     const addFiles = (files) => {
       const arr = Array.from(files).filter(f => /\.(mtf|xml)$/i.test(f.name));
       if (!arr.length) { this.toast('Faqat .mtf va .xml fayllar qabul qilinadi', 'error'); return; }
-      // Deduplicate by name
-      const existing = new Set(selectedFiles.map(f => f.name));
-      arr.forEach(f => { if (!existing.has(f.name)) { selectedFiles.push(f); existing.add(f.name); } });
-      renderQueue();
+      const existing = new Set(uploadFiles.map(f => f.name));
+      arr.forEach(f => { if (!existing.has(f.name)) { uploadFiles.push(f); existing.add(f.name); } });
+      renderUploadQueue();
     };
 
-    const removeFile = (idx) => {
-      selectedFiles.splice(idx, 1);
-      renderQueue();
-    };
-
-    const renderQueue = () => {
-      if (!selectedFiles.length) {
+    const renderUploadQueue = () => {
+      if (!uploadFiles.length) {
         fileQueue.style.display = 'none';
         nameLabel.innerHTML = 'MTF yoki XML fayllarni bu yerga tashlang yoki bosing';
-        dropZone.style.borderColor = 'rgba(56,189,248,0.35)';
-        dropZone.style.background  = 'rgba(56,189,248,0.03)';
         return;
       }
       fileQueue.style.display = 'block';
-      queueLabel.textContent = `${selectedFiles.length} ta fayl tanlandi`;
-      nameLabel.innerHTML = `📂 <b style="color:#60a5fa;">${selectedFiles.length} ta fayl</b> tanlandi`;
+      queueLabel.textContent = `${uploadFiles.length} ta fayl tanlandi`;
+      nameLabel.innerHTML = `📂 <b style="color:#60a5fa;">${uploadFiles.length} ta fayl</b> tanlandi`;
 
-      fileList.innerHTML = selectedFiles.map((f, i) => `
-        <div id="file-row-${i}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;gap:10px;flex-wrap:wrap;">
+      fileList.innerHTML = uploadFiles.map((f, i) => `
+        <div id="upload-row-${i}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px;">
-            <span id="file-icon-${i}" style="font-size:18px;">${statusIcon('waiting')}</span>
+            <span id="upload-icon-${i}">⏳</span>
             <div>
               <div style="font-size:13px;font-weight:700;color:#fff;">${f.name}</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.5);">${sizeStr(f.size)}</div>
+              <div id="upload-msg-${i}" style="font-size:11px;color:rgba(255,255,255,0.5);">${sizeStr(f.size)}</div>
             </div>
           </div>
-          <div id="file-downloads-${i}" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-          <div id="file-msg-${i}" style="font-size:11px;color:rgba(255,255,255,0.5);width:100%;display:none;"></div>
-          <button onclick="ATLAS._mtfRemoveFile(${i})" id="file-btn-del-${i}" style="background:none;border:none;color:rgba(239,68,68,0.7);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;" title="O'chirish">✕</button>
+          <div id="upload-downloads-${i}" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          <button onclick="ATLAS._mtfRemoveUploadFile(${i})" style="background:none;border:none;color:rgba(239,68,68,0.7);cursor:pointer;font-size:16px;">✕</button>
         </div>
       `).join('');
 
-      window.ATLAS._mtfRemoveFile = removeFile;
+      window.ATLAS._mtfRemoveUploadFile = (idx) => {
+        uploadFiles.splice(idx, 1);
+        renderUploadQueue();
+      };
     };
 
-    // ── Drop / Click ─────────────────────────────────────────
     dropZone?.addEventListener('click', () => fileInput?.click());
-
     fileInput?.addEventListener('change', (e) => {
       if (e.target.files?.length) addFiles(e.target.files);
       fileInput.value = '';
     });
+    ['dragenter', 'dragover'].forEach(ev => dropZone?.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+    ['dragleave', 'drop'].forEach(ev => dropZone?.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+    dropZone?.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files); });
+    document.getElementById('btn-mtf-clear')?.addEventListener('click', () => { uploadFiles = []; renderUploadQueue(); });
 
-    ['dragenter', 'dragover'].forEach(ev => {
-      dropZone?.addEventListener(ev, e => {
-        e.preventDefault(); e.stopPropagation();
-        dropZone.style.borderColor = '#10b981';
-        dropZone.style.background  = 'rgba(16,185,129,0.12)';
-      });
-    });
-
-    ['dragleave', 'drop'].forEach(ev => {
-      dropZone?.addEventListener(ev, e => {
-        e.preventDefault(); e.stopPropagation();
-        dropZone.style.borderColor = 'rgba(56,189,248,0.35)';
-        dropZone.style.background  = 'rgba(56,189,248,0.03)';
-      });
-    });
-
-    dropZone?.addEventListener('drop', e => {
-      if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
-    });
-
-    // ── Clear ────────────────────────────────────────────────
-    document.getElementById('btn-mtf-clear')?.addEventListener('click', () => {
-      selectedFiles = [];
-      renderQueue();
-    });
-
-    // ── Convert All ──────────────────────────────────────────
+    // ── Execute Conversion for Uploaded Files ────────────────
     document.getElementById('btn-mtf-convert')?.addEventListener('click', async () => {
-      if (!selectedFiles.length) { this.toast('Iltimos, avval fayl tanlang', 'error'); return; }
-
-      const layout      = document.getElementById('mtf-opt-layout')?.value  || '2col';
-      const withAnswers = document.getElementById('mtf-opt-answers')?.value  || 'true';
-      const globalTitle = document.getElementById('mtf-opt-title')?.value.trim() || '';
+      if (!uploadFiles.length) return;
+      const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
+      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
+      const autoSendTg = document.getElementById('mtf-opt-send-tg')?.checked || false;
 
       const btn = document.getElementById('btn-mtf-convert');
       btn.disabled = true;
-      btn.innerHTML = `<span class="spinner-sm"></span> <span>Konvertatsiya qilinmoqda...</span>`;
+      btn.innerHTML = `<span class="spinner-sm"></span> <span>Bajarilmoqda...</span>`;
 
-      let doneCount = 0, errCount = 0;
+      for (let i = 0; i < uploadFiles.length; i++) {
+        const f = uploadFiles[i];
+        const iconEl = document.getElementById(`upload-icon-${i}`);
+        const msgEl  = document.getElementById(`upload-msg-${i}`);
+        const dlEl   = document.getElementById(`upload-downloads-${i}`);
 
-      // Process each file sequentially (server is single-threaded)
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const f = selectedFiles[i];
-        const iconEl    = document.getElementById(`file-icon-${i}`);
-        const dlEl      = document.getElementById(`file-downloads-${i}`);
-        const msgEl     = document.getElementById(`file-msg-${i}`);
-        const delBtn    = document.getElementById(`file-btn-del-${i}`);
-        const rowEl     = document.getElementById(`file-row-${i}`);
-
-        if (iconEl) iconEl.innerHTML = statusIcon('converting');
-        if (delBtn) delBtn.style.display = 'none';
-        if (msgEl)  { msgEl.style.display = 'block'; msgEl.textContent = 'Konvertatsiya qilinmoqda...'; }
+        if (iconEl) iconEl.innerHTML = `<span class="spinner-sm"></span>`;
+        if (msgEl)  msgEl.textContent = 'Navbatga yuklanmoqda...';
 
         try {
-          const base64Data = await new Promise((resolve, reject) => {
+          const base64Data = await new Promise((res, rej) => {
             const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
+            reader.onload = () => res(reader.result);
+            reader.onerror = rej;
             reader.readAsDataURL(f);
           });
 
-          const fanName = globalTitle || f.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
+          const fanName = f.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
 
-          // 1. Submit Job to Queue (Async - 0.2s response, no timeout)
-          if (msgEl) { msgEl.style.display = 'block'; msgEl.textContent = 'Navbatga yuklanmoqda...'; }
           const submitRes = await this.api('/api/mtf/submit_job', 'POST', {
-            filename:     f.name,
-            file_base64:  base64Data,
+            filename: f.name,
+            file_base64: base64Data,
             layout,
             with_answers: withAnswers === 'true',
-            fan_name:     fanName,
+            fan_name: fanName
           });
 
-          if (!submitRes || !submitRes.success) {
-            throw new Error(submitRes?.error || 'Navbatga yuborishda xatolik');
-          }
+          if (!submitRes || !submitRes.success) throw new Error(submitRes?.error || 'Xatolik');
 
-          const jobId = submitRes.job_id;
           const cmdId = submitRes.cmd_id;
+          const jobId = submitRes.job_id;
 
-          // 2. Poll status every 1.5 seconds (up to 3 minutes)
-          let pollSuccess = false;
-          const startTime = Date.now();
-          while (Date.now() - startTime < 180000) {
+          let pollDone = false;
+          const startT = Date.now();
+          while (Date.now() - startT < 180000) {
             await new Promise(r => setTimeout(r, 1500));
-            const statusRes = await this.api(`/api/mtf/job_status?cmd_id=${cmdId}&job_id=${jobId}`, 'GET');
-            if (!statusRes) continue;
+            const stat = await this.api(`/api/mtf/job_status?cmd_id=${cmdId}&job_id=${jobId}`, 'GET');
+            if (!stat) continue;
 
-            if (statusRes.status === 'completed') {
-              pollSuccess = true;
-              doneCount++;
-              if (iconEl) iconEl.innerHTML = statusIcon('done');
-              if (rowEl)  rowEl.style.borderColor = 'rgba(16,185,129,0.4)';
-              if (msgEl)  { msgEl.textContent = `✅ ${statusRes.questions_count} ta savol • ${statusRes.title || f.name}`; msgEl.style.color = '#10b981'; }
+            if (stat.status === 'completed') {
+              pollDone = true;
+              if (iconEl) iconEl.textContent = '✅';
+              if (msgEl) {
+                msgEl.textContent = `✅ ${stat.questions_count} ta savol • ${stat.title || f.name}`;
+                msgEl.style.color = '#10b981';
+              }
 
               const stem = f.name.replace(/\.(mtf|xml)$/i, '');
               let dlHtml = '';
-              const pdfHref = statusRes.pdf_url || statusRes.pdf_base64;
-              if (pdfHref) {
-                dlHtml += `<a href="${pdfHref}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                  📄 PDF
-                </a>`;
+              const pdfUrl = stat.pdf_url || stat.pdf_base64;
+              if (pdfUrl) {
+                dlHtml += `<a href="${pdfUrl}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📄 PDF</a>`;
               }
-              const docxHref = statusRes.docx_url || statusRes.docx_base64;
-              if (docxHref) {
-                dlHtml += `<a href="${docxHref}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                  📝 DOCX
-                </a>`;
+              const docxUrl = stat.docx_url || stat.docx_base64;
+              if (docxUrl) {
+                dlHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 DOCX</a>`;
               }
+
+              dlHtml += `
+                <button onclick="ATLAS._mtfSendTelegram(this, '${(stat.title || f.name).replace(/'/g, "\\'")}', '${f.name}', '${stat.pdf_url || ''}', '${stat.docx_url || ''}', '${stat.pdf_base64 || ''}', '${stat.docx_base64 || ''}')" style="padding:6px 12px;background:rgba(37,99,235,0.18);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                  📲 Telegramga Yuborish
+                </button>
+              `;
               if (dlEl) dlEl.innerHTML = dlHtml;
+
+              if (autoSendTg) {
+                this.api('/api/mtf/send_telegram', 'POST', {
+                  title: stat.title || f.name,
+                  filename: f.name,
+                  pdf_url: stat.pdf_url,
+                  docx_url: stat.docx_url,
+                  pdf_base64: stat.pdf_base64,
+                  docx_base64: stat.docx_base64
+                }).catch(() => {});
+              }
+
               break;
-            } else if (statusRes.status === 'error') {
-              throw new Error(statusRes.error || 'Konvertatsiyada xatolik yuz berdi');
+            } else if (stat.status === 'error') {
+              throw new Error(stat.error || 'Xatolik');
             } else {
-              if (msgEl) msgEl.textContent = statusRes.message || 'Kompyuterda tahlil qilinmoqda...';
+              if (msgEl) msgEl.textContent = stat.message || 'Tahlil qilinmoqda...';
             }
           }
 
-          if (!pollSuccess) {
-            throw new Error('Jarayon vaqti tugadi (Timeout). Iltimos, kompyuterda bot yoniqligini tekshiring.');
-          }
+          if (!pollDone) throw new Error('Vaqt tugadi');
 
         } catch (err) {
-          errCount++;
-          if (iconEl) iconEl.innerHTML = statusIcon('error');
-          if (rowEl)  rowEl.style.borderColor = 'rgba(239,68,68,0.4)';
-          if (msgEl)  { msgEl.textContent = err.message || 'Tarmoq xatosi'; msgEl.style.color = '#ef4444'; }
-          if (delBtn) delBtn.style.display = '';
+          if (iconEl) iconEl.textContent = '❌';
+          if (msgEl) {
+            msgEl.textContent = err.message || 'Xatolik';
+            msgEl.style.color = '#ef4444';
+          }
         }
       }
 
       btn.disabled = false;
       btn.innerHTML = `${this.icons.zap} <span>Barchasini Konvert Qilish</span>`;
-
-      if (doneCount > 0 && errCount === 0) {
-        this.toast(`🎉 Barcha ${doneCount} ta fayl muvaffaqiyatli konvert qilindi!`, 'success');
-      } else if (doneCount > 0) {
-        this.toast(`✅ ${doneCount} ta tayyor, ❌ ${errCount} ta xato`, 'warning');
-      } else {
-        this.toast(`Konvertatsiyada xatolik yuz berdi`, 'error');
-      }
     });
 
     document.getElementById('btn-mtf-refresh')?.addEventListener('click', () => {
       this.loadMtfConverter(viewport);
     });
+
+    // Start by loading D:\MyTestX\tests
+    loadLocalTests();
   },
 
 
-  async openOnlineTestPlatform() {
+    async openOnlineTestPlatform() {
     this.modal({
       title: '🎓 Online MyTestX Platformasi Boshqaruvi',
       maxWidth: '520px',

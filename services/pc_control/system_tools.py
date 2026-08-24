@@ -47,6 +47,72 @@ def is_system_compatible() -> bool:
     return IS_WINDOWS
 
 
+def scan_mytestx_tests_dir(base_dir: str = r"D:\MyTestX\tests") -> dict:
+    """
+    D:\MyTestX\tests papkasidagi barcha .mtf va .xml test fayllarini papkalar bo'yicha guruhlab qaytaradi.
+    """
+    if not os.path.exists(base_dir):
+        candidates = [
+            r"D:\MyTestX\tests",
+            r"D:\01. Antigravity\online mytestx\tests",
+            r"C:\MyTestX\tests"
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                base_dir = c
+                break
+
+    if not os.path.exists(base_dir):
+        return {"success": False, "error": f"Testlar papkasi topilmadi: {base_dir}", "categories": [], "total_files": 0}
+
+    categories_map = {}
+    total_count = 0
+
+    for root, dirs, files in os.walk(base_dir):
+        test_files = [f for f in files if f.lower().endswith(('.mtf', '.xml')) and not f.endswith('_new.xml')]
+        if not test_files:
+            continue
+
+        rel_folder = os.path.relpath(root, base_dir)
+        display_folder = "Asosiy Papka" if rel_folder == "." else rel_folder.replace("\\", " / ")
+
+        file_items = []
+        for fn in sorted(test_files):
+            fp = os.path.join(root, fn)
+            try:
+                sz = os.path.getsize(fp)
+                mtime = os.path.getmtime(fp)
+                mtime_str = datetime.fromtimestamp(mtime).strftime("%d.%m.%Y %H:%M")
+                sz_str = f"{sz // 1024} KB" if sz < 1024*1024 else f"{sz / (1024*1024):.1f} MB"
+            except Exception:
+                sz_str, mtime_str = "-", "-"
+
+            stem = os.path.splitext(fn)[0]
+            ext = os.path.splitext(fn)[1].lower()
+
+            file_items.append({
+                "name": fn,
+                "stem": stem,
+                "ext": ext,
+                "path": fp,
+                "rel_path": os.path.relpath(fp, base_dir).replace("\\", "/"),
+                "size_str": sz_str,
+                "mtime_str": mtime_str
+            })
+            total_count += 1
+
+        if file_items:
+            categories_map[display_folder] = file_items
+
+    return {
+        "success": True,
+        "base_dir": base_dir,
+        "total_files": total_count,
+        "categories": [{"folder": k, "files": v} for k, v in sorted(categories_map.items())]
+    }
+
+
+
 def get_system_status() -> str:
     """
     Kompyuter tizim holati (CPU, RAM, Disk, Batareya, Uptime) haqida ma'lumot yig'adi.

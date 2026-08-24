@@ -507,6 +507,10 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
             }
 
 
+        elif action == "list_local_tests":
+            from services.pc_control.system_tools import scan_mytestx_tests_dir
+            return scan_mytestx_tests_dir()
+
         elif action == "apps":
             metrics = collect_local_pc_metrics()
             return {"success": True, "apps": metrics.get("apps", [])}
@@ -528,6 +532,36 @@ def _pc_bridge_worker_loop():
         return
 
     heartbeat_counter = 0
+    catalog_counter = 0
+
+    while True:
+        try:
+            # 1. Har 3 soniyada Heartbeat yuborish
+            heartbeat_counter += 1
+            if heartbeat_counter >= 3:
+                heartbeat_counter = 0
+                metrics = collect_local_pc_metrics()
+                _push_heartbeat_sync(metrics)
+
+            # 2. Har 15 soniyada D:\MyTestX\tests katalogini Supabase'ga sinxronlash
+            catalog_counter += 1
+            if catalog_counter >= 15:
+                catalog_counter = 0
+                try:
+                    from services.pc_control.system_tools import scan_mytestx_tests_dir
+                    cat_data = scan_mytestx_tests_dir()
+                    payload = {
+                        "key": "mytestx_catalog",
+                        "value": json.dumps(cat_data),
+                        "category": "mytestx",
+                        "description": "Local MyTestX Tests Catalog"
+                    }
+                    h = dict(headers)
+                    h["Prefer"] = "resolution=merge-duplicates"
+                    requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=h, json=payload, timeout=3.5)
+                except Exception:
+                    pass
+
 
     while True:
         try:
