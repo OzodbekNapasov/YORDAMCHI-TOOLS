@@ -2806,16 +2806,19 @@ def api_pc_unlock():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@atlas_api.route("/mtf/convert", methods=["POST", "OPTIONS"])
-def api_mtf_convert():
-    """MTF / XML test faylini PDF va DOCX formatlariga o'girish"""
+@atlas_api.route("/mtf/submit_job", methods=["POST", "OPTIONS"])
+def api_mtf_submit_job():
+    """Vercel 10s timeout cheklovisiz 100% ishonchli asinxron MTF / XML konvertatsiya navbati"""
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"})
 
     try:
         import os
         import base64
-        from services.mtf_converter import process_mtf_to_pdf
+        import requests
+        from pathlib import Path
+        from services.supabase_storage import upload_document_to_supabase
+        from services.pc_control.bridge import _get_supa_headers
 
         file_obj = request.files.get("file")
         layout = request.form.get("layout", "2col")
@@ -2825,7 +2828,6 @@ def api_mtf_convert():
         if file_obj and file_obj.filename:
             filename = file_obj.filename
             file_bytes = file_obj.read()
-            raw_b64 = base64.b64encode(file_bytes).decode("utf-8")
         else:
             data = request.get_json(silent=True) or {}
             filename = data.get("filename", "test.mtf")
@@ -2839,55 +2841,113 @@ def api_mtf_convert():
             with_answers = bool(data.get("with_answers", True))
             fan_name = data.get("fan_name") or None
 
-        # Vercel / Linux bulutida bo'lsa va fayl .mtf bo'lsa:
-        # 100% aniq Mtf2Xml.exe konvertatsiyasi uchun PC Bridge orqali kompyuterga yo'naltiramiz!
-        if os.name != "nt" and filename.lower().endswith(".mtf"):
-            try:
-                from services.pc_control.bridge import dispatch_bridge_command, get_bridge_pc_status
-                pc_stat = get_bridge_pc_status()
-                if pc_stat.get("online"):
-                    logger.info(f"PC Bridge orqali kompyuterda MTF konvertatsiya qilinmoqda: {filename}")
-                    bridge_res = dispatch_bridge_command("mtf_convert", {
-                        "filename": filename,
-                        "file_base64": raw_b64,
-                        "layout": layout,
-                        "with_answers": with_answers,
-                        "fan_name": fan_name
-                    }, timeout=60.0)
-                    if bridge_res.get("success"):
-                        return jsonify(bridge_res)
-                    else:
-                        logger.warning(f"Bridge MTF convert failed: {bridge_res.get('error')}")
-            except Exception as be:
-                logger.warning(f"Bridge dispatch error: {be}")
+        job_id = str(uuid.uuid4())
+        clean_name = Path(filename).name
 
-        res = process_mtf_to_pdf(
-            mtf_bytes=file_bytes,
-            filename=filename,
-            layout=layout,
-            with_answers=with_answers,
-            fan_name=fan_name
-        )
+        # 1. Faylni Supabase Storage ga yuklaymiz
+        temp_in = os.path.join(tempfile.gettempdir(), f"{job_id}_{clean_name}")
+        with open(temp_in, "wb") as f:
+            f.write(file_bytes)
+        input_url = upload_document_to_supabase(temp_in, f"mtf_inputs/{job_id}_{clean_name}")
+        try: os.remove(temp_in)
+        except Exception: pass
 
-        if not res or not res.get("success"):
-            err_msg = res.get("error", "Konvertatsiya amalga oshmadi.") if res else "Noma'lum xatolik"
-            return jsonify({"success": False, "error": err_msg}), 400
+        # 2. Supabase audit logs jadvaliga pending task qo'shamiz
+        supa_url, supa_key, headers = _get_supa_headers()
+        cmd_record = {
+            "actor": "web_admin",
+            "module": "pc_bridge",
+            "action": "mtf_convert",
+            "status": "pending",
+            "details_json": {
+                "job_id": job_id,
+                "filename": filename,
+                "input_url": input_url,
+                "layout": layout,
+                "with_answers": with_answers,
+                "fan_name": fan_name,
+                "created_at": time.time()
+            }
+        }
 
-        pdf_b64 = base64.b64encode(res["pdf_bytes"]).decode("utf-8") if res.get("pdf_bytes") else None
-        docx_b64 = base64.b64encode(res["docx_bytes"]).decode("utf-8") if res.get("docx_bytes") else None
+        h_post = dict(headers)
+        h_post["Prefer"] = "return=representation"
+        r = requests.post(f"{supa_url}/rest/v1/atlas_audit_logs", headers=h_post, json=cmd_record, timeout=6)
+        if r.status_code not in [200, 201]:
+            return jsonify({"success": False, "error": f"Navbatga qo'shishda xatolik: {r.text}"}), 500
 
+        created_row = r.json()[0]
         return jsonify({
             "success": True,
-            "filename": res.get("filename"),
-            "title": res.get("title"),
-            "questions_count": res.get("questions_count", 0),
-            "pdf_base64": f"data:application/pdf;base64,{pdf_b64}" if pdf_b64 else None,
-            "docx_base64": f"data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_b64}" if docx_b64 else None,
-            "questions_summary": res.get("questions_summary", [])
+            "job_id": job_id,
+            "cmd_id": created_row.get("id"),
+            "status": "pending",
+            "filename": filename
         })
     except Exception as e:
-        logger.error(f"MTF Convert error: {e}")
-        return jsonify({"success": False, "error": f"Konvertatsiyada xatolik: {str(e)}"}), 500
+        logger.error(f"MTF Submit Job error: {e}")
+        return jsonify({"success": False, "error": f"Navbatga yuborishda xatolik: {str(e)}"}), 500
+
+
+@atlas_api.route("/mtf/job_status", methods=["GET", "OPTIONS"])
+def api_mtf_job_status():
+    """Asinxron MTF konvertatsiya natijasi va holatini tekshirish"""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+
+    job_id = request.args.get("job_id")
+    cmd_id = request.args.get("cmd_id")
+    if not job_id and not cmd_id:
+        return jsonify({"success": False, "error": "job_id yoki cmd_id kiritilmadi"}), 400
+
+    try:
+        from services.pc_control.bridge import _get_supa_headers
+        supa_url, supa_key, headers = _get_supa_headers()
+
+        if cmd_id:
+            query = f"id=eq.{cmd_id}"
+        else:
+            query = f"details_json->>job_id=eq.{job_id}"
+
+        r = requests.get(
+            f"{supa_url}/rest/v1/atlas_audit_logs?{query}&select=id,status,details_json",
+            headers=headers,
+            timeout=3.5
+        )
+
+        if r.status_code != 200 or not r.json():
+            return jsonify({"success": False, "status": "not_found", "error": "Vazifa topilmadi"}), 404
+
+        row = r.json()[0]
+        status = row.get("status")
+        details = row.get("details_json") or {}
+
+        if status == "completed":
+            result = details.get("result") or {}
+            return jsonify({
+                "success": True,
+                "status": "completed",
+                "filename": result.get("filename"),
+                "title": result.get("title"),
+                "questions_count": result.get("questions_count", 0),
+                "pdf_url": result.get("pdf_url"),
+                "docx_url": result.get("docx_url"),
+                "pdf_base64": result.get("pdf_base64"),
+                "docx_base64": result.get("docx_base64"),
+                "questions_summary": result.get("questions_summary", [])
+            })
+        elif status == "error":
+            err_msg = details.get("error") or "Konvertatsiyada xatolik yuz berdi"
+            return jsonify({"success": False, "status": "error", "error": err_msg})
+        else:
+            return jsonify({
+                "success": True,
+                "status": status,
+                "message": "Kompyuterda tahlil qilinmoqda..." if status == "executing" else "Navbatda kutilmoqda..."
+            })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 

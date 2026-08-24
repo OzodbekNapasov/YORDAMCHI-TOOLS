@@ -8604,7 +8604,9 @@ const ATLAS = {
 
           const fanName = globalTitle || f.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
 
-          const res = await this.api('/api/mtf/convert', 'POST', {
+          // 1. Submit Job to Queue (Async - 0.2s response, no timeout)
+          if (msgEl) { msgEl.style.display = 'block'; msgEl.textContent = 'Navbatga yuklanmoqda...'; }
+          const submitRes = await this.api('/api/mtf/submit_job', 'POST', {
             filename:     f.name,
             file_base64:  base64Data,
             layout,
@@ -8612,32 +8614,55 @@ const ATLAS = {
             fan_name:     fanName,
           });
 
-          if (res && res.success) {
-            doneCount++;
-            if (iconEl) iconEl.innerHTML = statusIcon('done');
-            if (rowEl)  rowEl.style.borderColor = 'rgba(16,185,129,0.4)';
-            if (msgEl)  { msgEl.textContent = `✅ ${res.questions_count} ta savol • ${res.title}`; msgEl.style.color = '#10b981'; }
-
-            const stem = f.name.replace(/\.(mtf|xml)$/i, '');
-            let dlHtml = '';
-            if (res.pdf_base64) {
-              dlHtml += `<a href="${res.pdf_base64}" download="${stem}.pdf" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                📄 PDF
-              </a>`;
-            }
-            if (res.docx_base64) {
-              dlHtml += `<a href="${res.docx_base64}" download="${stem}.docx" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                📝 DOCX
-              </a>`;
-            }
-            if (dlEl) dlEl.innerHTML = dlHtml;
-          } else {
-            errCount++;
-            if (iconEl) iconEl.innerHTML = statusIcon('error');
-            if (rowEl)  rowEl.style.borderColor = 'rgba(239,68,68,0.4)';
-            if (msgEl)  { msgEl.textContent = (res && res.error) || 'Xatolik yuz berdi'; msgEl.style.color = '#ef4444'; }
-            if (delBtn) delBtn.style.display = '';
+          if (!submitRes || !submitRes.success) {
+            throw new Error(submitRes?.error || 'Navbatga yuborishda xatolik');
           }
+
+          const jobId = submitRes.job_id;
+          const cmdId = submitRes.cmd_id;
+
+          // 2. Poll status every 1.5 seconds (up to 3 minutes)
+          let pollSuccess = false;
+          const startTime = Date.now();
+          while (Date.now() - startTime < 180000) {
+            await new Promise(r => setTimeout(r, 1500));
+            const statusRes = await this.api(`/api/mtf/job_status?cmd_id=${cmdId}&job_id=${jobId}`, 'GET');
+            if (!statusRes) continue;
+
+            if (statusRes.status === 'completed') {
+              pollSuccess = true;
+              doneCount++;
+              if (iconEl) iconEl.innerHTML = statusIcon('done');
+              if (rowEl)  rowEl.style.borderColor = 'rgba(16,185,129,0.4)';
+              if (msgEl)  { msgEl.textContent = `✅ ${statusRes.questions_count} ta savol • ${statusRes.title || f.name}`; msgEl.style.color = '#10b981'; }
+
+              const stem = f.name.replace(/\.(mtf|xml)$/i, '');
+              let dlHtml = '';
+              const pdfHref = statusRes.pdf_url || statusRes.pdf_base64;
+              if (pdfHref) {
+                dlHtml += `<a href="${pdfHref}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                  📄 PDF
+                </a>`;
+              }
+              const docxHref = statusRes.docx_url || statusRes.docx_base64;
+              if (docxHref) {
+                dlHtml += `<a href="${docxHref}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                  📝 DOCX
+                </a>`;
+              }
+              if (dlEl) dlEl.innerHTML = dlHtml;
+              break;
+            } else if (statusRes.status === 'error') {
+              throw new Error(statusRes.error || 'Konvertatsiyada xatolik yuz berdi');
+            } else {
+              if (msgEl) msgEl.textContent = statusRes.message || 'Kompyuterda tahlil qilinmoqda...';
+            }
+          }
+
+          if (!pollSuccess) {
+            throw new Error('Jarayon vaqti tugadi (Timeout). Iltimos, kompyuterda bot yoniqligini tekshiring.');
+          }
+
         } catch (err) {
           errCount++;
           if (iconEl) iconEl.innerHTML = statusIcon('error');

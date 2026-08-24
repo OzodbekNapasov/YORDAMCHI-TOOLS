@@ -434,14 +434,31 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
 
         elif action == "mtf_convert":
             from services.mtf_converter import process_mtf_to_pdf
+            from services.supabase_storage import upload_document_to_supabase
+
             raw_b64 = payload.get("file_base64", "")
-            if "," in raw_b64:
-                raw_b64 = raw_b64.split(",", 1)[1]
-            file_bytes = base64.b64decode(raw_b64)
+            input_url = payload.get("input_url", "")
             filename = payload.get("filename", "test.mtf")
             layout = payload.get("layout", "2col")
             with_answers = bool(payload.get("with_answers", True))
             fan_name = payload.get("fan_name") or None
+
+            file_bytes = None
+            if input_url:
+                try:
+                    r_in = requests.get(input_url, timeout=30)
+                    if r_in.status_code == 200:
+                        file_bytes = r_in.content
+                except Exception as e:
+                    logger.warning(f"Failed to download input_url {input_url}: {e}")
+
+            if not file_bytes and raw_b64:
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                file_bytes = base64.b64decode(raw_b64)
+
+            if not file_bytes:
+                return {"success": False, "error": "Fayl ma'lumotlari yuklanmadi"}
 
             res = process_mtf_to_pdf(
                 mtf_bytes=file_bytes,
@@ -453,6 +470,27 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
             if not res or not res.get("success"):
                 return {"success": False, "error": res.get("error", "Konvertatsiya amalga oshmadi.") if res else "Noma'lum xatolik"}
 
+            clean_stem = Path(filename).stem
+            uid = str(uuid.uuid4())[:8]
+
+            pdf_url = ""
+            if res.get("pdf_bytes"):
+                temp_pdf = os.path.join(tempfile.gettempdir(), f"{clean_stem}_{uid}.pdf")
+                with open(temp_pdf, "wb") as f:
+                    f.write(res["pdf_bytes"])
+                pdf_url = upload_document_to_supabase(temp_pdf, f"mtf_outputs/{clean_stem}_{uid}.pdf")
+                try: os.remove(temp_pdf)
+                except Exception: pass
+
+            docx_url = ""
+            if res.get("docx_bytes"):
+                temp_docx = os.path.join(tempfile.gettempdir(), f"{clean_stem}_{uid}.docx")
+                with open(temp_docx, "wb") as f:
+                    f.write(res["docx_bytes"])
+                docx_url = upload_document_to_supabase(temp_docx, f"mtf_outputs/{clean_stem}_{uid}.docx")
+                try: os.remove(temp_docx)
+                except Exception: pass
+
             pdf_b64 = base64.b64encode(res["pdf_bytes"]).decode("utf-8") if res.get("pdf_bytes") else None
             docx_b64 = base64.b64encode(res["docx_bytes"]).decode("utf-8") if res.get("docx_bytes") else None
 
@@ -461,10 +499,13 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
                 "filename": res.get("filename"),
                 "title": res.get("title"),
                 "questions_count": res.get("questions_count", 0),
+                "pdf_url": pdf_url,
+                "docx_url": docx_url,
                 "pdf_base64": f"data:application/pdf;base64,{pdf_b64}" if pdf_b64 else None,
                 "docx_base64": f"data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_b64}" if docx_b64 else None,
                 "questions_summary": res.get("questions_summary", [])
             }
+
 
         elif action == "apps":
             metrics = collect_local_pc_metrics()
