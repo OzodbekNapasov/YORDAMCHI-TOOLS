@@ -10,8 +10,10 @@ import json
 import uuid
 import tempfile
 import threading
+import requests
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, send_file, current_app
+
 
 from services.atlas_db import (
     get_db_connection, log_audit, track_user_activity,
