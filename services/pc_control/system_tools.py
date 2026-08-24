@@ -63,7 +63,7 @@ def scan_mytestx_tests_dir(base_dir: str = r"D:\MyTestX\tests") -> dict:
                 break
 
     if not os.path.exists(base_dir):
-        return {"success": False, "error": f"Testlar papkasi topilmadi: {base_dir}", "categories": [], "total_files": 0}
+        return {"success": False, "error": f"Testlar papkasi topilmadi: {base_dir}", "categories": [], "total_files": 0, "tree": None}
 
     categories_map = {}
     total_count = 0
@@ -104,12 +104,64 @@ def scan_mytestx_tests_dir(base_dir: str = r"D:\MyTestX\tests") -> dict:
         if file_items:
             categories_map[display_folder] = file_items
 
+    # Recursive Tree Builder for Windows Explorer Tree View
+    def _build_tree(cur_path, rel_path=""):
+        node_name = os.path.basename(cur_path) if rel_path else "D:\\MyTestX\\tests"
+        children = []
+        try:
+            entries = sorted(os.scandir(cur_path), key=lambda e: (not e.is_dir(), e.name.lower()))
+        except Exception:
+            entries = []
+
+        sub_files_count = 0
+        for entry in entries:
+            child_rel = os.path.join(rel_path, entry.name).replace("\\", "/") if rel_path else entry.name
+            if entry.is_dir():
+                sub_node, count = _build_tree(entry.path, child_rel)
+                if count > 0:
+                    children.append(sub_node)
+                    sub_files_count += count
+            elif entry.is_file():
+                fn = entry.name
+                if fn.lower().endswith(('.mtf', '.xml')) and not fn.endswith('_new.xml'):
+                    try:
+                        sz = entry.stat().st_size
+                        mtime = entry.stat().st_mtime
+                        mtime_str = datetime.fromtimestamp(mtime).strftime("%d.%m.%Y %H:%M")
+                        sz_str = f"{sz // 1024} KB" if sz < 1024*1024 else f"{sz / (1024*1024):.1f} MB"
+                    except Exception:
+                        sz_str, mtime_str = "-", "-"
+                    children.append({
+                        "type": "file",
+                        "name": fn,
+                        "stem": os.path.splitext(fn)[0],
+                        "ext": os.path.splitext(fn)[1].lower(),
+                        "path": entry.path,
+                        "rel_path": child_rel,
+                        "size_str": sz_str,
+                        "mtime_str": mtime_str
+                    })
+                    sub_files_count += 1
+
+        return {
+            "type": "folder",
+            "name": node_name,
+            "path": cur_path,
+            "rel_path": rel_path,
+            "total_files": sub_files_count,
+            "children": children
+        }, sub_files_count
+
+    root_tree, _ = _build_tree(base_dir)
+
     return {
         "success": True,
         "base_dir": base_dir,
         "total_files": total_count,
-        "categories": [{"folder": k, "files": v} for k, v in sorted(categories_map.items())]
+        "categories": [{"folder": k, "files": v} for k, v in sorted(categories_map.items())],
+        "tree": root_tree
     }
+
 
 
 

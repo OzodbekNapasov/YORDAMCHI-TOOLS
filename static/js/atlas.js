@@ -8376,31 +8376,33 @@ const ATLAS = {
   // ============================================================
   // MTF & TEST CONVERTER (MYTESTX -> PDF / DOCX + D:\MyTestX\tests + TELEGRAM)
   // ============================================================
+  // MTF & TEST CONVERTER (WINDOWS EXPLORER DIRECTORY TREE + TELEGRAM)
+  // ============================================================
   loadMtfConverter(viewport) {
     viewport.innerHTML = `
-      <div style="max-width:1240px;margin:0 auto;padding-bottom:50px;">
+      <div style="max-width:1280px;margin:0 auto;padding-bottom:50px;">
         <!-- HEADER -->
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:20px;">
           <div>
             <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px 0;display:flex;align-items:center;gap:10px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:24px;height:24px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:26px;height:26px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               <span>MTF & Test Generator (PDF / DOCX)</span>
-              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">MYTESTX ⚡ TELEGRAM</span>
+              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">WINDOWS EXPLORER ⚡ TELEGRAM</span>
             </h2>
             <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0;">
-              <code>D:\\MyTestX\\tests</code> papkasidagi yoki yuklangan testlarni yuqori sifatli PDF, Word (.docx) ga o'girish va to'g'ridan-to'g'ri Telegramga yuborish.
+              <code>D:\\MyTestX\\tests</code> papkalaridagi testlarni Windows Explorer kabi ko'rish, tanlash va yuqori sifatli PDF hamda Word formatida Telegramga yuborish.
             </p>
           </div>
           <div style="display:flex;gap:10px;">
             <button class="btn-secondary btn-sm" id="btn-mtf-refresh" style="display:flex;align-items:center;gap:6px;">
-              ${this.icons.refresh} <span>Yangilash</span>
+              ${this.icons.refresh} <span>Papkani Yangilash</span>
             </button>
           </div>
         </div>
 
-        <!-- SETTINGS & TELEGRAM BAR -->
+        <!-- SETTINGS BAR -->
         <div class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;margin-bottom:20px;">
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-items:end;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:end;">
             <div>
               <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">PDF Tartibi:</label>
               <select id="mtf-opt-layout" class="select-control">
@@ -8412,74 +8414,85 @@ const ATLAS = {
               <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Javoblar belgisi (*):</label>
               <select id="mtf-opt-answers" class="select-control">
                 <option value="true" selected>To'g'ri javoblarni (*) belgilash</option>
-                <option value="false">Faqat savollar (Imtihon uchun)</option>
+                <option value="false">Faqat savollar (Imtihon / Chop etish uchun)</option>
               </select>
             </div>
             <div>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#38bdf8;cursor:pointer;padding-bottom:10px;">
-                <input type="checkbox" id="mtf-opt-send-tg" style="width:18px;height:18px;accent-color:#38bdf8;" checked>
-                <span>📲 Natijalarni Telegramga ham yuborish</span>
-              </label>
+              <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Fan Sarlavhasi (ixtiyoriy):</label>
+              <input type="text" id="mtf-opt-fanname" class="input-control" placeholder="Fayl nomidan avtomatik olinadi">
             </div>
           </div>
         </div>
 
         <!-- SOURCE TABS -->
         <div style="display:flex;gap:10px;margin-bottom:16px;">
-          <button id="mtf-tab-btn-local" class="btn-primary" style="padding:10px 20px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
+          <button id="mtf-tab-btn-local" class="btn-primary" style="padding:10px 22px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            <span>📂 D:\\MyTestX\\tests Papkasi</span>
+            <span>🗂 D:\\MyTestX\\tests Papkasi</span>
             <span id="mtf-local-badge" style="font-size:11px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px;">Yuklanmoqda...</span>
           </button>
-          <button id="mtf-tab-btn-upload" class="btn-secondary" style="padding:10px 20px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
+          <button id="mtf-tab-btn-upload" class="btn-secondary" style="padding:10px 22px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span>⬆️ Fayl Yuklash (Drag & Drop)</span>
           </button>
         </div>
 
-        <!-- TAB 1: D:\MyTestX\tests EXPLORER -->
-        <div id="mtf-tab-local" class="card" style="background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:22px;margin-bottom:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <!-- TAB 1: WINDOWS EXPLORER DIRECTORY TREE -->
+        <div id="mtf-tab-local" class="card" style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.35);">
+          <!-- EXPLORER TOOLBAR -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);">
             <div style="flex:1;min-width:280px;position:relative;">
-              <input type="text" id="mtf-local-search" class="input-control" placeholder="🔍 Test nomini qidirish (masalan: TAT, Anatomiya, Akusherlik)..." style="padding-left:14px;">
+              <input type="text" id="mtf-local-search" class="input-control" placeholder="🔍 Test yoki papka nomini qidirish (masalan: TAT, Anatomiya, Yakuniy)..." style="padding-left:14px;">
             </div>
-            <div style="display:flex;gap:10px;align-items:center;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <button class="btn-secondary btn-sm" id="btn-mtf-expand-all" title="Barcha papkalarni ochish">Hammasini ochish</button>
+              <button class="btn-secondary btn-sm" id="btn-mtf-collapse-all" title="Barcha papkalarni yopish">Yopish</button>
               <button class="btn-secondary btn-sm" id="btn-mtf-select-all">Hammasini tanlash</button>
-              <button class="btn-secondary btn-sm" id="btn-mtf-deselect-all">Bekor qilish</button>
-              <button class="btn-primary" id="btn-mtf-convert-local" style="padding:8px 22px;font-weight:800;display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#38bdf8,#0284c7);">
-                ${this.icons.zap} <span>Tanlanganlarni Konvert Qilish</span>
+              <button class="btn-secondary btn-sm" id="btn-mtf-deselect-all">Tozalash</button>
+              <button class="btn-primary" id="btn-mtf-convert-local" style="padding:8px 24px;font-weight:800;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#38bdf8,#0284c7);box-shadow:0 4px 15px rgba(56,189,248,0.35);">
+                ${this.icons.zap} <span id="btn-mtf-convert-label">Tanlanganlarni Konvert Qilish</span>
               </button>
             </div>
           </div>
 
-          <div id="mtf-local-list-container" style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px;">
+          <!-- BREADCRUMB -->
+          <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#38bdf8;background:rgba(0,0,0,0.3);padding:8px 14px;border-radius:8px;margin-bottom:14px;border:1px solid rgba(56,189,248,0.2);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span id="mtf-breadcrumb">D:\\MyTestX\\tests</span>
+            <span style="margin-left:auto;color:rgba(255,255,255,0.5);font-size:11px;" id="mtf-selected-counter">0 ta tanlandi</span>
+          </div>
+
+          <!-- TREE VIEW CONTAINER -->
+          <div id="mtf-tree-container" style="max-height:550px;overflow-y:auto;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;">
             <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">
-              <span class="spinner-sm"></span> D:\\MyTestX\\tests papkasi skanerlanmoqda...
+              <span class="spinner-sm"></span> D:\\MyTestX\\tests katalogi yuklanmoqda...
             </div>
           </div>
         </div>
 
-        <!-- TAB 2: MANUAL DRAG & DROP -->
-        <div id="mtf-tab-upload" class="card" style="display:none;background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;margin-bottom:20px;">
-          <div id="mtf-drop-zone" style="border:2px dashed rgba(56,189,248,0.35);background:rgba(56,189,248,0.03);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;">
+        <!-- TAB 2: ANIMATED DRAG & DROP -->
+        <div id="mtf-tab-upload" class="card" style="display:none;background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:24px;margin-bottom:20px;">
+          <div id="mtf-drop-zone" style="position:relative;border:2px dashed rgba(56,189,248,0.4);background:radial-gradient(ellipse at center, rgba(56,189,248,0.08) 0%, rgba(15,23,42,0.4) 100%);border-radius:16px;padding:50px 20px;text-align:center;cursor:pointer;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);overflow:hidden;">
             <input type="file" id="mtf-file-input" accept=".mtf,.xml" multiple style="display:none;">
-            <div style="margin-bottom:12px;color:#38bdf8;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div style="margin-bottom:14px;color:#38bdf8;animation:pulseSlow 2.5s infinite ease-in-out;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:54px;height:54px;filter:drop-shadow(0 0 12px rgba(56,189,248,0.6));"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
-            <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;" id="mtf-file-name-label">
+            <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:6px;" id="mtf-file-name-label">
               MTF yoki XML fayllarni bu yerga tashlang yoki bosing
             </div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);">
-              <code>.mtf</code> va <code>.xml</code> — bir vaqtda bir nechta fayl tanlash mumkin
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;gap:8px;">
+              <span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 8px;border-radius:6px;font-weight:700;">.MTF</span>
+              <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 8px;border-radius:6px;font-weight:700;">.XML</span>
+              <span>— bir vaqtda bir nechta fayl tanlash mumkin</span>
             </div>
           </div>
 
-          <div id="mtf-file-queue" style="margin-top:16px;display:none;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);" id="mtf-queue-label">0 ta fayl tanlandi</span>
+          <div id="mtf-file-queue" style="margin-top:18px;display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);" id="mtf-queue-label">0 ta fayl tanlandi</span>
               <div style="display:flex;gap:8px;">
                 <button class="btn-secondary btn-sm" id="btn-mtf-clear" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Tozalash</button>
-                <button class="btn-primary" id="btn-mtf-convert" style="padding:8px 20px;font-weight:700;display:flex;align-items:center;gap:6px;">
+                <button class="btn-primary" id="btn-mtf-convert" style="padding:8px 22px;font-weight:700;display:flex;align-items:center;gap:6px;">
                   ${this.icons.zap} <span>Barchasini Konvert Qilish</span>
                 </button>
               </div>
@@ -8489,12 +8502,12 @@ const ATLAS = {
         </div>
 
         <!-- PROGRESS & CONVERTED RESULTS PANEL -->
-        <div id="mtf-results-card" class="card" style="display:none;background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:22px;margin-bottom:20px;">
+        <div id="mtf-results-card" class="card" style="display:none;background:rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.3);border-radius:14px;padding:22px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.4);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
             <h3 style="font-size:16px;font-weight:800;color:#fff;margin:0;display:flex;align-items:center;gap:8px;">
               ${this.icons.check} <span>Konvertatsiya Natijalari</span>
             </h3>
-            <span id="mtf-results-status" style="font-size:12px;color:rgba(255,255,255,0.6);"></span>
+            <span id="mtf-results-status" style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:600;"></span>
           </div>
           <div id="mtf-results-list" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
@@ -8524,14 +8537,26 @@ const ATLAS = {
     const tabUpload     = document.getElementById('mtf-tab-upload');
     const localBadge    = document.getElementById('mtf-local-badge');
     const localSearch   = document.getElementById('mtf-local-search');
-    const localListCont = document.getElementById('mtf-local-list-container');
+    const treeCont      = document.getElementById('mtf-tree-container');
     const resultsCard   = document.getElementById('mtf-results-card');
     const resultsList   = document.getElementById('mtf-results-list');
     const resultsStatus = document.getElementById('mtf-results-status');
+    const selCounterEl  = document.getElementById('mtf-selected-counter');
+    const convertBtnLbl = document.getElementById('btn-mtf-convert-label');
 
-    let localCategories = [];
+    let treeData = null;
+    let flatCategories = [];
     let selectedLocalPaths = new Set();
+    let expandedFolders = new Set(['tests', 'D:\\MyTestX\\tests']);
     let uploadFiles = [];
+
+    // Official Telegram SVG Icon HTML
+    const TG_ICON_SVG = `
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;vertical-align:middle;" viewBox="0 0 24 24">
+        <path fill="#229ED9" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/>
+        <path fill="#ffffff" d="M5.4 11.97l12.42-4.79c.57-.21 1.07.13.88.99l-2.11 9.94c-.16.71-.58.88-1.18.55l-3.23-2.38-1.56 1.5c-.17.17-.32.32-.65.32l.23-3.3 6.01-5.43c.26-.23-.06-.36-.4-.13L8.35 14.15l-3.2-.99c-.7-.22-.71-.7.15-1.19z"/>
+      </svg>
+    `;
 
     // ── Tab Switch ───────────────────────────────────────────
     tabBtnLocal.addEventListener('click', () => {
@@ -8552,7 +8577,7 @@ const ATLAS = {
     window.ATLAS._mtfSendTelegram = async (btn, title, filename, pdfUrl, docxUrl, pdfB64, docxB64) => {
       btn.disabled = true;
       const origText = btn.innerHTML;
-      btn.innerHTML = `<span class="spinner-sm" style="width:12px;height:12px;"></span> <span>Yuborilmoqda...</span>`;
+      btn.innerHTML = `<span class="spinner-sm" style="width:12px;height:12px;"></span> <span>Telegramga yuborilmoqda...</span>`;
 
       try {
         const res = await this.api('/api/mtf/send_telegram', 'POST', {
@@ -8566,10 +8591,10 @@ const ATLAS = {
 
         if (res && res.success) {
           btn.innerHTML = `✅ <span>Telegramga Yuborildi</span>`;
-          btn.style.background = 'rgba(16,185,129,0.2)';
+          btn.style.background = 'rgba(16,185,129,0.25)';
           btn.style.borderColor = '#10b981';
           btn.style.color = '#10b981';
-          this.toast(`📲 "${title}" Telegramga muvaffaqiyatli yuborildi!`, 'success');
+          this.toast(`✈️ "${title}" Telegramingizga muvaffaqiyatli tashlab berildi!`, 'success');
         } else {
           btn.disabled = false;
           btn.innerHTML = origText;
@@ -8582,106 +8607,243 @@ const ATLAS = {
       }
     };
 
-    // ── Load D:\MyTestX\tests Catalog ────────────────────────
-    const loadLocalTests = async () => {
-      localListCont.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);"><span class="spinner-sm"></span> D:\\MyTestX\\tests papkasi skanerlanmoqda...</div>`;
-      try {
-        const res = await this.api('/api/mtf/local_tests', 'GET');
-        if (res && res.success && res.categories) {
-          localCategories = res.categories;
-          localBadge.textContent = `${res.total_files} ta test`;
-          renderLocalTests();
-        } else {
-          localListCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ ${res?.error || "Testlar ro'yxatini olib bo'lmadi"}</div>`;
-        }
-      } catch (err) {
-        localListCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ Xatolik: ${err.message}</div>`;
+    // ── Helper: Collect all file paths inside a tree node ────
+    const getAllFilePaths = (node) => {
+      let paths = [];
+      if (!node) return paths;
+      if (node.type === 'file') {
+        paths.push(node.path);
+      } else if (node.children) {
+        node.children.forEach(c => {
+          paths = paths.concat(getAllFilePaths(c));
+        });
       }
+      return paths;
     };
 
-    const renderLocalTests = () => {
-      const q = (localSearch.value || '').trim().toLowerCase();
-      let matchedCount = 0;
+    const updateSelectedCounter = () => {
+      const count = selectedLocalPaths.size;
+      if (selCounterEl) selCounterEl.textContent = `${count} ta test tanlandi`;
+      if (convertBtnLbl) convertBtnLbl.textContent = count > 0 ? `Tanlanganlarni Konvert Qilish (${count})` : `Tanlanganlarni Konvert Qilish`;
+    };
 
-      const html = localCategories.map((cat, catIdx) => {
-        const filteredFiles = cat.files.filter(f => !q || f.name.toLowerCase().includes(q) || cat.folder.toLowerCase().includes(q));
-        if (!filteredFiles.length) return '';
-        matchedCount += filteredFiles.length;
+    // ── Recursive Node Renderer for Windows Explorer Tree ────
+    const renderTreeNode = (node, depth = 0, query = '') => {
+      if (!node) return '';
 
-        const allInCatSelected = filteredFiles.every(f => selectedLocalPaths.has(f.path));
+      // If search query is active
+      if (query) {
+        if (node.type === 'file') {
+          if (!node.name.toLowerCase().includes(query) && !node.rel_path.toLowerCase().includes(query)) {
+            return '';
+          }
+        } else if (node.type === 'folder') {
+          const matchChild = node.children && node.children.some(c => {
+            if (c.type === 'file') return c.name.toLowerCase().includes(query) || c.rel_path.toLowerCase().includes(query);
+            return true;
+          });
+          if (!matchChild && !node.name.toLowerCase().includes(query)) {
+            return '';
+          }
+        }
+      }
+
+      const indent = depth * 20;
+
+      if (node.type === 'folder') {
+        const isRoot = depth === 0;
+        const folderKey = node.rel_path || node.name;
+        const isExpanded = query ? true : (expandedFolders.has(folderKey) || isRoot);
+        const allFiles = getAllFilePaths(node);
+        const isAllSelected = allFiles.length > 0 && allFiles.every(p => selectedLocalPaths.has(p));
+        const isPartSelected = !isAllSelected && allFiles.some(p => selectedLocalPaths.has(p));
+
+        const childrenHtml = isExpanded && node.children ? node.children.map(c => renderTreeNode(c, depth + 1, query)).join('') : '';
 
         return `
-          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;flex-shrink:0;">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.06);">
-
-              <div style="display:flex;align-items:center;gap:8px;">
-                <input type="checkbox" data-cat-idx="${catIdx}" class="mtf-cat-select" style="width:16px;height:16px;accent-color:#38bdf8;" ${allInCatSelected ? 'checked' : ''}>
-                <span style="font-size:13px;font-weight:700;color:#38bdf8;">📁 ${cat.folder}</span>
-                <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${filteredFiles.length} ta)</span>
-              </div>
+          <div class="tree-folder-block" style="margin-bottom:2px;">
+            <div style="display:flex;align-items:center;padding:6px 8px;border-radius:6px;padding-left:${indent + 6}px;background:${isExpanded ? 'rgba(255,255,255,0.03)' : 'transparent'};transition:background 0.15s;gap:6px;" class="tree-row-hover">
+              <button class="tree-toggle-btn" data-folder-key="${folderKey}" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;padding:0;">
+                ${isExpanded ? '▼' : '▶'}
+              </button>
+              <input type="checkbox" class="tree-folder-cb" data-folder-key="${folderKey}" style="width:15px;height:15px;accent-color:#38bdf8;cursor:pointer;" ${isAllSelected ? 'checked' : ''}>
+              <span class="tree-folder-name" data-folder-key="${folderKey}" style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:${depth <= 1 ? '700' : '600'};color:${depth === 0 ? '#38bdf8' : '#e2e8f0'};flex:1;">
+                <span>${isExpanded ? '📂' : '📁'}</span>
+                <span>${node.name}</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:400;">(${node.total_files || (node.children ? node.children.length : 0)} ta)</span>
+              </span>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;padding:10px;">
-              ${filteredFiles.map(f => {
-                const isSel = selectedLocalPaths.has(f.path);
-                return `
-                  <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:${isSel ? 'rgba(56,189,248,0.12)' : 'rgba(0,0,0,0.2)'};border:1px solid ${isSel ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.04)'};cursor:pointer;transition:all 0.15s;">
-                    <input type="checkbox" value="${f.path}" class="mtf-file-checkbox" style="width:15px;height:15px;accent-color:#38bdf8;" ${isSel ? 'checked' : ''}>
-                    <div style="flex:1;overflow:hidden;">
-                      <div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${f.name}">${f.name}</div>
-                      <div style="font-size:10px;color:rgba(255,255,255,0.4);">${f.size_str} • ${f.mtime_str}</div>
-                    </div>
-                  </label>
-                `;
-              }).join('')}
+            ${isExpanded ? `<div class="tree-folder-children">${childrenHtml}</div>` : ''}
+          </div>
+        `;
+      } else {
+        // File Node
+        const isSel = selectedLocalPaths.has(node.path);
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;padding-left:${indent + 26}px;border-radius:6px;background:${isSel ? 'rgba(56,189,248,0.12)' : 'transparent'};margin-bottom:2px;gap:8px;" class="tree-row-hover">
+            <label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;overflow:hidden;">
+              <input type="checkbox" value="${node.path}" class="tree-file-cb" style="width:15px;height:15px;accent-color:#38bdf8;cursor:pointer;" ${isSel ? 'checked' : ''}>
+              <span style="color:#60a5fa;font-size:13px;">📝</span>
+              <span style="font-size:12.5px;font-weight:600;color:${isSel ? '#38bdf8' : '#f1f5f9'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${node.name}">${node.name}</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap;">
+              <span>${node.size_str}</span>
+              <span>${node.mtime_str}</span>
+              <button onclick="ATLAS._mtfQuickConvertSingle('${node.path.replace(/\\/g, '\\\\')}', '${node.name}')" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">⚡ Konvert</button>
             </div>
           </div>
         `;
-      }).filter(Boolean).join('');
+      }
+    };
 
-      if (!matchedCount) {
-        localListCont.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Qidiruv bo'yicha testlar topilmadi</div>`;
-      } else {
-        localListCont.innerHTML = html;
+    // ── Quick Convert Single File Helper ─────────────────────
+    window.ATLAS._mtfQuickConvertSingle = (filePath, fileName) => {
+      selectedLocalPaths.clear();
+      selectedLocalPaths.add(filePath);
+      renderTree();
+      document.getElementById('btn-mtf-convert-local')?.click();
+    };
+
+    // ── Render Tree View ─────────────────────────────────────
+    const renderTree = () => {
+      const q = (localSearch?.value || '').trim().toLowerCase();
+      if (!treeData) {
+        // Fallback: render flat categories if tree is not present
+        if (flatCategories && flatCategories.length) {
+          treeCont.innerHTML = flatCategories.map(cat => `
+            <div style="margin-bottom:10px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;">
+              <div style="font-size:13px;font-weight:700;color:#38bdf8;margin-bottom:6px;">📁 ${cat.folder}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                ${cat.files.map(f => `
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#fff;">
+                    <input type="checkbox" value="${f.path}" class="tree-file-cb" ${selectedLocalPaths.has(f.path) ? 'checked' : ''}>
+                    <span>${f.name} (${f.size_str})</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          `).join('');
+          attachTreeListeners();
+        } else {
+          treeCont.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Testlar topilmadi</div>`;
+        }
+        updateSelectedCounter();
+        return;
       }
 
-      // Attach file checkbox listeners
-      localListCont.querySelectorAll('.mtf-file-checkbox').forEach(cb => {
-        cb.addEventListener('change', (e) => {
-          if (e.target.checked) selectedLocalPaths.add(e.target.value);
-          else selectedLocalPaths.delete(e.target.value);
-          renderLocalTests();
+      const html = renderTreeNode(treeData, 0, q);
+      treeCont.innerHTML = html || `<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Qidiruv bo'yicha testlar topilmadi</div>`;
+      attachTreeListeners();
+      updateSelectedCounter();
+    };
+
+    // ── Attach Tree Event Listeners ──────────────────────────
+    const attachTreeListeners = () => {
+      // Toggle folder expand/collapse
+      treeCont.querySelectorAll('.tree-toggle-btn, .tree-folder-name').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const key = el.getAttribute('data-folder-key');
+          if (expandedFolders.has(key)) expandedFolders.delete(key);
+          else expandedFolders.add(key);
+          renderTree();
         });
       });
 
-      // Attach category select all listeners
-      localListCont.querySelectorAll('.mtf-cat-select').forEach(catCb => {
-        catCb.addEventListener('change', (e) => {
-          const catIdx = parseInt(e.target.getAttribute('data-cat-idx'));
-          const cat = localCategories[catIdx];
-          if (cat) {
-            cat.files.forEach(f => {
-              if (e.target.checked) selectedLocalPaths.add(f.path);
-              else selectedLocalPaths.delete(f.path);
-            });
+      // Folder checkbox toggle (selects all children recursively)
+      treeCont.querySelectorAll('.tree-folder-cb').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const key = e.target.getAttribute('data-folder-key');
+          const findNodeByKey = (node) => {
+            if (!node) return null;
+            if ((node.rel_path || node.name) === key) return node;
+            if (node.children) {
+              for (const c of node.children) {
+                const found = findNodeByKey(c);
+                if (found) return found;
+              }
+            }
+            return null;
+          };
+          const targetNode = findNodeByKey(treeData);
+          if (targetNode) {
+            const paths = getAllFilePaths(targetNode);
+            if (e.target.checked) paths.forEach(p => selectedLocalPaths.add(p));
+            else paths.forEach(p => selectedLocalPaths.delete(p));
           }
-          renderLocalTests();
+          renderTree();
+        });
+      });
+
+      // File checkbox toggle
+      treeCont.querySelectorAll('.tree-file-cb').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          if (e.target.checked) selectedLocalPaths.add(e.target.value);
+          else selectedLocalPaths.delete(e.target.value);
+          renderTree();
         });
       });
     };
 
-    localSearch?.addEventListener('input', () => renderLocalTests());
+    // ── Load D:\MyTestX\tests Catalog ────────────────────────
+    const loadLocalTests = async () => {
+      treeCont.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.6);"><span class="spinner-sm"></span> D:\\MyTestX\\tests katalogi skanerlanmoqda...</div>`;
+      try {
+        const res = await this.api('/api/mtf/local_tests', 'GET');
+        if (res && res.success) {
+          treeData = res.tree || null;
+          flatCategories = res.categories || [];
+          localBadge.textContent = `${res.total_files} ta test`;
+          // Expand 1st level by default
+          if (treeData && treeData.children) {
+            treeData.children.forEach(c => {
+              if (c.type === 'folder') expandedFolders.add(c.rel_path || c.name);
+            });
+          }
+          renderTree();
+        } else {
+          treeCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ ${res?.error || "Testlar ro'yxatini olib bo'lmadi"}</div>`;
+        }
+      } catch (err) {
+        treeCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ Xatolik: ${err.message}</div>`;
+      }
+    };
+
+    // ── Tree Toolbar Buttons ─────────────────────────────────
+    localSearch?.addEventListener('input', () => renderTree());
+
+    document.getElementById('btn-mtf-expand-all')?.addEventListener('click', () => {
+      const addAllFolders = (node) => {
+        if (!node) return;
+        if (node.type === 'folder') {
+          expandedFolders.add(node.rel_path || node.name);
+          if (node.children) node.children.forEach(addAllFolders);
+        }
+      };
+      if (treeData) addAllFolders(treeData);
+      renderTree();
+    });
+
+    document.getElementById('btn-mtf-collapse-all')?.addEventListener('click', () => {
+      expandedFolders.clear();
+      renderTree();
+    });
 
     document.getElementById('btn-mtf-select-all')?.addEventListener('click', () => {
-      localCategories.forEach(cat => cat.files.forEach(f => selectedLocalPaths.add(f.path)));
-      renderLocalTests();
+      if (treeData) {
+        getAllFilePaths(treeData).forEach(p => selectedLocalPaths.add(p));
+      } else if (flatCategories) {
+        flatCategories.forEach(cat => cat.files.forEach(f => selectedLocalPaths.add(f.path)));
+      }
+      renderTree();
     });
 
     document.getElementById('btn-mtf-deselect-all')?.addEventListener('click', () => {
       selectedLocalPaths.clear();
-      renderLocalTests();
+      renderTree();
     });
 
-    // ── Execute Conversion for Local Files ────────────────────
+    // ── Execute Conversion for Local Explorer Files ───────────
     document.getElementById('btn-mtf-convert-local')?.addEventListener('click', async () => {
       if (!selectedLocalPaths.size) {
         this.toast("Iltimos, avval ro'yxatdan kamida bitta testni tanlang", 'error');
@@ -8691,7 +8853,7 @@ const ATLAS = {
       const paths = Array.from(selectedLocalPaths);
       const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
       const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
-      const autoSendTg = document.getElementById('mtf-opt-send-tg')?.checked || false;
+      const fanNameCustom = document.getElementById('mtf-opt-fanname')?.value || '';
 
       resultsCard.style.display = 'block';
       resultsStatus.textContent = `${paths.length} ta test konvertatsiya qilinmoqda...`;
@@ -8699,14 +8861,14 @@ const ATLAS = {
         const fn = p.split(/[\\/]/).pop();
         return `
           <div id="res-row-${idx}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;gap:10px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px;">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;">
               <span id="res-icon-${idx}">⏳</span>
               <div>
                 <div style="font-size:13px;font-weight:700;color:#fff;">${fn}</div>
                 <div id="res-msg-${idx}" style="font-size:11px;color:rgba(255,255,255,0.5);">Navbatga yuklanmoqda...</div>
               </div>
             </div>
-            <div id="res-actions-${idx}" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+            <div id="res-actions-${idx}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></div>
           </div>
         `;
       }).join('');
@@ -8731,7 +8893,7 @@ const ATLAS = {
             file_path: filePath,
             layout,
             with_answers: withAnswers === 'true',
-            fan_name: fileName.replace(/\.(mtf|xml)$/i, '')
+            fan_name: fanNameCustom || fileName.replace(/\.(mtf|xml)$/i, '')
           });
 
           if (!submitRes || !submitRes.success) {
@@ -8765,29 +8927,17 @@ const ATLAS = {
               }
               const docxUrl = stat.docx_url || stat.docx_base64;
               if (docxUrl) {
-                actHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 DOCX</a>`;
+                actHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 Word</a>`;
               }
 
-              // Telegram button
+              // Prominent Telegram button with real SVG
+              const escapedTitle = (stat.title || fileName).replace(/'/g, "\\'");
               actHtml += `
-                <button onclick="ATLAS._mtfSendTelegram(this, '${(stat.title || fileName).replace(/'/g, "\\'")}', '${fileName}', '${stat.pdf_url || ''}', '${stat.docx_url || ''}', '${stat.pdf_base64 || ''}', '${stat.docx_base64 || ''}')" style="padding:6px 12px;background:rgba(37,99,235,0.18);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
-                  📲 Telegramga Yuborish
+                <button onclick="ATLAS._mtfSendTelegram(this, '${escapedTitle}', '${fileName}', '${stat.pdf_url || ''}', '${stat.docx_url || ''}', '${stat.pdf_base64 || ''}', '${stat.docx_base64 || ''}')" style="padding:6px 14px;background:linear-gradient(135deg,rgba(34,158,217,0.25),rgba(0,136,204,0.35));border:1px solid #229ED9;color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(34,158,217,0.3);">
+                  ${TG_ICON_SVG} <span>Telegram</span>
                 </button>
               `;
               if (actsEl) actsEl.innerHTML = actHtml;
-
-              // Auto send to Telegram if checked
-              if (autoSendTg) {
-                this.api('/api/mtf/send_telegram', 'POST', {
-                  title: stat.title || fileName,
-                  filename: fileName,
-                  pdf_url: stat.pdf_url,
-                  docx_url: stat.docx_url,
-                  pdf_base64: stat.pdf_base64,
-                  docx_base64: stat.docx_base64
-                }).catch(() => {});
-              }
-
               break;
             } else if (stat.status === 'error') {
               throw new Error(stat.error || 'Xatolik yuz berdi');
@@ -8811,7 +8961,7 @@ const ATLAS = {
       this.toast(`🎉 ${successCount} ta test muvaffaqiyatli konvert qilindi!`, 'success');
     });
 
-    // ── Drag & Drop Queue Logic ──────────────────────────────
+    // ── Drag & Drop Queue Logic with Rich Animations ─────────
     const dropZone   = document.getElementById('mtf-drop-zone');
     const fileInput  = document.getElementById('mtf-file-input');
     const nameLabel  = document.getElementById('mtf-file-name-label');
@@ -8850,7 +9000,7 @@ const ATLAS = {
               <div id="upload-msg-${i}" style="font-size:11px;color:rgba(255,255,255,0.5);">${sizeStr(f.size)}</div>
             </div>
           </div>
-          <div id="upload-downloads-${i}" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          <div id="upload-downloads-${i}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></div>
           <button onclick="ATLAS._mtfRemoveUploadFile(${i})" style="background:none;border:none;color:rgba(239,68,68,0.7);cursor:pointer;font-size:16px;">✕</button>
         </div>
       `).join('');
@@ -8861,22 +9011,50 @@ const ATLAS = {
       };
     };
 
+    // Drag-over hover animations
     dropZone?.addEventListener('click', () => fileInput?.click());
     fileInput?.addEventListener('change', (e) => {
       if (e.target.files?.length) addFiles(e.target.files);
       fileInput.value = '';
     });
-    ['dragenter', 'dragover'].forEach(ev => dropZone?.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
-    ['dragleave', 'drop'].forEach(ev => dropZone?.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
-    dropZone?.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files); });
-    document.getElementById('btn-mtf-clear')?.addEventListener('click', () => { uploadFiles = []; renderUploadQueue(); });
 
-    // ── Execute Conversion for Uploaded Files ────────────────
+    ['dragenter', 'dragover'].forEach(ev => {
+      dropZone?.addEventListener(ev, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.style.borderColor = '#38bdf8';
+        dropZone.style.background = 'radial-gradient(ellipse at center, rgba(56,189,248,0.2) 0%, rgba(15,23,42,0.8) 100%)';
+        dropZone.style.transform = 'scale(1.01)';
+        dropZone.style.boxShadow = '0 0 25px rgba(56,189,248,0.4)';
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(ev => {
+      dropZone?.addEventListener(ev, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.style.borderColor = 'rgba(56,189,248,0.4)';
+        dropZone.style.background = 'radial-gradient(ellipse at center, rgba(56,189,248,0.08) 0%, rgba(15,23,42,0.4) 100%)';
+        dropZone.style.transform = 'scale(1)';
+        dropZone.style.boxShadow = 'none';
+      });
+    });
+
+    dropZone?.addEventListener('drop', e => {
+      if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+    });
+
+    document.getElementById('btn-mtf-clear')?.addEventListener('click', () => {
+      uploadFiles = [];
+      renderUploadQueue();
+    });
+
+    // ── Execute Conversion for Uploaded Drag & Drop Files ────
     document.getElementById('btn-mtf-convert')?.addEventListener('click', async () => {
       if (!uploadFiles.length) return;
       const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
       const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
-      const autoSendTg = document.getElementById('mtf-opt-send-tg')?.checked || false;
+      const fanNameCustom = document.getElementById('mtf-opt-fanname')?.value || '';
 
       const btn = document.getElementById('btn-mtf-convert');
       btn.disabled = true;
@@ -8899,7 +9077,7 @@ const ATLAS = {
             reader.readAsDataURL(f);
           });
 
-          const fanName = f.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
+          const fanName = fanNameCustom || f.name.replace(/\.(mtf|xml)$/i, '').replace(/_/g, ' ');
 
           const submitRes = await this.api('/api/mtf/submit_job', 'POST', {
             filename: f.name,
@@ -8937,27 +9115,16 @@ const ATLAS = {
               }
               const docxUrl = stat.docx_url || stat.docx_base64;
               if (docxUrl) {
-                dlHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 DOCX</a>`;
+                dlHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 Word</a>`;
               }
 
+              const escapedTitle = (stat.title || f.name).replace(/'/g, "\\'");
               dlHtml += `
-                <button onclick="ATLAS._mtfSendTelegram(this, '${(stat.title || f.name).replace(/'/g, "\\'")}', '${f.name}', '${stat.pdf_url || ''}', '${stat.docx_url || ''}', '${stat.pdf_base64 || ''}', '${stat.docx_base64 || ''}')" style="padding:6px 12px;background:rgba(37,99,235,0.18);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
-                  📲 Telegramga Yuborish
+                <button onclick="ATLAS._mtfSendTelegram(this, '${escapedTitle}', '${f.name}', '${stat.pdf_url || ''}', '${stat.docx_url || ''}', '${stat.pdf_base64 || ''}', '${stat.docx_base64 || ''}')" style="padding:6px 14px;background:linear-gradient(135deg,rgba(34,158,217,0.25),rgba(0,136,204,0.35));border:1px solid #229ED9;color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(34,158,217,0.3);">
+                  ${TG_ICON_SVG} <span>Telegram</span>
                 </button>
               `;
               if (dlEl) dlEl.innerHTML = dlHtml;
-
-              if (autoSendTg) {
-                this.api('/api/mtf/send_telegram', 'POST', {
-                  title: stat.title || f.name,
-                  filename: f.name,
-                  pdf_url: stat.pdf_url,
-                  docx_url: stat.docx_url,
-                  pdf_base64: stat.pdf_base64,
-                  docx_base64: stat.docx_base64
-                }).catch(() => {});
-              }
-
               break;
             } else if (stat.status === 'error') {
               throw new Error(stat.error || 'Xatolik');
@@ -8982,10 +9149,10 @@ const ATLAS = {
     });
 
     document.getElementById('btn-mtf-refresh')?.addEventListener('click', () => {
-      this.loadMtfConverter(viewport);
+      loadLocalTests();
     });
 
-    // Start by loading D:\MyTestX\tests
+    // Start by loading Windows Explorer Tree
     loadLocalTests();
   },
 
