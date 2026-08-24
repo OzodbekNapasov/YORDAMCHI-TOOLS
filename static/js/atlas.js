@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 //  static/js/atlas.js
 //  ATLAS Universal Bot Platform — Single Page Application Engine
 //  Shaxsiy Markaziy Boshqaruv & Hujjatlar Arxiv Tizimi
@@ -172,8 +172,19 @@ const ATLAS = {
     const headers = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
 
+    let targetUrl = endpoint;
+    // MTF konvertor uchun agar foydalanuvchi Vercel'da bo'lsa va lokal server (localhost:5005) yoniq bo'lsa, to'g'ridan-to'g'ri lokal kompyuterda 100% tezkor bajarish
+    if (endpoint.startsWith('/api/mtf/convert') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      try {
+        const ping = await fetch('http://localhost:5005/api/ping', { method: 'GET', mode: 'cors' }).catch(() => null);
+        if (ping && ping.ok) {
+          targetUrl = 'http://localhost:5005' + endpoint;
+        }
+      } catch (e) {}
+    }
+
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(targetUrl, {
         method,
         headers,
         body: body ? JSON.stringify(body) : null
@@ -184,11 +195,14 @@ const ATLAS = {
         return null;
       }
 
-      return await res.json();
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        return json || { success: false, error: `HTTP ${res.status}: Server xatoligi` };
+      }
+      return json;
     } catch (err) {
       console.error('API Error:', err);
-      this.toast('Server bilan aloqa uzildi', 'error');
-      return null;
+      return { success: false, error: err.message || 'Server bilan aloqa uzildi' };
     }
   },
 

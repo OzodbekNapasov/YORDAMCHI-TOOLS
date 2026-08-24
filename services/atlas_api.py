@@ -44,6 +44,20 @@ atlas_api = Blueprint("atlas_api", __name__, url_prefix="/api")
 BROADCAST_STATUSES = {}
 
 
+@atlas_api.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
+
+
+@atlas_api.route("/ping", methods=["GET", "OPTIONS"])
+def api_ping():
+    return jsonify({"status": "ok", "platform": "ATLAS Universal", "os": os.name})
+
+
+
 # ============================================================
 # 1. AUTHENTICATION ENDPOINTS
 # ============================================================
