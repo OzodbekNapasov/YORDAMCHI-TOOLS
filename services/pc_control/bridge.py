@@ -43,23 +43,49 @@ _DAEMON_LOCK = threading.Lock()
 
 
 def _get_supa_headers():
-    supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-    supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY", "")
-    if not supa_key:
-        env_paths = [".env", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")]
+    """Supabase URL va API kalitlarini olish (atlas_db orqali yoki .env orqali)"""
+    try:
+        from services.atlas_db import _get_supabase_credentials
+        supa_url, supa_key = _get_supabase_credentials()
+    except Exception:
+        # Fallback: to'g'ridan-to'g'ri o'qish
+        supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
+        supa_key = (
+            os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or
+            os.environ.get("SUPABASE_KEY") or
+            os.environ.get("SB_KEY") or
+            ""
+        )
+
+    # .env faylidan o'qish (agar env variable bo'lmasa)
+    if not supa_key or supa_key == "":
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        env_paths = [
+            os.path.join(base_dir, ".env"),
+            ".env"
+        ]
         for ep in env_paths:
             if os.path.exists(ep):
                 try:
                     with open(ep, "r", encoding="utf-8") as f:
                         for line in f:
-                            if line.strip().startswith("SUPABASE_SERVICE_ROLE_KEY="):
-                                supa_key = line.strip().split("=", 1)[1].strip()
-                            elif not supa_key and line.strip().startswith("SUPABASE_KEY="):
-                                supa_key = line.strip().split("=", 1)[1].strip()
-                            elif line.strip().startswith("SUPABASE_URL=") and not os.environ.get("SUPABASE_URL"):
-                                supa_url = line.strip().split("=", 1)[1].strip()
+                            line = line.strip()
+                            if not line or line.startswith("#"):
+                                continue
+                            if "=" not in line:
+                                continue
+                            k, v = line.split("=", 1)
+                            k, v = k.strip(), v.strip()
+                            if k == "SUPABASE_SERVICE_ROLE_KEY" and v:
+                                supa_key = v
+                            elif k == "SUPABASE_KEY" and v and not supa_key:
+                                supa_key = v
+                            elif k == "SUPABASE_URL" and v and not os.environ.get("SUPABASE_URL"):
+                                supa_url = v
                 except Exception:
                     pass
+                if supa_key:
+                    break
 
     headers = {
         "apikey": supa_key,
@@ -458,4 +484,7 @@ def start_pc_bridge_daemon():
         _DAEMON_STARTED = True
         worker_thread = threading.Thread(target=_pc_bridge_worker_loop, daemon=True, name="ATLAS_PC_Bridge_Daemon")
         worker_thread.start()
-        print("🚀 [ATLAS] Realtime PC Cloud Bridge Worker ishga tushirildi!")
+        try:
+            print("[ATLAS] Realtime PC Cloud Bridge Worker ishga tushirildi!")
+        except Exception:
+            pass

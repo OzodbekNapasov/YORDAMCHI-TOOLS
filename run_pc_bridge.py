@@ -6,32 +6,55 @@
 import os
 import sys
 import time
-from dotenv import load_dotenv
 
-load_dotenv()
+# .env faylidan kalitlarni yuklash
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
-from services.pc_control.bridge import start_pc_bridge_daemon, collect_local_pc_metrics
+from services.pc_control.bridge import (
+    start_pc_bridge_daemon,
+    collect_local_pc_metrics,
+    _push_heartbeat_sync
+)
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
     print("=" * 60)
-    print("  💻 ATLAS Universal — Realtime PC Bridge Agent")
+    print("  ATLAS Universal -- Realtime PC Bridge Agent")
     print("  Vercel Web Platformasi <===> Mahalliy Windows PC")
     print("=" * 60)
-    
+
     metrics = collect_local_pc_metrics()
-    print(f"✅ Kompyuter: {metrics.get('hostname')}")
-    print(f"✅ CPU: {metrics.get('cpu_percent')}% | RAM: {metrics.get('ram_used_gb')}/{metrics.get('ram_total_gb')} GB")
-    print(f"✅ Disks: {len(metrics.get('disks', []))} ta disk aniqlandi")
-    print("\n🟢 Realtime Cloud Bridge faollashtirilmoqda...")
-    
+    hostname = metrics.get('hostname', 'Windows-PC')
+    cpu = metrics.get('cpu_percent', 0)
+    ram_used = metrics.get('ram_used_gb', 0)
+    ram_total = metrics.get('ram_total_gb', 0)
+    disks = len(metrics.get('disks', []))
+
+    print(f"[OK] Kompyuter: {hostname}")
+    print(f"[OK] CPU: {cpu}% | RAM: {ram_used}/{ram_total} GB")
+    print(f"[OK] Disks: {disks} ta disk aniqlandi")
+    print("\n[START] Realtime Cloud Bridge faollashtirilmoqda...")
+
     start_pc_bridge_daemon()
-    
-    print("🚀 Bridge muvaffaqiyatli ishga tushdi!")
-    print("💡 Endi Vercel platformasida (atlas-my-tools.vercel.app) istalgan buyruqni bosing.")
-    print("Ushbu konsol oynasini yopmang (fonda ishlab turadi).\n")
-    
+    _push_heartbeat_sync(metrics)
+
+    print("[OK] Bridge muvaffaqiyatli ishga tushdi!")
+    print("[INFO] Endi Vercel platformasida (atlas-my-tools.vercel.app) istalgan buyruqni bosing.")
+    print("[INFO] Ushbu konsol oynasini yopmang (fonda ishlab turadi).")
+    print("-" * 60)
+
+    counter = 0
     try:
         while True:
-            time.sleep(1)
+            time.sleep(5)
+            counter += 1
+            if counter % 6 == 0:  # Har 30 soniyada
+                m = collect_local_pc_metrics()
+                print(f"[ALIVE] CPU:{m.get('cpu_percent',0)}% RAM:{m.get('ram_percent',0)}% | Bridge ishlamoqda...")
     except KeyboardInterrupt:
-        print("\n🛑 Bridge to'xtatildi.")
+        print("\n[STOP] Bridge to'xtatildi.")

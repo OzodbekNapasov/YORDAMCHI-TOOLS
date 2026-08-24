@@ -445,6 +445,10 @@ def _get_supabase_credentials():
                                 supa_url = line.split("=", 1)[1].strip()
                 except Exception:
                     pass
+    # Serverless fallback (Vercel'da .env yo'q - env var orqali o'rnatilgan bo'lishi kerak)
+    if not supa_key:
+        # Vercel dashboard'da SUPABASE_KEY env var o'rnating
+        supa_key = os.environ.get("SB_KEY", "")
     return supa_url, supa_key
 
 
