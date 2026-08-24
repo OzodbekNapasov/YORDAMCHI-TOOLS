@@ -46,6 +46,13 @@ from services.insta_poster_service import (
 from services.insta_scheduler import start_insta_scheduler, stop_insta_scheduler
 from services.insta_bot_listener import start_insta_bot_listener, stop_insta_bot_listener
 
+# Kompyuter Boshqaruvi & AI Agent moduli
+try:
+    from services.pc_control import register_pc_control_handlers
+except Exception as _pc_err:
+    print(f"[PC Control Import Warn]: {_pc_err}")
+    register_pc_control_handlers = None
+
 try:
     from meta_ads_bot.facebook_api import MetaAdsManager
     from meta_ads_bot.scheduler import BotScheduler, load_settings as load_meta_settings, save_settings as save_meta_settings
@@ -57,7 +64,7 @@ except Exception as _meta_e:
     save_meta_settings = None
 
 TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-BOT_VERSION = "2.2.0"
+BOT_VERSION = "2.3.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
 
 def get_main_keyboard():
@@ -70,10 +77,11 @@ def get_main_keyboard():
     btn_meta = telebot.types.KeyboardButton("🎯 Meta Ads Manager")
     btn_insta = telebot.types.KeyboardButton("📸 Instagram AutoPoster")
     btn_stats = telebot.types.KeyboardButton("📊 Tizim Statistikasi")
+    btn_pc = telebot.types.KeyboardButton("💻 Kompyuter Boshqaruvi")
     markup.add(btn_kontrakt, btn_amaliyot)
     markup.add(btn_docs, btn_buyruq)
     markup.add(btn_meta, btn_insta)
-    markup.add(btn_stats)
+    markup.add(btn_stats, btn_pc)
     return markup
 
 def get_insta_poster_keyboard():
@@ -241,6 +249,15 @@ if not is_serverless_env:
     except Exception as _sched_err:
         print(f"[Insta Scheduler/Listener Startup Warn]: {_sched_err}")
 app.register_blueprint(atlas_api)
+
+# PC Control & AI Agent handlerlarini ro'yxatdan o'tkazish
+if register_pc_control_handlers:
+    try:
+        register_pc_control_handlers(bot, get_main_keyboard)
+        print("[PC Control]: Kompyuter boshqaruvi va AI Agent handlerlari muvaffaqiyatli ulandi.")
+    except Exception as _pc_reg_err:
+        print(f"[PC Control Register Warn]: {_pc_reg_err}")
+
 user_data = {}
 
 class TelegramProgress:

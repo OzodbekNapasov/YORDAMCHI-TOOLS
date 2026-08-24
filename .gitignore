@@ -17,6 +17,10 @@ test_filled.docx
 temp/
 tmp/
 *.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
 atlas.db
 saved_documents/*
 !saved_documents/.gitkeep
@@ -30,4 +34,11 @@ youtube_token.json
 *.m4a
 *.webm
 *.mkv
+*.wav
+*.gif
+screenshot_*.png
+webcam_*.jpg
+ai_shot_*.png
+services/pc_control/local_settings.json
+services/pc_control/__pycache__/
 
