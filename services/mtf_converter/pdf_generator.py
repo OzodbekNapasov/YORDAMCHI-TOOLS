@@ -211,13 +211,56 @@ def decode_image_base64(image_b64: str) -> bytes:
         return base64.b64decode(image_b64.encode('cp1251', errors='ignore'))
 
 
-FONT_REGULAR = r"C:\Windows\Fonts\arial.ttf"
-FONT_BOLD    = r"C:\Windows\Fonts\arialbd.ttf"
-
 PAGE_W   = 210
 MARGIN   = 10
 LINE_H   = 6.5
 Q_SPACE  = 4
+
+
+def clean_text_for_fpdf(t: str) -> str:
+    """FPDF uchun matnni xavfsiz Unicode/Latin-1 formatiga tozalash."""
+    if not t:
+        return ""
+    repl = {
+        "\u2018": "'", "\u2019": "'", "`": "'", "\u02bb": "'", "\u02bc": "'",
+        "\u201c": '"', "\u201d": '"', "\u00ab": '"', "\u00bb": '"',
+        "\u2013": "-", "\u2014": "-", "\u2212": "-",
+        "\u2026": "...", "\u2116": "No.",
+        "ў": "o'", "Ў": "O'", "ғ": "g'", "Ғ": "G'",
+        "қ": "q", "Қ": "Q", "ҳ": "h", "Ҳ": "H"
+    }
+    for k, v in repl.items():
+        t = t.replace(k, v)
+    return t.encode("latin-1", errors="replace").decode("latin-1")
+
+
+def _setup_pdf_fonts(pdf: FPDF) -> str:
+    """Windows va Linux/Vercel tizimlarida mos shrifni xavfsiz sozlash."""
+    win_reg = r"C:\Windows\Fonts\arial.ttf"
+    win_bold = r"C:\Windows\Fonts\arialbd.ttf"
+    if os.path.exists(win_reg) and os.path.exists(win_bold):
+        try:
+            pdf.add_font("CustomFont", fname=win_reg)
+            pdf.add_font("CustomFont", style="B", fname=win_bold)
+            return "CustomFont"
+        except Exception:
+            pass
+
+    linux_candidates = [
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        ("/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"),
+        ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf")
+    ]
+    for reg, bold in linux_candidates:
+        if os.path.exists(reg) and os.path.exists(bold):
+            try:
+                pdf.add_font("CustomFont", fname=reg)
+                pdf.add_font("CustomFont", style="B", fname=bold)
+                return "CustomFont"
+            except Exception:
+                pass
+
+    return "Helvetica"
 
 
 def generate_pdf(
@@ -227,10 +270,10 @@ def generate_pdf(
     output_path: str,
     compact: bool = False,
 ) -> str:
-    fan_name_upper = fan_name.upper()
+    fan_name_clean = clean_text_for_fpdf(fan_name).upper()
 
     if not compact:
-        pdf = _create_pdf(fan_name_upper, with_answers)
+        pdf = _create_pdf(fan_name_clean, with_answers)
         for q in questions:
             _add_question(pdf, q, with_answers, output_path)
     else:
@@ -238,16 +281,15 @@ def generate_pdf(
         pdf.set_margins(MARGIN, MARGIN, MARGIN)
         pdf.set_auto_page_break(auto=False)
 
-        pdf.add_font("Arial", fname=FONT_REGULAR)
-        pdf.add_font("Arial", style="B", fname=FONT_BOLD)
+        font_name = _setup_pdf_fonts(pdf)
 
         pdf.add_page()
 
-        pdf.set_font("Arial", style="B", size=13)
-        pdf.multi_cell(0, 8, fan_name_upper, align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font(font_name, style="B", size=13)
+        pdf.multi_cell(0, 8, fan_name_clean, align="C", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
 
-        pdf.set_font("Arial", style="", size=8.5)
+        pdf.set_font(font_name, style="", size=8.5)
         date_str = datetime.now().strftime("%d.%m.%Y %H:%M")
         variant_str = "Javoblar bilan" if with_answers else "Savollar (Javobsiz)"
         metadata_line = f"Variant: {variant_str}  |  Yaratilgan vaqt: {date_str}"
@@ -271,15 +313,16 @@ def generate_pdf(
         indent = 6
 
         for q in questions:
-            pdf.set_font("Arial", style="B", size=8.5)
-            q_text = f"{q.index}. {q.question_text}"
+            pdf.set_font(font_name, style="B", size=8.5)
+            q_text = clean_text_for_fpdf(f"{q.index}. {q.question_text}")
             q_h = pdf.multi_cell(col_w, line_h, q_text, dry_run=True, output="HEIGHT")
 
-            pdf.set_font("Arial", style="", size=8.5)
+            pdf.set_font(font_name, style="", size=8.5)
             v_h_total = 0.0
             for i, v in enumerate(q.variants):
                 letter = chr(ord("A") + i)
-                v_text = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_raw = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_text = clean_text_for_fpdf(v_raw)
                 v_h_total += pdf.multi_cell(col_w - indent, line_h, v_text, dry_run=True, output="HEIGHT")
 
             img_h = 0.0
@@ -315,7 +358,7 @@ def generate_pdf(
             curr_x = MARGIN if pdf.col == 0 else MARGIN + col_w + col_gap
 
             # 1. Savol matni
-            pdf.set_font("Arial", style="B", size=8.5)
+            pdf.set_font(font_name, style="B", size=8.5)
             pdf.multi_cell(col_w, line_h, q_text, align="L", new_x="LMARGIN", new_y="NEXT")
 
             # 2. Rasm SAVOLDAN KEYIN
@@ -330,10 +373,11 @@ def generate_pdf(
                     logger.warning(f"Rasm joylashda xatolik ({q.index}-savol): {e}")
 
             # 3. Variantlar (A, B, C, D)
-            pdf.set_font("Arial", style="", size=8.5)
+            pdf.set_font(font_name, style="", size=8.5)
             for i, v in enumerate(q.variants):
                 letter = chr(ord("A") + i)
-                v_text = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_raw = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_text = clean_text_for_fpdf(v_raw)
                 pdf.set_x(curr_x + indent)
                 pdf.multi_cell(col_w - indent, line_h, v_text, align="L", new_x="LMARGIN", new_y="NEXT")
 
@@ -358,8 +402,7 @@ def generate_variants_pdf(
     pdf.set_margins(MARGIN, MARGIN, MARGIN)
     pdf.set_auto_page_break(auto=False)
 
-    pdf.add_font("Arial", fname=FONT_REGULAR)
-    pdf.add_font("Arial", style="B", fname=FONT_BOLD)
+    font_name = _setup_pdf_fonts(pdf)
 
     col_w = 90
     col_gap = 10
@@ -371,12 +414,12 @@ def generate_variants_pdf(
     for var_idx, questions in enumerate(variants_questions):
         pdf.add_page()
 
-        pdf.set_font("Arial", style="B", size=13)
-        variant_title = f"{fan_name.upper()} - Variant {var_idx + 1}"
+        pdf.set_font(font_name, style="B", size=13)
+        variant_title = clean_text_for_fpdf(f"{fan_name.upper()} - Variant {var_idx + 1}")
         pdf.multi_cell(0, 8, variant_title, align="C", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
 
-        pdf.set_font("Arial", style="", size=8.5)
+        pdf.set_font(font_name, style="", size=8.5)
         date_str = datetime.now().strftime("%d.%m.%Y %H:%M")
         variant_str = "Javoblar bilan" if with_answers else "Savollar (Javobsiz)"
         metadata_line = f"Variant: {variant_str}  |  Yaratilgan vaqt: {date_str}"
@@ -392,15 +435,16 @@ def generate_variants_pdf(
         pdf.set_xy(MARGIN, pdf.col_y_start)
 
         for q in questions:
-            pdf.set_font("Arial", style="B", size=8.5)
-            q_text = f"{q.index}. {q.question_text}"
+            pdf.set_font(font_name, style="B", size=8.5)
+            q_text = clean_text_for_fpdf(f"{q.index}. {q.question_text}")
             q_h = pdf.multi_cell(col_w, line_h, q_text, dry_run=True, output="HEIGHT")
 
-            pdf.set_font("Arial", style="", size=8.5)
+            pdf.set_font(font_name, style="", size=8.5)
             v_h_total = 0.0
             for i, v in enumerate(q.variants):
                 letter = chr(ord("A") + i)
-                v_text = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_raw = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_text = clean_text_for_fpdf(v_raw)
                 v_h_total += pdf.multi_cell(col_w - indent, line_h, v_text, dry_run=True, output="HEIGHT")
 
             img_h = 0.0
@@ -436,7 +480,7 @@ def generate_variants_pdf(
             curr_x = MARGIN if pdf.col == 0 else MARGIN + col_w + col_gap
 
             # 1. Savol matni
-            pdf.set_font("Arial", style="B", size=8.5)
+            pdf.set_font(font_name, style="B", size=8.5)
             pdf.multi_cell(col_w, line_h, q_text, align="L", new_x="LMARGIN", new_y="NEXT")
 
             # 2. Rasm SAVOLDAN KEYIN
@@ -451,10 +495,11 @@ def generate_variants_pdf(
                     logger.warning(f"Rasm joylashda xatolik ({q.index}-savol): {e}")
 
             # 3. Variantlar (A, B, C, D)
-            pdf.set_font("Arial", style="", size=8.5)
+            pdf.set_font(font_name, style="", size=8.5)
             for i, v in enumerate(q.variants):
                 letter = chr(ord("A") + i)
-                v_text = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_raw = f"{letter}) {v.text} *" if with_answers and v.is_correct else f"{letter}) {v.text}"
+                v_text = clean_text_for_fpdf(v_raw)
                 pdf.set_x(curr_x + indent)
                 pdf.multi_cell(col_w - indent, line_h, v_text, align="L", new_x="LMARGIN", new_y="NEXT")
 
@@ -470,16 +515,16 @@ def _create_pdf(fan_name: str, with_answers: bool) -> FPDF:
     pdf.set_margins(MARGIN, MARGIN, MARGIN)
     pdf.set_auto_page_break(auto=True, margin=MARGIN)
 
-    pdf.add_font("Arial", fname=FONT_REGULAR)
-    pdf.add_font("Arial", style="B", fname=FONT_BOLD)
+    font_name = _setup_pdf_fonts(pdf)
+    pdf.custom_font_name = font_name
 
     pdf.add_page()
 
-    pdf.set_font("Arial", style="B", size=14)
-    pdf.multi_cell(0, 9, fan_name, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font(font_name, style="B", size=14)
+    pdf.multi_cell(0, 9, clean_text_for_fpdf(fan_name), align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(1)
 
-    pdf.set_font("Arial", style="", size=9)
+    pdf.set_font(font_name, style="", size=9)
     date_str = datetime.now().strftime("%d.%m.%Y %H:%M")
     variant_str = "Javoblar bilan" if with_answers else "Savollar (Javobsiz)"
     metadata_line = f"Variant: {variant_str}  |  Yaratilgan vaqt: {date_str}"
@@ -495,10 +540,11 @@ def _create_pdf(fan_name: str, with_answers: bool) -> FPDF:
 
 def _add_question(pdf: FPDF, q: Question, with_answers: bool, output_path: str) -> None:
     usable_w = PAGE_W - 2 * MARGIN
+    font_name = getattr(pdf, "custom_font_name", "Helvetica")
 
     # 1. Savol matni
-    pdf.set_font("Arial", style="B", size=10.5)
-    question_line = f"{q.index}. {q.question_text}"
+    pdf.set_font(font_name, style="B", size=10.5)
+    question_line = clean_text_for_fpdf(f"{q.index}. {q.question_text}")
     pdf.multi_cell(usable_w, LINE_H, question_line, align="L", new_x="LMARGIN", new_y="NEXT")
 
     indent = 8
@@ -526,12 +572,14 @@ def _add_question(pdf: FPDF, q: Question, with_answers: bool, output_path: str) 
             logger.warning(f"Rasm joylashda xatolik ({q.index}-savol): {e}")
 
     # 3. Variantlar (A, B, C, D)
-    pdf.set_font("Arial", style="", size=10)
+    pdf.set_font(font_name, style="", size=10)
     for i, v in enumerate(q.variants):
         letter = chr(ord("A") + i)
         line = f"{letter}) {v.text} *" if (with_answers and v.is_correct) else f"{letter}) {v.text}"
+        clean_line = clean_text_for_fpdf(line)
 
         pdf.set_x(MARGIN + indent)
-        pdf.multi_cell(variant_w, LINE_H, line, align="L", new_x="LMARGIN", new_y="NEXT")
+        pdf.multi_cell(variant_w, LINE_H, clean_line, align="L", new_x="LMARGIN", new_y="NEXT")
 
     pdf.ln(Q_SPACE)
+

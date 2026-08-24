@@ -239,7 +239,10 @@ if os.path.exists('/var/www') or 'PYTHONANYWHERE_DOMAIN' in os.environ or 'PYTHO
     apihelper.proxy = {'http': 'http://proxy.server:3128', 'https': 'http://proxy.server:3128'}
 
 bot = telebot.TeleBot(TOKEN, threaded=False)
-app = Flask(__name__, static_folder="static", template_folder="templates")
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_STATIC_DIR = os.path.join(_BASE_DIR, "static")
+_TEMPLATES_DIR = os.path.join(_BASE_DIR, "templates")
+app = Flask(__name__, static_folder=_STATIC_DIR, static_url_path="/static", template_folder=_TEMPLATES_DIR)
 init_db()
 init_insta_tables()
 is_serverless_env = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
