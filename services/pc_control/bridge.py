@@ -32,10 +32,13 @@ from .system_tools import (
     show_desktop,
     search_user_files,
     pair_sunshine_pin,
-    register_sunshine_client_cert,
     take_all_monitors_screenshots,
     wake_and_unlock_pc,
-    is_system_compatible
+    is_system_compatible,
+    print_file,
+    read_file_content,
+    download_or_install_software,
+    write_file_content
 )
 
 logger = logging.getLogger(__name__)
@@ -388,9 +391,25 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
                 msg = "Noma'lum media buyruq."
             return {"success": True, "message": msg}
 
-        elif action == "kill":
-            target = str(payload.get("target", "")).strip()
-            res = kill_process(target)
+        elif action == "print_file":
+            fp = str(payload.get("file_path", "")).strip()
+            res = print_file(fp)
+            return {"success": True, "message": res}
+
+        elif action == "read_file":
+            fp = str(payload.get("file_path", "")).strip()
+            res = read_file_content(fp)
+            return {"success": True, "content": res}
+
+        elif action == "download_software":
+            tgt = str(payload.get("target", "")).strip()
+            res = download_or_install_software(tgt)
+            return {"success": True, "message": res}
+
+        elif action == "write_file":
+            fp = str(payload.get("file_path", "eslatma.txt")).strip()
+            cnt = str(payload.get("content", ""))
+            res = write_file_content(fp, cnt)
             return {"success": True, "message": res}
 
         elif action == "ai":

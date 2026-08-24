@@ -981,3 +981,124 @@ def get_anydesk_id() -> str:
     return "AnyDesk ID topilmadi (AnyDesk o'rnatilmagan yoki konfiguratsiya topilmadi)"
 
 
+def print_file(file_path: str) -> str:
+    """Faylni standart Windows printerida qog'ozga chiqarish."""
+    if not file_path:
+        return "❌ Fayl yo'li ko'rsatilmadi."
+
+    candidates = [
+        file_path,
+        os.path.join(os.path.expanduser("~"), "Desktop", file_path),
+        os.path.join(os.path.expanduser("~"), "Downloads", file_path),
+        os.path.join(os.path.expanduser("~"), "Documents", file_path),
+    ]
+    target = None
+    for c in candidates:
+        if os.path.exists(c):
+            target = c
+            break
+
+    if not target:
+        return f"❌ Chop etish uchun fayl topilmadi: <code>{file_path}</code>"
+
+    try:
+        cmd = f'Start-Process -FilePath "{target}" -Verb Print'
+        subprocess.run(["powershell", "-Command", cmd], timeout=15)
+        return f"🖨️ <b>Fayl printerga yuborildi:</b> <code>{os.path.basename(target)}</code>"
+    except Exception as e:
+        return f"❌ Printerga yuborishda xatolik: {e}"
+
+
+def read_file_content(file_path: str, max_chars: int = 4000) -> str:
+    """Fayl ichidagi matn yoki ma'lumotlarni o'qish (Word, PDF, Excel, Text, Code)."""
+    if not file_path:
+        return "❌ Fayl yo'li ko'rsatilmadi."
+
+    candidates = [
+        file_path,
+        os.path.join(os.path.expanduser("~"), "Desktop", file_path),
+        os.path.join(os.path.expanduser("~"), "Downloads", file_path),
+        os.path.join(os.path.expanduser("~"), "Documents", file_path),
+    ]
+    target = None
+    for c in candidates:
+        if os.path.exists(c):
+            target = c
+            break
+
+    if not target:
+        return f"❌ Fayl topilmadi: <code>{file_path}</code>"
+
+    ext = os.path.splitext(target)[1].lower()
+    try:
+        if ext == ".docx":
+            import docx
+            doc = docx.Document(target)
+            text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            return f"📄 <b>WORD HUJJATI MAZMUNI ({os.path.basename(target)}):</b>\n\n{text[:max_chars]}"
+
+        elif ext in [".xlsx", ".xls"]:
+            import openpyxl
+            wb = openpyxl.load_workbook(target, data_only=True)
+            res = []
+            for sheet in wb.sheetnames[:2]:
+                ws = wb[sheet]
+                res.append(f"📊 Varaq: {sheet}")
+                for row in list(ws.iter_rows(values_only=True))[:15]:
+                    row_clean = [str(x) if x is not None else "" for x in row]
+                    if any(row_clean):
+                        res.append(" | ".join(row_clean[:6]))
+            return f"📊 <b>EXCEL MAZMUNI ({os.path.basename(target)}):</b>\n\n" + "\n".join(res)[:max_chars]
+
+        # Oddiy matnli fayllar (txt, py, json, xml, csv, md, log, html, pdf)
+        for enc in ["utf-8", "windows-1251", "cp1256", "latin-1"]:
+            try:
+                with open(target, "r", encoding=enc) as f:
+                    content = f.read(max_chars)
+                    return f"📝 <b>FAYL MAZMUNI ({os.path.basename(target)}):</b>\n\n<pre>{content}</pre>"
+            except Exception:
+                continue
+
+        return f"❌ Ushbu fayl formatini o'qib bo'lmadi: {ext}"
+    except Exception as e:
+        return f"❌ Faylni o'qishda xatolik: {e}"
+
+
+def download_or_install_software(target: str) -> str:
+    """Dastur yuklab olish yoki winget orqali o'rnatish."""
+    target = target.strip()
+    if target.startswith("http://") or target.startswith("https://"):
+        downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+        fname = target.split("?")[0].split("/")[-1] or "downloaded_file"
+        dest = os.path.join(downloads_dir, fname)
+        try:
+            import requests
+            r = requests.get(target, timeout=60, stream=True)
+            with open(dest, "wb") as f:
+                for chunk in r.iter_content(chunk_size=65536):
+                    f.write(chunk)
+            return f"✅ <b>Fayl yuklab olindi:</b> <code>{dest}</code> ({round(os.path.getsize(dest)/1024/1024, 1)} MB)"
+        except Exception as e:
+            return f"❌ Yuklab olishda xatolik: {e}"
+    else:
+        try:
+            cmd = f'winget install --id "{target}" --silent --accept-source-agreements --accept-package-agreements'
+            res = subprocess.run(["powershell", "-Command", cmd], capture_output=True, text=True, timeout=90)
+            return f"📦 <b>Dastur o'rnatish buyrug'i bajarildi ({target}):</b>\n<code>{res.stdout[:500]}</code>"
+        except Exception as e:
+            return f"❌ O'rnatishda xatolik: {e}"
+
+
+def write_file_content(file_path: str, content: str) -> str:
+    """Faylga matn yozish yoki yangi fayl yaratish."""
+    try:
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(os.path.expanduser("~"), "Desktop", file_path)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return f"✅ <b>Fayl saqlandi:</b> <code>{file_path}</code>"
+    except Exception as e:
+        return f"❌ Faylni saqlashda xatolik: {e}"
+
+

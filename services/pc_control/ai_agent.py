@@ -26,7 +26,11 @@ from .system_tools import (
     set_mute,
     media_control,
     get_anydesk_id,
-    wake_and_unlock_pc
+    wake_and_unlock_pc,
+    print_file,
+    read_file_content,
+    download_or_install_software,
+    write_file_content
 )
 
 logger = logging.getLogger(__name__)
@@ -52,10 +56,6 @@ def _get_openrouter_key():
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # OpenRouter uchun eng optimal, tez va arzon modellar:
-# 1. meta-llama/llama-3.1-8b-instruct (Ultra tezkor, <1 soniyada javob)
-# 2. openai/gpt-4o-mini (1 soniya, yuqori aniqlik)
-# 3. deepseek/deepseek-chat (DeepSeek V3, mukammal o'zbek tili)
-# 4. meta-llama/llama-3.3-70b-instruct
 OPENROUTER_MODELS = [
     "meta-llama/llama-3.1-8b-instruct",
     "openai/gpt-4o-mini",
@@ -69,63 +69,94 @@ CHAT_HISTORIES: Dict[int, List[Dict[str, str]]] = {}
 def clear_user_history(user_id: int):
     CHAT_HISTORIES.pop(user_id, None)
 
-AGENT_SYSTEM_PROMPT = """Siz Windows kompyuterini masofadan turib to'liq boshqaruvchi va barcha topshiriqlarni avtomatik bajaruvchi aqlli Sun'iy Intellekt Agentisiz (ATLAS PC Agent).
-Siz foydalanuvchi bilan o'zbek tilida muloqot qilasiz va avvalgi xabarlar tarixini eslab qolasiz.
+AGENT_SYSTEM_PROMPT = """Siz Windows kompyuterini to'liq mustaqil boshqaruvchi va barcha vazifalarni avtomatlashtiruvchi professional Sun'iy Intellekt Agentisiz (ATLAS Master PC Agent).
+Siz foydalanuvchi bilan o'zbek tilida muloqot qilasiz va kompyuterda quyidagi barcha amallarni bexato bajara olasiz.
 
-Siz har doim yagona to'g'ri JSON obyektini qaytarishingiz shart!
+Siz har doim yagona to'g'ri JSON formatida javob qaytarishingiz SHART! Hech qanday ortiqcha matn JSONdan tashqarida bo'lmasin.
 
-JSON Formati:
+JSON Shabloni:
 {
   "action": "ACTION_TYPE",
   "params": { ... },
-  "message": "Foydalanuvchiga yuboriladigan qisqa tushuntirish matni"
+  "message": "Foydalanuvchiga yuboriladigan qisqa tushunarli o'zbekcha xabar"
 }
 
-ACTION_TYPE turlari:
-1. "open_app": Dasturni ochish (kalkulyator, bloknot, chrome, telegram, explorer, word, excel, va h.k.).
+QO'LLAB-QUVVATLANADIGAN AMALLAR (ACTION_TYPE):
+
+1. "print_file": Faylni (PDF, Word, Excel, rasm, matn) standart Windows printerida qog'ozga chiqarish / chop etish.
+   params: {"file_path": "shartnoma.docx"} yoki {"file_path": "C:\\Users\\user\\Desktop\\test.pdf"}
+
+2. "read_file": Kompyuterdagi istalgan fayl ichini o'qish (Word .docx, Excel .xlsx, PDF, .txt, .py, .json, .xml, .csv, .log).
+   params: {"file_path": "hisobot.xlsx"} yoki {"file_path": "talabalar.docx"}
+
+3. "download_software": Internetdan dastur/fayl yuklab olish yoki Windows winget orqali dastur o'rnatish.
+   params: {"target": "Google.Chrome"} yoki {"target": "Telegram.TelegramDesktop"} yoki {"target": "https://example.com/file.zip"}
+
+4. "write_file": Kompyuterda yangi fayl/hujjat yaratish yoki matn yozish.
+   params: {"file_path": "eslatma.txt", "content": "Eslatma matni..."}
+
+5. "open_app": Dasturni ochish (kalkulyator, word, excel, chrome, telegram, photoshop, explorer va h.k.).
    params: {"app_name": "calc"}
-2. "open_url": Brauzerda sayt ochish.
+
+6. "open_url": Brauzerda veb-sayt yoki videoni ochish.
    params: {"url": "https://youtube.com"}
-3. "click": Ekranning (x, y) nuqtasida sichqonchani bosish.
-   params: {"x": 500, "y": 400}
-4. "press_key": Klaviaturada tugma bosish (enter, space, tab, alt+f4, win+d va h.k.).
-   params: {"key": "enter"}
-5. "cmd": Windows CMD/PowerShell buyrug'i.
-   params: {"command": "dir"}
-6. "screenshot": Ekrandan rasm olish.
+
+7. "screenshot": Ekrandan sifatli rasm (skrinshot) olish.
    params: {}
-7. "status": CPU, RAM, Disk holati.
+
+8. "status": CPU, RAM xotira, Disklarning joriy holatini tekshirish.
    params: {}
-8. "popup": Ekran bildirishnomasi.
-   params: {"text": "Matn"}
-9. "brightness": Ekran yorqinligini o'zgartirish (0-100%).
-   params: {"percent": 80}
-10. "volume": Ovoz balandligini o'rnatish (0-100%).
+
+9. "volume": Ovoz balandligini o'rnatish (0 dan 100 gacha foizda).
    params: {"percent": 50}
-11. "mute": Ovozni o'chirish/yoqish.
-   params: {"mute": true}
-12. "media": Media ijro boshqaruvi (playpause, next, prev).
-   params: {"action": "playpause"}
-13. "show_desktop": Ish stolini ko'rsatish (Win + D).
-   params: {}
-14. "close_window": Faol oynani yopish (Alt + F4).
-   params: {}
-15. "empty_recycle_bin": Windows Korzinani tozalash.
-   params: {}
-16. "clean_temp": Vaqtinchalik kesh fayllarini tozalash.
-   params: {}
-17. "type_text": Ekranga matn kiritish.
-   params: {"text": "salom dunyo"}
-18. "scroll": Sahifani aylantirish.
-   params: {"amount": -500}
-19. "kill": Jarayonni to'xtatish.
-   params: {"target": "chrome.exe"}
-20. "anydesk_id": AnyDesk dasturini ochish va AnyDesk ID raqamini aniqlab berish.
-   params: {}
-21. "unlock": Kompyuter ekranini uyg'otish, Lock ekrandan chiqarish (Spacebar) yoki parolni terish.
-   params: {"password": ""}
-22. "chat": Kompyuterda hech narsa bajarmasdan, shunchaki foydalanuvchi savoliga o'zbek tilida javob berish.
-   params: {}
+
+10. "mute": Ovozni butunlay o'chirish yoki yoqish.
+    params: {"mute": true}
+
+11. "media": Qo'shiq/videoni to'xtatish yoki davom ettirish (playpause, next, prev).
+    params: {"action": "playpause"}
+
+12. "brightness": Ekran yorqinligini o'zgartirish (0-100%).
+    params: {"percent": 80}
+
+13. "click": Sichqonchani ekranning (x, y) nuqtasida bosish.
+    params: {"x": 500, "y": 400}
+
+14. "type_text": Ekranga matn kiritish (klaviaturadan yozish).
+    params: {"text": "salom"}
+
+15. "press_key": Klaviaturada tugma bosish (enter, space, tab, alt+f4, win+d, ctrl+s).
+    params: {"key": "enter"}
+
+16. "show_desktop": Barcha oynalarni yashirib, Ish stolini ko'rsatish (Win + D).
+    params: {}
+
+17. "close_window": Faol oynani yopish (Alt + F4).
+    params: {}
+
+18. "empty_recycle_bin": Windows Korzinasini (Recycle Bin) tozalash.
+    params: {}
+
+19. "clean_temp": Vaqtinchalik kesh va temp fayllarni tozalab joy ochish.
+    params: {}
+
+20. "scroll": Sahifani tepaga yoki pastga aylantirish (musbat=tepaga, manfiy=pastga).
+    params: {"amount": -500}
+
+21. "kill": Qotib qolgan dastur yoki jarayonni to'xtatish.
+    params: {"target": "chrome.exe"}
+
+22. "anydesk_id": AnyDesk dasturini ochish va AnyDesk ID raqamini aniqlash.
+    params: {}
+
+23. "unlock": Kompyuter ekranini uyg'otish yoki parolni kiritib ochish.
+    params: {"password": ""}
+
+24. "cmd": Har qanday maxsus Windows CMD / PowerShell buyrug'ini bajarish.
+    params: {"command": "ipconfig"}
+
+25. "chat": Kompyuterda hech narsa bajarmasdan, shunchaki foydalanuvchi bilan o'zbek tilida savol-javob qilish yoki maslahat berish.
+    params: {}
 """
 
 def call_gemini_api_sync(messages: list, api_key: str) -> str | None:
@@ -329,6 +360,19 @@ def process_ai_agent_request(user_id: int, user_prompt: str) -> dict:
         elif action == "kill":
             tgt = params.get("target", "")
             exec_result = kill_process(tgt)
+        elif action in ["print_file", "print", "print_document"]:
+            fp = params.get("file_path", "")
+            exec_result = print_file(fp)
+        elif action in ["read_file", "read_document", "inspect_file"]:
+            fp = params.get("file_path", "")
+            exec_result = read_file_content(fp)
+        elif action in ["download_software", "download_app", "install_app", "download"]:
+            tgt = params.get("target", "") or params.get("url", "")
+            exec_result = download_or_install_software(tgt)
+        elif action in ["write_file", "create_file", "save_file"]:
+            fp = params.get("file_path", "eslatma.txt")
+            cnt = params.get("content", "")
+            exec_result = write_file_content(fp, cnt)
         elif action in ["anydesk_id", "get_anydesk_id", "get_app_id"]:
             open_app("anydesk")
             aid = get_anydesk_id()

@@ -2829,6 +2829,10 @@ def api_mtf_convert():
             fan_name=fan_name
         )
 
+        if not res or not res.get("success"):
+            err_msg = res.get("error", "Konvertatsiya amalga oshmadi.") if res else "Noma'lum xatolik"
+            return jsonify({"success": False, "error": err_msg}), 400
+
         pdf_b64 = base64.b64encode(res["pdf_bytes"]).decode("utf-8") if res.get("pdf_bytes") else None
         docx_b64 = base64.b64encode(res["docx_bytes"]).decode("utf-8") if res.get("docx_bytes") else None
 
@@ -2836,14 +2840,14 @@ def api_mtf_convert():
             "success": True,
             "filename": res.get("filename"),
             "title": res.get("title"),
-            "questions_count": res.get("questions_count"),
+            "questions_count": res.get("questions_count", 0),
             "pdf_base64": f"data:application/pdf;base64,{pdf_b64}" if pdf_b64 else None,
             "docx_base64": f"data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_b64}" if docx_b64 else None,
             "questions_summary": res.get("questions_summary", [])
         })
     except Exception as e:
         logger.error(f"MTF Convert error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Konvertatsiyada xatolik: {str(e)}"}), 500
 
 
 

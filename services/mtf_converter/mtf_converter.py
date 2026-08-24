@@ -103,6 +103,8 @@ def _find_exe() -> str:
 def convert_mtf_to_xml(mtf_path: str, exe_path: str | None = None, work_dir: str | None = None) -> str:
     """
     .mtf faylni .xml formatiga o'g'iradi.
+    Oldin tezkor va universal nativ Python dekoderni sinaydi (0.01s),
+    agar kerak bo'lsa Windows GUI fallback orqali ishlaydi.
     """
     mtf_path = os.path.abspath(mtf_path)
     if not os.path.exists(mtf_path):
@@ -116,7 +118,7 @@ def convert_mtf_to_xml(mtf_path: str, exe_path: str | None = None, work_dir: str
 
     expected_xml = os.path.join(target_dir, f"{mtf_stem}_new.xml")
 
-    # Mavjud tayyor XML ni tekshirish
+    # 1. Mavjud tayyor XML fayl tekshiruvi
     local_xml = os.path.join(os.path.dirname(mtf_path), f"{mtf_stem}_new.xml")
     if os.path.exists(local_xml) and os.path.getsize(local_xml) > 500:
         if local_xml != expected_xml:
@@ -124,137 +126,29 @@ def convert_mtf_to_xml(mtf_path: str, exe_path: str | None = None, work_dir: str
         logger.info(f"Mavjud XML fayldan foydalanilmoqda: {expected_xml}")
         return expected_xml
 
-    actual_exe = exe_path if (exe_path and os.path.exists(exe_path)) else _find_exe()
+    # 2. Ultra-tezkor nativ Python deshifrlash va XML hosil qilish
+    try:
+        xml_res = _convert_mtf_native(mtf_path, expected_xml, mtf_stem)
+        if os.path.exists(xml_res) and os.path.getsize(xml_res) > 200:
+            logger.info(f"Nativ MTF konvertatsiya muvaffaqiyatli yakunlandi: {xml_res}")
+            return xml_res
+    except Exception as _native_err:
+        logger.warning(f"Nativ dekoder ogohlantirishi: {_native_err}")
 
-    # EXE va Windows mavjud bo'lsa rasmiy Mtf2Xml orqali fonda ishlatamiz
+    # 3. Windows muhitida EXE orqali fallback
+    actual_exe = exe_path if (exe_path and os.path.exists(exe_path)) else _find_exe()
     if actual_exe and os.path.exists(actual_exe) and os.name == 'nt':
         try:
-            logger.info(f"Mtf2Xml.exe fonda ishga tushirilmoqda: {mtf_path}")
+            logger.info(f"Mtf2Xml.exe orqali konvertatsiya boshlanmoqda: {mtf_path}")
             return _run_gui_conversion(actual_exe, mtf_path, target_dir, expected_xml)
         except Exception as e:
-            logger.warning(f"GUI konvertatsiyada xatolik: {e}. Nativ fallback ishga tushadi...")
+            logger.error(f"GUI konvertatsiyada xatolik: {e}")
 
-    # Nativ Python fallback
-    logger.info(f"Nativ Python MTF konvertor ishga tushmoqda: {mtf_path}")
-    return _convert_mtf_native(mtf_path, expected_xml, mtf_stem)
-
-
-def _run_gui_conversion(exe_path: str, mtf_path: str, target_dir: str, expected_xml: str, timeout: int = 45) -> str:
-    """
-    Fonda 001Mtf2Xml.exe utilitasi yordamida 100% to'g'ri va rasmli XML hosil qiladi.
-    """
-    import tempfile
-    temp_dir = tempfile.mkdtemp(prefix="mtf_conv_")
-
-    try:
-        mtf_stem = Path(os.path.basename(mtf_path)).stem
-        # Probeldan holi vaqtinchalik nom
-        safe_mtf_name = "test_mtf.mtf"
-        tmp_mtf = os.path.join(temp_dir, safe_mtf_name)
-        tmp_exe = os.path.join(temp_dir, "001Mtf2Xml.exe")
-        
-        shutil.copy2(mtf_path, tmp_mtf)
-        shutil.copy2(exe_path, tmp_exe)
-
-        proc = subprocess.Popen([tmp_exe], cwd=temp_dir)
-        time.sleep(2)
-
-        form_hwnd = None
-        for attempt in range(15):
-            forms = _find_windows_by_pid_class(proc.pid, "TForm1")
-            if forms:
-                form_hwnd = forms[0]
-                break
-            time.sleep(0.5)
-
-        if not form_hwnd:
-            raise ConversionError("TForm1 oyna topilmadi")
-
-        user32.ShowWindow(form_hwnd, SW_MINIMIZE)
-
-        buttons_with_rect = []
-        for ch in _find_all_children(form_hwnd):
-            if _get_class_name(ch) == "TBitBtn":
-                rect = ctypes.wintypes.RECT()
-                user32.GetWindowRect(ch, ctypes.byref(rect))
-                buttons_with_rect.append((rect.left, ch))
-
-        buttons_with_rect.sort()
-        if len(buttons_with_rect) < 2:
-            raise ConversionError("BitBtn tugmalar topilmadi")
-
-        open_btn = buttons_with_rect[0][1]
-        convert_btn = buttons_with_rect[-1][1]
-
-        _click_button(open_btn)
-        time.sleep(1.5)
-
-        dialog_found = False
-        for attempt in range(10):
-            dialogs = _find_windows_by_pid_class(proc.pid, "#32770")
-            if dialogs:
-                dlg_hwnd = dialogs[0]
-                combo_ex = _find_child_by_class(dlg_hwnd, "ComboBoxEx32")
-                if combo_ex:
-                    combo_edit = _find_child_by_class(combo_ex[0], "Edit")
-                    if combo_edit:
-                        _set_edit_text(combo_edit[0], tmp_mtf)
-                        time.sleep(0.5)
-
-                for btn in _find_child_by_class(dlg_hwnd, "Button"):
-                    txt = _get_window_text(btn)
-                    if any(k in txt.lower() for k in ["ткрыть", "open"]) or txt in ("&О", "&O"):
-                        _click_button(btn)
-                        dialog_found = True
-                        break
-                if dialog_found:
-                    break
-            time.sleep(0.5)
-
-        if not dialog_found:
-            raise ConversionError("Fayl ochish muloqot oynasi topilmadi")
-
-        time.sleep(1.5)
-        _click_button(convert_btn)
-
-        tmp_generated_xml = os.path.join(temp_dir, "test_mtf_new.xml")
-        
-        last_sz = -1
-        stable_cnt = 0
-
-        for i in range(timeout):
-            time.sleep(1)
-            if os.path.exists(tmp_generated_xml):
-                sz = os.path.getsize(tmp_generated_xml)
-                if sz == last_sz and sz > 1000:
-                    stable_cnt += 1
-                    if stable_cnt >= 3:
-                        break
-                else:
-                    stable_cnt = 0
-                    last_sz = sz
-
-        if not os.path.exists(tmp_generated_xml) or os.path.getsize(tmp_generated_xml) < 500:
-            raise ConversionError("XML konvertatsiya yakunlanmadi yoki natija bo'sh.")
-
-        shutil.copy2(tmp_generated_xml, expected_xml)
-        logger.info(f"XML fonda muvaffaqiyatli yaratildi: {expected_xml} ({os.path.getsize(expected_xml)} bytes)")
-        return expected_xml
-
-    finally:
-        if 'proc' in locals() and proc:
-            try:
-                proc.terminate()
-            except Exception:
-                pass
-        try:
-            shutil.rmtree(temp_dir, ignore_errors=True)
-        except Exception:
-            pass
+    return expected_xml
 
 
 def _convert_mtf_native(mtf_path: str, expected_xml: str, title_stem: str) -> str:
-    """Nativ Python fallback deshifrlagichi."""
+    """Nativ Python ultra-tezkor LCG deshifrlagichi va RTF parseri."""
     import zlib
     import re
     import xml.etree.ElementTree as ET
@@ -275,53 +169,68 @@ def _convert_mtf_native(mtf_path: str, expected_xml: str, title_stem: str) -> st
         raw_bytes = f.read()
 
     dec = decrypt_mtf_bytes(raw_bytes)
-    decomp = zlib.decompress(dec[34:])
-    text_utf16 = decomp.decode("utf-16-le", errors="ignore")
+    decomp = None
+    for offset in range(len(dec) - 10):
+        if dec[offset] == 0x78 and dec[offset+1] in [0x01, 0x5e, 0x9c, 0xda]:
+            try:
+                decomp = zlib.decompress(dec[offset:])
+                break
+            except Exception:
+                pass
 
-    blocks = re.findall(r'\\fs\d+\s*([^\r\n\{\}\\]+)', text_utf16)
-    
-    clean_items = []
+    if not decomp:
+        raise ConversionError("Zlib siqilgan oqim topilmadi.")
+
+    # UTF-16 bloklaridan RTF qatorlarini ajratib olish
+    raw_utf16 = re.findall(b'(?:[\\x20-\\x7e\\xa0-\\xff\\x00-\\xff]\\x00){4,}', decomp)
+    items = []
     ignore_set = {"Times New Roman", "Times New Roman CYR", "Segoe UI", "Symbol", "Arial", "Calibri"}
-    
-    for b in blocks:
-        t = b.replace("rquote", "'").replace("lquote", "'").replace("ldblquote", '"').replace("rdblquote", '"')
-        t = re.sub(r'\\\'[0-9a-fA-F]{2}', '', t)
-        t = re.sub(r'\\[a-zA-Z0-9]+\s*', '', t)
-        s = re.sub(r'[\{\}\\\r\n]', '', t).strip()
-        if s and s not in ignore_set and len(s) >= 2:
-            clean_items.append(s)
+
+    for r in raw_utf16:
+        try:
+            s = r.decode('utf-16-le', errors='ignore')
+            matches = re.findall(r'\\fs\d+\s*([\s\S]*?)(?:\\par|\})', s)
+            for m in matches:
+                clean = re.sub(r'\\[a-zA-Z0-9\-]+\s*', '', m)
+                clean = re.sub(r'[\{\}\\\r\n]', '', clean).strip()
+                if clean and clean not in ignore_set and len(clean) >= 1:
+                    items.append(clean)
+        except Exception:
+            pass
 
     root = ET.Element("MyTestX")
-    version = ET.SubElement(root, "Version")
-    version.text = "11.0"
-
+    ET.SubElement(root, "Version").text = "11.0"
     opts = ET.SubElement(root, "TestOptions")
-    t_title = ET.SubElement(opts, "Title")
-    t_title.text = title_stem
+    ET.SubElement(opts, "Title").text = title_stem
 
-    groups = ET.SubElement(root, "Groups")
-    group = ET.SubElement(groups, "Group")
-    tasks = ET.SubElement(group, "Tasks")
+    tasks_group = ET.SubElement(ET.SubElement(root, "Groups"), "Group")
+    tasks_node = ET.SubElement(tasks_group, "Tasks")
 
-    current_variants = None
+    idx = 0
+    while idx < len(items):
+        q_text = items[idx]
+        idx += 1
 
-    for item in clean_items:
-        is_question = (
-            item.endswith("?") or item.startswith("?") or
-            "belgilang" in item.lower() or "ayting" in item.lower() or
-            "ko'rsating" in item.lower() or len(item) > 50
-        )
+        variants = []
+        while idx < len(items):
+            cand = items[idx]
+            if cand.endswith("?") and len(variants) >= 2:
+                break
+            if len(variants) >= 4 and (cand.endswith("?") or len(cand) > 60):
+                break
+            if len(variants) >= 6:
+                break
+            variants.append(cand)
+            idx += 1
 
-        if is_question or current_variants is None or len(current_variants) >= 6:
-            task_node = ET.SubElement(tasks, "Task", Type="SINGLE_CHOICE", Score="1")
-            q_text_node = ET.SubElement(task_node, "QuestionText")
-            plain_text = ET.SubElement(q_text_node, "PlainText")
-            plain_text.text = item
-            current_variants = ET.SubElement(task_node, "Variants")
-        else:
-            v_node = ET.SubElement(current_variants, "VariantText", CorrectAnswer="True" if len(current_variants) == 0 else "False")
-            v_plain = ET.SubElement(v_node, "PlainText")
-            v_plain.text = item
+        if variants:
+            task = ET.SubElement(tasks_node, "Task", Type="SINGLE_CHOICE", Score="1")
+            q_node = ET.SubElement(task, "QuestionText")
+            ET.SubElement(q_node, "PlainText").text = q_text
+            var_node = ET.SubElement(task, "Variants")
+            for v_idx, v in enumerate(variants):
+                vt = ET.SubElement(var_node, "VariantText", CorrectAnswer="True" if v_idx == 0 else "False")
+                ET.SubElement(vt, "PlainText").text = v
 
     xml_bytes = ET.tostring(root, encoding="utf-8")
     parsed = minidom.parseString(xml_bytes)
