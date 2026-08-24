@@ -232,7 +232,7 @@ def _push_heartbeat_sync(metrics):
         pass
 
 
-def dispatch_bridge_command(action: str, payload: dict = None, timeout: float = 6.5) -> dict:
+def dispatch_bridge_command(action: str, payload: dict = None, timeout: float = 12.0) -> dict:
     """
     Platformadan kelgan buyruqni bajarish:
     - Agar lokal Windows bo'lsa: darhol shu yerda bajaradi.
@@ -475,7 +475,7 @@ def _pc_bridge_worker_loop():
                         f"{supa_url}/rest/v1/atlas_audit_logs?id=eq.{cmd_id}",
                         headers=patch_headers,
                         json={"status": status, "details_json": details},
-                        timeout=4
+                        timeout=20
                     )
 
         except Exception as e:
