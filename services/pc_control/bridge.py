@@ -438,13 +438,22 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
 
             raw_b64 = payload.get("file_base64", "")
             input_url = payload.get("input_url", "")
+            file_path = payload.get("file_path", "")
             filename = payload.get("filename", "test.mtf")
             layout = payload.get("layout", "2col")
             with_answers = bool(payload.get("with_answers", True))
             fan_name = payload.get("fan_name") or None
 
             file_bytes = None
-            if input_url:
+            if file_path and os.path.exists(file_path):
+                try:
+                    with open(file_path, "rb") as f:
+                        file_bytes = f.read()
+                    filename = os.path.basename(file_path)
+                except Exception as e:
+                    logger.warning(f"Failed to read local file_path {file_path}: {e}")
+
+            if not file_bytes and input_url:
                 try:
                     r_in = requests.get(input_url, timeout=30)
                     if r_in.status_code == 200:
@@ -458,7 +467,8 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
                 file_bytes = base64.b64decode(raw_b64)
 
             if not file_bytes:
-                return {"success": False, "error": "Fayl ma'lumotlari yuklanmadi"}
+                return {"success": False, "error": "Fayl ma'lumotlari yuklanmadi yoki topilmadi"}
+
 
             res = process_mtf_to_pdf(
                 mtf_bytes=file_bytes,

@@ -2828,15 +2828,20 @@ def api_mtf_submit_job():
         if file_obj and file_obj.filename:
             filename = file_obj.filename
             file_bytes = file_obj.read()
+            file_path = None
         else:
             data = request.get_json(silent=True) or {}
             filename = data.get("filename", "test.mtf")
             raw_b64 = data.get("file_base64", "")
-            if not raw_b64:
-                return jsonify({"success": False, "error": "Fayl yuborilmadi."}), 400
-            if "," in raw_b64:
-                raw_b64 = raw_b64.split(",", 1)[1]
-            file_bytes = base64.b64decode(raw_b64)
+            file_path = data.get("file_path")
+            if not raw_b64 and not file_path:
+                return jsonify({"success": False, "error": "Fayl yoki fayl manzili kiritilmadi."}), 400
+            
+            file_bytes = None
+            if raw_b64:
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                file_bytes = base64.b64decode(raw_b64)
             layout = data.get("layout", "2col")
             with_answers = bool(data.get("with_answers", True))
             fan_name = data.get("fan_name") or None
@@ -2844,13 +2849,15 @@ def api_mtf_submit_job():
         job_id = str(uuid.uuid4())
         clean_name = Path(filename).name
 
-        # 1. Faylni Supabase Storage ga yuklaymiz
-        temp_in = os.path.join(tempfile.gettempdir(), f"{job_id}_{clean_name}")
-        with open(temp_in, "wb") as f:
-            f.write(file_bytes)
-        input_url = upload_document_to_supabase(temp_in, f"mtf_inputs/{job_id}_{clean_name}")
-        try: os.remove(temp_in)
-        except Exception: pass
+        input_url = None
+        if file_bytes:
+            # 1. Faylni Supabase Storage ga yuklaymiz
+            temp_in = os.path.join(tempfile.gettempdir(), f"{job_id}_{clean_name}")
+            with open(temp_in, "wb") as f:
+                f.write(file_bytes)
+            input_url = upload_document_to_supabase(temp_in, f"mtf_inputs/{job_id}_{clean_name}")
+            try: os.remove(temp_in)
+            except Exception: pass
 
         # 2. Supabase audit logs jadvaliga pending task qo'shamiz
         supa_url, supa_key, headers = _get_supa_headers()
@@ -2859,16 +2866,21 @@ def api_mtf_submit_job():
             "module": "pc_bridge",
             "action": "mtf_convert",
             "status": "pending",
+            "ip_address": request.remote_addr,
             "details_json": {
                 "job_id": job_id,
-                "filename": filename,
-                "input_url": input_url,
-                "layout": layout,
-                "with_answers": with_answers,
-                "fan_name": fan_name,
-                "created_at": time.time()
+                "created_at": time.time(),
+                "payload": {
+                    "filename": clean_name,
+                    "input_url": input_url,
+                    "file_path": file_path,
+                    "layout": layout,
+                    "with_answers": with_answers,
+                    "fan_name": fan_name
+                }
             }
         }
+
 
         h_post = dict(headers)
         h_post["Prefer"] = "return=representation"
