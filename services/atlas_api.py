@@ -2959,21 +2959,38 @@ def api_mtf_local_tests():
         import os
         import json
         import requests
-        from services.pc_control.system_tools import scan_mytestx_tests_dir
+
         if os.name == "nt":
-            res = scan_mytestx_tests_dir()
-            return jsonify(res)
-        else:
-            # Vercel: Supabase'dagi jonli katalogdan o'qish
-            from services.pc_control.bridge import _get_supa_headers
-            supa_url, supa_key, headers = _get_supa_headers()
-            r = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=eq.mytestx_catalog&select=*", headers=headers, timeout=3.5)
-            if r.status_code == 200 and r.json():
-                val = json.loads(r.json()[0].get("value", "{}"))
-                return jsonify(val)
-            return jsonify({"success": False, "error": "Kompyuter bilan bog'lanilmadi", "categories": [], "total_files": 0})
+            try:
+                from services.pc_control.system_tools import scan_mytestx_tests_dir
+                res = scan_mytestx_tests_dir()
+                if res and res.get("success") and res.get("categories"):
+                    return jsonify(res)
+            except Exception:
+                pass
+
+        # Supabase'dagi saqlangan katalogdan o'qish (Vercel yoki zahira)
+        from services.pc_control.bridge import _get_supa_headers
+        supa_url, supa_key, headers = _get_supa_headers()
+        r = requests.get(
+            f"{supa_url}/rest/v1/atlas_settings?key=eq.mytestx_catalog&select=*",
+            headers=headers,
+            timeout=5.0
+        )
+        if r.status_code == 200 and r.json():
+            raw_val = r.json()[0].get("value")
+            if isinstance(raw_val, dict):
+                return jsonify(raw_val)
+            elif isinstance(raw_val, str):
+                try:
+                    return jsonify(json.loads(raw_val))
+                except Exception:
+                    pass
+
+        return jsonify({"success": False, "error": "Kompyuter bilan bog'lanilmadi", "categories": [], "total_files": 0})
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        logger.error(f"local_tests error: {e}")
+        return jsonify({"success": False, "error": str(e), "categories": [], "total_files": 0}), 200
 
 
 @atlas_api.route("/mtf/send_telegram", methods=["POST", "OPTIONS"])
@@ -2983,11 +3000,13 @@ def api_mtf_send_telegram():
         return jsonify({"status": "ok"})
 
     try:
+        import os
         import base64
         import requests
-        import io
         from pathlib import Path
-        from bot import bot, PRIMARY_ADMIN_ID
+
+        TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
+        PRIMARY_ADMIN_ID = 8135594558
 
         data = request.get_json(silent=True) or {}
         title = data.get("title", "Test Hujjati")
@@ -3000,50 +3019,55 @@ def api_mtf_send_telegram():
         target_chat_id = data.get("chat_id") or PRIMARY_ADMIN_ID
 
         sent_count = 0
+        tg_api_url = f"https://api.telegram.org/bot{TOKEN}/sendDocument"
 
         # 1. Send PDF
-        pdf_data = None
+        pdf_bytes = None
         if pdf_b64:
             if "," in pdf_b64:
                 pdf_b64 = pdf_b64.split(",", 1)[1]
-            pdf_data = base64.b64decode(pdf_b64)
+            pdf_bytes = base64.b64decode(pdf_b64)
         elif pdf_url:
             r_pdf = requests.get(pdf_url, timeout=25)
             if r_pdf.status_code == 200:
-                pdf_data = r_pdf.content
+                pdf_bytes = r_pdf.content
 
-        if pdf_data:
-            bio = io.BytesIO(pdf_data)
-            bio.name = f"{clean_stem}.pdf"
-            bot.send_document(
-                target_chat_id,
-                bio,
-                caption=f"📄 <b>{title}</b>\n<i>PDF format (2 ustunli kitobcha)</i>",
-                parse_mode="HTML"
-            )
-            sent_count += 1
+        if pdf_bytes:
+            files = {
+                "document": (f"{clean_stem}.pdf", pdf_bytes, "application/pdf")
+            }
+            form_data = {
+                "chat_id": target_chat_id,
+                "caption": f"📄 <b>{title}</b>\n<i>PDF format (2 ustunli kitobcha)</i>",
+                "parse_mode": "HTML"
+            }
+            r_tg = requests.post(tg_api_url, data=form_data, files=files, timeout=30)
+            if r_tg.status_code == 200 and r_tg.json().get("ok"):
+                sent_count += 1
 
         # 2. Send DOCX
-        docx_data = None
+        docx_bytes = None
         if docx_b64:
             if "," in docx_b64:
                 docx_b64 = docx_b64.split(",", 1)[1]
-            docx_data = base64.b64decode(docx_b64)
+            docx_bytes = base64.b64decode(docx_b64)
         elif docx_url:
             r_docx = requests.get(docx_url, timeout=25)
             if r_docx.status_code == 200:
-                docx_data = r_docx.content
+                docx_bytes = r_docx.content
 
-        if docx_data:
-            bio = io.BytesIO(docx_data)
-            bio.name = f"{clean_stem}.docx"
-            bot.send_document(
-                target_chat_id,
-                bio,
-                caption=f"📝 <b>{title}</b>\n<i>Word (.docx) formati</i>",
-                parse_mode="HTML"
-            )
-            sent_count += 1
+        if docx_bytes:
+            files = {
+                "document": (f"{clean_stem}.docx", docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            }
+            form_data = {
+                "chat_id": target_chat_id,
+                "caption": f"📝 <b>{title}</b>\n<i>Word (.docx) formati</i>",
+                "parse_mode": "HTML"
+            }
+            r_tg = requests.post(tg_api_url, data=form_data, files=files, timeout=30)
+            if r_tg.status_code == 200 and r_tg.json().get("ok"):
+                sent_count += 1
 
         if sent_count == 0:
             return jsonify({"success": False, "error": "Yuborish uchun PDF yoki Word fayl topilmadi"}), 400
@@ -3056,6 +3080,7 @@ def api_mtf_send_telegram():
     except Exception as e:
         logger.error(f"Send telegram error: {e}")
         return jsonify({"success": False, "error": f"Telegramga yuborishda xatolik: {str(e)}"}), 500
+
 
 
 
