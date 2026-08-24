@@ -42,7 +42,7 @@ from .ai_agent import process_ai_agent_request, clear_user_history
 
 logger = logging.getLogger(__name__)
 
-PRIMARY_ADMIN_ID = int(os.getenv("ADMIN_ID") or 8135594558)
+PRIMARY_ADMIN_ID = int(os.getenv("PRIMARY_ADMIN_ID") or os.getenv("ADMIN_ID") or 8135594558)
 ACTIVE_AI_USERS = set()
 
 

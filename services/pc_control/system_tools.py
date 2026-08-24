@@ -638,15 +638,15 @@ def open_app(app_name: str) -> str:
         "control panel": "control",
         "boshqaruv paneli": "control",
         "paint": "mspaint",
-        "skrinshot": "snippingtool"
+        "skrinshot": "snippingtool",
+        "anydesk": "anydesk",
+        "rustdesk": "rustdesk"
     }
 
     cmd_to_run = apps_map.get(name, name)
     try:
-        if "." not in cmd_to_run and " " not in cmd_to_run:
-            cmd_to_run = f"start {cmd_to_run}"
-
-        os.system(cmd_to_run)
+        import subprocess
+        subprocess.Popen(f"start {cmd_to_run}", shell=True)
         return f"🚀 <b>{app_name.capitalize()}</b> dasturi ishga tushirildi!"
     except Exception as e:
         logger.error(f"Open app error: {e}")
@@ -922,4 +922,41 @@ def register_sunshine_client_cert(cert_path: str) -> str:
         )
     except Exception as e:
         return f"❌ Sertifikatni saqlashda xatolik: {e}"
+
+
+def get_anydesk_id() -> str:
+    """Kompyuterdagi AnyDesk ID raqamini aniqlash"""
+    # 1. ProgramData/AnyDesk/system.conf
+    p1 = r"C:\ProgramData\AnyDesk\system.conf"
+    if os.path.exists(p1):
+        try:
+            with open(p1, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    if line.strip().startswith("ad.anynet.id="):
+                        return line.strip().split("=", 1)[1].strip()
+        except Exception:
+            pass
+
+    # 2. AppData/AnyDesk/user.conf
+    appdata = os.environ.get("APPDATA", "")
+    p2 = os.path.join(appdata, "AnyDesk", "user.conf")
+    if os.path.exists(p2):
+        try:
+            with open(p2, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    if line.strip().startswith("ad.anynet.id="):
+                        return line.strip().split("=", 1)[1].strip()
+        except Exception:
+            pass
+
+    # 3. Try anydesk --get-id
+    try:
+        res = subprocess.run(["anydesk", "--get-id"], capture_output=True, text=True, timeout=5)
+        if res.stdout.strip().isdigit():
+            return res.stdout.strip()
+    except Exception:
+        pass
+
+    return "AnyDesk ID topilmadi (AnyDesk o'rnatilmagan yoki konfiguratsiya topilmadi)"
+
 

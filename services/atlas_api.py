@@ -2756,7 +2756,7 @@ def api_pc_ai():
         if not prompt:
             return jsonify({"success": False, "error": "Prompt kiritilmadi."}), 400
 
-        res = dispatch_bridge_command("ai", {"prompt": prompt}, timeout=15.0)
+        res = dispatch_bridge_command("ai", {"prompt": prompt}, timeout=28.0)
         return jsonify(res)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

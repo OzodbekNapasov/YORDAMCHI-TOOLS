@@ -155,12 +155,22 @@ const ATLAS = {
     {
       id: 'pc_control',
       num: '9',
-      title: 'KOMPYUTER & PC AGENT',
-      subtitle: 'Windows monitoring, ekran skrinshoti, veb-kamera, quvvat va Gemini AI Agent',
+      title: 'KOMPYUTER BOSHQARUVI',
+      subtitle: 'Windows monitoring, ko\'p monitorli skrinshot, veb-kamera, Sunshine va quvvat',
       category: 'Masofaviy Boshqaruv',
       color: '#00f2fe',
       glow: 'rgba(0, 242, 254, 0.45)',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
+    },
+    {
+      id: 'ai_chat',
+      num: '10',
+      title: 'AI PC AGENT CHAT',
+      subtitle: 'Kompyuterni boshqaruvchi o\'zbek tilidagi aqlli AI suhbatdosh va assistent',
+      category: 'Sun\'iy Intellekt',
+      color: '#a855f7',
+      glow: 'rgba(168, 85, 247, 0.45)',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`
     }
   ],
 
@@ -641,6 +651,7 @@ const ATLAS = {
       case 'groups': this.loadGroups(viewport, 'telegram'); break;
       case 'dashboard': this.loadDashboard(viewport); break;
       case 'pc_control': this.loadPcControl(viewport); break;
+      case 'ai_chat': this.loadAiChat(viewport); break;
       case 'users': this.loadUsers(viewport); break;
       case 'messages': this.loadMessages(viewport); break;
       case 'automation': this.loadAutomation(viewport); break;
@@ -946,6 +957,9 @@ const ATLAS = {
             <div class="sidebar-group-title">Monitoring & Tizim</div>
             <div class="nav-item" data-route="pc_control">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> <span>Kompyuter Boshqaruvi</span>
+            </div>
+            <div class="nav-item" data-route="ai_chat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> <span>AI Agent Chat</span>
             </div>
             <div class="nav-item" data-route="analytics">
               ${this.icons.analytics} <span>Statistika & Tahlil</span>
@@ -7717,60 +7731,40 @@ const ATLAS = {
           </div>
         </div>
 
-        <!-- MAIN 2-COLUMN SECTION: APPS & TERMINAL / AI -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:20px;margin-bottom:24px;">
-          <!-- COLUMN 1: RUNNING APPS -->
-          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;display:flex;flex-direction:column;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-              <h3 style="margin:0;font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
-                🎮 Faol Dasturlar (TOP RAM)
+        <!-- SECTION: COMPACT RUNNING APPS & AI AGENT BANNER -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:16px;margin-bottom:20px;">
+          <!-- COMPACT RUNNING APPS -->
+          <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <h3 style="margin:0;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:6px;">
+                🎮 <span>Faol Dasturlar (Top RAM)</span>
               </h3>
-              <button class="btn-secondary btn-sm" id="btn-refresh-apps" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;cursor:pointer;">
+              <button class="btn-secondary btn-sm" id="btn-refresh-apps" style="font-size:11px;padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;cursor:pointer;">
                 ${this.icons.refresh} <span>Yangilash</span>
               </button>
             </div>
-            <div id="pc-apps-list-wrap" style="flex:1;max-height:360px;overflow-y:auto;font-size:13px;">
-              <div style="display:flex;align-items:center;justify-content:center;height:120px;"><div class="spinner-sm"></div></div>
+            <div id="pc-apps-list-wrap" style="flex:1;max-height:210px;overflow-y:auto;font-size:12px;">
+              <div style="display:flex;align-items:center;justify-content:center;height:80px;"><div class="spinner-sm"></div></div>
             </div>
           </div>
 
-          <!-- COLUMN 2: CMD TERMINAL & AI AGENT -->
-          <div style="display:flex;flex-direction:column;gap:20px;">
-            <!-- CMD TERMINAL -->
-            <div class="card" style="background:rgba(13,17,23,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <h4 style="margin:0;font-size:14px;font-weight:700;color:#00f2fe;display:flex;align-items:center;gap:6px;">
-                  <span>💻</span> Windows CMD Terminal
-                </h4>
-                <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;">CMD / PowerShell</span>
+          <!-- DEDICATED AI AGENT PROMO CARD -->
+          <div class="card" style="background:linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(99,102,241,0.08) 100%);border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="font-size:16px;font-weight:800;color:#c084fc;display:flex;align-items:center;gap:8px;">
+                  <span>🧠</span> <span>AI PC Agent & Suhbat Markazi</span>
+                </div>
+                <span class="badge" style="background:rgba(168,85,247,0.2);color:#c084fc;font-size:10px;padding:2px 8px;border-radius:4px;">YANGI BO'LIM</span>
               </div>
-              <div id="pc-terminal-output" style="background:#000;border:1px solid #222;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a7f3d0;min-height:110px;max-height:160px;overflow-y:auto;white-space:pre-wrap;margin-bottom:10px;">
-Microsoft Windows [Version 10.0]
-(c) Microsoft Corporation. All rights reserved.
-C:\\Users\\user> Tayyor.
-              </div>
-              <form id="form-pc-cmd" style="display:flex;gap:8px;">
-                <input type="text" id="input-pc-cmd" class="input-control" placeholder="Buyruq yozing (masalan: ipconfig, dir, ping...)" style="font-family:'JetBrains Mono',monospace;font-size:12px;flex:1;" required>
-                <button type="submit" class="btn-primary btn-sm" id="btn-run-cmd" style="padding:0 16px;">Bajarish</button>
-              </form>
+              <p style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.5;margin:0 0 14px 0;">
+                Kompyuteringizni tabiiy o'zbek tilidagi buyruqlar orqali boshqaring: AnyDesk IDni aniqlash, skrinshot olish, ilovalarni ochish, tizimni tozalash va ko'proq.
+              </p>
             </div>
-
-            <!-- GEMINI AI PC AGENT -->
-            <div class="card" style="background:linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(13,17,23,0.95) 100%);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:18px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <h4 style="margin:0;font-size:14px;font-weight:700;color:#a78bfa;display:flex;align-items:center;gap:6px;">
-                  <span>🧠</span> Gemini AI PC Agent
-                </h4>
-                <span class="badge" style="background:rgba(99,102,241,0.2);color:#a78bfa;font-size:10px;padding:2px 8px;border-radius:4px;">GEMINI 2.0 FLASH</span>
-              </div>
-              <div id="pc-ai-chat-output" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;font-size:13px;color:#fff;min-height:100px;max-height:160px;overflow-y:auto;margin-bottom:10px;line-height:1.4;">
-                <div style="color:rgba(255,255,255,0.6);font-style:italic;">AI Agent tayyor. Istalgan tabiiy buyruq yozishingiz mumkin (masalan: "Ekrandan rasm olib ko'rsat", "Kalkulyatorni och", "Temp fayllarni tozalab ber").</div>
-              </div>
-              <form id="form-pc-ai" style="display:flex;gap:8px;">
-                <input type="text" id="input-pc-ai" class="input-control" placeholder="AI Agentga topshiriq bering..." style="font-size:13px;flex:1;" required>
-                <button type="submit" class="btn-primary btn-sm" id="btn-send-ai" style="background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);border:none;padding:0 16px;">Yuborish</button>
-              </form>
-            </div>
+            <button type="button" class="btn-primary" id="btn-goto-ai-chat" style="background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%);border:none;padding:12px 20px;border-radius:10px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 4px 16px rgba(168,85,247,0.35);">
+              <span>🧠 AI Agent Suhbat Bo'limiga O'tish</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -7996,70 +7990,216 @@ C:\\Users\\user> Tayyor.
       document.getElementById('modal-btn-power-cancel')?.addEventListener('click', () => handlePowerAction('cancel'));
     });
 
-    // CMD Form
-    document.getElementById('form-pc-cmd')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const input = document.getElementById('input-pc-cmd');
-      const cmd = input.value.trim();
-      if (!cmd) return;
+    // Go to dedicated AI Chat
+    document.getElementById('btn-goto-ai-chat')?.addEventListener('click', () => {
+      this.navigate('ai_chat');
+    });
+  },
 
-      const outputEl = document.getElementById('pc-terminal-output');
-      outputEl.innerHTML += `\n\nC:\\Users\\user> ${cmd}\n[Bajarilmoqda...]`;
-      outputEl.scrollTop = outputEl.scrollHeight;
+  // ============================================================
+  // 10. DEDICATED AI PC AGENT CHAT VIEW
+  // ============================================================
+  loadAiChat(viewport) {
+    if (!this._aiChatHistory || this._aiChatHistory.length === 0) {
+      this._aiChatHistory = [
+        {
+          role: 'assistant',
+          text: 'Assalomu alaykum! Men sizning shaxsiy <b>ATLAS AI PC Agenti</b>man. Windows kompyuteringizni masofadan to\'liq boshqarishim, AnyDesk IDni aniqlashim, ilovalarni ochishim, skrinshot olishim va savollaringizga javob berishim mumkin.',
+          badge: 'DEEPSEEK V3 / LLAMA 3.1',
+          time: new Date().toLocaleTimeString().slice(0, 5)
+        }
+      ];
+    }
 
-      input.value = '';
-      const res = await this.api('/api/pc/cmd', 'POST', { command: cmd });
-      if (res && res.success) {
-        outputEl.innerHTML += `\n${res.output || 'Bajarildi.'}`;
-      } else {
-        outputEl.innerHTML += `\n❌ Xatolik: ${(res && res.error) || 'Xatolik yuz berdi'}`;
-      }
-      outputEl.scrollTop = outputEl.scrollHeight;
+    viewport.innerHTML = `
+      <div class="contracts-page">
+        <!-- HEADER -->
+        <div class="content-header-card" style="background:linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(13, 17, 23, 0.95) 100%);border:1px solid rgba(168, 85, 247, 0.25);padding:20px;border-radius:12px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h2 style="margin:0 0 4px 0;font-size:20px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px;">
+                <span style="color:#a855f7;">🧠</span> ATLAS AI PC Agent & Suhbat Markazi
+                <span class="badge" style="background:rgba(168,85,247,0.18);color:#c084fc;border:1px solid rgba(168,85,247,0.35);font-size:11px;">DEEPSEEK V3 / LLAMA 3.1</span>
+              </h2>
+              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.6);">
+                Windows kompyuteringizni tabiiy o'zbek tilidagi yozma yoki ovozli buyruqlar bilan to'liq boshqaring
+              </p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn-secondary btn-sm" id="btn-back-to-pc" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;">
+                💻 <span>PC Paneli</span>
+              </button>
+              <button class="btn-secondary btn-sm" id="btn-clear-ai-history" style="display:flex;align-items:center;gap:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 14px;cursor:pointer;">
+                🗑 <span>Tarixni tozalash</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK ACTION CHIPS -->
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:14px;scrollbar-width:none;">
+          <button class="ai-chip-btn" data-prompt="AnyDesk dasturini ishga tushurib, ID raqamini aniqlab ber" style="white-space:nowrap;padding:7px 14px;border-radius:20px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:12px;font-weight:600;cursor:pointer;">
+            ⚡ AnyDesk IDni aniqlab ber
+          </button>
+          <button class="ai-chip-btn" data-prompt="Ekrandan to'liq skrinshot olib ko'rsat" style="white-space:nowrap;padding:7px 14px;border-radius:20px;background:rgba(0,242,254,0.12);border:1px solid rgba(0,242,254,0.3);color:#00f2fe;font-size:12px;font-weight:600;cursor:pointer;">
+            📸 Skrinshot ol
+          </button>
+          <button class="ai-chip-btn" data-prompt="Kompyuter protsessor va RAM holatini aytib ber" style="white-space:nowrap;padding:7px 14px;border-radius:20px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-size:12px;font-weight:600;cursor:pointer;">
+            📊 Kompyuter holati
+          </button>
+          <button class="ai-chip-btn" data-prompt="Vaqtinchalik temp fayllar va korzinani tozalab ber" style="white-space:nowrap;padding:7px 14px;border-radius:20px;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;font-size:12px;font-weight:600;cursor:pointer;">
+            🧹 Kesh va korzinani tozala
+          </button>
+          <button class="ai-chip-btn" data-prompt="Barcha oynalarni yashirib ish stolini ko'rsat (Win+D)" style="white-space:nowrap;padding:7px 14px;border-radius:20px;background:rgba(236,72,153,0.12);border:1px solid rgba(236,72,153,0.3);color:#f472b6;font-size:12px;font-weight:600;cursor:pointer;">
+            🖥 Ish stolini ko'rsat
+          </button>
+          <button class="ai-chip-btn" data-prompt="Kalkulyator dasturini och" style="white-space:nowrap;padding:7px 14px;border-radius:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">
+            🧮 Kalkulyatorni och
+          </button>
+        </div>
+
+        <!-- FULL CHAT BOX -->
+        <div class="card" style="background:rgba(13,17,23,0.94);border:1px solid rgba(255,255,255,0.08);border-radius:14px;display:flex;flex-direction:column;min-height:550px;max-height:72vh;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.5);">
+          <!-- CHAT MESSAGES CONTAINER -->
+          <div id="ai-chat-messages-box" style="flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:16px;">
+            <!-- Messages rendered dynamically -->
+          </div>
+
+          <!-- INPUT FORM -->
+          <div style="padding:16px 20px;background:rgba(0,0,0,0.4);border-top:1px solid rgba(255,255,255,0.08);">
+            <form id="form-ai-chat-main" style="display:flex;gap:12px;align-items:center;">
+              <div style="position:relative;flex:1;">
+                <input type="text" id="input-ai-chat-prompt" class="input-control" placeholder="AI Agentga xohlagan topshiriq yoki savolingizni yozing... (Enter bosib yuboring)" style="font-size:14px;padding:14px 18px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);width:100%;color:#fff;" autocomplete="off" required>
+              </div>
+              <button type="submit" id="btn-submit-ai-chat" class="btn-primary" style="background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%);border:none;padding:14px 28px;border-radius:12px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 4px 16px rgba(168,85,247,0.35);">
+                <span>Yuborish</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const renderMessages = () => {
+      const box = document.getElementById('ai-chat-messages-box');
+      if (!box) return;
+
+      box.innerHTML = this._aiChatHistory.map(msg => {
+        if (msg.role === 'user') {
+          return `
+            <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+              <div style="max-width:75%;background:linear-gradient(135deg, rgba(168,85,247,0.25) 0%, rgba(99,102,241,0.2) 100%);border:1px solid rgba(168,85,247,0.4);border-radius:14px 14px 2px 14px;padding:12px 18px;color:#fff;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                <div>${msg.text}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px;">${msg.time || ''}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div style="display:flex;gap:12px;align-items:flex-start;max-width:85%;">
+              <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(168,85,247,0.4);flex-shrink:0;">
+                🧠
+              </div>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px 14px 14px 2px;padding:14px 18px;color:#fff;font-size:14px;flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span style="font-weight:700;color:#c084fc;font-size:13px;">ATLAS AI Agent</span>
+                  ${msg.action ? `<span class="badge" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:10px;padding:2px 8px;">⚙️ ${msg.action}</span>` : ''}
+                </div>
+                <div style="line-height:1.5;">${msg.text}</div>
+                ${msg.exec_result ? `<div style="margin-top:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;font-size:12px;color:#34d399;font-family:'JetBrains Mono',monospace;">${msg.exec_result}</div>` : ''}
+                ${msg.screenshot ? `<div style="margin-top:10px;"><img src="${msg.screenshot}" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.15);" /></div>` : ''}
+                <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:6px;">${msg.time || ''}</div>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      box.scrollTop = box.scrollHeight;
+    };
+
+    renderMessages();
+
+    // Quick chips
+    viewport.querySelectorAll('.ai-chip-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const p = e.currentTarget.dataset.prompt;
+        if (p) {
+          const inp = document.getElementById('input-ai-chat-prompt');
+          if (inp) {
+            inp.value = p;
+            document.getElementById('form-ai-chat-main')?.dispatchEvent(new Event('submit'));
+          }
+        }
+      });
     });
 
-    // AI Agent Form
-    document.getElementById('form-pc-ai')?.addEventListener('submit', async (e) => {
+    // Clear history
+    document.getElementById('btn-clear-ai-history')?.addEventListener('click', () => {
+      this._aiChatHistory = [];
+      renderMessages();
+      this.toast('Chat tarixi tozalandi', 'info');
+    });
+
+    // Back to PC panel
+    document.getElementById('btn-back-to-pc')?.addEventListener('click', () => {
+      this.navigate('pc_control');
+    });
+
+    // Submit handler
+    document.getElementById('form-ai-chat-main')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const input = document.getElementById('input-pc-ai');
+      const input = document.getElementById('input-ai-chat-prompt');
       const prompt = input.value.trim();
       if (!prompt) return;
 
-      const chatEl = document.getElementById('pc-ai-chat-output');
-      chatEl.innerHTML += `
-        <div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;">
-          <b>Siz:</b> ${prompt}
-        </div>
-        <div id="ai-loading-indicator" style="margin-top:6px;font-size:12px;color:#a78bfa;display:flex;align-items:center;gap:6px;">
-          <span class="spinner-sm"></span> AI Agent vazifani tahlil qilmoqda...
-        </div>
-      `;
-      chatEl.scrollTop = chatEl.scrollHeight;
+      const timeStr = new Date().toLocaleTimeString().slice(0, 5);
+      this._aiChatHistory.push({
+        role: 'user',
+        text: prompt,
+        time: timeStr
+      });
       input.value = '';
+      renderMessages();
 
-      const res = await this.api('/api/pc/ai', 'POST', { prompt: prompt });
-      document.getElementById('ai-loading-indicator')?.remove();
+      // Show loader
+      const box = document.getElementById('ai-chat-messages-box');
+      const loaderId = 'ai-temp-chat-loader';
+      if (box) {
+        box.innerHTML += `
+          <div id="${loaderId}" style="display:flex;gap:12px;align-items:flex-start;max-width:85%;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">
+              <span class="spinner-sm"></span>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 16px;color:#c084fc;font-size:13px;display:flex;align-items:center;gap:8px;">
+              <span>AI Agent topshiriqni tahlil qilib kompyuterda bajarmoqda...</span>
+            </div>
+          </div>
+        `;
+        box.scrollTop = box.scrollHeight;
+      }
+
+      const res = await this.api('/api/pc/ai', 'POST', { prompt });
+      document.getElementById(loaderId)?.remove();
 
       if (res && res.success) {
-        let shotHtml = '';
-        if (res.screenshot) {
-          shotHtml = `<div style="margin-top:8px;"><img src="${res.screenshot}" style="max-width:100%;border-radius:6px;" /></div>`;
-        }
-        chatEl.innerHTML += `
-          <div style="margin-top:8px;padding:10px 12px;border-radius:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#fff;">
-            <div style="font-weight:700;color:#a78bfa;margin-bottom:4px;">🤖 AI Agent:</div>
-            <div>${res.message || 'Topshiriq bajarildi.'}</div>
-            ${res.exec_result ? `<div style="font-size:11px;color:#34d399;margin-top:4px;">⚙️ ${res.exec_result}</div>` : ''}
-            ${shotHtml}
-          </div>
-        `;
+        this._aiChatHistory.push({
+          role: 'assistant',
+          text: res.message || 'Topshiriq bajarildi.',
+          action: res.action,
+          exec_result: res.exec_result,
+          screenshot: res.screenshot,
+          time: new Date().toLocaleTimeString().slice(0, 5)
+        });
       } else {
-        chatEl.innerHTML += `
-          <div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;">
-            ❌ ${(res && res.error) || 'AI topshirig‘ini bajarishda xatolik yuz berdi'}
-          </div>
-        `;
+        this._aiChatHistory.push({
+          role: 'assistant',
+          text: `❌ Xatolik yuz berdi: ${(res && res.error) || 'AI topshirig‘ini bajarib bo‘lmadi.'}`,
+          time: new Date().toLocaleTimeString().slice(0, 5)
+        });
       }
-      chatEl.scrollTop = chatEl.scrollHeight;
+      renderMessages();
     });
   },
 

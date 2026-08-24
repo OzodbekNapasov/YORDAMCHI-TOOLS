@@ -24,7 +24,8 @@ from .system_tools import (
     scroll_page,
     set_volume,
     set_mute,
-    media_control
+    media_control,
+    get_anydesk_id
 )
 
 logger = logging.getLogger(__name__)
@@ -49,15 +50,15 @@ def _get_openrouter_key():
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# OpenRouter uchun eng optimal, arzon va o'zbek tilida aniq ishlovchi modellar:
-# 1. deepseek/deepseek-chat (DeepSeek V3: $0.14/M token - eng aqlli va o'ta arzon)
-# 2. meta-llama/llama-3.1-8b-instruct ($0.05/M token - eng tezkor)
-# 3. openai/gpt-4o-mini ($0.15/M token - barqaror zaxira)
-# 4. meta-llama/llama-3.3-70b-instruct ($0.12/M token - chuqur mantiqiy)
+# OpenRouter uchun eng optimal, tez va arzon modellar:
+# 1. meta-llama/llama-3.1-8b-instruct (Ultra tezkor, <1 soniyada javob)
+# 2. openai/gpt-4o-mini (1 soniya, yuqori aniqlik)
+# 3. deepseek/deepseek-chat (DeepSeek V3, mukammal o'zbek tili)
+# 4. meta-llama/llama-3.3-70b-instruct
 OPENROUTER_MODELS = [
-    "deepseek/deepseek-chat",
     "meta-llama/llama-3.1-8b-instruct",
     "openai/gpt-4o-mini",
+    "deepseek/deepseek-chat",
     "meta-llama/llama-3.3-70b-instruct",
 ]
 
@@ -118,7 +119,9 @@ ACTION_TYPE turlari:
    params: {"amount": -500}
 19. "kill": Jarayonni to'xtatish.
    params: {"target": "chrome.exe"}
-20. "chat": Kompyuterda hech narsa bajarmasdan, shunchaki foydalanuvchi savoliga o'zbek tilida javob berish.
+20. "anydesk_id": AnyDesk dasturini ochish va AnyDesk ID raqamini aniqlab berish.
+   params: {}
+21. "chat": Kompyuterda hech narsa bajarmasdan, shunchaki foydalanuvchi savoliga o'zbek tilida javob berish.
    params: {}
 """
 
@@ -189,7 +192,7 @@ def call_openrouter_api_sync(messages: list, api_key: str, model: str = None) ->
             "response_format": {"type": "json_object"}
         }
         try:
-            resp = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=25)
+            resp = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=7.0)
             data = resp.json()
             if resp.status_code == 200 and "choices" in data and data["choices"]:
                 content = data["choices"][0]["message"]["content"]
@@ -323,6 +326,10 @@ def process_ai_agent_request(user_id: int, user_prompt: str) -> dict:
         elif action == "kill":
             tgt = params.get("target", "")
             exec_result = kill_process(tgt)
+        elif action in ["anydesk_id", "get_anydesk_id", "get_app_id"]:
+            open_app("anydesk")
+            aid = get_anydesk_id()
+            exec_result = f"⚡ <b>AnyDesk ID:</b> <code>{aid}</code>\n<i>AnyDesk dasturi ishga tushirildi.</i>"
         elif action == "chat":
             exec_result = ""
         else:
