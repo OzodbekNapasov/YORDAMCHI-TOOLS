@@ -562,22 +562,13 @@ def _pc_bridge_worker_loop():
                 except Exception:
                     pass
 
-
-    while True:
-        try:
-            # 1. Har 3 soniyada Heartbeat yuborish
-            heartbeat_counter += 1
-            if heartbeat_counter >= 3:
-                heartbeat_counter = 0
-                metrics = collect_local_pc_metrics()
-                _push_heartbeat_sync(metrics)
-
-            # 2. Vercel'dan kelgan 'pending' buyruqlarni tekshirish
+            # 3. Vercel'dan kelgan 'pending' buyruqlarni tekshirish
             r = requests.get(
                 f"{supa_url}/rest/v1/atlas_audit_logs?module=eq.pc_bridge&status=eq.pending&order=id.asc&limit=3",
                 headers=headers,
                 timeout=3.5
             )
+
 
             if r.status_code == 200:
                 pending_cmds = r.json()
