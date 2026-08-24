@@ -1679,11 +1679,77 @@ def handle_docs(message):
         send_access_denied(chat_id, message.from_user.id)
         return
     save_user_chat_id(chat_id)
-    holat = user_data.get(chat_id, {}).get("holat")
+    # AUTO MTF & XML CONVERTER HANDLER
+    doc_name = (message.document.file_name or "").strip()
+    if doc_name.lower().endswith((".mtf", ".xml")):
+        try:
+            status_msg = bot.send_message(
+                chat_id,
+                f"⚙️ <b>{html.escape(doc_name)}</b> qabul qilindi.\n\n"
+                f"⏳ MyTestX test fayli tahlil qilinmoqda, barcha rasmlar va to'g'ri variantlar bilan <b>PDF</b> hamda <b>Word (.docx)</b> tayyorlanmoqda...",
+                parse_mode="HTML"
+            )
+            file_info = bot.get_file(message.document.file_id)
+            downloaded_bytes = bot.download_file(file_info.file_path)
+
+            from services.mtf_converter import process_mtf_to_pdf
+            res = process_mtf_to_pdf(
+                mtf_bytes=downloaded_bytes,
+                filename=doc_name,
+                layout="2col",
+                with_answers=True
+            )
+
+            if not res or not res.get("success"):
+                err = res.get("error", "Konvertatsiya amalga oshmadi") if res else "Xatolik"
+                bot.edit_message_text(f"❌ Xatolik: {err}", chat_id, status_msg.message_id)
+                return
+
+            q_cnt = res.get("questions_count", 0)
+            title = res.get("title", doc_name)
+            stem = os.path.splitext(doc_name)[0]
+
+            bot.edit_message_text(
+                f"✅ <b>{html.escape(title)}</b> muvaffaqiyatli tayyorlandi!\n\n"
+                f"📊 <b>Savollar soni:</b> {q_cnt} ta\n"
+                f"📤 Fayllar yuborilmoqda...",
+                chat_id,
+                status_msg.message_id,
+                parse_mode="HTML"
+            )
+
+            import io
+            # Send PDF
+            if res.get("pdf_bytes"):
+                pdf_io = io.BytesIO(res["pdf_bytes"])
+                pdf_io.name = f"{stem}.pdf"
+                bot.send_document(
+                    chat_id,
+                    pdf_io,
+                    caption=f"📄 <b>{html.escape(title)}</b> (PDF kitobcha, 2 ustunli)",
+                    parse_mode="HTML"
+                )
+
+            # Send DOCX
+            if res.get("docx_bytes"):
+                docx_io = io.BytesIO(res["docx_bytes"])
+                docx_io.name = f"{stem}.docx"
+                bot.send_document(
+                    chat_id,
+                    docx_io,
+                    caption=f"📝 <b>{html.escape(title)}</b> (Word hujjati)",
+                    parse_mode="HTML"
+                )
+
+            return
+        except Exception as e:
+            send_safe_message(chat_id, f"❌ Test konvertatsiyasida xatolik: {str(e)}")
+            return
 
     if not holat:
         send_safe_message(chat_id, "Iltimos, avval menyudan kerakli tugmani tanlang:")
         return
+
 
     # AMALIYOT SO'ROVNOMA EXCEL YUKLASH
     if holat == "amaliyot_excel_kutish":

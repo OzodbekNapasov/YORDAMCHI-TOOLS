@@ -2797,6 +2797,7 @@ def api_pc_unlock():
 def api_mtf_convert():
     """MTF / XML test faylini PDF va DOCX formatlariga o'girish"""
     try:
+        import os
         import base64
         from services.mtf_converter import process_mtf_to_pdf
 
@@ -2808,6 +2809,7 @@ def api_mtf_convert():
         if file_obj and file_obj.filename:
             filename = file_obj.filename
             file_bytes = file_obj.read()
+            raw_b64 = base64.b64encode(file_bytes).decode("utf-8")
         else:
             data = request.get_json(silent=True) or {}
             filename = data.get("filename", "test.mtf")
@@ -2820,6 +2822,28 @@ def api_mtf_convert():
             layout = data.get("layout", "2col")
             with_answers = bool(data.get("with_answers", True))
             fan_name = data.get("fan_name") or None
+
+        # Vercel / Linux bulutida bo'lsa va fayl .mtf bo'lsa:
+        # 100% aniq Mtf2Xml.exe konvertatsiyasi uchun PC Bridge orqali kompyuterga yo'naltiramiz!
+        if os.name != "nt" and filename.lower().endswith(".mtf"):
+            try:
+                from services.pc_control.bridge import dispatch_bridge_command, get_bridge_pc_status
+                pc_stat = get_bridge_pc_status()
+                if pc_stat.get("online"):
+                    logger.info(f"PC Bridge orqali kompyuterda MTF konvertatsiya qilinmoqda: {filename}")
+                    bridge_res = dispatch_bridge_command("mtf_convert", {
+                        "filename": filename,
+                        "file_base64": raw_b64,
+                        "layout": layout,
+                        "with_answers": with_answers,
+                        "fan_name": fan_name
+                    }, timeout=60.0)
+                    if bridge_res.get("success"):
+                        return jsonify(bridge_res)
+                    else:
+                        logger.warning(f"Bridge MTF convert failed: {bridge_res.get('error')}")
+            except Exception as be:
+                logger.warning(f"Bridge dispatch error: {be}")
 
         res = process_mtf_to_pdf(
             mtf_bytes=file_bytes,
@@ -2848,6 +2872,7 @@ def api_mtf_convert():
     except Exception as e:
         logger.error(f"MTF Convert error: {e}")
         return jsonify({"success": False, "error": f"Konvertatsiyada xatolik: {str(e)}"}), 500
+
 
 
 

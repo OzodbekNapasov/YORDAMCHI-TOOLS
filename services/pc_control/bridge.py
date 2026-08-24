@@ -432,6 +432,40 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
                 "screenshot": shot_b64
             }
 
+        elif action == "mtf_convert":
+            from services.mtf_converter import process_mtf_to_pdf
+            raw_b64 = payload.get("file_base64", "")
+            if "," in raw_b64:
+                raw_b64 = raw_b64.split(",", 1)[1]
+            file_bytes = base64.b64decode(raw_b64)
+            filename = payload.get("filename", "test.mtf")
+            layout = payload.get("layout", "2col")
+            with_answers = bool(payload.get("with_answers", True))
+            fan_name = payload.get("fan_name") or None
+
+            res = process_mtf_to_pdf(
+                mtf_bytes=file_bytes,
+                filename=filename,
+                layout=layout,
+                with_answers=with_answers,
+                fan_name=fan_name
+            )
+            if not res or not res.get("success"):
+                return {"success": False, "error": res.get("error", "Konvertatsiya amalga oshmadi.") if res else "Noma'lum xatolik"}
+
+            pdf_b64 = base64.b64encode(res["pdf_bytes"]).decode("utf-8") if res.get("pdf_bytes") else None
+            docx_b64 = base64.b64encode(res["docx_bytes"]).decode("utf-8") if res.get("docx_bytes") else None
+
+            return {
+                "success": True,
+                "filename": res.get("filename"),
+                "title": res.get("title"),
+                "questions_count": res.get("questions_count", 0),
+                "pdf_base64": f"data:application/pdf;base64,{pdf_b64}" if pdf_b64 else None,
+                "docx_base64": f"data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_b64}" if docx_b64 else None,
+                "questions_summary": res.get("questions_summary", [])
+            }
+
         elif action == "apps":
             metrics = collect_local_pc_metrics()
             return {"success": True, "apps": metrics.get("apps", [])}
