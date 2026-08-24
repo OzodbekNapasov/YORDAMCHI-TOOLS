@@ -23,6 +23,7 @@ from .system_tools import (
     search_user_files,
     pair_sunshine_pin,
     register_sunshine_client_cert,
+    get_monitors_list,
     is_system_compatible
 )
 from .keyboards import (
@@ -89,20 +90,60 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
         status_info = get_system_status()
         bot.edit_message_text(status_info, message.chat.id, load_msg.message_id, parse_mode="HTML")
 
-    # 3. Skrinshot olish
-    @bot.message_handler(func=lambda msg: msg.text in ["🖼 Skrinshot", "/screenshot"])
+    # 3. Skrinshot olish (Multi-monitor qo'llab-quvvatlanadi)
+    @bot.message_handler(func=lambda msg: (msg.text and (msg.text.startswith("/screenshot") or msg.text == "🖼 Skrinshot")))
     def handle_screenshot(message: Message):
         if not is_authorized_admin(message.from_user.id):
             return
 
         load_msg = bot.send_message(message.chat.id, "📸 <i>Ekran tasviri olinmoqda...</i>", parse_mode="HTML")
         temp_dir = tempfile.gettempdir()
-        filepath = os.path.join(temp_dir, f"screenshot_{int(message.date)}.png")
+        mons = get_monitors_list()
+
+        # Check if user requested specific monitor: e.g. /screenshot 1 or /screenshot 2
+        parts = message.text.strip().split()
+        mon_req = None
+        if len(parts) > 1 and parts[1].isdigit():
+            mon_req = int(parts[1])
 
         try:
-            take_screenshot(filepath)
-            with open(filepath, "rb") as photo:
-                bot.send_photo(message.chat.id, photo, caption="🖼 <b>Kompyuter ekran tasviri</b>", parse_mode="HTML")
+            if mon_req and 1 <= mon_req <= len(mons):
+                filepath = os.path.join(temp_dir, f"screenshot_mon_{mon_req}_{int(message.date)}.png")
+                take_screenshot(filepath, monitor_index=mon_req)
+                with open(filepath, "rb") as photo:
+                    bot.send_photo(
+                        message.chat.id,
+                        photo,
+                        caption=f"🖼 <b>{mons[mon_req - 1].get('name', f'{mon_req}-Monitor')}</b>",
+                        parse_mode="HTML"
+                    )
+                if os.path.exists(filepath):
+                    try: os.remove(filepath)
+                    except Exception: pass
+            elif len(mons) > 1:
+                # 2 va undan ortiq monitor bo'lsa - har birini alohida yuborish
+                for i, m in enumerate(mons, 1):
+                    filepath = os.path.join(temp_dir, f"screenshot_mon_{i}_{int(message.date)}.png")
+                    take_screenshot(filepath, monitor_index=i)
+                    with open(filepath, "rb") as photo:
+                        bot.send_photo(
+                            message.chat.id,
+                            photo,
+                            caption=f"🖥️ <b>{m.get('name', f'{i}-Monitor')}</b>",
+                            parse_mode="HTML"
+                        )
+                    if os.path.exists(filepath):
+                        try: os.remove(filepath)
+                        except Exception: pass
+            else:
+                filepath = os.path.join(temp_dir, f"screenshot_{int(message.date)}.png")
+                take_screenshot(filepath)
+                with open(filepath, "rb") as photo:
+                    bot.send_photo(message.chat.id, photo, caption="🖼 <b>Kompyuter ekran tasviri</b>", parse_mode="HTML")
+                if os.path.exists(filepath):
+                    try: os.remove(filepath)
+                    except Exception: pass
+
             try:
                 bot.delete_message(message.chat.id, load_msg.message_id)
             except Exception:
@@ -110,12 +151,6 @@ def register_pc_control_handlers(bot: telebot.TeleBot, get_main_keyboard_fn=None
         except Exception as e:
             logger.error(f"Screenshot xatoligi: {e}")
             bot.edit_message_text(f"❌ Screenshot olishda xatolik:\n<code>{e}</code>", message.chat.id, load_msg.message_id, parse_mode="HTML")
-        finally:
-            if os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception:
-                    pass
 
     # 4. Veb-kamera surati
     @bot.message_handler(func=lambda msg: msg.text in ["📷 Veb-kamera", "/webcam"])

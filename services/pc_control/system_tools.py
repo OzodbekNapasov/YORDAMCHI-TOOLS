@@ -107,9 +107,58 @@ def get_system_status() -> str:
         return f"❌ Tizim holatini olishda xatolik yuz berdi: {e}"
 
 
-def take_screenshot(filepath: str) -> str:
+def get_monitors_list() -> list:
+    """Kompyuterga ulangan barcha monitorlar koordinata va o'lchamlarini aniqlash"""
+    monitors = []
+    if IS_WINDOWS and ctypes:
+        try:
+            from ctypes import wintypes
+            user32 = ctypes.windll.user32
+
+            def _enum(hMon, hdcMon, lprcMon, dwData):
+                r = lprcMon.contents
+                x, y, w, h = r.left, r.top, r.right - r.left, r.bottom - r.top
+                is_prim = (x == 0 and y == 0)
+                monitors.append({
+                    "id": len(monitors) + 1,
+                    "x": x,
+                    "y": y,
+                    "width": w,
+                    "height": h,
+                    "is_primary": is_prim,
+                    "name": f"{len(monitors) + 1}-Monitor {'(Asosiy)' if is_prim else ''} ({w}x{h})".strip()
+                })
+                return 1
+
+            MONITORENUMPROC = ctypes.WINFUNCTYPE(
+                ctypes.c_int,
+                wintypes.HMONITOR,
+                wintypes.HDC,
+                ctypes.POINTER(wintypes.RECT),
+                wintypes.LPARAM
+            )
+            proc = MONITORENUMPROC(_enum)
+            user32.EnumDisplayMonitors(0, 0, proc, 0)
+        except Exception as e:
+            logger.warning(f"Error enumerating monitors: {e}")
+
+    if not monitors:
+        monitors.append({
+            "id": 1,
+            "x": 0,
+            "y": 0,
+            "width": 1920,
+            "height": 1080,
+            "is_primary": True,
+            "name": "1-Monitor (Asosiy) (1920x1080)"
+        })
+    return monitors
+
+
+def take_screenshot(filepath: str, monitor_index: int = None) -> str:
     """
     Ekran tasvirini (screenshot) olib ko'rsatilgan yo'lga saqlaydi (Fail-safe Win32 Desktop DC + ImageGrab).
+    Agar monitor_index (1, 2, ...) berilsa, aynan o'sha monitor olinadi.
     """
     if IS_WINDOWS and ctypes and Image:
         try:
@@ -133,18 +182,38 @@ def take_screenshot(filepath: str) -> str:
             except Exception:
                 pass
 
-            hdc = user32.GetDC(0)
-            w = user32.GetSystemMetrics(0)  # SM_CXSCREEN
-            h = user32.GetSystemMetrics(1)  # SM_CYSCREEN
-            if w <= 0 or h <= 0:
-                w, h = 1920, 1080
+            mons = get_monitors_list()
+            target_mon = None
+            if monitor_index and isinstance(monitor_index, int) and 1 <= monitor_index <= len(mons):
+                target_mon = mons[monitor_index - 1]
+            elif monitor_index == "all":
+                target_mon = None
+            else:
+                for m in mons:
+                    if m.get("is_primary"):
+                        target_mon = m
+                        break
+                if not target_mon and mons:
+                    target_mon = mons[0]
 
+            if target_mon:
+                x, y, w, h = target_mon["x"], target_mon["y"], target_mon["width"], target_mon["height"]
+            else:
+                # Virtual desktop bounding box
+                x = user32.GetSystemMetrics(76)  # SM_XVIRTUALSCREEN
+                y = user32.GetSystemMetrics(77)  # SM_YVIRTUALSCREEN
+                w = user32.GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+                h = user32.GetSystemMetrics(79)  # SM_CYVIRTUALSCREEN
+                if w <= 0 or h <= 0:
+                    x, y, w, h = 0, 0, 1920, 1080
+
+            hdc = user32.GetDC(0)
             memdc = gdi32.CreateCompatibleDC(hdc)
             bmp = gdi32.CreateCompatibleBitmap(hdc, w, h)
             oldbmp = gdi32.SelectObject(memdc, bmp)
 
             # SRCCOPY = 0x00CC0020, CAPTUREBLT = 0x40000000
-            gdi32.BitBlt(memdc, 0, 0, w, h, hdc, 0, 0, 0x00CC0020 | 0x40000000)
+            gdi32.BitBlt(memdc, 0, 0, w, h, hdc, x, y, 0x00CC0020 | 0x40000000)
 
             class BITMAPINFOHEADER(ctypes.Structure):
                 _fields_ = [
@@ -193,6 +262,52 @@ def take_screenshot(filepath: str) -> str:
             logger.warning(f"ImageGrab failed: {e}")
 
     raise Exception("Screenshot olish imkonsiz: Pillow yoki Windows GUI mavjud emas.")
+
+
+def take_all_monitors_screenshots() -> list:
+    """Barcha monitorlardan alohida-alohida skrinshot olib base64 formatda qaytaradi"""
+    import base64
+    mons = get_monitors_list()
+    results = []
+    temp_dir = tempfile.gettempdir()
+
+    for i, m in enumerate(mons, 1):
+        try:
+            shot_path = os.path.join(temp_dir, f"bridge_mon_{i}_{int(time.time())}.png")
+            take_screenshot(shot_path, monitor_index=i)
+            if os.path.exists(shot_path):
+                with open(shot_path, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                try: os.remove(shot_path)
+                except Exception: pass
+                results.append({
+                    "id": i,
+                    "name": m.get("name", f"{i}-Monitor"),
+                    "width": m.get("width", 1920),
+                    "height": m.get("height", 1080),
+                    "is_primary": m.get("is_primary", False),
+                    "image": f"data:image/png;base64,{b64}"
+                })
+        except Exception as e:
+            logger.error(f"Error capturing monitor {i}: {e}")
+
+    if not results:
+        shot_path = os.path.join(temp_dir, f"bridge_mon_def_{int(time.time())}.png")
+        take_screenshot(shot_path)
+        if os.path.exists(shot_path):
+            with open(shot_path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+            try: os.remove(shot_path)
+            except Exception: pass
+            results.append({
+                "id": 1,
+                "name": "1-Monitor (Asosiy)",
+                "width": 1920,
+                "height": 1080,
+                "is_primary": True,
+                "image": f"data:image/png;base64,{b64}"
+            })
+    return results
 
 
 def take_webcam_photo(filepath: str) -> str:

@@ -7805,20 +7805,59 @@ C:\\Users\\user> Tayyor.
       btn.disabled = false;
       btn.innerHTML = `📸 <span>Skrinshot Olish</span>`;
 
-      if (res && res.success && res.image) {
-        this.modal({
-          title: `🖼 Kompyuter Ekran Tasviri (${res.timestamp})`,
-          maxWidth: '850px',
-          contentHtml: `
-            <div style="text-align:center;">
-              <img src="${res.image}" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-bottom:14px;" />
-              <div style="display:flex;justify-content:flex-end;gap:8px;">
-                <a href="${res.image}" download="screenshot_${Date.now()}.png" class="btn-primary btn-sm">Yuklab olish</a>
-                <button class="btn-secondary btn-sm" onclick="ATLAS.closeModal()">Yopish</button>
+      if (res && res.success && (res.image || (res.monitors && res.monitors.length))) {
+        const monitors = (res.monitors && res.monitors.length > 0) ? res.monitors : [{ id: 1, name: '1-Monitor (Asosiy)', width: 1920, height: 1080, image: res.image }];
+
+        const renderModalHtml = (activeIdx) => {
+          const cur = monitors[activeIdx] || monitors[0];
+          return `
+            <div id="pc-screenshot-container">
+              ${monitors.length > 1 ? `
+                <div style="display:flex;gap:8px;margin-bottom:14px;background:rgba(255,255,255,0.04);padding:6px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);justify-content:center;flex-wrap:wrap;">
+                  ${monitors.map((m, idx) => `
+                    <button type="button" class="btn-mon-switch" data-idx="${idx}" style="background:${idx === activeIdx ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)' : 'rgba(255,255,255,0.06)'};color:${idx === activeIdx ? '#000' : '#fff'};border:1px solid ${idx === activeIdx ? '#00f2fe' : 'rgba(255,255,255,0.1)'};padding:6px 16px;border-radius:6px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;transition:all 0.2s;">
+                      🖥️ <span>${m.name || `${idx + 1}-Monitor`}</span>
+                    </button>
+                  `).join('')}
+                </div>
+              ` : ''}
+              <div style="text-align:center;">
+                <div style="background:#000;border-radius:8px;padding:4px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 24px rgba(0,0,0,0.6);margin-bottom:14px;">
+                  <img id="active-mon-img" src="${cur.image}" style="max-width:100%;max-height:65vh;border-radius:6px;display:block;margin:0 auto;object-fit:contain;" />
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                  <span style="font-size:12px;color:rgba(255,255,255,0.6);">
+                    🖥️ <b>${cur.name || ''}</b> &nbsp;|&nbsp; ${cur.width || 1920}x${cur.height || 1080} px
+                  </span>
+                  <div style="display:flex;gap:8px;">
+                    <a id="btn-download-active-mon" href="${cur.image}" download="screenshot_monitor_${cur.id || 1}_${Date.now()}.png" class="btn-primary btn-sm" style="background:#00f2fe;color:#000;font-weight:700;">Yuklab olish</a>
+                    <button type="button" class="btn-secondary btn-sm" onclick="ATLAS.closeModal()">Yopish</button>
+                  </div>
+                </div>
               </div>
             </div>
-          `
+          `;
+        };
+
+        this.modal({
+          title: `🖼 Kompyuter Ekran Tasviri (${res.timestamp || ''})`,
+          maxWidth: '920px',
+          contentHtml: `<div id="screenshot-modal-wrapper">${renderModalHtml(0)}</div>`
         });
+
+        const bindMonTabs = () => {
+          document.querySelectorAll('.btn-mon-switch').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const targetIdx = parseInt(e.currentTarget.dataset.idx, 10) || 0;
+              const wrapper = document.getElementById('screenshot-modal-wrapper');
+              if (wrapper) {
+                wrapper.innerHTML = renderModalHtml(targetIdx);
+                bindMonTabs();
+              }
+            });
+          });
+        };
+        bindMonTabs();
       } else {
         this.toast((res && res.error) || 'Screenshot olishda xatolik', 'error');
       }

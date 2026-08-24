@@ -2635,10 +2635,11 @@ def api_pc_status():
 @atlas_api.route("/pc/screenshot", methods=["POST"])
 @admin_required
 def api_pc_screenshot():
-    """Ekran skrinshotini olib base64 formatda qaytarish"""
+    """Ekran skrinshotini olib base64 formatda qaytarish (Multi-monitor qo'llab-quvvatlanadi)"""
     try:
         from services.pc_control.bridge import dispatch_bridge_command
-        res = dispatch_bridge_command("screenshot", timeout=8.0)
+        data = request.get_json(silent=True) or {}
+        res = dispatch_bridge_command("screenshot", data, timeout=9.0)
         return jsonify(res)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

@@ -33,6 +33,7 @@ from .system_tools import (
     search_user_files,
     pair_sunshine_pin,
     register_sunshine_client_cert,
+    take_all_monitors_screenshots,
     is_system_compatible
 )
 
@@ -303,15 +304,28 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
     """Lokal Windows kompyuterida buyruqni bevosita bajarish"""
     try:
         if action == "screenshot":
-            temp_path = os.path.join(tempfile.gettempdir(), f"bridge_shot_{int(time.time())}.png")
-            take_screenshot(temp_path)
-            with open(temp_path, "rb") as f:
-                b64_str = base64.b64encode(f.read()).decode("utf-8")
-            try: os.remove(temp_path)
-            except Exception: pass
+            mon_param = payload.get("monitor")
+            all_monitors = take_all_monitors_screenshots()
+            primary_image = all_monitors[0]["image"] if all_monitors else ""
+
+            if mon_param and str(mon_param).isdigit():
+                idx = int(mon_param)
+                if 1 <= idx <= len(all_monitors):
+                    primary_image = all_monitors[idx - 1]["image"]
+            elif mon_param == "all":
+                temp_path = os.path.join(tempfile.gettempdir(), f"bridge_shot_all_{int(time.time())}.png")
+                take_screenshot(temp_path, monitor_index="all")
+                if os.path.exists(temp_path):
+                    with open(temp_path, "rb") as f:
+                        b64_str = base64.b64encode(f.read()).decode("utf-8")
+                    try: os.remove(temp_path)
+                    except Exception: pass
+                    primary_image = f"data:image/png;base64,{b64_str}"
+
             return {
                 "success": True,
-                "image": f"data:image/png;base64,{b64_str}",
+                "image": primary_image,
+                "monitors": all_monitors,
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             }
 
