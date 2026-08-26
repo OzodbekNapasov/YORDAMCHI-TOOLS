@@ -526,10 +526,11 @@ body {
 }
 
 .sidebar-header {
-  padding: 22px 18px;
+  padding: 18px 14px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  position: relative;
   border-bottom: 1px solid var(--border-glass-subtle);
 }
 .sidebar-logo-icon svg {
@@ -548,12 +549,12 @@ body {
 .sidebar-brand-badge {
   font-size: 10px;
   font-weight: 700;
-  background: rgba(0, 203, 169, 0.15);
-  color: var(--accent-glow);
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
   padding: 2px 7px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(0, 203, 169, 0.3);
-  margin-left: auto;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  flex-shrink: 0;
 }
 
 .sidebar-menu {
