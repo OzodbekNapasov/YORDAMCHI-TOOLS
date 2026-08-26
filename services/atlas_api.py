@@ -82,8 +82,8 @@ def api_login():
     resp.set_cookie(
         "atlas_token",
         auth_res["token"],
-        max_age=86400,
-        httponly=True,
+        max_age=86400 * 7,
+        httponly=False,
         samesite="Lax"
     )
     return resp
@@ -825,10 +825,15 @@ def api_view_document(doc_id):
         return jsonify({"error": "Hujjat topilmadi."}), 404
 
     fpath, _ = _ensure_doc_files(doc)
-    if not os.path.exists(fpath):
-        return jsonify({"error": "Hujjat fayli shakllantirilmadi."}), 404
+    if os.path.exists(fpath):
+        return send_file(fpath, mimetype="image/png", as_attachment=False)
 
-    return send_file(fpath, mimetype="image/png", as_attachment=False)
+    cdn_url = doc.get("cdn_url")
+    if cdn_url:
+        from flask import redirect
+        return redirect(cdn_url)
+
+    return jsonify({"error": "Hujjat fayli shakllantirilmadi."}), 404
 
 
 @atlas_api.route("/documents/download/<int:doc_id>", methods=["GET"])
@@ -840,15 +845,21 @@ def api_download_document_by_id(doc_id):
         return jsonify({"error": "Hujjat topilmadi."}), 404
 
     fpath, _ = _ensure_doc_files(doc)
-    if not os.path.exists(fpath):
-        return jsonify({"error": "Hujjat fayli shakllantirilmadi."}), 404
-
     fio = str(doc["recipient_fio"]).strip()
     tpl_name = str(doc["template_name"]).strip()
     tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
-    suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
+    suffix = "buyrug'i" if "buyruq" in doc.get("template_id", "") else "ma'lumotnomasi"
     download_filename = f"{fio} — {tpl_clean} {suffix}.png"
-    return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=download_filename)
+
+    if os.path.exists(fpath):
+        return send_file(fpath, mimetype="image/png", as_attachment=True, download_name=download_filename)
+
+    cdn_url = doc.get("cdn_url")
+    if cdn_url:
+        from flask import redirect
+        return redirect(cdn_url)
+
+    return jsonify({"error": "Hujjat fayli shakllantirilmadi."}), 404
 
 
 @atlas_api.route("/documents/download_docx/<int:doc_id>", methods=["GET"])
@@ -860,8 +871,6 @@ def api_download_docx_by_id(doc_id):
         return jsonify({"error": "Hujjat topilmadi."}), 404
 
     _, docx_path = _ensure_doc_files(doc)
-    if not os.path.exists(docx_path):
-        return jsonify({"error": "Word fayli shakllantirilmadi."}), 404
 
     data_dict = doc.get("parsed_data") or {}
     tpl_id = doc.get("template_id", "")
@@ -884,15 +893,24 @@ def api_download_docx_by_id(doc_id):
         fio = str(doc["recipient_fio"]).strip()
         tpl_name = str(doc["template_name"]).strip()
         tpl_clean = tpl_name.replace("🎓", "").replace("📖", "").replace("📝", "").strip()
-        suffix = "buyrug'i" if "buyruq" in doc["template_id"] else "ma'lumotnomasi"
+        suffix = "buyrug'i" if "buyruq" in doc.get("template_id", "") else "ma'lumotnomasi"
         download_filename = f"{fio} — {tpl_clean} {suffix}.docx"
 
-    return send_file(
-        docx_path,
-        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        as_attachment=True,
-        download_name=download_filename
-    )
+    if os.path.exists(docx_path):
+        return send_file(
+            docx_path,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            as_attachment=True,
+            download_name=download_filename
+        )
+
+    cdn_url = doc.get("cdn_url", "")
+    if cdn_url and cdn_url.endswith(".png"):
+        docx_cdn_url = cdn_url.rsplit(".", 1)[0] + ".docx"
+        from flask import redirect
+        return redirect(docx_cdn_url)
+
+    return jsonify({"error": "Word fayli shakllantirilmadi."}), 404
 
 
 @atlas_api.route("/documents/<int:doc_id>", methods=["DELETE"])
@@ -1935,6 +1953,22 @@ def api_contracts_download_screenshot(session_id, group_name):
     fpath = os.path.join(sdir, f"screenshot_{clean_gname}.png")
     if os.path.exists(fpath):
         return send_file(fpath, as_attachment=is_attachment, mimetype="image/png", download_name=f"{clean_gname}.png")
+
+    # 3. Supabase Cloud Storage Fallback
+    try:
+        from services.atlas_db import _get_supabase_credentials
+        supa_url, _ = _get_supabase_credentials()
+        if supa_url:
+            clean_filename = f"screenshot_{clean_gname}.png"
+            import re
+            clean_key = f"contracts/screenshots_{session_id}/{clean_filename}"
+            clean_key = re.sub(r'[^a-zA-Z0-9_\-\.\/]', '_', clean_key)
+            public_url = f"{supa_url}/storage/v1/object/public/documents/{clean_key}"
+            from flask import redirect
+            return redirect(public_url)
+    except Exception:
+        pass
+
     return jsonify({"success": False, "error": "Screenshot rasmi topilmadi."}), 404
 
 

@@ -45,7 +45,7 @@ const ATLAS = {
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
     menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
     chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>`,
-    brandLogo: `<img src="${ATLAS_ICE_LOGO_PNG}" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 10px rgba(56,189,248,0.85));" alt="ATLAS">`,
+    brandLogo: `<img src="/static/img/navigation_icon.png" style="height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 0 10px rgba(56,189,248,0.85));" alt="ATLAS">`,
     folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
     calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
     activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
@@ -684,17 +684,12 @@ const ATLAS = {
         <!-- HEADER -->
         <header class="hub-header">
           <div class="hub-brand-block">
-            <div class="hub-logo-symbol" title="ATLAS Universal Platform">
-              <img src="${ATLAS_ICE_LOGO_PNG}" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(56,189,248,0.85));" alt="ATLAS">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="/static/img/navigation_icon.png" style="height:34px;max-width:180px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(56,189,248,0.7));" alt="ATLAS">
+              <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);letter-spacing:0.5px;">MUNDARIJA</span>
             </div>
-            <div>
-              <div class="hub-title-text">
-                <span>ATLAS</span>
-                <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);letter-spacing:0.5px;">MUNDARIJA</span>
-              </div>
-              <div class="hub-subtitle-text">
-                Barcha bot xizmatlari va avtomatlashtirish modullari katalogi
-              </div>
+            <div class="hub-subtitle-text" style="margin-top:4px;">
+              Barcha bot xizmatlari va avtomatlashtirish modullari katalogi
             </div>
           </div>
 
@@ -829,9 +824,8 @@ const ATLAS = {
     root.innerHTML = `
       <div class="auth-wrapper">
         <div class="auth-card">
-          <div class="auth-logo">
-            ${this.icons.brandLogo}
-            <div class="auth-logo-text">ATLAS</div>
+          <div class="auth-logo" style="margin-bottom:20px;display:flex;justify-content:center;align-items:center;">
+            <img src="/static/img/navigation_icon.png" style="height:46px;max-width:210px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(56,189,248,0.75));" alt="ATLAS">
           </div>
           <h2 class="auth-title">Shaxsiy Boshqaruv Markazi</h2>
           <p class="auth-subtitle">Platformaga kirish uchun parolingizni kiriting</p>
@@ -918,10 +912,14 @@ const ATLAS = {
       <div class="app-container">
         <!-- SIDEBAR -->
         <aside class="sidebar">
-          <div class="sidebar-header" id="btn-sidebar-logo-hub" style="cursor:pointer;" title="Bosh Mundarijaga qaytish">
-            <div class="sidebar-logo-icon">${this.icons.brandLogo}</div>
-            <div class="sidebar-brand-name">ATLAS</div>
-            <div class="sidebar-brand-badge">PRO</div>
+          <div class="sidebar-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 14px;">
+            <div id="btn-sidebar-logo-hub" style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;min-width:0;" title="Bosh Mundarijaga qaytish">
+              <img src="/static/img/navigation_icon.png" style="height:26px;max-width:145px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(56,189,248,0.7));" alt="ATLAS PRO">
+              <div class="sidebar-brand-badge" style="margin-left:auto;flex-shrink:0;">PRO</div>
+            </div>
+            <button class="btn-icon mobile-sidebar-close-btn" id="mobile-sidebar-close-btn" title="Menyuni yopish" style="color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;width:32px;height:32px;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-left:8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
 
           <nav class="sidebar-menu">
@@ -1059,6 +1057,12 @@ const ATLAS = {
         backdropEl.classList.remove('active');
       });
     }
+
+    document.getElementById('mobile-sidebar-close-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebarEl?.classList.remove('mobile-open');
+      backdropEl?.classList.remove('active');
+    });
 
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3529,9 +3533,11 @@ const ATLAS = {
       if (res && res.success) {
         this.toast(res.message, 'success');
         const prevBox = document.getElementById('doc-preview-box');
+        const curToken = localStorage.getItem('atlas_token') || this.token || '';
+        const tokenQuery = curToken ? `?token=${encodeURIComponent(curToken)}` : '';
         prevBox.innerHTML = `
           <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
-            <img src="${res.view_url}" style="max-width:100%;max-height:410px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
+            <img src="${res.view_url}${tokenQuery}" style="max-width:100%;max-height:410px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
             <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
               <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${fio}', ${res.doc_id})">
                 ${this.icons.eye} <span>Katta ko'rish</span>
@@ -3539,10 +3545,10 @@ const ATLAS = {
               <button class="btn-sm btn-secondary" onclick="ATLAS.openEditDocModal(${res.doc_id})">
                 ${this.icons.edit} <span>Tahrirlash</span>
               </button>
-              <a href="${res.download_docx_url || `/api/documents/download_docx/${res.doc_id}`}" class="btn-sm btn-primary" style="background:#2563eb;border-color:#3b82f6;">
+              <a href="${res.download_docx_url || `/api/documents/download_docx/${res.doc_id}`}${tokenQuery}" class="btn-sm btn-primary" style="background:#2563eb;border-color:#3b82f6;">
                 ${this.icons.download} <span>Word (.docx) yuklab olish</span>
               </a>
-              <a href="${res.download_url}" class="btn-sm btn-secondary">
+              <a href="${res.download_url}${tokenQuery}" class="btn-sm btn-secondary">
                 ${this.icons.download} <span>Rasm (.png)</span>
               </a>
               <button class="btn-sm btn-secondary" onclick="ATLAS.resendDocumentToTelegram(${res.doc_id})">
@@ -3849,11 +3855,29 @@ const ATLAS = {
       if (resUpdate && resUpdate.success) {
         this.toast(resUpdate.message, 'success');
         this.closeModal();
-        this.loadDocuments(document.getElementById('content-viewport'));
+        this.refreshCurrentView();
       } else {
         this.toast(resUpdate ? resUpdate.error : 'Tahrirlashda xatolik', 'error');
       }
     });
+  },
+
+  refreshCurrentView() {
+    const route = this.currentRoute || (window.location.hash || '').replace(/^#\/?/, '').trim() || 'orders';
+    const viewport = document.getElementById('content-viewport');
+    if (!viewport) return;
+
+    if (route === 'orders') {
+      this.loadOrders(viewport);
+    } else if (route === 'certificates') {
+      this.loadCertificates(viewport);
+    } else if (route === 'amaliyot') {
+      this.loadAmaliyot(viewport);
+    } else if (route === 'contracts') {
+      this.loadContracts(viewport);
+    } else {
+      this.navigate(route, false);
+    }
   },
 
   async resendDocumentToTelegram(docId) {
@@ -3879,18 +3903,23 @@ const ATLAS = {
     const res = await this.api(`/api/documents/${docId}`, 'DELETE');
     if (res && res.success) {
       this.toast(res.message, 'success');
-      this.loadDocuments(document.getElementById('content-viewport'));
+      this.refreshCurrentView();
     }
   },
 
   openImageModal(imgUrl, title, docId) {
-    const downloadPngUrl = docId ? `/api/documents/download/${docId}` : imgUrl;
-    const downloadDocxUrl = docId ? `/api/documents/download_docx/${docId}` : '';
+    const token = localStorage.getItem('atlas_token') || this.token || '';
+    let authImgUrl = imgUrl;
+    if (token && !authImgUrl.includes('token=')) {
+      authImgUrl += (authImgUrl.includes('?') ? '&' : '?') + `token=${encodeURIComponent(token)}`;
+    }
+    const downloadPngUrl = docId ? `/api/documents/download/${docId}?token=${encodeURIComponent(token)}` : authImgUrl;
+    const downloadDocxUrl = docId ? `/api/documents/download_docx/${docId}?token=${encodeURIComponent(token)}` : '';
     this.openModalLarge(`${title} — 300 DPI A4 Ko'rinish`, `
       <div style="text-align:center;">
-        <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="${title}">
-        <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;">
-          <a href="${imgUrl}" target="_blank" class="btn-sm btn-secondary">${this.icons.eye} Yangi oynada ochish</a>
+        <img src="${authImgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="${title}">
+        <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;flex-wrap:wrap;">
+          <a href="${authImgUrl}" target="_blank" class="btn-sm btn-secondary">${this.icons.eye} Yangi oynada ochish</a>
           ${downloadDocxUrl ? `<a href="${downloadDocxUrl}" class="btn-sm btn-primary" style="background:#2563eb;border-color:#3b82f6;">${this.icons.download} Word (.docx) yuklab olish</a>` : ''}
           <a href="${downloadPngUrl}" class="btn-sm btn-secondary">${this.icons.download} Rasm (.png) yuklab olish</a>
         </div>
@@ -4367,7 +4396,7 @@ const ATLAS = {
         </div>
 
         <div id="subtab-content-preview" style="display:none;text-align:center;padding:16px;">
-          <img src="/api/contracts/download-xulosa/${data.session_id}" style="max-width:100%;border-radius:var(--radius-md);box-shadow:var(--shadow-card);" alt="Xulosa Jadvali">
+          <img src="/api/contracts/download-xulosa/${data.session_id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" style="max-width:100%;border-radius:var(--radius-md);box-shadow:var(--shadow-card);" alt="Xulosa Jadvali">
         </div>
       </div>
     `;
@@ -4392,11 +4421,13 @@ const ATLAS = {
     const vBtn = document.getElementById('btn-view-xulosa-img');
     if (vBtn) {
       vBtn.addEventListener('click', () => {
+        const uToken = localStorage.getItem('atlas_token') || this.token || '';
+        const xulUrl = `/api/contracts/download-xulosa/${data.session_id}?token=${encodeURIComponent(uToken)}`;
         this.openModalLarge('Guruh Rahbarlari bo\'yicha XULOSA Hisoboti (300 DPI)', `
           <div style="text-align:center;">
-            <img src="/api/contracts/download-xulosa/${data.session_id}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);" alt="Xulosa">
+            <img src="${xulUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);" alt="Xulosa">
             <div class="modal-footer" style="justify-content:center;gap:12px;margin-top:16px;">
-              <a href="/api/contracts/download-xulosa/${data.session_id}" download class="btn-primary">${this.icons.download} Xulosa rasmini yuklab olish</a>
+              <a href="${xulUrl}" download class="btn-primary">${this.icons.download} Xulosa rasmini yuklab olish</a>
             </div>
           </div>
         `);
@@ -4555,8 +4586,10 @@ const ATLAS = {
           if (grid) {
             const card = document.createElement('div');
             card.className = 'screenshot-card';
+            const curTok = localStorage.getItem('atlas_token') || this.token || '';
+            const tQ = curTok ? `?token=${encodeURIComponent(curTok)}` : '';
             card.innerHTML = `
-              <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
+              <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}${tQ}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
               <div class="screenshot-card-body">
                 <div class="screenshot-card-title">
                   <span style="${g.is_xulosa ? 'color:var(--accent-glow);font-weight:700;' : ''}">${g.is_xulosa ? 'XULOSA (Guruh Rahbarlari)' : `Guruh: ${g.group_name}`}</span>
@@ -4570,7 +4603,7 @@ const ATLAS = {
                   <button class="btn-sm btn-secondary btn-ss-preview" data-group="${g.group_name}" data-session="${data.session_id}" style="flex:1;">
                     ${this.icons.eye} Ko'rish
                   </button>
-                  <a href="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" download="${g.group_name}.png" class="btn-sm btn-primary" style="flex:1;text-align:center;">
+                  <a href="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}${tQ}" download="${g.group_name}.png" class="btn-sm btn-primary" style="flex:1;text-align:center;">
                     ${this.icons.download} Yuklab olish
                   </a>
                 </div>
@@ -4578,7 +4611,7 @@ const ATLAS = {
             `;
             // Attach preview click
             card.querySelector('.btn-ss-preview').addEventListener('click', () => {
-              const imgUrl = `/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}`;
+              const imgUrl = `/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}${tQ}`;
               this.openModalLarge(`Guruh: ${g.group_name} — 3x Ultra HD Screenshot`, `
                 <div style="text-align:center;">
                   <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);" alt="${g.group_name}">
@@ -4605,8 +4638,10 @@ const ATLAS = {
         const actionBar = document.getElementById('ss-action-bar');
         if (actionBar) {
           actionBar.style.display = 'flex';
+          const curTok = localStorage.getItem('atlas_token') || this.token || '';
+          const tQ = curTok ? `?token=${encodeURIComponent(curTok)}` : '';
           const zipLink = document.getElementById('ss-zip-download-link');
-          if (zipLink) zipLink.href = `/api/contracts/download-all-screenshots-zip/${data.session_id}`;
+          if (zipLink) zipLink.href = `/api/contracts/download-all-screenshots-zip/${data.session_id}${tQ}`;
           const tgBtn = document.getElementById('btn-telegram-ss-forward');
           if (tgBtn) tgBtn.addEventListener('click', () => this.sendContractToMyBot(data.session_id, 'screenshots'));
         }
@@ -4628,6 +4663,8 @@ const ATLAS = {
 
   renderScreenshotsGalleryHTML(data) {
     const groups = data.groups || [];
+    const curTok = localStorage.getItem('atlas_token') || this.token || '';
+    const tQ = curTok ? `?token=${encodeURIComponent(curTok)}` : '';
     return `
       <div class="card" style="margin-top:24px;">
         <div style="text-align:center;margin-bottom:22px;">
@@ -4636,7 +4673,7 @@ const ATLAS = {
         </div>
 
         <div class="contract-action-bar">
-          <a href="/api/contracts/download-all-screenshots-zip/${data.session_id}" class="btn-primary" style="background:#7c3aed;border-color:#8b5cf6;">
+          <a href="/api/contracts/download-all-screenshots-zip/${data.session_id}${tQ}" class="btn-primary" style="background:#7c3aed;border-color:#8b5cf6;">
             ${this.icons.download} <span>Barcha Screenshotlarni (ZIP) yuklab olish</span>
           </a>
           <button class="btn-primary" id="btn-telegram-ss-forward" style="margin-left:auto;background:linear-gradient(135deg, #0088cc, #00b4d8);border-color:#0088cc;">
@@ -4647,7 +4684,7 @@ const ATLAS = {
         <div class="screenshot-gallery-grid">
           ${groups.map(g => `
             <div class="screenshot-card">
-              <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
+              <img src="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}${tQ}" class="screenshot-card-thumb" alt="${g.group_name}" data-group="${g.group_name}" data-session="${data.session_id}">
               <div class="screenshot-card-body">
                 <div class="screenshot-card-title">
                   <span style="${g.is_xulosa ? 'color:var(--accent-glow);font-weight:700;' : ''}">${g.is_xulosa ? 'XULOSA (Guruh Rahbarlari)' : `Guruh: ${g.group_name}`}</span>
@@ -4661,7 +4698,7 @@ const ATLAS = {
                   <button class="btn-sm btn-secondary btn-ss-preview" data-group="${g.group_name}" data-session="${data.session_id}" style="flex:1;">
                     ${this.icons.eye} Ko'rish
                   </button>
-                  <a href="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}" download="${g.group_name}.png" class="btn-sm btn-primary" style="flex:1;text-align:center;">
+                  <a href="/api/contracts/download-screenshot/${data.session_id}/${encodeURIComponent(g.group_name)}${tQ}" download="${g.group_name}.png" class="btn-sm btn-primary" style="flex:1;text-align:center;">
                     ${this.icons.download} Yuklab olish
                   </a>
                 </div>
@@ -4678,7 +4715,9 @@ const ATLAS = {
       el.addEventListener('click', () => {
         const gName = el.dataset.group;
         const sId = el.dataset.session;
-        const imgUrl = `/api/contracts/download-screenshot/${sId}/${encodeURIComponent(gName)}`;
+        const curTok = localStorage.getItem('atlas_token') || this.token || '';
+        const tQ = curTok ? `?token=${encodeURIComponent(curTok)}` : '';
+        const imgUrl = `/api/contracts/download-screenshot/${sId}/${encodeURIComponent(gName)}${tQ}`;
         this.openModalLarge(`Guruh: ${gName} — 3x Ultra HD Screenshot`, `
           <div style="text-align:center;">
             <img src="${imgUrl}" style="max-width:100%;max-height:75vh;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);" alt="${gName}">

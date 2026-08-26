@@ -10,6 +10,8 @@ __pycache__/
 *.png
 !templates/*.png
 !templates/stamps/*
+!static/img/*
+!ICONS/*
 .venv/
 venv/
 scratch/
@@ -45,3 +47,6 @@ services/pc_control/__pycache__/
 
 .vercel
 .env*
+TAT 201-203.*
+*.xml
+*.pdf
