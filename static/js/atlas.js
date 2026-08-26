@@ -8900,15 +8900,90 @@ const ATLAS = {
       }
     });
 
+    // ── Helper: Build Tree Structure from Categories ──────────
+    const buildTreeFromCategories = (categories, totalFiles) => {
+      const root = {
+        type: 'folder',
+        name: 'D:\\MyTestX\\tests',
+        path: 'D:\\MyTestX\\tests',
+        rel_path: '',
+        total_files: totalFiles || 0,
+        children: []
+      };
+
+      if (!categories || !categories.length) return root;
+
+      const findOrCreateFolder = (parent, folderName, relPath) => {
+        let child = parent.children.find(c => c.type === 'folder' && c.name === folderName);
+        if (!child) {
+          child = {
+            type: 'folder',
+            name: folderName,
+            path: parent.path + '\\' + folderName,
+            rel_path: relPath,
+            total_files: 0,
+            children: []
+          };
+          parent.children.push(child);
+        }
+        return child;
+      };
+
+      categories.forEach(cat => {
+        const rawFolder = (cat.folder || '').trim();
+        const files = cat.files || [];
+        let curFolder = root;
+
+        if (rawFolder && rawFolder !== 'Asosiy Papka') {
+          const parts = rawFolder.split('/').map(s => s.trim()).filter(Boolean);
+          let curRel = '';
+          parts.forEach(p => {
+            curRel = curRel ? curRel + '/' + p : p;
+            curFolder = findOrCreateFolder(curFolder, p, curRel);
+          });
+        }
+
+        files.forEach(f => {
+          curFolder.children.push({
+            type: 'file',
+            name: f.name,
+            stem: f.stem || f.name.replace(/\.(mtf|xml)$/i, ''),
+            ext: f.ext || '.mtf',
+            path: f.path,
+            rel_path: f.rel_path || f.name,
+            size_str: f.size_str || '-',
+            mtime_str: f.mtime_str || '-'
+          });
+        });
+      });
+
+      const countFolderFiles = (node) => {
+        if (node.type === 'file') return 1;
+        let count = 0;
+        if (node.children) {
+          node.children.forEach(c => {
+            count += countFolderFiles(c);
+          });
+        }
+        node.total_files = count;
+        return count;
+      };
+      countFolderFiles(root);
+
+      return root;
+    };
+
     // ── Load D:\MyTestX\tests Catalog ────────────────────────
     const loadLocalTests = async () => {
       treeCont.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.6);"><span class="spinner-sm"></span> D:\\MyTestX\\tests katalogi skanerlanmoqda...</div>`;
       try {
         const res = await this.api('/api/mtf/local_tests', 'GET');
         if (res && res.success) {
-          treeData = res.tree || null;
           flatCategories = res.categories || [];
-          localBadge.textContent = `${res.total_files} ta test`;
+          localBadge.textContent = `${res.total_files || 0} ta test`;
+          treeData = (res.tree && res.tree.children && res.tree.children.length > 0)
+            ? res.tree
+            : buildTreeFromCategories(flatCategories, res.total_files);
           folderNavStack = treeData ? [treeData] : [];
           renderExplorer();
         } else {
