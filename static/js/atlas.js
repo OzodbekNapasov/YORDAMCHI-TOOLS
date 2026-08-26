@@ -8460,8 +8460,8 @@ const ATLAS = {
             <div>
               <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:6px;">Javoblar belgisi (*):</label>
               <select id="mtf-opt-answers" class="select-control">
-                <option value="true" selected>To'g'ri javoblarni (*) belgilash</option>
-                <option value="false">Faqat savollar (Imtihon / Chop etish uchun)</option>
+                <option value="false" selected>Faqat savollar (Imtihon / Chop etish uchun)</option>
+                <option value="true">To'g'ri javoblarni (*) belgilash</option>
               </select>
             </div>
             <div>
@@ -9029,7 +9029,7 @@ const ATLAS = {
 
       const paths = Array.from(selectedLocalPaths);
       const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
-      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
+      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'false';
       const fanNameCustom = document.getElementById('mtf-opt-fanname')?.value || '';
 
       // Hide files selection and show conversion view
@@ -9234,7 +9234,7 @@ const ATLAS = {
     document.getElementById('btn-mtf-convert')?.addEventListener('click', async () => {
       if (!uploadFiles.length) return;
       const layout = document.getElementById('mtf-opt-layout')?.value || '2col';
-      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'true';
+      const withAnswers = document.getElementById('mtf-opt-answers')?.value || 'false';
       const fanNameCustom = document.getElementById('mtf-opt-fanname')?.value || '';
 
       const btn = document.getElementById('btn-mtf-convert');

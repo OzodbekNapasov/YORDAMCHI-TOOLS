@@ -3080,33 +3080,22 @@ def api_mtf_send_telegram():
             r_tg = requests.post(tg_api_url, data=form_data, files=files, timeout=30)
             if r_tg.status_code == 200 and r_tg.json().get("ok"):
                 sent_count += 1
-
-        # 2. Send DOCX
-        docx_bytes = None
-        if docx_b64:
-            if "," in docx_b64:
-                docx_b64 = docx_b64.split(",", 1)[1]
-            docx_bytes = base64.b64decode(docx_b64)
-        elif docx_url:
-            r_docx = requests.get(docx_url, timeout=25)
-            if r_docx.status_code == 200:
-                docx_bytes = r_docx.content
-
-        if docx_bytes:
-            files = {
-                "document": (f"{clean_stem}.docx", docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-            }
-            form_data = {
-                "chat_id": target_chat_id,
-                "caption": f"📝 <b>{title}</b>\n<i>Word (.docx) formati</i>",
-                "parse_mode": "HTML"
-            }
-            r_tg = requests.post(tg_api_url, data=form_data, files=files, timeout=30)
-            if r_tg.status_code == 200 and r_tg.json().get("ok"):
-                sent_count += 1
+        elif docx_bytes or docx_url:
+            # Fallback if PDF was not generated
+            if docx_b64:
+                if "," in docx_b64: docx_b64 = docx_b64.split(",", 1)[1]
+                docx_bytes = base64.b64decode(docx_b64)
+            elif docx_url:
+                r_docx = requests.get(docx_url, timeout=25)
+                if r_docx.status_code == 200: docx_bytes = r_docx.content
+            if docx_bytes:
+                files = {"document": (f"{clean_stem}.docx", docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+                form_data = {"chat_id": target_chat_id, "caption": f"📝 <b>{title}</b>\n<i>Word (.docx) formati</i>", "parse_mode": "HTML"}
+                r_tg = requests.post(tg_api_url, data=form_data, files=files, timeout=30)
+                if r_tg.status_code == 200 and r_tg.json().get("ok"): sent_count += 1
 
         if sent_count == 0:
-            return jsonify({"success": False, "error": "Yuborish uchun PDF yoki Word fayl topilmadi"}), 400
+            return jsonify({"success": False, "error": "Yuborish uchun PDF fayl topilmadi"}), 400
 
         return jsonify({
             "success": True,
