@@ -1101,9 +1101,10 @@ const ATLAS = {
   // ============================================================
   async loadOrders(container, selectedTplId = 'buyruq_akademik_tatil') {
     let currentTpl = selectedTplId;
-    let activeTab = 'create'; // 'create' | 'by_group' | 'archive'
+    let activeTab = this.ordersActiveTab || 'create'; // 'create' | 'by_group' | 'archive'
 
     const render = () => {
+      this.ordersActiveTab = activeTab;
       container.innerHTML = `
         <div class="tab-pills-row">
           <button class="tab-pill-btn ${activeTab === 'create' ? 'active' : ''}" id="tab-orders-create">
@@ -1122,16 +1123,19 @@ const ATLAS = {
 
       document.getElementById('tab-orders-create').addEventListener('click', () => {
         activeTab = 'create';
+        this.ordersActiveTab = 'create';
         render();
       });
 
       document.getElementById('tab-orders-by-group').addEventListener('click', () => {
         activeTab = 'by_group';
+        this.ordersActiveTab = 'by_group';
         render();
       });
 
       document.getElementById('tab-orders-archive').addEventListener('click', () => {
         activeTab = 'archive';
+        this.ordersActiveTab = 'archive';
         render();
       });
 
@@ -3057,9 +3061,10 @@ const ATLAS = {
   // ============================================================
   async loadCertificates(container, selectedTplId = 'qabul_1_kurs') {
     let currentTpl = selectedTplId;
-    let activeTab = 'create'; // 'create' | 'archive'
+    let activeTab = this.certsActiveTab || 'create'; // 'create' | 'archive'
 
     const render = () => {
+      this.certsActiveTab = activeTab;
       container.innerHTML = `
         <div class="tab-pills-row">
           <button class="tab-pill-btn ${activeTab === 'create' ? 'active' : ''}" id="tab-certs-create">
@@ -3075,11 +3080,13 @@ const ATLAS = {
 
       document.getElementById('tab-certs-create').addEventListener('click', () => {
         activeTab = 'create';
+        this.certsActiveTab = 'create';
         render();
       });
 
       document.getElementById('tab-certs-archive').addEventListener('click', () => {
         activeTab = 'archive';
+        this.certsActiveTab = 'archive';
         render();
       });
 

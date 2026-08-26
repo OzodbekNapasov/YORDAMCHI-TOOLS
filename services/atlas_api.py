@@ -793,7 +793,7 @@ def api_get_documents_list():
     q = request.args.get("q", "").strip()
     tpl_filter = request.args.get("template", "").strip()
     page = max(int(request.args.get("page", 1)), 1)
-    limit = min(max(int(request.args.get("limit", 20)), 5), 1000)
+    limit = min(max(int(request.args.get("limit", 200)), 5), 1000)
     offset = (page - 1) * limit
 
     from services.atlas_db import get_saved_documents
@@ -916,21 +916,8 @@ def api_download_docx_by_id(doc_id):
 @atlas_api.route("/documents/<int:doc_id>", methods=["DELETE"])
 @admin_required
 def api_delete_document(doc_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
-    doc = cursor.fetchone()
-
-    if doc:
-        fpath = doc["file_path"]
-        if fpath and os.path.exists(fpath):
-            try: os.remove(fpath)
-            except Exception: pass
-
-        cursor.execute("DELETE FROM generated_docs WHERE id = ?", (doc_id,))
-        conn.commit()
-
-    conn.close()
+    from services.atlas_db import delete_generated_document
+    delete_generated_document(doc_id)
     admin = get_current_admin()
     log_audit(admin["username"], "documents", "delete_document", "warning", {"doc_id": doc_id}, request.remote_addr)
     return jsonify({"success": True, "message": "Hujjat arxivdan o'chirildi."})

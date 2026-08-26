@@ -641,44 +641,47 @@ def update_generated_document(doc_id: int, recipient_fio: str, data: dict, file_
         return False
 
 
-def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, offset: int = 0):
-    """Barcha saqlangan hujjatlarni olish (SQLite + Supabase Cloud avtomatik yuklash)"""
+def delete_generated_document(doc_id: int):
+    """Hujjatni ham SQLite dan, ham Supabase Cloud bazasidan butunlay o'chirish"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        query = "SELECT * FROM generated_docs WHERE 1=1"
-        params = []
-        if q:
-            query += " AND (recipient_fio LIKE ? OR data_json LIKE ?)"
-            params.extend([f"%{q}%", f"%{q}%"])
-        if template_id:
-            if template_id in ["all_orders", "buyruq", "buyruqlar"]:
-                query += " AND template_id LIKE 'buyruq_%'"
-            elif template_id in ["all_certs", "malumotnoma", "malumotnomalar"]:
-                query += " AND template_id NOT LIKE 'buyruq_%'"
-            else:
-                query += " AND template_id = ?"
-                params.append(template_id)
-        query += " ORDER BY id DESC LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
-        cursor.execute(query, params)
-        rows = [dict(r) for r in cursor.fetchall()]
+        cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
+        doc = cursor.fetchone()
+        if doc:
+            fpath = doc["file_path"]
+            if fpath and os.path.exists(fpath):
+                try: os.remove(fpath)
+                except Exception: pass
+            cursor.execute("DELETE FROM generated_docs WHERE id = ?", (doc_id,))
+            conn.commit()
         conn.close()
-        if rows:
-            for r in rows:
-                try:
-                    r["parsed_data"] = json.loads(r.get("data_json") or "{}") if isinstance(r.get("data_json"), str) else r.get("data_json") or {}
-                except Exception:
-                    r["parsed_data"] = {}
-            return rows
     except Exception as e:
-        print(f"Sqlite get docs error: {e}")
+        print(f"SQLite delete doc error: {e}")
 
-    # Agar SQLite bo'sh bo'lsa (Serverless konteyner yangilanganda), Supabase Cloud'dan yuklash
+    # Delete from Supabase Cloud
     try:
-        import requests
         supa_url, supa_key = _get_supabase_credentials()
         if supa_url and supa_key:
+            import requests
+            headers = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}"
+            }
+            requests.delete(f"{supa_url}/rest/v1/atlas_generated_docs?id=eq.{doc_id}", headers=headers, timeout=6)
+    except Exception as se:
+        print(f"Supabase delete doc error: {se}")
+
+    return True
+
+
+def get_saved_documents(q: str = "", template_id: str = "", limit: int = 200, offset: int = 0):
+    """Barcha saqlangan hujjatlarni olish (Supabase Cloud haqiqiy global baza + SQLite kesh)"""
+    # 1. Supabase Cloud'dan yangilangan ma'lumotlarni olish
+    supa_url, supa_key = _get_supabase_credentials()
+    if supa_url and supa_key:
+        try:
+            import requests
             headers = {
                 "apikey": supa_key,
                 "Authorization": f"Bearer {supa_key}"
@@ -696,10 +699,22 @@ def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, of
             resp = requests.get(url, headers=headers, timeout=5)
             if resp.status_code == 200:
                 cloud_docs = resp.json()
-                if cloud_docs:
+                if cloud_docs is not None:
+                    # Sync local sqlite cache
                     try:
                         conn = get_db_connection()
                         c = conn.cursor()
+                        # If offset is 0 and no search, purge local cache for this filter to keep IDs in sync
+                        if offset == 0 and not q:
+                            if template_id in ["all_orders", "buyruq", "buyruqlar"]:
+                                c.execute("DELETE FROM generated_docs WHERE template_id LIKE 'buyruq_%'")
+                            elif template_id in ["all_certs", "malumotnoma", "malumotnomalar"]:
+                                c.execute("DELETE FROM generated_docs WHERE template_id NOT LIKE 'buyruq_%'")
+                            elif template_id:
+                                c.execute("DELETE FROM generated_docs WHERE template_id = ?", (template_id,))
+                            else:
+                                c.execute("DELETE FROM generated_docs")
+                        
                         for d in cloud_docs:
                             d_json = json.dumps(d.get("data_json") or {}) if isinstance(d.get("data_json"), dict) else str(d.get("data_json") or "{}")
                             c.execute("""
@@ -722,12 +737,42 @@ def get_saved_documents(q: str = "", template_id: str = "", limit: int = 100, of
                         print(f"Cache docs error: {cache_err}")
 
                     for cd in cloud_docs:
-                        cd["parsed_data"] = cd.get("data_json") or {}
+                        cd["parsed_data"] = cd.get("data_json") if isinstance(cd.get("data_json"), dict) else json.loads(cd.get("data_json") or "{}") if isinstance(cd.get("data_json"), str) else {}
                     return cloud_docs
-    except Exception as se:
-        print(f"Supabase fetch docs error: {se}")
+        except Exception as se:
+            print(f"Supabase fetch docs error: {se}")
 
-    return []
+    # 2. Offline / Fallback to local SQLite
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "SELECT * FROM generated_docs WHERE 1=1"
+        params = []
+        if q:
+            query += " AND (recipient_fio LIKE ? OR data_json LIKE ?)"
+            params.extend([f"%{q}%", f"%{q}%"])
+        if template_id:
+            if template_id in ["all_orders", "buyruq", "buyruqlar"]:
+                query += " AND template_id LIKE 'buyruq_%'"
+            elif template_id in ["all_certs", "malumotnoma", "malumotnomalar"]:
+                query += " AND template_id NOT LIKE 'buyruq_%'"
+            else:
+                query += " AND template_id = ?"
+                params.append(template_id)
+        query += " ORDER BY id DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        cursor.execute(query, params)
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        for r in rows:
+            try:
+                r["parsed_data"] = json.loads(r.get("data_json") or "{}") if isinstance(r.get("data_json"), str) else r.get("data_json") or {}
+            except Exception:
+                r["parsed_data"] = {}
+        return rows
+    except Exception as e:
+        print(f"Sqlite get docs error: {e}")
+        return []
 
 
 def get_document_by_id(doc_id: int):
