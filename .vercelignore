@@ -37,10 +37,13 @@ scratch/
 saved_documents/*
 !saved_documents/.gitkeep
 
-# Rasmlar (faqat templates'dan tashqari)
+# Rasmlar (faqat templates va static'dan tashqari)
 *.png
 !templates/*.png
 !templates/stamps/*
+!static/img/*
+!static/*
+!ICONS/*
 
 # Excel fayllar
 *.xlsx
