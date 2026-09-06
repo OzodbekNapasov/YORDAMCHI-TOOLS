@@ -8,6 +8,7 @@ import sys
 import json
 import time
 import base64
+import traceback
 
 # YouTube Upload Scope
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube']
@@ -17,43 +18,87 @@ TOKEN_FILE = os.path.join(BASE_DIR, "youtube_token.json")
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
 
 # Yangi OAuth 2.0 Web Client va Production Refresh Token (Doimiy zaxira)
-_B64_FALLBACK_TOKEN = "eyJyZWZyZXNoX3Rva2VuIjoiMS8vMDQtVkZ6bnVQRGN5YUNnWUlBUkFBR0FRU053Ri1MOUlyaWtjNkZFMTBGTHFvWFdXNElwOElpa0lZX2hESHN2QTZIa1ZOYld1S3hYWmdhRXBkcDdMU3dHbF82TTN4NHA2SjhNbyIsInRva2VuX3VyaSI6Imh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwiY2xpZW50X2lkIjoiNjk0MzE0MjYyOTYzLThkbHI3YXBlM2F2Z3NsdmowNWpmZGJidG1ubTQyYzJpLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiY2xpZW50X3NlY3JldCI6IkdPQ1NQWC1qalRrMEhKQWM2ZDZYoTVnZ1ZDWXR2Y2JZeGJEIiwic2NvcGVzIjpbImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgveW91dHViZS51cGxvYWQiLCJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3lvdXR1YmUiXX0="
+# DIQQAT: Bu qiymat to'g'ridan-to'g'ri JSON matnidan yasalgan (eski buzilgan
+# base64 o'rniga). Agar tokenni yangilasangiz, quyidagi _rebuild_fallback_b64()
+# yordam funksiyasi bilan yangi base64 hosil qilishingiz mumkin.
+_B64_FALLBACK_TOKEN = "eyJyZWZyZXNoX3Rva2VuIjogIjEvLzA0LVZGem51UERjeWFDZ1lJQVJBQUdBUVNOd0YtTDlJcmlrYzZGRTEwRkxxb1hXVzRJcDhJaWtJWV9oREhzdkE2SGtWTmJXdUt4WFpnYUVwZHA3TFN3R2xfNk0zeDRwNko4TW8iLCAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwgImNsaWVudF9pZCI6ICI2OTQzMTQyNjI5NjMtOGRscjdhcGUzYXZnc2x2ajA1amZkYmI3bW5tNDJjMmkuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCAiY2xpZW50X3NlY3JldCI6ICJHT0NTUFgtampUazBISkFjNmQ2WG81Z2dWQ1l0dmNiWXhqRCIsICJzY29wZXMiOiBbImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgveW91dHViZS51cGxvYWQiLCAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vYXV0aC95b3V0dWJlIl19"
+
+
+def _rebuild_fallback_b64(refresh_token, client_id, client_secret,
+                            token_uri="https://oauth2.googleapis.com/token"):
+    """
+    Yordamchi funksiya: agar tokenni yangilash kerak bo'lsa, shu funksiyani
+    Python konsolida chaqirib to'g'ri base64 string hosil qiling va uni
+    yuqoridagi _B64_FALLBACK_TOKEN ga qo'ying.
+
+    Masalan:
+        from services.youtube_service import _rebuild_fallback_b64
+        print(_rebuild_fallback_b64("1//...", "xxx.apps.googleusercontent.com", "GOCSPX-..."))
+    """
+    info = {
+        "refresh_token": refresh_token,
+        "token_uri": token_uri,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "scopes": SCOPES
+    }
+    return base64.b64encode(json.dumps(info).encode("utf-8")).decode("utf-8")
+
 
 def _get_raw_token_info():
-    """Token ma'lumotlarini o'qish (Environment > Fayl > Baza > Fallback)"""
+    """Token ma'lumotlarini o'qish (Environment > Fayl > Base64 Fallback > Baza)"""
+    source = None
+    info = None
+
     # 1. Eng birinchi Vercel Environment o'zgaruvchisidan tekshirish
     env_token = os.getenv("YOUTUBE_TOKEN_JSON")
     if env_token and env_token.strip().startswith("{"):
         try:
-            return json.loads(env_token.strip())
-        except Exception:
-            pass
+            info = json.loads(env_token.strip())
+            source = "ENV (YOUTUBE_TOKEN_JSON)"
+        except Exception as e:
+            print(f"[YouTube Token] ENV JSON parse xatosi: {e}")
 
     # 2. Lokal fayldan tekshirish
-    if os.path.exists(TOKEN_FILE):
+    if info is None and os.path.exists(TOKEN_FILE):
         try:
             with open(TOKEN_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
+                info = json.load(f)
+                source = f"FAYL ({TOKEN_FILE})"
+        except Exception as e:
+            print(f"[YouTube Token] Fayl o'qish xatosi: {e}")
 
-    # 3. Base64 zaxira sozlamadan o'qish (Yangi doimiy token)
-    try:
-        raw_json = base64.b64decode(_B64_FALLBACK_TOKEN.encode('utf-8')).decode('utf-8')
-        return json.loads(raw_json)
-    except Exception:
-        pass
+    # 3. Base64 zaxira sozlamadan o'qish
+    if info is None:
+        try:
+            raw_json = base64.b64decode(_B64_FALLBACK_TOKEN.encode('utf-8')).decode('utf-8')
+            info = json.loads(raw_json)
+            source = "BASE64 FALLBACK"
+        except Exception as e:
+            print(f"[YouTube Token] Base64 fallback decode xatosi: {e}")
 
     # 4. DB dan tekshirish (oxirgi variant)
-    try:
-        from services.insta_poster_service import get_setting
-        db_val = get_setting("youtube_token_json", "")
-        if db_val and db_val.strip().startswith("{"):
-            return json.loads(db_val.strip())
-    except Exception:
-        pass
+    if info is None:
+        try:
+            from services.insta_poster_service import get_setting
+            db_val = get_setting("youtube_token_json", "")
+            if db_val and db_val.strip().startswith("{"):
+                info = json.loads(db_val.strip())
+                source = "DATABASE (insta_settings)"
+        except Exception as e:
+            print(f"[YouTube Token] DB o'qish xatosi: {e}")
 
-    return None
+    if info:
+        # Xavfsizlik uchun to'liq secret'ni emas, faqat manba va qisqartirilgan
+        # ma'lumotni chiqaramiz - lekin muammoni aniqlash uchun juda foydali.
+        masked_secret = (info.get("client_secret", "")[:10] + "...") if info.get("client_secret") else "YO'Q"
+        masked_refresh = (info.get("refresh_token", "")[:15] + "...") if info.get("refresh_token") else "YO'Q"
+        print(f"[YouTube Token] Manba: {source} | client_id: {info.get('client_id', 'YO`Q')[:20]}... "
+              f"| client_secret: {masked_secret} | refresh_token: {masked_refresh}")
+    else:
+        print("[YouTube Token] HECH QAYERDA token topilmadi (ENV, fayl, base64, DB barchasi bo'sh/xato)")
+
+    return info
 
 
 def is_youtube_ready():
@@ -82,6 +127,16 @@ def get_youtube_credentials():
     if not info:
         raise FileNotFoundError("YouTube token ma'lumotlari topilmadi!")
 
+    # Majburiy maydonlarni tekshirish - shu orqali 'invalid_grant' kabi
+    # tushunarsiz xatolar o'rniga aniq xabar beramiz
+    required_fields = ["refresh_token", "token_uri", "client_id", "client_secret"]
+    missing = [f for f in required_fields if not info.get(f)]
+    if missing:
+        raise ValueError(
+            f"YouTube token ma'lumotlarida quyidagi maydonlar yo'q yoki bo'sh: {missing}. "
+            f"Token JSON to'liq va to'g'ri ekanligini tekshiring."
+        )
+
     creds = Credentials.from_authorized_user_info(info, SCOPES)
 
     if not creds.valid:
@@ -100,7 +155,23 @@ def get_youtube_credentials():
                 except Exception:
                     pass
             except Exception as e:
-                print(f"[YouTube Refresh Token Err]: {e}")
+                err_str = str(e)
+                print(f"[YouTube Refresh Token Err]: {err_str}")
+                print(traceback.format_exc())
+
+                # invalid_grant uchun tushunarli tushuntirish qo'shamiz
+                if "invalid_grant" in err_str:
+                    raise RuntimeError(
+                        "YouTube refresh_token Google tomonidan rad etildi (invalid_grant). "
+                        "Bu odatda quyidagi sabablarga ko'ra yuz beradi:\n"
+                        "1) client_id/client_secret token olingan paytdagi bilan mos kelmayapti "
+                        "(masalan, boshqa Google Cloud loyihasi client'i bilan olingan token ishlatilmoqda);\n"
+                        "2) OAuth consent screen 'Testing' rejimida va token 7 kunda eskirgan;\n"
+                        "3) Google akkaunt xavfsizlik sozlamalari o'zgargan yoki token qo'lda bekor qilingan;\n"
+                        "4) Token boshqa loyiha/环境 uchun yaratilgan.\n"
+                        "Yechim: YouTube OAuth flow'ni qaytadan o'tib, yangi refresh_token oling va "
+                        "uni ATLAS environment (YOUTUBE_TOKEN_JSON) ga to'liq to'g'ri JSON sifatida joylang."
+                    ) from e
                 raise e
         else:
             raise ValueError("YouTube token muddati o'tgan va refresh_token mavjud emas!")
@@ -158,7 +229,7 @@ def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public
                 'title': title,
                 'description': description,
                 'tags': tags,
-                'categoryId': '27' # 27: Education (Ta'lim)
+                'categoryId': '27'  # 27: Education (Ta'lim)
             },
             'status': {
                 'privacyStatus': privacy,
@@ -193,6 +264,7 @@ def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public
 
     except Exception as e:
         print(f"[YouTube Upload Error]: {e}")
+        print(traceback.format_exc())
         return {
             "success": False,
             "error": str(e)
