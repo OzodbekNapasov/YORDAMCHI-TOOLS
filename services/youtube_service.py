@@ -7,6 +7,8 @@ import os
 import sys
 import json
 import time
+import base64
+
 # YouTube Upload Scope
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube']
 
@@ -14,15 +16,35 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOKEN_FILE = os.path.join(BASE_DIR, "youtube_token.json")
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
 
-
-import base64
-
-# Base64 encoded fallback credentials for cloud deployment
-_B64_FALLBACK_TOKEN = "eyJ0b2tlbiI6ICJ5YTI5LmEwQWRNRDZFZ2o5eFcxSm9wYmpJMlV5cUFVTFRPNC1lM2xvcVVWV1NjMWQ3eVd3ZFpyeHZILUwtRHNveTBkdG1CWGxHbFZWM0toN2RaV1pDbkx1MDhnZml1MUYwN1RXWndKOE5Ecm9MVkJpay16SnhvSUxESjlFQ1F2NWk4WWwtQUxBZjJ2d1dHWTdMOEtlRVByTkVucFAwYzJmbFIydXB1cnJZeWJLd0tfZmdyZV9UR3cxM3pPRjZsTzNOQ3BSczdfQ1ZwYnBhTWFDZ1lLQVlNU0FSWVNGUUhHWDJNaVVXamNnLUpiVHJjUWN1cXBFUWl3bEEwMjA2IiwgInJlZnJlc2hfdG9rZW4iOiAiMS8vMGNHb1NfY3dhZjd3MENnWUlBUkFBR0F3U053Ri1MOUlyUWd2MlotXzhYRjQ2dkxhenhTa1U3dUhEUmhLcUZKV1Q2VDFfb292QUFXdWJ1VUpHRGhaemlja1R0MkVvdHQxLVU0cyIsICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLCAiY2xpZW50X2lkIjogIjY5NDMxNDI2Mjk2My1xY3ZhY3VlamYwMGpqNm41ZnVhZm9rb2xvZ21ldXFhNi5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsICJjbGllbnRfc2VjcmV0IjogIkdPQ1NQWC1LRFNhOExic0c0dlc1dFdNQ2ZPUVEtN1pDX0JHIiwgInNjb3BlcyI6IFsiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vYXV0aC95b3V0dWJlLnVwbG9hZCIsICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3lvdXR1YmUiXSwgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSIsICJhY2NvdW50IjogIiIsICJleHBpcnkiOiAiMjAyNi0wOC0yMVQwNjoyNToyN1oifQ=="
+# Yangi OAuth 2.0 Web Client va Production Refresh Token (Doimiy zaxira)
+_B64_FALLBACK_TOKEN = "eyJyZWZyZXNoX3Rva2VuIjoiMS8vMDQtVkZ6bnVQRGN5YUNnWUlBUkFBR0FRU053Ri1MOUlyaWtjNkZFMTBGTHFvWFdXNElwOElpa0lZX2hESHN2QTZIa1ZOYld1S3hYWmdhRXBkcDdMU3dHbF82TTN4NHA2SjhNbyIsInRva2VuX3VyaSI6Imh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwiY2xpZW50X2lkIjoiNjk0MzE0MjYyOTYzLThkbHI3YXBlM2F2Z3NsdmowNWpmZGJidG1ubTQyYzJpLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiY2xpZW50X3NlY3JldCI6IkdPQ1NQWC1qalRrMEhKQWM2ZDZYoTVnZ1ZDWXR2Y2JZeGJEIiwic2NvcGVzIjpbImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgveW91dHViZS51cGxvYWQiLCJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3lvdXR1YmUiXX0="
 
 def _get_raw_token_info():
-    """Token ma'lumotlarini fayl, baza yoki zaxiradan olish"""
-    # 1. DB dan tekshirish
+    """Token ma'lumotlarini o'qish (Environment > Fayl > Baza > Fallback)"""
+    # 1. Eng birinchi Vercel Environment o'zgaruvchisidan tekshirish
+    env_token = os.getenv("YOUTUBE_TOKEN_JSON")
+    if env_token and env_token.strip().startswith("{"):
+        try:
+            return json.loads(env_token.strip())
+        except Exception:
+            pass
+
+    # 2. Lokal fayldan tekshirish
+    if os.path.exists(TOKEN_FILE):
+        try:
+            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+
+    # 3. Base64 zaxira sozlamadan o'qish (Yangi doimiy token)
+    try:
+        raw_json = base64.b64decode(_B64_FALLBACK_TOKEN.encode('utf-8')).decode('utf-8')
+        return json.loads(raw_json)
+    except Exception:
+        pass
+
+    # 4. DB dan tekshirish (oxirgi variant)
     try:
         from services.insta_poster_service import get_setting
         db_val = get_setting("youtube_token_json", "")
@@ -31,28 +53,7 @@ def _get_raw_token_info():
     except Exception:
         pass
 
-    # 2. Fayldan tekshirish
-    if os.path.exists(TOKEN_FILE):
-        try:
-            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-
-    # 3. Environment o'zgaruvchisidan tekshirish
-    env_token = os.getenv("YOUTUBE_TOKEN_JSON")
-    if env_token and env_token.strip().startswith("{"):
-        try:
-            return json.loads(env_token.strip())
-        except Exception:
-            pass
-
-    # 4. Base64 zaxira sozlama
-    try:
-        raw_json = base64.b64decode(_B64_FALLBACK_TOKEN.encode('utf-8')).decode('utf-8')
-        return json.loads(raw_json)
-    except Exception:
-        return None
+    return None
 
 
 def is_youtube_ready():
@@ -130,7 +131,6 @@ def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public
 
         # 1. Sarlavha (Title) tayyorlash (YouTube cheklovi: maksimal 100 belgi)
         first_line = caption.split('\n')[0].strip() if caption else "Shahrisabz Tibbiyot Texnikumi"
-        # Belgilarni tozalash
         clean_title = first_line.replace("#", "").strip()
         if len(clean_title) > 85:
             clean_title = clean_title[:82] + "..."
