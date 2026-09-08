@@ -15,14 +15,23 @@ TOKEN_FILE = os.path.join(BASE_DIR, "youtube_token.json")
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
 
 
-import base64
-
-# Base64 encoded fallback credentials for cloud deployment
-_B64_FALLBACK_TOKEN = "eyJ0b2tlbiI6ICJ5YTI5LmEwQWRNRDZFZ2o5eFcxSm9wYmpJMlV5cUFVTFRPNC1lM2xvcVVWV1NjMWQ3eVd3ZFpyeHZILUwtRHNveTBkdG1CWGxHbFZWM0toN2RaV1pDbkx1MDhnZml1MUYwN1RXWndKOE5Ecm9MVkJpay16SnhvSUxESjlFQ1F2NWk4WWwtQUxBZjJ2d1dHWTdMOEtlRVByTkVucFAwYzJmbFIydXB1cnJZeWJLd0tfZmdyZV9UR3cxM3pPRjZsTzNOQ3BSczdfQ1ZwYnBhTWFDZ1lLQVlNU0FSWVNGUUhHWDJNaVVXamNnLUpiVHJjUWN1cXBFUWl3bEEwMjA2IiwgInJlZnJlc2hfdG9rZW4iOiAiMS8vMGNHb1NfY3dhZjd3MENnWUlBUkFBR0F3U053Ri1MOUlyUWd2MlotXzhYRjQ2dkxhenhTa1U3dUhEUmhLcUZKV1Q2VDFfb292QUFXdWJ1VUpHRGhaemlja1R0MkVvdHQxLVU0cyIsICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLCAiY2xpZW50X2lkIjogIjY5NDMxNDI2Mjk2My1xY3ZhY3VlamYwMGpqNm41ZnVhZm9rb2xvZ21ldXFhNi5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsICJjbGllbnRfc2VjcmV0IjogIkdPQ1NQWC1LRFNhOExic0c0dlc1dFdNQ2ZPUVEtN1pDX0JHIiwgInNjb3BlcyI6IFsiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vYXV0aC95b3V0dWJlLnVwbG9hZCIsICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3lvdXR1YmUiXSwgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSIsICJhY2NvdW50IjogIiIsICJleHBpcnkiOiAiMjAyNi0wOC0yMVQwNjoyNToyN1oifQ=="
-
 def _get_raw_token_info():
-    """Token ma'lumotlarini fayl, baza yoki zaxiradan olish"""
-    # 1. DB dan tekshirish
+    """Token ma'lumotlarini environment, baza yoki fayldan olish.
+
+    Tartib muhim: Vercel'da atlas.db va youtube_token.json deploy'ga kirmaydi
+    (.vercelignore), shuning uchun env var birinchi o'rinda turadi. Bu, shu
+    bilan birga, bazada qolib ketgan eski tokenning yangisini bosib ketishiga
+    ham yo'l qo'ymaydi.
+    """
+    # 1. Environment o'zgaruvchisidan tekshirish (Vercel / production)
+    env_token = os.getenv("YOUTUBE_TOKEN_JSON")
+    if env_token and env_token.strip().startswith("{"):
+        try:
+            return json.loads(env_token.strip())
+        except Exception:
+            pass
+
+    # 2. DB dan tekshirish (lokal server, refresh'dan keyin yangilanadi)
     try:
         from services.insta_poster_service import get_setting
         db_val = get_setting("youtube_token_json", "")
@@ -31,7 +40,7 @@ def _get_raw_token_info():
     except Exception:
         pass
 
-    # 2. Fayldan tekshirish
+    # 3. Fayldan tekshirish
     if os.path.exists(TOKEN_FILE):
         try:
             with open(TOKEN_FILE, "r", encoding="utf-8") as f:
@@ -39,20 +48,7 @@ def _get_raw_token_info():
         except Exception:
             pass
 
-    # 3. Environment o'zgaruvchisidan tekshirish
-    env_token = os.getenv("YOUTUBE_TOKEN_JSON")
-    if env_token and env_token.strip().startswith("{"):
-        try:
-            return json.loads(env_token.strip())
-        except Exception:
-            pass
-
-    # 4. Base64 zaxira sozlama
-    try:
-        raw_json = base64.b64decode(_B64_FALLBACK_TOKEN.encode('utf-8')).decode('utf-8')
-        return json.loads(raw_json)
-    except Exception:
-        return None
+    return None
 
 
 def is_youtube_ready():
@@ -107,15 +103,19 @@ def get_youtube_credentials():
     return creds
 
 
-def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public", is_shorts=True):
+def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public",
+                            is_shorts=True, keep_caption=True):
     """
     Videoni YouTube (Shorts) ga avtomatik yuklash.
-    
+
     :param video_path: Lokal .mp4 fayl manzili
     :param caption: Instagramdagi post matni
     :param post_url: Instagram post havolasi
     :param privacy: 'public', 'unlisted', yoki 'private'
-    :param is_shorts: True bo'lsa sarlavhaga #Shorts qo'shadi
+    :param is_shorts: False bo'lsa havola /shorts/ o'rniga youtu.be ko'rinishida qaytadi
+    :param keep_caption: True (standart) — izoh Instagramdagi holicha qoladi:
+        sarlavhaga #Shorts, tavsifga havola yoki qo'shimcha teglar qo'shilmaydi.
+        False — eski xatti-harakat (havola + doimiy teglar qo'shiladi).
     :return: dict {"success": bool, "video_id": str, "url": str, "error": str}
     """
     if not os.path.exists(video_path):
@@ -128,43 +128,52 @@ def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public
         creds = get_youtube_credentials()
         youtube = build('youtube', 'v3', credentials=creds)
 
-        # 1. Sarlavha (Title) tayyorlash (YouTube cheklovi: maksimal 100 belgi)
+        # 1. Sarlavha (Title) — YouTube cheklovi: maksimal 100 belgi
         first_line = caption.split('\n')[0].strip() if caption else "Shahrisabz Tibbiyot Texnikumi"
-        # Belgilarni tozalash
-        clean_title = first_line.replace("#", "").strip()
-        if len(clean_title) > 85:
-            clean_title = clean_title[:82] + "..."
-            
-        if is_shorts and "#Shorts" not in clean_title:
-            title = f"{clean_title} #Shorts"
+
+        if keep_caption:
+            # Izoh o'zgarmaydi. Sarlavhada faqat YouTube taqiqlagan < va > tozalanadi
+            # (aks holda API 400 qaytaradi) va 100 belgiga sig'diriladi.
+            title = first_line.replace("<", "").replace(">", "").strip()
+            if len(title) > 100:
+                title = title[:97] + "..."
+            description = caption
+            tags = None
         else:
-            title = clean_title
+            clean_title = first_line.replace("#", "").strip()
+            if len(clean_title) > 85:
+                clean_title = clean_title[:82] + "..."
 
-        # 2. Tavsif (Description) tayyorlash
-        description_lines = []
-        if caption:
-            description_lines.append(caption)
-        if post_url:
-            description_lines.append(f"\n🔗 Instagram: {post_url}")
-        description_lines.append("\n#Shahrisabz #Tibbiyot #Texnikum #Shorts #Hamshiralik #Talaba")
-        
-        description = "\n".join(description_lines)
+            if is_shorts and "#Shorts" not in clean_title:
+                title = f"{clean_title} #Shorts"
+            else:
+                title = clean_title
 
-        # 3. Teglar
-        tags = ["Shahrisabz", "Tibbiyot", "Texnikum", "Hamshiralik", "Qabul", "Talabalar", "Shorts"]
+            description_lines = []
+            if caption:
+                description_lines.append(caption)
+            if post_url:
+                description_lines.append(f"\n🔗 Instagram: {post_url}")
+            description_lines.append("\n#Shahrisabz #Tibbiyot #Texnikum #Shorts #Hamshiralik #Talaba")
+            description = "\n".join(description_lines)
+            tags = ["Shahrisabz", "Tibbiyot", "Texnikum", "Hamshiralik", "Qabul", "Talabalar", "Shorts"]
+
+        if not title:
+            title = "Shahrisabz Tibbiyot Texnikumi"
 
         body = {
             'snippet': {
                 'title': title,
                 'description': description,
-                'tags': tags,
-                'categoryId': '27' # 27: Education (Ta'lim)
+                'categoryId': '27'  # 27: Education (Ta'lim)
             },
             'status': {
                 'privacyStatus': privacy,
                 'selfDeclaredMadeForKids': False
             }
         }
+        if tags:
+            body['snippet']['tags'] = tags
 
         # 4. Resumable Upload orqali yuklash
         media = MediaFileUpload(video_path, chunksize=-1, resumable=True, mimetype="video/mp4")

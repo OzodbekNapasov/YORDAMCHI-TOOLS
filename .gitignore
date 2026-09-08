@@ -29,6 +29,9 @@ saved_documents/*
 
 # YouTube API Credentials & Tokens
 client_secrets.json
+client_secrets.json.*
+client_secret_*.json
+client_secret_* - kalitlari.txt
 youtube_token.json
 
 # Video & Media temp files
