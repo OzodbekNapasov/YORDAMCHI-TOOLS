@@ -37,6 +37,9 @@ youtube_token.json
 # Loglar
 *.log
 
+# Supabase holati zaxira nusxalari
+cloud_state_backup_*.json
+
 # Video & Media temp files
 *.mp4
 *.m4a
