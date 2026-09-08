@@ -7,12 +7,36 @@ import os
 import sys
 import json
 import time
+import base64
+import traceback
+
 # YouTube Upload Scope
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube']
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOKEN_FILE = os.path.join(BASE_DIR, "youtube_token.json")
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
+
+# DIQQAT: bu yerda ilgari _B64_FALLBACK_TOKEN bo'lgan — kodga base64 ko'rinishida
+# yozilgan tirik refresh_token va client_secret. U olib tashlandi: manba kodiga
+# yozilgan kalit repoga tushadi va git tarixida abadiy qoladi. Kalitlar faqat
+# YOUTUBE_TOKEN_JSON env o'zgaruvchisi, Supabase yoki youtube_token.json orqali
+# beriladi (quyidagi _iter_token_sources ga qarang).
+
+
+def _mask(info, source):
+    """Token manbasini xavfsiz ko'rinishda logga chiqarish (secret to'liq emas)"""
+    try:
+        # client_id maxfiy emas (har bir OAuth so'rovida ochiq yuboriladi), shuning
+        # uchun uni to'liq ko'rsatsa bo'ladi. client_secret va refresh_token esa
+        # loglarga (Vercel log'lari ham) hech qanday ko'rinishda tushmasligi kerak —
+        # faqat mavjud/yo'qligini bildiramiz.
+        cid = info.get("client_id") or "YO'Q"
+        print(f"[YouTube Token] Manba: {source} | client_id: {cid} "
+              f"| client_secret: {'bor' if info.get('client_secret') else 'YO`Q'} "
+              f"| refresh_token: {'bor' if info.get('refresh_token') else 'YO`Q'}")
+    except Exception:
+        pass
 
 
 def _iter_token_sources():
@@ -25,30 +49,32 @@ def _iter_token_sources():
     env_token = os.getenv("YOUTUBE_TOKEN_JSON")
     if env_token and env_token.strip().startswith("{"):
         try:
-            yield "env (YOUTUBE_TOKEN_JSON)", json.loads(env_token.strip())
-        except Exception:
-            pass
+            yield "ENV (YOUTUBE_TOKEN_JSON)", json.loads(env_token.strip())
+        except Exception as e:
+            print(f"[YouTube Token] ENV JSON parse xatosi: {e}")
 
     try:
         from services.insta_poster_service import get_setting
         db_val = get_setting("youtube_token_json", "")
         if db_val and db_val.strip().startswith("{"):
-            yield "baza/Supabase", json.loads(db_val.strip())
-    except Exception:
-        pass
+            yield "BAZA/Supabase (insta_settings)", json.loads(db_val.strip())
+    except Exception as e:
+        print(f"[YouTube Token] DB o'qish xatosi: {e}")
 
     if os.path.exists(TOKEN_FILE):
         try:
             with open(TOKEN_FILE, "r", encoding="utf-8") as f:
-                yield "youtube_token.json", json.load(f)
-        except Exception:
-            pass
+                yield f"FAYL ({TOKEN_FILE})", json.load(f)
+        except Exception as e:
+            print(f"[YouTube Token] Fayl o'qish xatosi: {e}")
 
 
 def _get_raw_token_info():
-    """Birinchi mavjud token ma'lumotini qaytarish (tekshirmasdan)"""
-    for _name, info in _iter_token_sources():
+    """Birinchi mavjud token ma'lumotini qaytarish (yaroqliligini tekshirmasdan)"""
+    for name, info in _iter_token_sources():
+        _mask(info, name)
         return info
+    print("[YouTube Token] HECH QAYERDA token topilmadi (ENV, baza, fayl — barchasi bo'sh/xato)")
     return None
 
 
@@ -99,8 +125,13 @@ def get_youtube_credentials():
 
     for name, info in _iter_token_sources():
         tried += 1
-        if not info.get("refresh_token"):
-            errors.append(f"{name}: refresh_token yo'q")
+
+        # Majburiy maydonlarni oldindan tekshirish — shu orqali 'invalid_grant'
+        # kabi tushunarsiz xatolar o'rniga aniq sabab ko'rsatiladi
+        missing = [f for f in ("refresh_token", "token_uri", "client_id", "client_secret")
+                   if not info.get(f)]
+        if missing:
+            errors.append(f"{name}: quyidagi maydonlar yo'q — {', '.join(missing)}")
             continue
 
         try:
@@ -118,9 +149,26 @@ def get_youtube_credentials():
     if tried == 0:
         raise FileNotFoundError("YouTube token ma'lumotlari topilmadi!")
 
-    raise ValueError(
-        "Hech bir YouTube token manbasi ishlamadi:\n  " + "\n  ".join(errors)
-    )
+    detail = "Hech bir YouTube token manbasi ishlamadi:\n  " + "\n  ".join(errors)
+    joined = " ".join(errors)
+
+    if "invalid_grant" in joined:
+        detail += (
+            "\n\ninvalid_grant — Google refresh_token'ni rad etdi. Sabablari:\n"
+            "  1) client_id/client_secret token olingan paytdagidan boshqa "
+            "(masalan boshqa Google Cloud loyihasi client'i ishlatilmoqda);\n"
+            "  2) OAuth consent screen 'Testing' rejimida va token 7 kunda eskirgan;\n"
+            "  3) Ruxsat qo'lda bekor qilingan yoki akkaunt xavfsizligi o'zgargan.\n"
+            "  Yechim: python setup_youtube.py — qaytadan avtorizatsiya qiling."
+        )
+    elif "deleted_client" in joined:
+        detail += (
+            "\n\ndeleted_client — OAuth client Google Cloud Console'da o'chirilgan.\n"
+            "  Yechim: Console'da yangi OAuth client yarating, client_secrets.json "
+            "ni almashtiring va python setup_youtube.py ni ishga tushiring."
+        )
+
+    raise ValueError(detail)
 
 
 def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public",
@@ -222,6 +270,7 @@ def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public
 
     except Exception as e:
         print(f"[YouTube Upload Error]: {e}")
+        print(traceback.format_exc())
         return {
             "success": False,
             "error": str(e)
