@@ -643,7 +643,15 @@ def api_run_task():
 # 8. DOCUMENTS & FILES GENERATOR & PERMANENT ARCHIVE ENDPOINTS
 # ============================================================
 
-is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+# DIQQAT: os.path.exists("/tmp") ni Windows'da tekshirish mumkin emas — u yerda
+# "/tmp" C:\tmp ga aylanadi va o'sha papka tasodifan paydo bo'lsa, lokal ish ham
+# serverless deb hisoblanib, hujjatlar loyiha papkasi o'rniga C:\tmp ga yozilardi.
+# atlas_db.py da bu shart to'g'ri yozilgan; shu bilan bir xil qilindi.
+is_serverless = bool(
+    os.environ.get("VERCEL")
+    or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    or (os.name != "nt" and os.path.exists("/tmp"))
+)
 if is_serverless:
     SAVED_DOCS_DIR = "/tmp/saved_documents"
 else:
@@ -926,40 +934,73 @@ def api_delete_document(doc_id):
 @atlas_api.route("/documents/resend/<int:doc_id>", methods=["POST"])
 @admin_required
 def api_resend_document_telegram(doc_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM generated_docs WHERE id = ?", (doc_id,))
-    doc = cursor.fetchone()
-    conn.close()
+    """Arxivdagi hujjatni Telegram botga qayta yuborish.
 
-    if not doc or not os.path.exists(doc["file_path"]):
-        return jsonify({"success": False, "error": "Hujjat fayli topilmadi."}), 404
+    Serverless muhitda /tmp har bir so'rov uchun alohida bo'ladi, shuning uchun
+    hujjat yaratilgan paytdagi fayl bu so'rovda mavjud bo'lmasligi mumkin.
+    Ilgari bu yerda faqat os.path.exists() tekshirilardi va natijada "Hujjat
+    fayli topilmadi" chiqardi. Endi yuklab olish/ko'rish endpointlari bilan bir
+    xil tartib ishlatiladi: avval fayl qayta yaratiladi, bo'lmasa Supabase
+    CDN'dan olinadi.
+    """
+    from services.atlas_db import get_document_by_id
+
+    doc = get_document_by_id(doc_id)
+    if not doc:
+        return jsonify({"success": False, "error": "Hujjat topilmadi."}), 404
 
     try:
         from bot import bot, PRIMARY_ADMIN_ID
-        fpath = doc["file_path"]
-        fio = doc["recipient_fio"] or "Talaba"
-        tpl_name = doc["template_name"] or "Rasmiy Hujjat"
-        ext = os.path.splitext(fpath)[1].lower()
 
-        caption = f"📄 <b>{tpl_name}</b>\n👤 <b>Talaba / Qabul qiluvchi:</b> {fio}\n📅 <b>Vaqti:</b> {doc['created_at']}"
-        with open(fpath, "rb") as f_obj:
-            if ext in [".png", ".jpg", ".jpeg"]:
-                bot.send_photo(
-                    PRIMARY_ADMIN_ID,
-                    photo=f_obj,
-                    caption=caption,
-                    parse_mode="HTML"
-                )
-            else:
-                bot.send_document(
-                    PRIMARY_ADMIN_ID,
-                    document=f_obj,
-                    caption=caption,
-                    parse_mode="HTML"
-                )
-        return jsonify({"success": True, "message": "Hujjat Telegram botingizga muvaffaqiyatli yuborildi!"})
+        fio = doc.get("recipient_fio") or "Talaba"
+        tpl_name = doc.get("template_name") or "Rasmiy Hujjat"
+        caption = (f"📄 <b>{tpl_name}</b>\n"
+                   f"👤 <b>Talaba / Qabul qiluvchi:</b> {fio}\n"
+                   f"📅 <b>Vaqti:</b> {doc.get('created_at', '')}")
+
+        # 1. Fayllarni qayta yaratishga urinish (parsed_data dan)
+        fpath, _docx_path = _ensure_doc_files(doc)
+
+        if fpath and os.path.exists(fpath):
+            ext = os.path.splitext(fpath)[1].lower()
+            with open(fpath, "rb") as f_obj:
+                if ext in (".png", ".jpg", ".jpeg"):
+                    bot.send_photo(PRIMARY_ADMIN_ID, photo=f_obj,
+                                   caption=caption, parse_mode="HTML")
+                else:
+                    bot.send_document(PRIMARY_ADMIN_ID, document=f_obj,
+                                      caption=caption, parse_mode="HTML")
+            return jsonify({"success": True,
+                            "message": "Hujjat Telegram botingizga muvaffaqiyatli yuborildi!"})
+
+        # 2. Qayta yaratib bo'lmadi — Supabase CDN'dan olish
+        cdn_url = doc.get("cdn_url") or ""
+        if cdn_url:
+            import io
+            import requests as _rq
+            r = _rq.get(cdn_url, timeout=30)
+            if r.status_code == 200 and r.content:
+                buf = io.BytesIO(r.content)
+                buf.name = os.path.basename(cdn_url) or f"doc_{doc_id}.png"
+                if cdn_url.lower().endswith((".png", ".jpg", ".jpeg")):
+                    bot.send_photo(PRIMARY_ADMIN_ID, photo=buf,
+                                   caption=caption, parse_mode="HTML")
+                else:
+                    bot.send_document(PRIMARY_ADMIN_ID, document=buf,
+                                      caption=caption, parse_mode="HTML")
+                return jsonify({"success": True,
+                                "message": "Hujjat Telegram botingizga yuborildi (bulutdagi nusxadan)."})
+
+        return jsonify({
+            "success": False,
+            "error": "Hujjat fayli qayta yaratilmadi va bulutda nusxasi topilmadi. "
+                     "Hujjatni qaytadan shakllantirib ko'ring."
+        }), 404
+
     except Exception as e:
+        import traceback
+        print(f"[Resend Telegram Error] doc_id={doc_id}: {e}")
+        print(traceback.format_exc())
         return jsonify({"success": False, "error": f"Telegram xatosi: {str(e)}"}), 500
 
 

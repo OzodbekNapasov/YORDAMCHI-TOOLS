@@ -445,7 +445,13 @@ def process_docbot_generation(chat_id, tpl, answers):
                 )
 
         # 5. Doimiy arxivga saqlash va Supabase Storage bulutiga yuklash
-        is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+        # os.path.exists("/tmp") Windows'da C:\tmp ga aylanadi — o'sha papka
+        # tasodifan paydo bo'lsa lokal ish ham serverless deb hisoblanardi
+        is_serverless = bool(
+            os.environ.get("VERCEL")
+            or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+            or (os.name != "nt" and os.path.exists("/tmp"))
+        )
         saved_dir = "/tmp/saved_documents" if is_serverless else os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_documents")
         try:
             os.makedirs(saved_dir, exist_ok=True)

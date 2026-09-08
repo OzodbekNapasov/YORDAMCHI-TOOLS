@@ -326,7 +326,13 @@ BUYRUQ_TEMPLATES = [
 # Barcha birlashtirilgan shablonlar
 TEMPLATES = MALUMOTNOMA_TEMPLATES + BUYRUQ_TEMPLATES
 
-is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/tmp")
+# os.path.exists("/tmp") Windows'da C:\tmp ga aylanadi — o'sha papka tasodifan
+# paydo bo'lsa lokal ish ham serverless deb hisoblanardi
+is_serverless = bool(
+    os.environ.get("VERCEL")
+    or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    or (os.name != "nt" and os.path.exists("/tmp"))
+)
 TEMP_DIR = "/tmp" if is_serverless else os.path.join(BASE_DIR, "temp")
 try:
     os.makedirs(TEMP_DIR, exist_ok=True)

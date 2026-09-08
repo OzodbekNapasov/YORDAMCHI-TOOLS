@@ -20,7 +20,13 @@ from services.supabase_storage import upload_document_to_supabase
 from services.atlas_db import log_audit
 
 # Directory for storing generated contract assets (Serverless safe)
-is_serverless = os.environ.get("VERCEL") == "1" or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None or os.path.exists("/tmp")
+# os.path.exists("/tmp") Windows'da C:\tmp ga aylanadi — o'sha papka tasodifan
+# paydo bo'lsa lokal ish ham serverless deb hisoblanardi
+is_serverless = bool(
+    os.environ.get("VERCEL")
+    or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    or (os.name != "nt" and os.path.exists("/tmp"))
+)
 
 if is_serverless:
     base_tmp = "/tmp" if os.name != 'nt' else (os.environ.get("TEMP") or os.environ.get("TMP") or "C:\\temp")
