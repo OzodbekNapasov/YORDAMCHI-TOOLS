@@ -15,39 +15,40 @@ TOKEN_FILE = os.path.join(BASE_DIR, "youtube_token.json")
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secrets.json")
 
 
-def _get_raw_token_info():
-    """Token ma'lumotlarini environment, baza yoki fayldan olish.
+def _iter_token_sources():
+    """Mavjud barcha token manbalarini (nom, ma'lumot) ko'rinishida qaytarish.
 
-    Tartib muhim: Vercel'da atlas.db va youtube_token.json deploy'ga kirmaydi
-    (.vercelignore), shuning uchun env var birinchi o'rinda turadi. Bu, shu
-    bilan birga, bazada qolib ketgan eski tokenning yangisini bosib ketishiga
-    ham yo'l qo'ymaydi.
+    Bitta manbaga tayanish xavfli: Vercel'dagi eski YOUTUBE_TOKEN_JSON yoki
+    bazada qolib ketgan eski token butun tizimni to'xtatib qo'yadi. Shuning
+    uchun get_youtube_credentials() birinchi ISHLAYDIGANini tanlaydi.
     """
-    # 1. Environment o'zgaruvchisidan tekshirish (Vercel / production)
     env_token = os.getenv("YOUTUBE_TOKEN_JSON")
     if env_token and env_token.strip().startswith("{"):
         try:
-            return json.loads(env_token.strip())
+            yield "env (YOUTUBE_TOKEN_JSON)", json.loads(env_token.strip())
         except Exception:
             pass
 
-    # 2. DB dan tekshirish (lokal server, refresh'dan keyin yangilanadi)
     try:
         from services.insta_poster_service import get_setting
         db_val = get_setting("youtube_token_json", "")
         if db_val and db_val.strip().startswith("{"):
-            return json.loads(db_val.strip())
+            yield "baza/Supabase", json.loads(db_val.strip())
     except Exception:
         pass
 
-    # 3. Fayldan tekshirish
     if os.path.exists(TOKEN_FILE):
         try:
             with open(TOKEN_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                yield "youtube_token.json", json.load(f)
         except Exception:
             pass
 
+
+def _get_raw_token_info():
+    """Birinchi mavjud token ma'lumotini qaytarish (tekshirmasdan)"""
+    for _name, info in _iter_token_sources():
+        return info
     return None
 
 
@@ -65,42 +66,61 @@ def is_youtube_ready():
         return False
 
 
+def _persist_token(updated_json):
+    """Yangilangan tokenni bazaga (Supabase) va faylga yozish"""
+    try:
+        from services.insta_poster_service import set_setting
+        set_setting("youtube_token_json", updated_json)
+    except Exception:
+        pass
+    try:
+        with open(TOKEN_FILE, 'w', encoding='utf-8') as token_f:
+            token_f.write(updated_json)
+    except Exception:
+        pass
+
+
 def get_youtube_credentials():
-    """OAuth 2.0 orqali ruxsat olingan ma'lumotlarni yuklash yoki yangilash"""
+    """Ishlaydigan birinchi token manbasini topib, ruxsatnomani qaytarish.
+
+    Manbalar ketma-ket sinaladi (env -> baza/Supabase -> fayl). Biri yaroqsiz
+    bo'lsa (masalan Vercel'da eski YOUTUBE_TOKEN_JSON qolib ketgan bo'lsa),
+    keyingisiga o'tiladi. Muvaffaqiyatli yangilangan token qolgan manbalarga
+    ham yoziladi, shunda eski nusxa o'z-o'zidan tuzaladi.
+    """
     try:
         from google.oauth2.credentials import Credentials
         from google.auth.transport.requests import Request
     except ImportError as e:
         raise ImportError("Google API kutubxonalari o'rnatilmagan") from e
 
-    info = _get_raw_token_info()
-    if not info:
+    errors = []
+    tried = 0
+
+    for name, info in _iter_token_sources():
+        tried += 1
+        if not info.get("refresh_token"):
+            errors.append(f"{name}: refresh_token yo'q")
+            continue
+
+        try:
+            creds = Credentials.from_authorized_user_info(info, SCOPES)
+            if not creds.valid:
+                creds.refresh(Request())
+                _persist_token(creds.to_json())
+            return creds
+        except Exception as e:
+            msg = str(e)
+            errors.append(f"{name}: {msg[:120]}")
+            print(f"[YouTube Token Manbasi Yaroqsiz] {name}: {msg[:160]}")
+            continue
+
+    if tried == 0:
         raise FileNotFoundError("YouTube token ma'lumotlari topilmadi!")
 
-    creds = Credentials.from_authorized_user_info(info, SCOPES)
-
-    if not creds.valid:
-        if creds.refresh_token:
-            try:
-                creds.refresh(Request())
-                updated_json = creds.to_json()
-                try:
-                    from services.insta_poster_service import set_setting
-                    set_setting("youtube_token_json", updated_json)
-                except Exception:
-                    pass
-                try:
-                    with open(TOKEN_FILE, 'w', encoding='utf-8') as token_f:
-                        token_f.write(updated_json)
-                except Exception:
-                    pass
-            except Exception as e:
-                print(f"[YouTube Refresh Token Err]: {e}")
-                raise e
-        else:
-            raise ValueError("YouTube token muddati o'tgan va refresh_token mavjud emas!")
-
-    return creds
+    raise ValueError(
+        "Hech bir YouTube token manbasi ishlamadi:\n  " + "\n  ".join(errors)
+    )
 
 
 def upload_video_to_youtube(video_path, caption="", post_url="", privacy="public",
