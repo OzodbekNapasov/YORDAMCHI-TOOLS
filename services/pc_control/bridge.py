@@ -547,6 +547,18 @@ def _execute_command_locally(action: str, payload: dict) -> dict:
             metrics = collect_local_pc_metrics()
             return {"success": True, "apps": metrics.get("apps", [])}
 
+        elif action == "youtube_upload":
+            # YouTube yuklash Vercel'da bajarilmaydi: atlas.db u yerda yo'q
+            # (.vercelignore), Instagram datacenter IP'larini bloklaydi va
+            # 60 soniyalik limit yetmaydi. Shuning uchun ish shu kompyuterda.
+            from services.insta_poster_service import (
+                post_next_youtube_video, post_single_youtube_item
+            )
+            post_id = payload.get("post_id")
+            if post_id:
+                return post_single_youtube_item(int(post_id))
+            return post_next_youtube_video()
+
         else:
             return {"success": False, "error": f"Noma'lum buyruq turi: {action}"}
 

@@ -2397,12 +2397,18 @@ def api_instagram_post_next():
 @atlas_api.route("/instagram/post_youtube", methods=["POST"])
 @admin_required
 def api_instagram_post_youtube():
-    """Navbatdagi 1 ta videoni YouTube Shorts ga yuklash"""
+    """Navbatdagi 1 ta videoni YouTube Shorts ga yuklash.
+
+    Ish PC Bridge orqali lokal kompyuterda bajariladi: Vercel'da atlas.db yo'q
+    (.vercelignore), Instagram datacenter IP'larini bloklaydi va 60 soniyalik
+    limit video yuklashga yetmaydi. Lokal Windows'da dispatch to'g'ridan-to'g'ri
+    bajaradi, shuning uchun bu o'zgarish lokal ishlashga ta'sir qilmaydi.
+    """
     try:
-        from services.insta_poster_service import post_next_youtube_video
+        from services.pc_control.bridge import dispatch_bridge_command
         admin = get_current_admin()
-        res = post_next_youtube_video()
-        
+        res = dispatch_bridge_command("youtube_upload", {}, timeout=50.0)
+
         log_audit(
             admin["username"] if admin else "web_admin",
             "instagram",
@@ -2441,12 +2447,12 @@ def api_instagram_post_single(post_id):
 @atlas_api.route("/instagram/post_single_youtube/<int:post_id>", methods=["POST"])
 @admin_required
 def api_instagram_post_single_youtube(post_id):
-    """Aniq tanlangan 1 ta videoni YouTube Shorts ga yuklash"""
+    """Aniq tanlangan 1 ta videoni YouTube Shorts ga yuklash (PC Bridge orqali)"""
     try:
-        from services.insta_poster_service import post_single_youtube_item
+        from services.pc_control.bridge import dispatch_bridge_command
         admin = get_current_admin()
-        res = post_single_youtube_item(post_id)
-        
+        res = dispatch_bridge_command("youtube_upload", {"post_id": post_id}, timeout=50.0)
+
         log_audit(
             admin["username"] if admin else "web_admin",
             "instagram",

@@ -34,6 +34,9 @@ client_secret_*.json
 client_secret_* - kalitlari.txt
 youtube_token.json
 
+# Loglar
+*.log
+
 # Video & Media temp files
 *.mp4
 *.m4a
