@@ -2397,17 +2397,11 @@ def api_instagram_post_next():
 @atlas_api.route("/instagram/post_youtube", methods=["POST"])
 @admin_required
 def api_instagram_post_youtube():
-    """Navbatdagi 1 ta videoni YouTube Shorts ga yuklash.
-
-    Ish PC Bridge orqali lokal kompyuterda bajariladi: Vercel'da atlas.db yo'q
-    (.vercelignore), Instagram datacenter IP'larini bloklaydi va 60 soniyalik
-    limit video yuklashga yetmaydi. Lokal Windows'da dispatch to'g'ridan-to'g'ri
-    bajaradi, shuning uchun bu o'zgarish lokal ishlashga ta'sir qilmaydi.
-    """
+    """Navbatdagi 1 ta videoni YouTube Shorts ga yuklash"""
     try:
-        from services.pc_control.bridge import dispatch_bridge_command
+        from services.insta_poster_service import post_next_youtube_video
         admin = get_current_admin()
-        res = dispatch_bridge_command("youtube_upload", {}, timeout=50.0)
+        res = post_next_youtube_video()
 
         log_audit(
             admin["username"] if admin else "web_admin",
@@ -2447,11 +2441,11 @@ def api_instagram_post_single(post_id):
 @atlas_api.route("/instagram/post_single_youtube/<int:post_id>", methods=["POST"])
 @admin_required
 def api_instagram_post_single_youtube(post_id):
-    """Aniq tanlangan 1 ta videoni YouTube Shorts ga yuklash (PC Bridge orqali)"""
+    """Aniq tanlangan 1 ta videoni YouTube Shorts ga yuklash"""
     try:
-        from services.pc_control.bridge import dispatch_bridge_command
+        from services.insta_poster_service import post_single_youtube_item
         admin = get_current_admin()
-        res = dispatch_bridge_command("youtube_upload", {"post_id": post_id}, timeout=50.0)
+        res = post_single_youtube_item(post_id)
 
         log_audit(
             admin["username"] if admin else "web_admin",
@@ -2647,8 +2641,23 @@ def api_instagram_yt_schedule_reset():
 
 @atlas_api.route("/instagram/cron_tick", methods=["GET", "POST"])
 def api_instagram_cron_tick():
-    """Avto-yuboruvchi jadvalini tekshirish (Vercel Cron yoki tashqi pingerlar uchun)"""
+    """Avto-yuboruvchi jadvalini tekshirish (Vercel Cron yoki tashqi pingerlar uchun).
+
+    Ixtiyoriy himoya: CRON_SECRET env o'zgaruvchisi qo'yilgan bo'lsa, so'rovda
+    ?key=... yoki Authorization: Bearer ... mos kelishi shart. Qo'yilmagan bo'lsa
+    endpoint avvalgidek ochiq qoladi (mavjud pingerlar buzilmasligi uchun).
+    """
     try:
+        secret = os.environ.get("CRON_SECRET", "").strip()
+        if secret:
+            provided = (request.args.get("key") or "").strip()
+            if not provided:
+                auth = (request.headers.get("Authorization") or "").strip()
+                if auth.lower().startswith("bearer "):
+                    provided = auth[7:].strip()
+            if provided != secret:
+                return jsonify({"success": False, "error": "Ruxsat yo'q"}), 401
+
         from services.insta_scheduler import run_scheduler_tick
         res = run_scheduler_tick()
         return jsonify({"success": True, "result": res})
