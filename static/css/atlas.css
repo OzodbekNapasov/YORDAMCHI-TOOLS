@@ -3002,6 +3002,248 @@ body.hub-cursor-active * {
   margin-bottom: 18px;
 }
 
+/* ============================================================
+   PWA & MOBILE APP LAYER
+   Bu blok fayl oxirida turadi — yuqoridagi qoidalarni ataylab
+   bosib o'tadi, shuning uchun uni ko'chirmang.
+============================================================ */
+
+:root {
+  /* iPhone "notch" va Android navigatsiya paneli uchun xavfsiz zonalar.
+     atlas.html da viewport-fit=cover yozilgan, aks holda bular 0 qaytadi. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ---------- O'rnatish taklifi ---------- */
+.pwa-install-banner {
+  position: fixed;
+  z-index: 10050;
+  left: max(12px, var(--safe-left));
+  right: max(12px, var(--safe-right));
+  bottom: calc(12px + var(--safe-bottom));
+  max-width: 460px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-glass-dropdown);
+  border: 1px solid var(--border-glass-hover);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
+  animation: pwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pwa-install-banner[hidden] { display: none; }
+
+@keyframes pwaSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-install-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.pwa-install-text {
+  flex: 1 1 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.pwa-install-text strong { font-size: 14px; color: var(--text-primary); }
+.pwa-install-text span { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+.pwa-install-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.pwa-btn {
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  min-height: 44px;              /* barmoq uchun qulay o'lcham */
+  transition: var(--transition);
+  font-family: inherit;
+}
+.pwa-btn-primary {
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-button);
+}
+.pwa-btn-primary:hover { background: var(--accent-gradient-hover); }
+.pwa-btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}
+.pwa-btn-ghost:hover { color: var(--text-primary); border-color: var(--border-glass-hover); }
+
+/* ---------- Yangilanish xabari ---------- */
+.pwa-update-toast {
+  position: fixed;
+  z-index: 10060;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(14px + var(--safe-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-glass-dropdown);
+  border: 1px solid var(--border-glass-hover);
+  box-shadow: var(--shadow-card);
+  font-size: 13px;
+  color: var(--text-secondary);
+  animation: pwaSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pwa-update-toast[hidden] { display: none; }
+.pwa-update-toast .pwa-btn { padding: 8px 14px; min-height: 38px; }
+
+@keyframes pwaSlideDown {
+  from { opacity: 0; transform: translate(-50%, -16px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---------- Standalone (o'rnatilgan ilova) rejimi ---------- */
+.pwa-standalone body { overscroll-behavior-y: none; }   /* "pull to refresh" o'chadi */
+.pwa-standalone .header { padding-top: var(--safe-top); height: auto; min-height: 62px; }
+.pwa-standalone .sidebar { padding-top: var(--safe-top); }
+.pwa-standalone .content-body { padding-bottom: calc(24px + var(--safe-bottom)); }
+
+/* ============================================================
+   MOBIL MOSLASHUV
+============================================================ */
+@media (max-width: 992px) {
+  /* Xavfsiz zonalar */
+  .header { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); }
+  .content-body {
+    padding-left: max(12px, var(--safe-left));
+    padding-right: max(12px, var(--safe-right));
+    padding-bottom: calc(24px + var(--safe-bottom));
+  }
+  .sidebar { padding-bottom: var(--safe-bottom); }
+
+  /* Barmoq uchun qulay o'lchamlar (Apple/Google tavsiyasi: 44px) */
+  .nav-item,
+  .btn,
+  button:not(.pwa-btn),
+  .icon-btn,
+  select {
+    min-height: 44px;
+  }
+  .nav-item { padding: 12px 14px; }
+
+  /* iOS input'ga bosilganda sahifani kattalashtirmasin:
+     buning yagona yo'li — shrift 16px dan kichik bo'lmasligi */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* Jadval: silliq gorizontal scroll + sarlavha yopishib turadi */
+  .table-responsive,
+  .table-container,
+  .students-table-wrapper {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+  .table-custom thead th,
+  .students-data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .table-custom td,
+  .table-custom th {
+    white-space: nowrap;         /* ustunlar ezilib ketmasin */
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Ko'p ustunli grid'lar bitta ustunga tushadi */
+  .stats-grid,
+  .cards-grid,
+  .form-grid,
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal deyarli to'liq ekran */
+  .modal-content,
+  .modal-box {
+    max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 24px);
+    margin-top: calc(12px + var(--safe-top));
+    margin-bottom: calc(12px + var(--safe-bottom));
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .pwa-install-banner { flex-direction: column; align-items: stretch; text-align: left; }
+  .pwa-install-actions { margin-left: 0; }
+  .pwa-install-actions .pwa-btn { flex: 1; }
+
+  /* Statistika kartalari ixchamroq */
+  .stat-card { padding: 14px; }
+  .stat-value { font-size: 22px; }
+
+  /* Sahifa sarlavhasi va tugmalar ustma-ust */
+  .page-header,
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .page-header .btn-group,
+  .section-header .btn-group {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .page-header .btn-group .btn,
+  .section-header .btn-group .btn {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+  }
+}
+
+/* Sichqonchasiz (sensorli) qurilmalarda hover effektlari "yopishib" qolmasin */
+@media (hover: none) {
+  .nav-item:hover,
+  .table-custom tbody tr:hover,
+  .btn:hover {
+    background: inherit;
+  }
+  .btn:active,
+  .nav-item:active { opacity: 0.75; }
+}
+
+/* Foydalanuvchi animatsiyani kamaytirishni tanlagan bo'lsa — hurmat qilamiz */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .cyber-loader-bar-fill {
   height: 100%;
   width: 30%;

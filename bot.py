@@ -903,6 +903,41 @@ def index_atlas():
     from flask import render_template
     return render_template("atlas.html")
 
+@app.route("/sw.js")
+def service_worker():
+    """Service worker'ni ildiz manzilidan berish.
+
+    Uni /static/js/sw.js sifatida ro'yxatdan o'tkazib bo'lmaydi: brauzer SW
+    qamrovini (scope) fayl turgan papka bilan cheklaydi, ya'ni u faqat
+    /static/js/ ostidagi so'rovlarni ko'rardi. Ildizdan berilganda esa butun
+    sayt qamrab olinadi.
+    """
+    from flask import send_from_directory, make_response
+    resp = make_response(send_from_directory(
+        os.path.join(_BASE_DIR, "static", "js"), "sw.js",
+        mimetype="application/javascript"
+    ))
+    # Yangilanish tez yetib borishi uchun SW faylining o'zi keshlanmaydi
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resp.headers["Service-Worker-Allowed"] = "/"
+    return resp
+
+
+@app.route("/manifest.webmanifest")
+def web_manifest():
+    from flask import send_from_directory
+    return send_from_directory(
+        os.path.join(_BASE_DIR, "static"), "manifest.webmanifest",
+        mimetype="application/manifest+json"
+    )
+
+
+@app.route("/offline")
+def offline_page():
+    from flask import render_template
+    return render_template("atlas.html")
+
+
 @app.route("/bot_status")
 def webhook_status_check():
     check_and_notify_updates()

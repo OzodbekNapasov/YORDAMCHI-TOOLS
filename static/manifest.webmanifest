@@ -1,0 +1,55 @@
+{
+  "name": "ATLAS — Universal Bot Control Platform",
+  "short_name": "ATLAS",
+  "description": "Shahrisabz Tibbiyot Texnikumi uchun hujjatlar, Instagram/YouTube avtoposter va kompyuter boshqaruvi platformasi",
+  "lang": "uz",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#051a1d",
+  "theme_color": "#051a1d",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/static/img/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/pwa-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Instagram Sinxronlash",
+      "short_name": "Instagram",
+      "url": "/#/instagram",
+      "icons": [{ "src": "/static/img/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Kontraktlar & Baza",
+      "short_name": "Kontraktlar",
+      "url": "/#/kontrakt",
+      "icons": [{ "src": "/static/img/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Boshqaruv Paneli",
+      "short_name": "Panel",
+      "url": "/#/dashboard",
+      "icons": [{ "src": "/static/img/pwa-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

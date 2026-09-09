@@ -2,11 +2,26 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- viewport-fit=cover: iPhone'da "notch" ostidagi xavfsiz zonalarni CSS ko'ra olsin -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ATLAS — Universal Bot Control Platform</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#051a1d">
+  <meta name="application-name" content="ATLAS">
+  <meta name="description" content="ATLAS — hujjatlar, Instagram/YouTube avtoposter va kompyuter boshqaruvi platformasi">
+
+  <!-- iOS: to'liq ekran rejimi va status bar -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ATLAS">
+
   <link rel="icon" type="image/png" href="/static/img/icon-ice.png">
-  <link rel="apple-touch-icon" href="/static/img/icon-ice.png">
-  <link rel="stylesheet" href="/static/css/atlas.css?v=2.7.9">
+  <link rel="apple-touch-icon" href="/static/img/pwa-apple-touch-180.png">
+
+  <link rel="stylesheet" href="/static/css/atlas.css?v=2.8.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,11 +30,134 @@
   <!-- Root SPA Mounting Point -->
   <div id="app-root"></div>
 
+  <!-- Ilovani o'rnatish taklifi (faqat brauzer ruxsat berganda ko'rinadi) -->
+  <div id="pwa-install-banner" class="pwa-install-banner" hidden>
+    <img src="/static/img/pwa-icon-192.png" alt="" class="pwa-install-icon">
+    <div class="pwa-install-text">
+      <strong>ATLAS ilovasini o‘rnating</strong>
+      <span>Telefoningizga ilova sifatida qo‘shiladi — tezroq ochiladi va oflaynda ham ishlaydi.</span>
+    </div>
+    <div class="pwa-install-actions">
+      <button type="button" id="pwa-install-btn" class="pwa-btn pwa-btn-primary">O‘rnatish</button>
+      <button type="button" id="pwa-install-dismiss" class="pwa-btn pwa-btn-ghost">Keyinroq</button>
+    </div>
+  </div>
+
+  <!-- Yangi versiya chiqqanda -->
+  <div id="pwa-update-toast" class="pwa-update-toast" hidden>
+    <span>Yangi versiya tayyor</span>
+    <button type="button" id="pwa-update-btn" class="pwa-btn pwa-btn-primary">Yangilash</button>
+  </div>
+
   <!-- Main Application Script -->
-  <script src="/static/js/atlas.js?v=2.7.9"></script>
+  <script src="/static/js/atlas.js?v=2.8.0"></script>
 
+  <script>
+  (function () {
+    'use strict';
 
+    // ---------- Service Worker ----------
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(function (reg) {
+            // Yangi versiya kutayotgan bo'lsa — foydalanuvchiga aytamiz
+            function watch(worker) {
+              if (!worker) return;
+              worker.addEventListener('statechange', function () {
+                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateToast(reg);
+                }
+              });
+            }
+            if (reg.waiting && navigator.serviceWorker.controller) showUpdateToast(reg);
+            watch(reg.installing);
+            reg.addEventListener('updatefound', function () { watch(reg.installing); });
+          })
+          .catch(function (e) { console.warn('[PWA] SW ro\'yxatdan o\'tmadi:', e); });
 
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      });
+    }
 
+    function showUpdateToast(reg) {
+      var toast = document.getElementById('pwa-update-toast');
+      var btn = document.getElementById('pwa-update-btn');
+      if (!toast || !btn) return;
+      toast.hidden = false;
+      btn.onclick = function () {
+        toast.hidden = true;
+        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+      };
+    }
+
+    // ---------- O'rnatish taklifi ----------
+    var deferredPrompt = null;
+    var banner = document.getElementById('pwa-install-banner');
+    var installBtn = document.getElementById('pwa-install-btn');
+    var dismissBtn = document.getElementById('pwa-install-dismiss');
+    var DISMISS_KEY = 'atlas_pwa_dismissed_at';
+
+    function recentlyDismissed() {
+      try {
+        var t = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+        // Rad etilsa 14 kun bezovta qilmaymiz
+        return t && (Date.now() - t) < 14 * 24 * 60 * 60 * 1000;
+      } catch (e) { return false; }
+    }
+
+    function isInstalled() {
+      return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (banner && !recentlyDismissed() && !isInstalled()) banner.hidden = false;
+      // atlas.js xohlasa o'z tugmasini ko'rsatishi uchun
+      window.dispatchEvent(new CustomEvent('atlas:installable'));
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', function () {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function () {
+          deferredPrompt = null;
+          if (banner) banner.hidden = true;
+        });
+      });
+    }
+
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function () {
+        if (banner) banner.hidden = true;
+        try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (e) {}
+      });
+    }
+
+    window.addEventListener('appinstalled', function () {
+      deferredPrompt = null;
+      if (banner) banner.hidden = true;
+      try { localStorage.removeItem(DISMISS_KEY); } catch (e) {}
+    });
+
+    // atlas.js dan chaqirish uchun: ATLAS_PWA.install()
+    window.ATLAS_PWA = {
+      canInstall: function () { return !!deferredPrompt; },
+      isInstalled: isInstalled,
+      install: function () { if (deferredPrompt) deferredPrompt.prompt(); }
+    };
+
+    // Standalone rejimda body ga klass qo'shamiz (CSS shunga qarab moslashadi)
+    if (isInstalled()) document.documentElement.classList.add('pwa-standalone');
+  })();
+  </script>
 </body>
 </html>
