@@ -510,6 +510,47 @@ def analyze_baza_excel(baza_path):
 # 4. EXECUTE CONTRACT & DEBITORKA UPDATE
 # ============================================================
 
+#: Debitorka faylida uchraydigan sana ko'rinishlari. Ilgari faqat "%d.%m.%y"
+#: sinalardi, shuning uchun "05.09.2026" kabi 4 raqamli yil ValueError berib,
+#: to'lov butunlay e'tiborsiz qolardi — pul hisobga olinmasdi va hech qayerda
+#: ko'rsatilmasdi ham.
+_SANA_FORMATLARI = (
+    "%d.%m.%Y", "%d.%m.%y",
+    "%d/%m/%Y", "%d/%m/%y",
+    "%d-%m-%Y", "%d-%m-%y",
+    "%Y-%m-%d %H:%M:%S", "%Y-%m-%d",
+    "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M",
+)
+
+
+#: Eng yaxshi va undan keyingi moslik orasidagi eng kichik farq. Shundan kam
+#: bo'lsa, qaysi talaba ekani aniq emas deb hisoblanadi.
+_MOSLIK_FARQI = 5
+
+
+def _parse_tolov_sanasi(val):
+    """Debitorkadagi sanani o'qish. Uddalay olmasa None qaytaradi."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val
+    if hasattr(val, "year") and hasattr(val, "month"):  # datetime.date
+        try:
+            return datetime(val.year, val.month, val.day)
+        except Exception:
+            return None
+
+    s = str(val).strip()
+    if not s:
+        return None
+    for fmt in _SANA_FORMATLARI:
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
+
+
 def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None):
     """
     Baza va debitorka fayllarini taqqoslab, formulalarga tegmasdan yangilaydi,
@@ -576,6 +617,7 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
 
     yangilangan_talabalar = []
     topilmaganlar = []
+    sana_xatolari = []
     jami_tushgan_pul = 0.0
     oxirgi_to_lov_sanasi = None
     yangilangan_talabalar_set = set()
@@ -585,17 +627,22 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
         sana_val = sheet_deb.cell(row=row, column=1).value
         if not sana_val: continue
 
-        try:
-            if isinstance(sana_val, str):
-                if '.' in sana_val:
-                    to_lov_sanasi = datetime.strptime(sana_val.strip(), "%d.%m.%y")
-                else:
-                    to_lov_sanasi = datetime.strptime(sana_val.strip(), "%Y-%m-%d %H:%M:%S")
-            elif isinstance(sana_val, datetime):
-                to_lov_sanasi = sana_val
-            else:
-                continue
-        except ValueError:
+        to_lov_sanasi = _parse_tolov_sanasi(sana_val)
+        if to_lov_sanasi is None:
+            # Sana o'qilmadi — to'lovni JIMGINA tashlab ketmaymiz, chunki bu
+            # pul hisobdan tushib qolishiga olib keladi. Hisobotda ko'rsatamiz.
+            summa_val = sheet_deb.cell(row=row, column=7).value
+            try:
+                bad_sum = float(summa_val) if summa_val else 0.0
+            except Exception:
+                bad_sum = 0.0
+            deb_fio = sheet_deb.cell(row=row, column=9).value
+            h_val = sheet_deb.cell(row=row, column=8).value
+            sana_xatolari.append({
+                "name": str(deb_fio or h_val or "Noma'lum").strip(),
+                "amount": bad_sum,
+                "raw_date": str(sana_val)[:32],
+            })
             continue
 
         if to_lov_sanasi >= cheklov_sanasi:
@@ -620,6 +667,8 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
             deb_fio_clean = ismlarni_standartlash(deb_fio_str or h_str)
             eng_yaxshi_moslik = None
             eng_yuqori_ball = 0
+            ikkinchi_ball = 0
+            ikkinchi_nom = ""
 
             for talaba in baza_talabalari:
                 s_set = fuzz.token_set_ratio(deb_fio_clean, talaba["clean_name"])
@@ -628,8 +677,34 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
                 ball = max(s_set, s_partial, s_sort)
 
                 if ball > eng_yuqori_ball:
+                    ikkinchi_ball = eng_yuqori_ball
+                    ikkinchi_nom = eng_yaxshi_moslik["original_name"] if eng_yaxshi_moslik else ""
                     eng_yuqori_ball = ball
                     eng_yaxshi_moslik = talaba
+                elif ball > ikkinchi_ball:
+                    ikkinchi_ball = ball
+                    ikkinchi_nom = talaba["original_name"]
+
+            # Ikki talaba deyarli bir xil ball olgan bo'lsa (masalan "Aliyev A"
+            # ham "Aliyev Aziz", ham "Aliyev Akmal" ga 100 ball beradi), qaysi
+            # biri ekanini bilib bo'lmaydi. Ilgari ro'yxatda birinchi uchragani
+            # jimgina tanlanardi — pul boshqa talabaga yozilib ketishi mumkin edi.
+            # Endi bunday holat qo'lda ko'rib chiqish uchun ajratiladi.
+            shubhali = (
+                eng_yaxshi_moslik is not None
+                and eng_yuqori_ball >= 70
+                and (eng_yuqori_ball - ikkinchi_ball) <= _MOSLIK_FARQI
+            )
+            if shubhali:
+                topilmaganlar.append({
+                    "name": deb_fio_str or h_str or "Noma'lum",
+                    "amount": yangi_summa,
+                    "date": to_lov_sanasi.strftime('%d.%m.%Y'),
+                    "reason": (f"Ikki talabaga bir xil mos keldi: "
+                               f"{eng_yaxshi_moslik['original_name']} ({eng_yuqori_ball:.0f}) / "
+                               f"{ikkinchi_nom} ({ikkinchi_ball:.0f})"),
+                })
+                continue
 
             if eng_yaxshi_moslik and eng_yuqori_ball >= 70:
                 target_row = eng_yaxshi_moslik["row"]
@@ -737,12 +812,16 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
             "total_income": jami_tushgan_pul,
             "updated_count": len(yangilangan_talabalar_set),
             "unmatched_count": len(topilmaganlar),
+            "date_error_count": len(sana_xatolari),
+            "date_error_amount": sum(x["amount"] for x in sana_xatolari),
             "start_date": cheklov_sanasi.strftime('%d.%m.%Y'),
             "end_date": oxirgi_sana_str,
             "next_date": keyingi_sana_str
         },
         "updated_students": yangilangan_talabalar,
         "unmatched_records": topilmaganlar,
+        # Sanasi o'qilmagani uchun umuman hisobga olinmagan to'lovlar
+        "date_error_records": sana_xatolari,
         "xulosa_rows": xulosa_rows
     }
 
