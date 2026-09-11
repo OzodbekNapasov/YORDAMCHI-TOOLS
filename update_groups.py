@@ -61,6 +61,29 @@ def headers():
     }
 
 
+def _notes_dict(g):
+    """notes ustunidagi JSON ni o'qish: {"rahbar": "...", "order": N}"""
+    raw = g.get("notes")
+    if not raw:
+        return {}
+    try:
+        d = json.loads(raw) if isinstance(raw, str) else raw
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _rahbar_of(g):
+    return str(_notes_dict(g).get("rahbar") or "")
+
+
+def _order_of(g):
+    try:
+        return int(_notes_dict(g).get("order") or 0)
+    except Exception:
+        return 0
+
+
 def fetch_all(url, h):
     r = requests.get(f"{url}/rest/v1/{TABLE}?select=*&order=group_name",
                      headers=h, timeout=25)
@@ -80,15 +103,11 @@ def main():
 
     h = headers()
     rows = fetch_all(url, h)
-    cols = set(rows[0].keys()) if rows else set()
-    has_rahbar = "rahbar_name" in cols
+    has_col = bool(rows) and "rahbar_name" in rows[0]
 
     print(f"Bazadagi guruhlar: {len(rows)} ta")
-    if not has_rahbar:
-        print("\nOGOHLANTIRISH: 'rahbar_name' ustuni yo'q — rahbarlar SAQLANMAYDI.")
-        print("Avval Supabase Dashboard > SQL Editor da shuni bajaring:\n")
-        print("  ALTER TABLE public.atlas_student_groups")
-        print("    ADD COLUMN IF NOT EXISTS rahbar_name TEXT;\n")
+    col_state = "bor" if has_col else "yo'q (notes ishlatiladi)"
+    print(f"'rahbar_name' ustuni: {col_state}")
 
     # Zaxira nusxa — qaytarish kerak bo'lsa
     backup = os.path.join(BASE_DIR, f"groups_backup_{datetime.now():%Y%m%d_%H%M%S}.json")
@@ -116,7 +135,8 @@ def main():
     print("KURS O'ZGARISHLARI:")
     if updates:
         for gname, old, new in updates:
-            print(f"   {gname}: {old}-kurs -> {new}-kurs")
+            rah = _rahbar_of(existing[gname])
+            print(f"   {gname}: {old}-kurs -> {new}-kurs   (rahbar: {rah or '-'})")
     else:
         print("   (o'zgarish yo'q)")
 
@@ -136,33 +156,52 @@ def main():
     # ---- Yozish ----
     ok_u = 0
     for gname, _old, new in updates:
+        payload = {"course_level": new}
+        # Ustun endi mavjud bo'lsa, notes dagi rahbarni unga ham ko'chiramiz —
+        # shunda kod qaysi manbadan o'qisa ham bir xil qiymatni topadi
+        if has_col and not existing[gname].get("rahbar_name"):
+            rah = _rahbar_of(existing[gname])
+            if rah:
+                payload["rahbar_name"] = rah
         r = requests.patch(
             f"{url}/rest/v1/{TABLE}?group_name=eq.{gname}",
-            headers=h, json={"course_level": new}, timeout=20)
+            headers=h, json=payload, timeout=20)
         if r.status_code in (200, 204):
             ok_u += 1
         else:
             print(f"   XATO {gname}: HTTP {r.status_code} {r.text[:90]}")
 
+    # Yangi guruhlar ketma-ketligi mavjudlaridan keyin davom etadi
+    next_order = max([_order_of(g) for g in rows] or [0]) + 1
+
     ok_i = 0
     for gn, rah in inserts:
-        rec = {"group_name": gn, "course_level": 1}
-        if has_rahbar:
+        rec = {
+            "group_name": gn,
+            "course_level": 1,
+            # notes — asosiy manba: atlas_db.py shu JSON ni o'qiydi va
+            # tartib raqami faqat shu yerda saqlanadi
+            "notes": json.dumps({"rahbar": rah, "order": next_order},
+                                ensure_ascii=False),
+        }
+        if has_col:
             rec["rahbar_name"] = rah
-        else:
-            rec["notes"] = f"Guruh rahbari: {rah}"
         r = requests.post(f"{url}/rest/v1/{TABLE}", headers=h, json=rec, timeout=20)
         if r.status_code in (200, 201, 204):
             ok_i += 1
+            next_order += 1
         else:
             print(f"   XATO {gn}: HTTP {r.status_code} {r.text[:90]}")
 
-    # ---- Rahbarlarni mavjud yangi guruhlarga ham yozish ----
-    if has_rahbar:
-        for gn, rah in NEW_FIRST_COURSE:
-            if gn in existing:
-                requests.patch(f"{url}/rest/v1/{TABLE}?group_name=eq.{gn}",
-                               headers=h, json={"rahbar_name": rah}, timeout=20)
+    # Allaqachon mavjud 26- guruhlarning rahbarini yangilash
+    for gn, rah in NEW_FIRST_COURSE:
+        if gn in existing:
+            old_order = _order_of(existing[gn]) or next_order
+            requests.patch(
+                f"{url}/rest/v1/{TABLE}?group_name=eq.{gn}", headers=h,
+                json={"notes": json.dumps({"rahbar": rah, "order": old_order},
+                                          ensure_ascii=False)},
+                timeout=20)
 
     print(f"\nYangilandi: {ok_u}/{len(updates)}   Qo'shildi: {ok_i}/{len(inserts)}")
 
