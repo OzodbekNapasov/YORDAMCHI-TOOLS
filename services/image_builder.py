@@ -19,7 +19,10 @@ def _get_font(font_type: str = "reg", px_size: int = 58):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     fonts_dir = os.path.join(base_dir, "fonts")
 
-    if font_type == "bold":
+    if font_type == "bolditalic":
+        filenames = ["timesbi.ttf", "TimesNewRomanBoldItalic.ttf", "FreeSerifBoldItalic.ttf",
+                     "timesbd.ttf", "TimesNewRomanBold.ttf"]
+    elif font_type == "bold":
         filenames = ["timesbd.ttf", "TimesNewRomanBold.ttf", "FreeSerifBold.ttf", "AppBoldFont.ttf"]
     elif font_type == "italic":
         filenames = ["timesi.ttf", "TimesNewRomanItalic.ttf", "FreeSerifItalic.ttf"]
@@ -239,319 +242,268 @@ def _render_oqiyapti(data: dict, draw: ImageDraw.ImageDraw, img: Image.Image, f_
     return cur_y
 
 
+# ============================================================
+#  BUYRUQ RENDERI — o'lchamlar Word etalonidan olingan (300 DPI A4)
+#
+#  Etalon qanday olingan: shablon Word (COM) orqali PDF ga o'girilib,
+#  PyMuPDF bilan har bir matn bo'lagining x/y/pt qiymati o'lchangan.
+#  Quyidagi raqamlar — o'sha o'lchovlar, taxmin emas.
+# ============================================================
+
+# Sahifa va chetlar (300 DPI: 1cm = 118.11px, 1pt = 4.167px)
+_PG_W, _PG_H = 2481, 3508
+_LEFT, _RIGHT = 355, 2340          # docx: chap 3.00cm, o'ng 1.25cm
+_CONTENT_W = _RIGHT - _LEFT        # 1985 px
+
+# Shrift o'lchamlari (docx dagi punktlardan)
+_SZ_BODY = 58                      # 14 pt — asosiy matn
+_SZ_HDR = 42                       # 10 pt — yuqoridagi ikki tilli sarlavha
+_SZ_ORDER = 67                     # 16 pt — "BUYRUQ №"
+
+_LINE_H = 67                       # qatorlar orasi
+_PARA_GAP = 49                     # xatboshilar orasidagi qo'shimcha bo'shliq
+_IND_PRE = 118                     # 1.00 cm — muqaddima xatboshisi
+_IND_ITEM = 125                    # 1.06 cm — ro'yxat bandlari
+
+# Aniq o'lchangan vertikal joylar
+_Y_HDR = 203                       # sarlavha birinchi qatori
+_HDR_STEP = 48
+_X_HDR_L, _X_HDR_R = 700, 1940     # chap va o'ng katak markazlari
+_EMB_X, _EMB_Y, _EMB_W = 1112, 201, 345   # gerb
+_Y_RULE = 650                      # sarlavha ostidagi gorizontal chiziq
+_Y_ORDER = 700                     # BUYRUQ №
+_Y_CITY = 776                      # "Qarshi sh." va sana
+_X_DATE = 1855                     # sana tab to'xtash joyi
+_Y_TITLE = 921                     # hujjat sarlavhasi
+_X_CENTER = 1410                   # markazlashtirilgan matnlar markazi
+_Y_BODY = 999                      # muqaddima boshlanishi
+
+
 def _render_buyruq(template_filename: str, data: dict, output_png_path: str) -> bool:
-    """4 turdagi rasmiy buyruqlar Ultra HD (300 DPI A4) renderer"""
-    img = Image.new("RGB", (2481, 3508), color=(255, 255, 255))
+    """Rasmiy buyruqlarni Word shablonining aynan o'zidek chizadi (300 DPI A4)"""
+    img = Image.new("RGB", (_PG_W, _PG_H), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
 
-    f_reg = _get_font("reg", 46)
-    f_bold = _get_font("bold", 46)
-    f_italic = _get_font("italic", 46)
-    f_bold_italic = _get_font("bold", 48)
-    f_hdr = _get_font("bold", 32)
-    f_title = _get_font("bold", 42)
-
-    left_margin = 250
-    right_margin = 2231
-    content_w = right_margin - left_margin
-    tab_indent_x = 390  # 1.25 cm
+    F = {
+        "reg": _get_font("reg", _SZ_BODY),
+        "bold": _get_font("bold", _SZ_BODY),
+        "italic": _get_font("italic", _SZ_BODY),
+        "bolditalic": _get_font("bolditalic", _SZ_BODY),
+    }
+    f_hdr = _get_font("bold", _SZ_HDR)
+    f_order = _get_font("bolditalic", _SZ_ORDER)
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    fn_lower = template_filename.lower()
 
-    # 1. HEADER (Bilingual + Emblem)
-    hdr_y = 180
-    logo_path = os.path.join(base_dir, "templates", "stamps", "buyruq_image1.png")
-    if os.path.exists(logo_path):
-        logo_img = Image.open(logo_path).convert("RGBA")
-        logo_w, logo_h = logo_img.size
-        target_w = 260
-        target_h = int(logo_h * (target_w / logo_w))
-        logo_resized = logo_img.resize((target_w, target_h), Image.Resampling.LANCZOS)
-        logo_x = (2481 - target_w) // 2
-        img.paste(logo_resized, (logo_x, hdr_y + 10), logo_resized if "A" in logo_resized.getbands() else None)
+    def tw(text, font):
+        bb = font.getbbox(text)
+        return bb[2] - bb[0]
 
-    # Left Uzbek Header
+    def draw_centered(text, y, font, center_x=_X_CENTER):
+        draw.text((int(center_x - tw(text, font) / 2), y), text, fill=(0, 0, 0), font=font)
+
+    # ---------- 1. Ikki tilli sarlavha ----------
+    # Word kataklar ichida matnni markazga tekislaydi va o'z-o'zidan o'raydi
     uz_lines = [
-        "O’ZBEKISTON RESPUBLIKASI",
-        "QASHQADARYO VILOYATI",
-        "“QARSHI TIBBIYOT TEXNIKUMI”",
-        "NODAVLAT TA’LIM MUASSASASI"
+        "O’ZBEKISTON RESPUBLIKASI", "QASHQADARYO VILOYATI",
+        "“QARSHI TIBBIYOT", "TEXNIKUMI”",
+        "NODAVLAT TA’LIM", "MUASSASASI",
     ]
-    cur_hy = hdr_y
-    for l in uz_lines:
-        draw.text((left_margin, cur_hy), l, fill=(0, 0, 0), font=f_hdr)
-        cur_hy += 52
-
-    # Right Russian Header
     ru_lines = [
         "РЕСПУБЛИКА УЗБЕКИСТАН",
         "КАШКАДАРЬИНСКАЯ ОБЛАСТЬ",
-        "НЕГОСУДАРСТВЕННОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ",
-        "«КАРSHИНСКИЙ МЕДИЦИНСКИЙ ТЕХНИКУМ»"
+        "НЕГОСУДАРСТВЕННОЕ",
+        "ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ",
+        "«КАРШИНСКИЙ МЕДИЦИНСКИЙ",
+        "ТЕХНИКУМ»",
     ]
-    cur_hy = hdr_y
-    for l in ru_lines:
-        bb = f_hdr.getbbox(l)
-        tw = bb[2] - bb[0]
-        draw.text((right_margin - tw, cur_hy), l, fill=(0, 0, 0), font=f_hdr)
-        cur_hy += 52
+    for i, line in enumerate(uz_lines):
+        draw_centered(line, _Y_HDR + i * _HDR_STEP, f_hdr, _X_HDR_L)
+    for i, line in enumerate(ru_lines):
+        draw_centered(line, _Y_HDR + i * _HDR_STEP, f_hdr, _X_HDR_R)
 
-    # 2. TITLE BOX
-    fn_lower = template_filename.lower()
-    title_text = "Akademik ta’til berish to‘g‘risida"
+    # Gerb
+    logo_path = os.path.join(base_dir, "templates", "stamps", "buyruq_image1.png")
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path).convert("RGBA")
+        h = int(logo.size[1] * (_EMB_W / logo.size[0]))
+        logo = logo.resize((_EMB_W, h), Image.Resampling.LANCZOS)
+        img.paste(logo, (_EMB_X, _EMB_Y), logo)
+
+    # Sarlavha ostidagi chiziq
+    draw.rectangle([(349, _Y_RULE), (_RIGHT, _Y_RULE + 5)], fill=(0, 0, 0))
+
+    # ---------- 2. BUYRUQ raqami, shahar va sana ----------
+    b_num = str(data.get("buyruq_raqami", "")).strip()
+    b_sana = str(data.get("sanasi") or data.get("SANA") or "").strip()
+    draw_centered(f"BUYRUQ №  {b_num}_", _Y_ORDER, f_order, (_LEFT + _RIGHT) // 2)
+    draw.text((_LEFT, _Y_CITY), "Qarshi sh.", fill=(0, 0, 0), font=F["reg"])
+    draw.text((_X_DATE, _Y_CITY), f"{b_sana}yil.", fill=(0, 0, 0), font=F["reg"])
+
+    # ---------- 3. Hujjat sarlavhasi (ramkasiz, markazda) ----------
+    title = "Akademik ta’til berish to‘g‘risida"
     if "qayta_tiklash" in fn_lower or "tiklash" in fn_lower:
-        title_text = "Akademik ta’til (o‘z kursida qolgan) o‘quvchini\no‘quvchilar safiga tiklash to‘g‘risida"
+        title = ("Akademik ta’til (o‘z kursida qolgan) o‘quvchini\n"
+                 "o‘quvchilar safiga tiklash to‘g‘risida")
     elif "guruhdan" in fn_lower or "otkazish" in fn_lower or "o`tkazish" in fn_lower:
-        title_text = "O‘quvchini guruhdan guruhga o’tkazish to‘g‘risida"
+        title = "O‘quvchini guruhdan guruhga o’tkazish to‘g‘risida"
     elif "chiqarish" in fn_lower or "safidan" in fn_lower:
-        title_text = "O‘quvchini o‘quvchilar safidan chiqarish to‘g‘risida"
+        title = "O‘quvchini o‘quvchilar safidan chiqarish to‘g‘risida"
 
-    box_y = 480
-    box_lines = title_text.split("\n")
-    box_h = 100 + (len(box_lines) - 1) * 60
-    draw.rectangle([(left_margin, box_y), (right_margin, box_y + box_h)], outline=(0, 0, 0), width=3)
+    ty = _Y_TITLE
+    for tline in title.split("\n"):
+        draw_centered(tline, ty, F["bold"])
+        ty += _LINE_H
 
-    for i, bl in enumerate(box_lines):
-        bb = f_title.getbbox(bl)
-        tw = bb[2] - bb[0]
-        tx = left_margin + (content_w - tw) // 2
-        ty = box_y + 25 + i * 60
-        draw.text((tx, ty), bl, fill=(0, 0, 0), font=f_title)
+    # Muqaddima sarlavha ostidan boshlanadi. Qat'iy _Y_BODY ga bog'lab qo'yilsa,
+    # ikki qatorli sarlavhali shablonlarda matn sarlavha ustiga chiqib ketardi.
+    body_y = max(_Y_BODY, ty + 11)
 
-    # 3. BUYRUQ NUMBER AND DATE
-    b_num = str(data.get("buyruq_raqami", "14-B")).strip()
-    b_sana = str(data.get("sanasi") or data.get("SANA") or "14.08.2026").strip()
-    num_y = box_y + box_h + 80
+    # ---------- Matn oqimi uchun yordamchilar ----------
+    space_w = tw(" ", F["reg"])
 
-    draw.text((left_margin, num_y), f"BUYRUQ №  {b_num}_", fill=(0, 0, 0), font=f_bold_italic)
-
-    bb_d = f_reg.getbbox(f"{b_sana}yil.")
-    w_d = bb_d[2] - bb_d[0]
-    draw.text((left_margin, num_y + 70), "Qarshi sh.", fill=(0, 0, 0), font=f_reg)
-    draw.text((right_margin - w_d, num_y + 70), f"{b_sana}yil.", fill=(0, 0, 0), font=f_reg)
-
-    # 4. PREAMBLE (Justified)
-    preamble = "O‘zbekiston Respublikasi Vazirlar Mahkamasining 2020 yil 7-avgustdagi “O‘zbekiston Respublikasida uzluksiz boshlang‘ich, o‘rta va o‘rta maxsus professional ta’lim tizimini tartibga soluvchi normativ-huquqiy hujjatlarni tasdiqlash to‘g‘risida”gi 466-son qarori 1-ilovasi bilan tasdiqlangan “O‘zbekiston Respublikasida uzluksiz boshlang‘ich, o‘rta va o‘rta maxsus professional ta’lim to‘g‘risida” NIZOMga asosan"
-
-    def draw_justified_paragraph(text, start_y, is_tab_indent=False, line_spacing=68):
-        words = text.split()
-        lines = []
-        cur_line = []
-        cur_w = 0
-        space_w = f_reg.getbbox(" ")[2] - f_reg.getbbox(" ")[0]
-
-        for w in words:
-            bb = f_reg.getbbox(w)
-            w_px = bb[2] - bb[0]
-            max_w = (content_w - (tab_indent_x - left_margin)) if (not lines and is_tab_indent) else content_w
-            test_w = cur_w + (space_w if cur_line else 0) + w_px
-            if test_w > max_w and cur_line:
-                lines.append((cur_line, len(lines) == 0 and is_tab_indent))
-                cur_line = [(w, w_px)]
-                cur_w = w_px
+    def layout(tokens, first_indent):
+        """So'zlarni qatorlarga bo'lish. token = (matn, uslub)"""
+        lines, cur, cur_w = [], [], 0
+        for text, st in tokens:
+            w = tw(text, F[st])
+            avail = _CONTENT_W - (first_indent if not lines else 0)
+            if cur and cur_w + space_w + w > avail:
+                lines.append(cur)
+                cur, cur_w = [(text, st, w)], w
             else:
-                cur_line.append((w, w_px))
-                cur_w = test_w
+                cur_w = cur_w + (space_w if cur else 0) + w
+                cur.append((text, st, w))
+        if cur:
+            lines.append(cur)
+        return lines
 
-        if cur_line:
-            lines.append((cur_line, len(lines) == 0 and is_tab_indent))
-
-        cur_y = start_y
-        for line_idx, (line, has_tab) in enumerate(lines):
-            is_last = (line_idx == len(lines) - 1)
-            tot_w = sum(w for _, w in line)
+    def render(lines, y, first_indent):
+        """Word kabi: oxirgi qatordan boshqasi ikki chetga tekislanadi"""
+        for i, line in enumerate(lines):
+            indent = first_indent if i == 0 else 0
+            x0, avail = _LEFT + indent, _CONTENT_W - indent
+            total = sum(w for _, _, w in line)
             gaps = len(line) - 1
-            line_start_x = tab_indent_x if has_tab else left_margin
-            line_max_w = (right_margin - tab_indent_x) if has_tab else content_w
+            gap = ((avail - total) / gaps) if (i < len(lines) - 1 and gaps > 0) else space_w
+            x = float(x0)
+            for text, st, w in line:
+                draw.text((int(round(x)), y), text, fill=(0, 0, 0), font=F[st])
+                x += w + gap
+            y += _LINE_H
+        return y
 
-            gap_px = (line_max_w - tot_w) / gaps if (not is_last and gaps > 0) else float(space_w)
-            cur_x = float(line_start_x)
-            for word, w_px in line:
-                draw.text((int(round(cur_x)), cur_y), word, fill=(0, 0, 0), font=f_reg)
-                cur_x += w_px + gap_px
-            cur_y += line_spacing
+    def para(tokens, y, first_indent=0):
+        return render(layout(tokens, first_indent), y, first_indent) + _PARA_GAP
 
-        return cur_y
+    def words(text, style="reg"):
+        return [(w, style) for w in text.split()]
 
-    cur_y = draw_justified_paragraph(preamble, num_y + 160, is_tab_indent=False)
+    # ---------- 4. Muqaddima ----------
+    preamble = (
+        "O‘zbekiston Respublikasi Vazirlar Mahkamasining 2020 yil 7-avgustdagi "
+        "“O‘zbekiston Respublikasida uzluksiz boshlang‘ich, o‘rta va "
+        "o‘rta maxsus professional ta’lim tizimini tartibga soluvchi "
+        "normativ-huquqiy hujjatlarni tasdiqlash to‘g‘risida”gi 466-son "
+        "qarori 1-ilovasi bilan tasdiqlangan “O‘zbekiston Respublikasida "
+        "uzluksiz boshlang‘ich, o‘rta va o‘rta maxsus professional "
+        "ta’lim to‘g‘risida” NIZOMga asosan"
+    )
+    # Muqaddimadan keyin xatboshi bo'shlig'i QO'YILMAYDI: etalonda oxirgi qator
+    # 1347 da, BUYURAMAN esa 1414 da — orasi roppa-rosa bitta qator balandligi.
+    cur_y = render(layout(words(preamble), _IND_PRE), body_y, _IND_PRE)
 
-    # 5. BUYURAMAN:
-    cur_y += 35
-    bb_b = f_bold.getbbox("BUYURAMAN:")
-    tw_b = bb_b[2] - bb_b[0]
-    draw.text((left_margin + (content_w - tw_b) // 2, cur_y), "BUYURAMAN:", fill=(0, 0, 0), font=f_bold)
-    cur_y += 85
+    # ---------- 5. BUYURAMAN: ----------
+    draw_centered("BUYURAMAN:", cur_y, F["bold"])
+    cur_y += _LINE_H + _PARA_GAP
 
-    # 6. DECISION PARAGRAPH
+    # ---------- 6. Ro'yxat bandlari ----------
     ifo = str(data.get("IFO") or data.get("FIO") or "").strip()
-    kurs = str(data.get("kursi", "1")).strip()
+    kurs = str(data.get("kursi", "")).strip()
     guruhi = str(data.get("guruhi") or data.get("avvalgi_guruhi") or "").strip()
     yangi_guruh = str(data.get("yangi_guruhi", "")).strip()
-    yonalish = str(data.get("yonalishi", "")).strip()
 
-    def draw_token_paragraph(tokens, start_y, is_tab_indent=True, line_spacing=68):
-        lines = []
-        cur_line = []
-        cur_w = 0
-        space_w = f_reg.getbbox(" ")[2] - f_reg.getbbox(" ")[0]
+    # Shablondagi {{IFO}}ga — qo'shimcha ismga YOPISHIB yozilishi kerak,
+    # shuning uchun oxirgi so'z bilan birga bitta token qilinadi
+    def ifo_tokens(suffix):
+        parts = ifo.split()
+        if not parts:
+            return [(suffix.lstrip(), "bold")] if suffix.strip() else []
+        out = [(w, "bold") for w in parts[:-1]]
+        out.append((parts[-1] + suffix, "bold"))
+        return out
 
-        for w, is_bold, is_it in tokens:
-            fnt = f_bold if is_bold else (f_italic if is_it else f_reg)
-            bb = fnt.getbbox(w)
-            w_px = bb[2] - bb[0]
-            max_w = (content_w - (tab_indent_x - left_margin)) if (not lines and is_tab_indent) else content_w
-            test_w = cur_w + (space_w if cur_line else 0) + w_px
-            if test_w > max_w and cur_line:
-                lines.append((cur_line, len(lines) == 0 and is_tab_indent))
-                cur_line = [(w, is_bold, is_it, w_px)]
-                cur_w = w_px
-            else:
-                cur_line.append((w, is_bold, is_it, w_px))
-                cur_w = test_w
+    base = words(
+        "“O‘zbekiston Respublikasida uzluksiz boshlang‘ich, o‘rta va "
+        "o‘rta maxsus professional ta’lim to‘g‘risida” NIZOMga asosan"
+    )
 
-        if cur_line:
-            lines.append((cur_line, len(lines) == 0 and is_tab_indent))
-
-        cur_y = start_y
-        for line_idx, (line, has_tab) in enumerate(lines):
-            is_last = (line_idx == len(lines) - 1)
-            tot_w = sum(w for _, _, _, w in line)
-            gaps = len(line) - 1
-            line_start_x = tab_indent_x if has_tab else left_margin
-            line_max_w = (right_margin - tab_indent_x) if has_tab else content_w
-
-            gap_px = (line_max_w - tot_w) / gaps if (not is_last and gaps > 0) else float(space_w)
-            cur_x = float(line_start_x)
-            for word, is_b, is_i, w_px in line:
-                fnt = f_bold if is_b else (f_italic if is_i else f_reg)
-                draw.text((int(round(cur_x)), cur_y), word, fill=(0, 0, 0), font=fnt)
-                cur_x += w_px + gap_px
-            cur_y += line_spacing
-
-        return cur_y
-
-    if "akademik ta'til berish" in fn_lower or "akademik_tatil" in fn_lower:
-        dec_tokens = [
-            ("“O‘zbekiston", False, False), ("Respublikasida", False, False), ("uzluksiz", False, False),
-            ("boshlang‘ich,", False, False), ("o‘rta", False, False), ("va", False, False), ("o‘rta", False, False),
-            ("maxsus", False, False), ("professional", False, False), ("ta’lim", False, False),
-            ("to‘g‘risida”", False, False), ("NIZOMga", False, False), ("asosan", False, False),
-            (f"{kurs}-bosqich", False, False), (f"{guruhi}-guruh", True, False), ("talabasi", False, False)
-        ]
-        for w in ifo.split():
-            dec_tokens.append((w, True, False))
-        dec_tokens.extend([("ga", True, False), ("akademik", False, False), ("ta`til", False, False), ("berilsin.", False, False)])
-        cur_y = draw_token_paragraph(dec_tokens, cur_y)
-
-    elif "qayta_tiklash" in fn_lower or "tiklash" in fn_lower:
-        avv_num = str(data.get("avvalgi_buyruq_raqami", "14-B")).strip()
-        avv_sana = str(data.get("avvalgi_buyruq_sanasi", "10.02.2025")).strip()
-        dec_tokens = [
-            ("“O‘zbekiston", False, False), ("Respublikasida", False, False), ("uzluksiz", False, False),
-            ("boshlang‘ich,", False, False), ("o‘rta", False, False), ("va", False, False), ("o‘rta", False, False),
-            ("maxsus", False, False), ("professional", False, False), ("ta’lim", False, False),
-            ("to‘g‘risida”", False, False), ("NIZOMga", False, False), ("asosan", False, False),
-            ("texnikum", False, False), ("direktorining", False, False), (f"{avv_sana}", True, False),
-            ("yil-dagi", False, False), (f"{avv_num}-sonli", True, False), ("buyrug`i", False, False),
-            ("bilan", False, False), ("akademik", False, False), ("ta`til", False, False), ("berilgan", False, False),
-            (f"{kurs}-bosqich", False, False), (f"{guruhi}-guruh", True, False), ("talabasi", False, False)
-        ]
-        for w in ifo.split():
-            dec_tokens.append((w, True, False))
-        dec_tokens.extend([
-            ("ni", True, False), (f"{kurs}-bosqich", False, False), (f"{yangi_guruh}-guruhga", True, False),
-            ("o’quv", False, False), ("jarayonlarini", False, False), ("davom", False, False),
-            ("ettirishi", False, False), ("uchun", False, False), ("tiklansin.", False, False)
-        ])
-        cur_y = draw_token_paragraph(dec_tokens, cur_y)
-
+    if "qayta_tiklash" in fn_lower or "tiklash" in fn_lower:
+        avv_num = str(data.get("avvalgi_buyruq_raqami", "")).strip()
+        avv_sana = str(data.get("avvalgi_buyruq_sanasi", "")).strip()
+        item1 = (base + words("texnikum direktorining")
+                 + [(avv_sana, "bold")] + words("yil-dagi")
+                 + [(f"{avv_num}-sonli", "bold")]
+                 + words("buyrug`i bilan akademik ta`til berilgan")
+                 + [(f"{kurs}-bosqich", "reg"), (f"{guruhi}-guruh", "bold")]
+                 + words("talabasi") + ifo_tokens("ni")
+                 + [(f"{kurs}-bosqich", "reg"), (f"{yangi_guruh}-guruhga", "bold")]
+                 + words("o’quv jarayonlarini davom ettirishi uchun tiklansin."))
     elif "guruhdan" in fn_lower or "otkazish" in fn_lower or "o`tkazish" in fn_lower:
-        dec_tokens = [
-            ("Ta`lim", False, False), ("yo`nalishi", False, False), ("va", False, False), ("o`quv", False, False),
-            ("jarayoni", False, False), ("bir", False, False), ("xil", False, False), ("bo`lganligi", False, False),
-            ("sababli", False, False), (f"{yonalish}", True, False), ("yo‘nalishining", False, False),
-            ("quyidagi", False, False), ("o‘quvchilari", False, False), ("guruhdan-guruhga", False, False),
-            ("o‘tkazilsin:", False, False)
-        ]
-        cur_y = draw_token_paragraph(dec_tokens, cur_y)
-
-        # Draw Table
-        cur_y += 30
-        tbl_top = cur_y
-        col_w = [180, 1000, 801]
-        tbl_h = 170
-        draw.rectangle([(left_margin, tbl_top), (right_margin, tbl_top + tbl_h)], outline=(0, 0, 0), width=2)
-        draw.line([(left_margin + col_w[0], tbl_top), (left_margin + col_w[0], tbl_top + tbl_h)], fill=(0, 0, 0), width=2)
-        draw.line([(left_margin + col_w[0] + col_w[1], tbl_top), (left_margin + col_w[0] + col_w[1], tbl_top + tbl_h)], fill=(0, 0, 0), width=2)
-        draw.line([(left_margin, tbl_top + 75), (right_margin, tbl_top + 75)], fill=(0, 0, 0), width=2)
-
-        draw.text((left_margin + 45, tbl_top + 15), "T/R", font=f_bold, fill=(0, 0, 0))
-        draw.text((left_margin + col_w[0] + 180, tbl_top + 15), "O'quvchilarning I.F.Sh", font=f_bold, fill=(0, 0, 0))
-        draw.text((left_margin + col_w[0] + col_w[1] + 160, tbl_top + 15), "Guruhdan almasishi", font=f_bold, fill=(0, 0, 0))
-
-        draw.text((left_margin + 70, tbl_top + 95), "1", font=f_reg, fill=(0, 0, 0))
-        draw.text((left_margin + col_w[0] + 40, tbl_top + 95), ifo, font=f_bold, fill=(0, 0, 0))
-        transfer_str = f"{guruhi}guruhdan  {yangi_guruh}guruhga"
-        draw.text((left_margin + col_w[0] + col_w[1] + 40, tbl_top + 95), transfer_str, font=f_reg, fill=(0, 0, 0))
-        cur_y = tbl_top + tbl_h + 40
-
+        item1 = (base + [(f"{kurs}-bosqich", "reg"), (f"{guruhi}-guruh", "bold")]
+                 + words("talabasi") + ifo_tokens("ni")
+                 + [(f"{yangi_guruh}-guruhga", "bold")]
+                 + words("o‘tkazilsin."))
+    elif "chiqarish" in fn_lower or "safidan" in fn_lower:
+        item1 = (base + words("texnikum ichki tartib qoidalariga amal qilmagan")
+                 + [(f"{kurs}-bosqich", "reg"), (f"{guruhi}-guruh", "bold")]
+                 + words("talabasi") + ifo_tokens("ni")
+                 + words("o’quvchilar safidan chiqarilsin."))
     else:
-        # safidan chiqarish
-        dec_tokens = [
-            ("“O‘zbekiston", False, False), ("Respublikasida", False, False), ("uzluksiz", False, False),
-            ("boshlang‘ich,", False, False), ("o‘rta", False, False), ("va", False, False), ("o‘rta", False, False),
-            ("maxsus", False, False), ("professional", False, False), ("ta’lim", False, False),
-            ("to‘g‘risida”", False, False), ("NIZOM", False, False), ("va", False, False),
-            ("texnikum", False, False), ("ichki", False, False), ("tartib", False, False),
-            ("qoidalariga", False, False), ("amal", False, False), ("qilmagan", False, False),
-            (f"{kurs}-bosqich", False, False), (f"{guruhi}-guruh", True, False), ("talabasi", False, False)
-        ]
-        for w in ifo.split():
-            dec_tokens.append((w, True, False))
-        dec_tokens.extend([
-            ("ni", True, False), ("o’quvchilar", False, False), ("safidan", False, False),
-            ("chiqarilsin.", False, False)
-        ])
-        cur_y = draw_token_paragraph(dec_tokens, cur_y)
+        item1 = (base + [(f"{kurs}-bosqich", "reg"), (f"{guruhi}-guruh", "bold")]
+                 + words("talabasi") + ifo_tokens("ga")
+                 + words("akademik ta`til berilsin."))
 
-    # 7. SUB-PARAGRAPHS
-    cur_y += 30
-    sub_p1 = "Ushbu buyruq bilan O`IBDO`, KTBDO`, MMIBDO` hamda guruh rahbarlari tanishtirilsin." if ("chiqarish" in fn_lower or "safidan" in fn_lower) else "Ushbu buyruq bilan O`IBDO` hamda guruh rahbarlari tanishtirilsin."
-    cur_y = draw_justified_paragraph(sub_p1, cur_y, is_tab_indent=False) + 20
+    is_expel = "chiqarish" in fn_lower or "safidan" in fn_lower
+    item2 = ("Ushbu buyruq bilan O`IBDO`, KTBDO`, MMIBDO` hamda guruh tutorlari tanishtirilsin."
+             if is_expel else
+             "Ushbu buyruq bilan O`IBDO` hamda guruh tutorlari tanishtirilsin.")
 
-    sub_p2 = "1 kun muddatda prof-emis.edu.uz platformasi administratoriga taqdim etilsin."
-    cur_y = draw_justified_paragraph(sub_p2, cur_y, is_tab_indent=False) + 20
+    items = [
+        item1,
+        words(item2),
+        words("1 kun muddatda prof-emis.edu.uz platformasi administratoriga taqdim etilsin."),
+        words("Ushbu buyruq ijrosini taminlashni o`z  zimmamda qoldiraman."),
+    ]
 
-    sub_p3 = "Ushbu buyruq ijrosini taminlashni o`z  zimmamda qoldiraman."
-    cur_y = draw_justified_paragraph(sub_p3, cur_y, is_tab_indent=False) + 35
+    for n, toks in enumerate(items, start=1):
+        numbered = list(toks)
+        if numbered:
+            first_text, first_st = numbered[0][0], numbered[0][1]
+            numbered[0] = (f"{n}.{first_text}", first_st)
+        cur_y = para(numbered, cur_y, _IND_ITEM)
 
-    # 8. ASOS (Italic)
-    asos_text = f"Asos: {ifo}ning arizasi va direktorning roziligi."
-    if "chiqarish" in fn_lower or "safidan" in fn_lower:
-        asos_turi = str(data.get("asos_turi", "Talaba arizasi")).strip()
-        if "bildirgi" in asos_turi.lower() or "rahbar" in asos_turi.lower():
-            asos_text = "Asos: Guruh rahbarining bildirgisi va ogohlantirish xatlari."
-        else:
-            asos_text = f"Asos: {ifo}ning arizasi va direktorning roziligi."
+    # ---------- 7. Asos ----------
+    asos_tail = f"{ifo}ning arizasi va direktorning roziligi."
+    if is_expel:
+        turi = str(data.get("asos_turi", "")).strip().lower()
+        if "bildirgi" in turi or "rahbar" in turi:
+            asos_tail = "Guruh rahbarining bildirgisi va ogohlantirish xatlari."
     elif "guruhdan" in fn_lower or "otkazish" in fn_lower or "o`tkazish" in fn_lower:
-        asos_text = "Asos: Talabalarning arizasi va O`IBDO`ning roziligi."
+        asos_tail = "Talabalarning arizasi va O`IBDO`ning roziligi."
 
-    draw.text((tab_indent_x, cur_y), asos_text, fill=(0, 0, 0), font=f_italic)
-    cur_y += 120
+    cur_y = render(layout([("Asos:", "bolditalic")] + words(asos_tail, "italic"), 0),
+                   cur_y, 0)
 
-    # 9. FOOTER (Asl Word shablonidagi kabi: Faqat matn, pechat va imzosiz)
-    footer_y = max(cur_y + 120, 2980)
-    draw.text((left_margin, footer_y), "“Qarshi tibbiyot texnikumi”", fill=(0, 0, 0), font=f_bold)
+    # ---------- 8. Imzo ----------
+    foot_y = max(cur_y + 200, 2432)
+    draw.text((502, foot_y), "“Qarshi tibbiyot texnikumi”", fill=(0, 0, 0), font=F["bold"])
+    draw.text((_LEFT, foot_y + _LINE_H), "ijrochi direktori:", fill=(0, 0, 0), font=F["bold"])
+    name = "Sh.Raxmonov"
+    draw.text((_RIGHT - tw(name, F["bold"]), foot_y + _LINE_H), name, fill=(0, 0, 0), font=F["bold"])
 
-    dir_label = "ijrochi direktori:"
-    dir_name = "Sh.Raxmonov"
-    bb_dn = f_bold.getbbox(dir_name)
-    w_dn = bb_dn[2] - bb_dn[0]
-
-    draw.text((left_margin, footer_y + 70), dir_label, fill=(0, 0, 0), font=f_reg)
-    draw.text((right_margin - w_dn, footer_y + 70), dir_name, fill=(0, 0, 0), font=f_bold)
-
-    img.save(output_png_path, "PNG", quality=100)
+    img.save(output_png_path, "PNG")
     return True
 
 

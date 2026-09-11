@@ -37,6 +37,9 @@ youtube_token.json
 # Loglar
 *.log
 
+# Tahrirlashdan oldingi zaxira nusxalar
+*.bak
+
 # Supabase holati zaxira nusxalari
 cloud_state_backup_*.json
 
