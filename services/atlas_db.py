@@ -427,8 +427,13 @@ def init_db():
 
 
 def _get_supabase_credentials():
-    supa_url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-    supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")
+    # .strip() muhim: env qiymatida tasodifiy bo'shliq yoki tab bo'lsa, u yasalgan
+    # URL'larning boshiga tushib qoladi (storage havolalari "\thttps://..." ko'rinishida
+    # saqlanib ketgan edi) va keyinchalik qiyoslash/ochishda muammo beradi.
+    supa_url = (os.environ.get("SUPABASE_URL") or "https://rsrrrkkpvfjyfnzikiiy.supabase.co").strip()
+    supa_key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+                or os.environ.get("SUPABASE_KEY")
+                or os.environ.get("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", "")).strip()
     if not supa_key:
         env_paths = [".env", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")]
         for ep in env_paths:
@@ -1117,8 +1122,31 @@ def get_contract_sessions():
         return []
 
 
+def _normalize_session(res: dict) -> dict:
+    """metrics_json ni metrics ga ochib berish (manba SQLite ham, Supabase ham bo'lishi mumkin)"""
+    raw = res.get("metrics_json")
+    if raw:
+        if isinstance(raw, dict):
+            res["metrics"] = raw
+        else:
+            try:
+                res["metrics"] = json.loads(raw)
+            except Exception:
+                res["metrics"] = {}
+    else:
+        res.setdefault("metrics", {})
+    return res
+
+
 def get_contract_session_by_id(session_id: str):
-    """Sessiya ID bo'yicha ma'lumot olish"""
+    """Sessiya ID bo'yicha ma'lumot olish (SQLite + Supabase Cloud fallback).
+
+    Serverless'da sessiya bir so'rovda yaratilib, Telegramga yuborish butunlay
+    boshqa instansiyada bajarilishi mumkin — u yerda /tmp/atlas.db bo'sh bo'ladi.
+    Ilgari bu yerda faqat SQLite o'qilar va None qaytardi; natijada yuborish
+    kodidagi `if sess:` shoxi tushib qolib, screenshot havolalari yig'ilmasdan
+    Telegramga faqat sarlavha ketardi.
+    """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1126,17 +1154,25 @@ def get_contract_session_by_id(session_id: str):
         row = cursor.fetchone()
         conn.close()
         if row:
-            res = dict(row)
-            if res.get("metrics_json"):
-                try:
-                    res["metrics"] = json.loads(res["metrics_json"])
-                except:
-                    res["metrics"] = {}
-            return res
-        return None
+            return _normalize_session(dict(row))
     except Exception as e:
-        print(f"Get contract session by id error: {e}")
-        return None
+        print(f"Get contract session by id sqlite error: {e}")
+
+    try:
+        import requests
+        supa_url, supa_key = _get_supabase_credentials()
+        if supa_url and supa_key:
+            headers = {"apikey": supa_key, "Authorization": f"Bearer {supa_key}"}
+            resp = requests.get(
+                f"{supa_url}/rest/v1/atlas_contract_sessions"
+                f"?session_id=eq.{session_id}&select=*&limit=1",
+                headers=headers, timeout=10)
+            if resp.status_code == 200 and resp.json():
+                return _normalize_session(dict(resp.json()[0]))
+    except Exception as se:
+        print(f"Get contract session by id supabase error: {se}")
+
+    return None
 
 
 def delete_contract_session(session_id: str):
