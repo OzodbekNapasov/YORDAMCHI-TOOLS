@@ -815,18 +815,35 @@ def get_document_by_id(doc_id: int):
 
 
 # O'quv Guruhlari (Academic Student Groups) Boshqaruvi
-def get_student_groups():
-    """Barcha o'quv guruhlarini tartib bo'yicha olish (SQLite + Supabase Cloud fallback)"""
+def _sqlite_student_groups():
+    """Lokal SQLite dagi guruhlar (bo'sh bo'lsa [] qaytadi)"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM student_groups ORDER BY order_num ASC, group_name ASC")
         rows = [dict(r) for r in cursor.fetchall()]
         conn.close()
-        if rows:
-            return rows
+        return rows
     except Exception as e:
         print(f"Get student groups sqlite error: {e}")
+        return []
+
+
+def get_student_groups():
+    """Barcha o'quv guruhlarini tartib bo'yicha olish.
+
+    Manba muhitga qarab tanlanadi:
+      - Lokal Windows'da SQLite asosiy ombor (yozish ham shu yerga ketadi),
+        Supabase esa zaxira.
+      - Serverless'da /tmp/atlas.db faqat shu instansiyaning keshi. U Supabase'da
+        bo'lgan o'zgarishni ko'rmaydi va instansiya tirik ekan eskirgan ro'yxatni
+        qaytaraveradi. Shuning uchun bulutda Supabase birinchi o'rinda turadi va
+        SQLite faqat aloqa uzilganda ishlatiladi.
+    """
+    if not is_serverless:
+        rows = _sqlite_student_groups()
+        if rows:
+            return rows
 
     # Agar SQLite bo'sh bo'lsa (Serverless / Yangi konteynerda), Supabase Cloud'dan o'qib kelish:
     try:
@@ -884,6 +901,10 @@ def get_student_groups():
                 return cloud_groups
     except Exception as se:
         print(f"Supabase fetch groups error: {se}")
+
+    # Bulutga ulanib bo'lmadi — serverless'da oxirgi keshga qaytamiz
+    if is_serverless:
+        return _sqlite_student_groups()
 
     return []
 
