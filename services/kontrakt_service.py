@@ -1035,8 +1035,8 @@ def xulosa_captioni(updated_date="") -> str:
     return (
         "❗️Yuqorida barcha guruhlarning kontrakt to'lovlari❗️\n\n"
         f"{sana_qatori}\n\n"
-        "Agar qaysidir talabaning kontrakti ko'rinmayotgn bo'lsa "
-        "(yangilanda ham ko'rinmasa) menga kvitansiyasini olib kelib "
+        "Agar qaysidir talabaning kontrakti ko'rinmayotgan bo'lsa "
+        "(yangilanganda ham ko'rinmasa) menga kvitansiyasini olib kelib "
         "ko'rsatsin, tekshirib kiritib qo'yaman. @Ozodbek_Napasov"
     )
 
