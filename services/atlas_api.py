@@ -2096,13 +2096,19 @@ def api_contracts_send_to_telegram():
                     f"<i>Fayllar va Xulosa jadvali quyida biriktirildi 👇</i>"
                 ).replace(",", " ")
 
+    # Xulosa izohidagi "Kontraktlar <sana>da yangilangan" uchun
+    updated_date = data.get("updated_date") or ""
+    if not updated_date and sess:
+        updated_date = sess.get("end_date") or sess.get("start_date") or ""
+
     res = forward_to_telegram(
         chat_ids=chat_ids,
         caption_text=caption_text,
         excel_path=excel_path,
         xulosa_img_path=xulosa_path,
         group_img_paths=group_images,
-        session_id=session_id
+        session_id=session_id,
+        updated_date=updated_date
     )
 
     log_audit(

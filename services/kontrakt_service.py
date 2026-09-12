@@ -1011,6 +1011,36 @@ def execute_group_screenshots(baza_path, session_id=None):
 # 6. FORWARD TO TELEGRAM GROUPS / CHANNELS (TARTIBLI & CAPTION BILAN)
 # ============================================================
 
+_UZ_OYLAR = ("yanvar", "fevral", "mart", "aprel", "may", "iyun",
+             "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr")
+
+
+def uzbek_sana(val) -> str:
+    """Sanani "12-sentabr" ko'rinishiga keltirish (xulosa matni uchun)."""
+    d = _parse_tolov_sanasi(val)
+    if not d:
+        return str(val or "").strip()
+    return f"{d.day}-{_UZ_OYLAR[d.month - 1]}"
+
+
+def xulosa_captioni(updated_date="") -> str:
+    """Xulosa jadvali ostida chiqadigan matn.
+
+    "Yuqorida" deb boshlangani uchun xulosa guruh rasmlaridan KEYIN yuborilishi
+    shart — tartib forward_to_telegram da shunga moslangan.
+    """
+    sana = uzbek_sana(updated_date)
+    sana_qatori = (f"«Kontraktlar {sana}da yangilangan»"
+                   if sana else "«Kontraktlar yangilangan»")
+    return (
+        "❗️Yuqorida barcha guruhlarning kontrakt to'lovlari❗️\n\n"
+        f"{sana_qatori}\n\n"
+        "Agar qaysidir talabaning kontrakti ko'rinmayotgn bo'lsa "
+        "(yangilanda ham ko'rinmasa) menga kvitansiyasini olib kelib "
+        "ko'rsatsin, tekshirib kiritib qo'yaman. @Ozodbek_Napasov"
+    )
+
+
 def natural_sort_key(s):
     """Matn ichidagi raqamlarni to'g'ri tartiblash (101, 102, 201, 25-16, 25-17...)"""
     import re
@@ -1087,8 +1117,14 @@ def resolve_image_bytes(img_item, session_id=None, group_name=None):
     return None, None
 
 
-def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path=None, group_img_paths=None, session_id=None):
-    """Tanlangan Telegram guruhlari yoki shaxsiy chatga bot orqali xabar, rasm va fayllarni qat'iy tartibda jo'natish (Serverless safe)"""
+def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path=None,
+                        group_img_paths=None, session_id=None, updated_date=""):
+    """Telegramga qat'iy tartibda jo'natish (Serverless safe).
+
+    Tartib: sarlavha -> Excel -> guruh rasmlari -> XULOSA.
+    Xulosa ataylab eng oxirida: uning matni "Yuqorida barcha guruhlarning
+    kontrakt to'lovlari" deb boshlanadi, ya'ni undan oldin guruhlar turishi kerak.
+    """
     try:
         import io
         import time
@@ -1128,22 +1164,10 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                     else:
                         actual_groups.append(img_item)
 
-                # 3. 1-bo'lib XULOSA rasmini jo'natish
-                if actual_xulosa:
-                    try:
-                        x_bytes, x_name = resolve_image_bytes(actual_xulosa, session_id=session_id, group_name="XULOSA")
-                        if x_bytes:
-                            x_cap = "📊 <b>XULOSA: Guruh rahbarlari va qarzdorliklar jamlanmasi</b>"
-                            xf = io.BytesIO(x_bytes)
-                            xf.name = "00_Xulosa_Hisoboti.png"
-                            bot.send_photo(cid_str, photo=xf, caption=x_cap, parse_mode="HTML")
-                            time.sleep(0.6)
-                        else:
-                            print("Xulosa image bytes could not be resolved.")
-                    except Exception as img_err:
-                        print(f"Xulosa send error: {img_err}")
+                # XULOSA endi bu yerda yuborilmaydi — u eng oxirida, guruh
+                # rasmlaridan keyin ketadi (matni "Yuqorida ..." deb boshlanadi).
 
-                # 4. Agar Excel bazasi mavjud bo'lsa uni jo'natish
+                # 3. Agar Excel bazasi mavjud bo'lsa uni jo'natish
                 if excel_path:
                     try:
                         clean_filename = "Yangilangan_Kontraktlar_Bazasi.xlsx"
@@ -1175,7 +1199,7 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                     except Exception as doc_err:
                         print(f"Excel send error: {doc_err}")
 
-                # 5. Guruhlarni ketma-ket, tartiblangan holda har birining tagiga Guruhi yozilib jo'natish
+                # 4. Guruhlarni ketma-ket, tartiblangan holda har birining tagiga Guruhi yozilib jo'natish
                 if actual_groups:
                     def extract_group_name(item):
                         bname = os.path.basename(str(item).split("?")[0])
@@ -1201,6 +1225,23 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
                                 print(f"Could not resolve image bytes for group: {g_title} ({g_img})")
                         except Exception as ss_err:
                             print(f"Group screenshot send error ({g_img}): {ss_err}")
+
+                # 5. ENG OXIRIDA — XULOSA jadvali va uning izohi
+                if actual_xulosa:
+                    try:
+                        x_bytes, x_name = resolve_image_bytes(
+                            actual_xulosa, session_id=session_id, group_name="XULOSA")
+                        if x_bytes:
+                            xf = io.BytesIO(x_bytes)
+                            xf.name = "00_Xulosa_Hisoboti.png"
+                            bot.send_photo(cid_str, photo=xf,
+                                           caption=xulosa_captioni(updated_date),
+                                           parse_mode="HTML")
+                            time.sleep(0.6)
+                        else:
+                            print("Xulosa image bytes could not be resolved.")
+                    except Exception as img_err:
+                        print(f"Xulosa send error: {img_err}")
 
                 results.append({"chat_id": cid_str, "status": "success"})
             except Exception as err:
