@@ -35,6 +35,9 @@ import services.insta_poster_service as ips
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--start-from", default="", metavar="SHORTCODE",
+                    help="Shu postdan boshlab qayta yuborilsin (undan oldingilari "
+                         "yuborilgan deb qoladi). YouTube holatiga tegilmaydi.")
     args = ap.parse_args()
 
     ok, cloud = ips._fetch_cloud_state()
@@ -100,9 +103,38 @@ def main():
     print(f"   yt_uploaded_shortcodes +{add_yt:<4} -> {len(yt)}")
     print(f"   custom_posts           +{add_custom:<4} -> {len(custom)}")
 
+    # --- Boshlanish nuqtasi ---
+    reset_codes = []
+    if args.start_from:
+        order = [r[0] for r in rows]
+        if args.start_from not in order:
+            print(f"\nXATO: {args.start_from} navbatda topilmadi.")
+            return 1
+        start_i = order.index(args.start_from)
+        # Shu post va undan keyingilari "yuborilmagan" holatiga qaytariladi.
+        # youtube_uploaded ataylab tegilmaydi — aks holda YouTube'ga dublikat chiqadi.
+        reset_codes = [sc for sc in order[start_i:] if sc in sent]
+        for sc in reset_codes:
+            sent.pop(sc, None)
+        print(f"\nQAYTA YUBORILADI ({args.start_from} dan boshlab): {len(reset_codes)} ta")
+        for sc in reset_codes[:10]:
+            print(f"   {sc}")
+        print(f"   sent_shortcodes yakuniy: {len(sent)}")
+        print("   (YouTube holati o'zgarmaydi — dublikat video chiqmasligi uchun)")
+
     if not args.apply:
         print("\n[dry-run] Yozilmadi. Yozish uchun: --apply")
         return 0
+
+    if reset_codes:
+        conn = ips.get_db_connection()
+        c = conn.cursor()
+        for sc in reset_codes:
+            c.execute("UPDATE insta_posts_queue SET status='PENDING', sent_at=NULL "
+                      "WHERE shortcode = ?", (sc,))
+        conn.commit()
+        conn.close()
+        print(f"Lokal bazada {len(reset_codes)} ta post PENDING qilindi.")
 
     cloud["sent_shortcodes"] = sent
     cloud["yt_uploaded_shortcodes"] = yt
