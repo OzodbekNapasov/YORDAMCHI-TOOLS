@@ -43,20 +43,44 @@ def _get_supabase_headers():
     return supa_url, headers
 
 
-def load_insta_cloud_state():
-    """Supabase Cloud dan yuborilgan postlar va YouTube yuklanganlar holatini olish"""
+#: Bulut holatidagi yig'ma maydonlar. Bular hech qachon "yo'q" bo'lgani uchun
+#: o'chib ketmasligi kerak — faqat ataylab berilgan qiymat bilan almashtiriladi.
+_CLOUD_COLLECTIONS = ("sent_shortcodes", "yt_uploaded_shortcodes",
+                      "custom_posts", "deleted_shortcodes", "settings")
+
+
+def _fetch_cloud_state():
+    """Supabase'dagi holatni o'qish.
+
+    (muvaffaqiyatli, holat) juftligini qaytaradi. Muvaffaqiyatsiz bo'lsa
+    (False, {}) — chaqiruvchi buni bo'sh holat deb TALQIN QILMASLIGI kerak.
+    """
     try:
         supa_url, headers = _get_supabase_headers()
-        if supa_url and headers:
-            r = requests.get(f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state", headers=headers, timeout=5)
-            if r.status_code == 200 and r.json():
-                raw_val = r.json()[0].get("value")
+        if not supa_url or not headers:
+            return False, {}
+        r = requests.get(
+            f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state",
+            headers=headers, timeout=8)
+        if r.status_code == 200:
+            rows = r.json()
+            if rows:
+                raw_val = rows[0].get("value")
                 if raw_val:
-                    return json.loads(raw_val)
+                    return True, json.loads(raw_val)
+            # Yozuv yo'q — bu haqiqatan bo'sh holat
+            return True, {}
     except Exception as e:
         print(f"[Supabase Load Insta State Info]: {e}")
-        
-    # Local fallback
+    return False, {}
+
+
+def load_insta_cloud_state():
+    """Bulut holatini olish (o'qib bo'lmasa — lokal nusxa, u ham bo'lmasa bo'sh)"""
+    ok, state = _fetch_cloud_state()
+    if ok and state:
+        return state
+
     try:
         val = get_setting("insta_poster_state_local", "")
         if val:
@@ -67,9 +91,19 @@ def load_insta_cloud_state():
 
 
 def save_insta_cloud_state(state: dict):
-    """Supabase Cloud ga holatni saqlash (Rekursiyasiz: to'g'ridan-to'g'ri DB ga yozish)"""
-    # LOCAL: to'g'ridan-to'g'ri SQLite ga yozamiz (set_setting orqali EMAS!)
-    # set_setting → save_insta_cloud_state → set_setting cheksiz siklini oldini olish uchun
+    """Holatni lokal SQLite va Supabase'ga saqlash.
+
+    DIQQAT — bu yerda ilgari ma'lumot yo'qotadigan xato bor edi. Chaqiruvchilar
+    odatda load_insta_cloud_state() bilan o'qib, bitta maydonni o'zgartirib,
+    butun holatni qaytaradi. Agar o'qish paytida Supabase javob bermagan bo'lsa,
+    load deyarli bo'sh dict qaytarardi va shu bo'sh dict butun bulut holatini
+    (yuborilganlar, YouTube'ga yuklanganlar, qo'shilgan postlar) bosib ketardi.
+
+    Endi yozishdan oldin bulut qaytadan o'qiladi:
+      - o'qib bo'lmasa, bulutga UMUMAN yozilmaydi (lokal nusxa saqlanadi);
+      - o'qilsa, kelgan holat ustiga qo'yiladi, lekin unda yo'q yig'ma
+        maydonlar bulutdagi holicha qoldiriladi.
+    """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -80,17 +114,31 @@ def save_insta_cloud_state(state: dict):
     except Exception as _db_e:
         print(f"[Cloud State Local Save Err]: {_db_e}")
 
-    # CLOUD: Supabase ga yuborish
     try:
         supa_url, headers = _get_supabase_headers()
-        if supa_url and headers:
-            payload = {
-                "key": "insta_poster_state",
-                "value": json.dumps(state),
-                "category": "instagram",
-                "description": "Instagram & YouTube AutoPoster persistent cloud state"
-            }
-            requests.post(f"{supa_url}/rest/v1/atlas_settings", headers=headers, json=payload, timeout=5)
+        if not supa_url or not headers:
+            return
+
+        ok, current = _fetch_cloud_state()
+        if not ok:
+            print("[Cloud State] Bulutni o'qib bo'lmadi — yozish bekor qilindi "
+                  "(mavjud ma'lumot o'chib ketmasligi uchun).")
+            return
+
+        merged = dict(current or {})
+        merged.update(state or {})
+        for key in _CLOUD_COLLECTIONS:
+            if key not in (state or {}) and key in (current or {}):
+                merged[key] = current[key]
+
+        payload = {
+            "key": "insta_poster_state",
+            "value": json.dumps(merged),
+            "category": "instagram",
+            "description": "Instagram & YouTube AutoPoster persistent cloud state"
+        }
+        requests.post(f"{supa_url}/rest/v1/atlas_settings",
+                      headers=headers, json=payload, timeout=8)
     except Exception as e:
         print(f"[Supabase Save Insta State Err]: {e}")
 

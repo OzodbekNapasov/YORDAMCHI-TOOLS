@@ -38,18 +38,26 @@ def _supabase_atomic_claim_slot(slot_key: str, setting_key: str) -> bool:
             from services.insta_poster_service import get_setting
             return get_setting(setting_key, "") != slot_key
 
-        # 1. Hozirgi holatni o'qish
+        # 1. Hozirgi holatni o'qish.
+        # O'qib bo'lmasa slot BAND QILINMAYDI. Ilgari bunday holatda cloud_state
+        # bo'sh dict deb olinardi va quyidagi yozuv butun bulut holatini —
+        # yuborilganlar, YouTube'ga yuklanganlar va qo'shilgan postlar ro'yxatini —
+        # o'chirib yuborardi. Bu tekshiruv har daqiqada ishlagani uchun Supabase
+        # bir marta javob bermasa ham yetarli edi.
         r = requests.get(
             f"{supa_url}/rest/v1/atlas_settings?key=eq.insta_poster_state",
-            headers=headers, timeout=5
+            headers=headers, timeout=8
         )
-        if r.status_code == 200 and r.json():
-            try:
-                cloud_state = json.loads(r.json()[0].get("value") or "{}")
-            except Exception:
-                cloud_state = {}
-        else:
-            cloud_state = {}
+        if r.status_code != 200:
+            print(f"[Scheduler Claim] Bulut o'qilmadi (HTTP {r.status_code}) — slot olinmadi.")
+            return False
+
+        rows = r.json()
+        try:
+            cloud_state = json.loads(rows[0].get("value") or "{}") if rows else {}
+        except Exception as pe:
+            print(f"[Scheduler Claim] Holatni o'qib bo'lmadi ({pe}) — slot olinmadi.")
+            return False
 
         settings = cloud_state.get("settings", {})
 
