@@ -176,10 +176,26 @@ def c_scheduler_running():
     except Exception as e:
         return WARN, f"Jarayonlarni tekshirib bo'lmadi: {e}"
 
+    # DIQQAT: faqat "bot.py" bo'yicha qidirish yetarli emas — bu kompyuterda
+    # boshqa loyihalarning bot.py fayllari ham ishlaydi (masalan
+    # D:\My BOTS\bot-MTF to Docx) va ular ATLAS deb hisoblanib ketardi.
+    # Shuning uchun jarayonning ish papkasi ham tekshiriladi.
+    try:
+        out = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
+             "ForEach-Object { $e=''; try { $e=(Get-Process -Id $_.ProcessId).Path } catch {}; "
+             "\"$e|$($_.CommandLine)\" }"],
+            capture_output=True, text=True, timeout=30).stdout or out
+    except Exception:
+        pass
+
+    here = BASE_DIR.lower()
     lines = [l.strip() for l in (out or "").split("\n") if l.strip()]
-    bot = [l for l in lines if "bot.py" in l]
-    worker = [l for l in lines if "run_insta_worker" in l]
-    bridge = [l for l in lines if "run_pc_bridge" in l]
+    ours = [l for l in lines if here in l.lower()]
+    bot = [l for l in ours if "bot.py" in l]
+    worker = [l for l in ours if "run_insta_worker" in l]
+    bridge = [l for l in ours if "run_pc_bridge" in l]
 
     msg = []
     msg.append(("ISHLAMOQDA" if bot else "TO'XTAGAN") + "  bot.py (scheduler shu yerda)")
