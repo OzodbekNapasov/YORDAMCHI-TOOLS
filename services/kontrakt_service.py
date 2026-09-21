@@ -423,19 +423,27 @@ def _butun_son(val):
         return 0
 
 
+#: Sarlavha topilmaganda qaytariladigan tarixiy joylashuv.
+_STANDART_USTUNLAR = {
+    'guruh': 1, 'tartib': 2, 'ism': 3, 'kerak': 4, 'tolov': 5, 'qarz': 6,
+    'sarlavha_row': 22, 'boshlanish_row': 23,
+}
+
+
 def _ustunlarni_aniqlash(sheet):
     """Talabalar jadvalining sarlavha qatorini topib, ustun raqamlarini qaytaradi.
 
     Sarlavhani tanish uchun har bir qator alohida baholanadi: qancha ko'p ustun
-    belgisi ('guruhi', 'familiyasi', "bo'lishi kerak", 'jami') topilsa, shuncha
-    yuqori ball. Eng yuqori ball olgan qator sarlavha deb qabul qilinadi.
+    belgisi ('guruhi', 'familiyasi', "bo'lishi kerak", 'jami', 'qarzi') topilsa,
+    shuncha yuqori ball. Eng yuqori ball olgan qator sarlavha deb qabul qilinadi.
 
     Ilgari qatorlar ketma-ket ko'rib chiqilib, topilgan qiymat ustiga
     yozilaverardi. Shu sababli xulosa blokidagi 'Jami' qatori yoki 'Ismoilov'
     kabi familiyali talaba sarlavha o'rnini egallab, ustunlar noto'g'ri
     aniqlanishi mumkin edi.
 
-    Qaytaradi: (guruh_ustun, ism_ustun, kerak_ustun, tolov_ustun, boshlanish_row)
+    Qaytaradi: ustun raqamlari ('guruh', 'tartib', 'ism', 'kerak', 'tolov',
+    'qarz') hamda 'sarlavha_row' va 'boshlanish_row' bo'lgan lug'at.
     """
     eng_yaxshi_ball = 0
     eng_yaxshi = None
@@ -457,6 +465,8 @@ def _ustunlarni_aniqlash(sheet):
                 topilgan['kerak'] = c
             if any(x in val for x in ['jami', 'to\'lagan summasi', 'to\'lov']):
                 topilgan['tolov'] = c
+            if 'qarz' in val:
+                topilgan['qarz'] = c
 
         # Ism ustunisiz qator talabalar jadvalining sarlavhasi bo'la olmaydi.
         if 'ism' not in topilgan:
@@ -467,17 +477,69 @@ def _ustunlarni_aniqlash(sheet):
             eng_yaxshi = (r, topilgan)
 
     if not eng_yaxshi:
-        # Sarlavha topilmadi — tarixan mavjud bo'lgan joylashuvga qaytamiz.
-        return 1, 3, 4, 5, 23
+        return dict(_STANDART_USTUNLAR)
 
     sarlavha_row, topilgan = eng_yaxshi
-    return (
-        topilgan.get('guruh', 1),
-        topilgan.get('ism', 3),
-        topilgan.get('kerak', 4),
-        topilgan.get('tolov', 5),
-        sarlavha_row + 1,
-    )
+    guruh_ustun = topilgan.get('guruh', 1)
+    return {
+        'guruh': guruh_ustun,
+        # "№" ustuni belgisiz bo'lishi mumkin — u doim guruhdan keyin turadi.
+        'tartib': guruh_ustun + 1,
+        'ism': topilgan.get('ism', 3),
+        'kerak': topilgan.get('kerak', 4),
+        'tolov': topilgan.get('tolov', 5),
+        'qarz': topilgan.get('qarz', 6),
+        'sarlavha_row': sarlavha_row,
+        'boshlanish_row': sarlavha_row + 1,
+    }
+
+
+def _xulosa_rahbarlari(sheet, sarlavha_row):
+    """Jadval tepasidagi xulosa blokidan {guruh: rahbar} lug'atini yig'adi.
+
+    Rahbar ismi uchun haqiqat manbai — fayl, baza emas. Guruh rahbari almashsa
+    yoki bazada umuman yo'q yangi guruh kiritilsa, bazadagi ro'yxat eskirgan
+    yoki bo'sh bo'ladi; fayl esa doim joriy holatni ko'rsatadi.
+    """
+    rahbar_ustun, guruh_ustun = 3, 4
+
+    # Xulosa blokining o'z sarlavhasi ('Guruh rahbari' | 'Guruh') bo'lsa,
+    # ustunlarni o'shandan olamiz.
+    for r in range(1, max(2, sarlavha_row)):
+        for c in range(1, 10):
+            val = str(sheet.cell(row=r, column=c).value or "").lower()
+            if 'guruh' in val and 'rahbar' in val:
+                rahbar_ustun = c
+                for c2 in range(c + 1, 10):
+                    v2 = str(sheet.cell(row=r, column=c2).value or "").lower()
+                    if 'guruh' in v2 and 'rahbar' not in v2:
+                        guruh_ustun = c2
+                        break
+                break
+
+    rahbarlar = {}
+    for r in range(1, max(2, sarlavha_row)):
+        rahbar = sheet.cell(row=r, column=rahbar_ustun).value
+        guruh = sheet.cell(row=r, column=guruh_ustun).value
+        if not rahbar or not guruh:
+            continue
+
+        rahbar_str = str(rahbar).strip()
+        guruh_str = str(guruh).strip()
+        if not rahbar_str or not guruh_str:
+            continue
+
+        past = rahbar_str.lower()
+        if past.startswith(('jami', 'итого', 'guruh rahbari')):
+            continue
+        if 'yangilangan sanasi' in past:
+            continue
+
+        if guruh_str.endswith('.0'):
+            guruh_str = guruh_str[:-2]
+        rahbarlar[guruh_str] = rahbar_str
+
+    return rahbarlar
 
 
 def analyze_baza_excel(baza_path):
@@ -513,7 +575,10 @@ def analyze_baza_excel(baza_path):
         suggested_start = (detected_date + timedelta(days=1)) if detected_date else datetime.now()
 
         # Count students and groups
-        guruh_ustun, ism_ustun, kerak_ustun, tolov_ustun, boshlanish_row = _ustunlarni_aniqlash(sheet)
+        ust = _ustunlarni_aniqlash(sheet)
+        guruh_ustun, ism_ustun = ust['guruh'], ust['ism']
+        kerak_ustun, tolov_ustun = ust['kerak'], ust['tolov']
+        boshlanish_row = ust['boshlanish_row']
 
         groups_set = set()
         students_count = 0
@@ -618,7 +683,10 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
     sheet_read = wb_baza_read[varoq_nomi]
     sheet_deb = wb_deb['bank'] if 'bank' in wb_deb.sheetnames else wb_deb.active
 
-    guruh_ustun, ism_ustun, kerak_ustun, tolov_ustun, boshlanish_row = _ustunlarni_aniqlash(sheet_read)
+    ust = _ustunlarni_aniqlash(sheet_read)
+    guruh_ustun, ism_ustun = ust['guruh'], ust['ism']
+    kerak_ustun, tolov_ustun = ust['kerak'], ust['tolov']
+    boshlanish_row = ust['boshlanish_row']
 
     baza_talabalari = []
     for row in range(boshlanish_row, sheet_read.max_row + 1):
@@ -878,17 +946,17 @@ def execute_group_screenshots(baza_path, session_id=None):
         session_id = uuid.uuid4().hex[:12]
 
     wb = openpyxl.load_workbook(baza_path, data_only=True)
-    sheet = wb.active
+    # wb.active fayl saqlanganda qaysi varaq ochiq turgani bo'yicha tanlanadi.
+    # Bu faylda 8 ta varaq bor ('Bitirganlar', 'KETGAN', ...), shuning uchun
+    # boshqa tabda saqlangan fayl jimgina boshqa ma'lumotdan rasm chiqarardi.
+    varoq_nomi = 'KONTRAKTLAR' if 'KONTRAKTLAR' in wb.sheetnames else wb.sheetnames[0]
+    sheet = wb[varoq_nomi]
 
-    header_row = 22
+    ust = _ustunlarni_aniqlash(sheet)
+    header_row = ust['sarlavha_row']
     date_str = datetime.now().strftime("%d.%m.%Y")
 
-    for r in range(1, 30):
-        val_a = str(sheet.cell(row=r, column=1).value or "").lower()
-        val_c = str(sheet.cell(row=r, column=3).value or "").lower()
-        if "guruh" in val_a or "familiy" in val_c:
-            header_row = r
-            break
+    for r in range(1, header_row):
         for c in range(1, 10):
             cell_val = str(sheet.cell(row=r, column=c).value or "")
             if "yangilangan sanasi" in cell_val.lower():
@@ -899,10 +967,13 @@ def execute_group_screenshots(baza_path, session_id=None):
                     else:
                         date_str = str(next_cell).strip()
 
+    # Guruh rahbarlari faylning o'zidan olinadi; baza faqat zaxira.
+    fayl_rahbarlari = _xulosa_rahbarlari(sheet, header_row)
+
     guruhlar = {}
     for r in range(header_row + 1, sheet.max_row + 1):
-        guruh_val = sheet.cell(row=r, column=1).value
-        fio_val = sheet.cell(row=r, column=3).value
+        guruh_val = sheet.cell(row=r, column=ust['guruh']).value
+        fio_val = sheet.cell(row=r, column=ust['ism']).value
 
         if not guruh_val or not fio_val: continue
 
@@ -910,10 +981,10 @@ def execute_group_screenshots(baza_path, session_id=None):
         if g_name.endswith('.0'): g_name = g_name[:-2]
         if g_name.lower().startswith(('jami', 'итого', 'guruh')): continue
 
-        no_val = sheet.cell(row=r, column=2).value or len(guruhlar.get(g_name, [])) + 1
-        kerak_val = sheet.cell(row=r, column=4).value or 0
-        jami_val = sheet.cell(row=r, column=5).value or 0
-        qarzi_val = sheet.cell(row=r, column=6).value or 0
+        no_val = sheet.cell(row=r, column=ust['tartib']).value or len(guruhlar.get(g_name, [])) + 1
+        kerak_val = sheet.cell(row=r, column=ust['kerak']).value or 0
+        jami_val = sheet.cell(row=r, column=ust['tolov']).value or 0
+        qarzi_val = sheet.cell(row=r, column=ust['qarz']).value or 0
 
         try: kerak_num = float(kerak_val)
         except: kerak_num = 0.0
@@ -943,15 +1014,20 @@ def execute_group_screenshots(baza_path, session_id=None):
         tot_tolangan = sum(float(r.get('jami', 0.0)) for r in rows)
         tot_qarz = sum(float(r.get('qarzi', 0.0)) for r in rows if float(r.get('qarzi', 0.0)) > 0)
         
-        rahbar_nomi = "Biriktirilmagan"
-        try:
-            from services.atlas_db import get_student_groups
-            all_groups = get_student_groups()
-            matched = next((g for g in all_groups if g.get("group_name") == g_name), None)
-            if matched and matched.get("rahbar_name"):
-                rahbar_nomi = matched.get("rahbar_name")
-        except Exception:
-            pass
+        # 1-navbatda fayldagi xulosa bloki: yangi guruh qo'shilgan yoki rahbar
+        # almashgan bo'lsa, bazada hali eski (yoki hech qanday) ma'lumot turadi.
+        rahbar_nomi = fayl_rahbarlari.get(g_name, "")
+        if not rahbar_nomi:
+            try:
+                from services.atlas_db import get_student_groups
+                all_groups = get_student_groups()
+                matched = next((g for g in all_groups if g.get("group_name") == g_name), None)
+                if matched and matched.get("rahbar_name"):
+                    rahbar_nomi = matched.get("rahbar_name")
+            except Exception:
+                pass
+        if not rahbar_nomi:
+            rahbar_nomi = "Biriktirilmagan"
 
         xulosa_rows.append({
             't_r': g_idx + 1,
