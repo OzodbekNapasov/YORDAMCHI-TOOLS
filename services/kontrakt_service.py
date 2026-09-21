@@ -415,6 +415,71 @@ def generate_xulosa_table_image(xulosa_rows, output_path):
 # 3. ANALYZE BASE EXCEL FILE
 # ============================================================
 
+def _butun_son(val):
+    """Katakdagi qiymatni butun songa o'giradi; uddalay olmasa 0 qaytaradi."""
+    try:
+        return int(float(val))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _ustunlarni_aniqlash(sheet):
+    """Talabalar jadvalining sarlavha qatorini topib, ustun raqamlarini qaytaradi.
+
+    Sarlavhani tanish uchun har bir qator alohida baholanadi: qancha ko'p ustun
+    belgisi ('guruhi', 'familiyasi', "bo'lishi kerak", 'jami') topilsa, shuncha
+    yuqori ball. Eng yuqori ball olgan qator sarlavha deb qabul qilinadi.
+
+    Ilgari qatorlar ketma-ket ko'rib chiqilib, topilgan qiymat ustiga
+    yozilaverardi. Shu sababli xulosa blokidagi 'Jami' qatori yoki 'Ismoilov'
+    kabi familiyali talaba sarlavha o'rnini egallab, ustunlar noto'g'ri
+    aniqlanishi mumkin edi.
+
+    Qaytaradi: (guruh_ustun, ism_ustun, kerak_ustun, tolov_ustun, boshlanish_row)
+    """
+    eng_yaxshi_ball = 0
+    eng_yaxshi = None
+
+    for r in range(1, 30):
+        topilgan = {}
+        for c in range(1, 15):
+            val = str(sheet.cell(row=r, column=c).value or "").lower()
+            if not val:
+                continue
+            # Ustun ichida oxirgi mos kelgan katak yutadi: sarlavhada
+            # "...kerak bo'lgan to'lov" ham, undan keyingi 'Jami' ham "to'lov"
+            # belgisiga tushadi, kerakligi esa oxirgisi.
+            if 'guruh' in val and 'rahbar' not in val and 'soni' not in val:
+                topilgan['guruh'] = c
+            if any(x in val for x in ['familiya', 'f.i.sh', 'ism', 'sharfi']):
+                topilgan['ism'] = c
+            if 'bo\'lishi' in val or 'kerak' in val:
+                topilgan['kerak'] = c
+            if any(x in val for x in ['jami', 'to\'lagan summasi', 'to\'lov']):
+                topilgan['tolov'] = c
+
+        # Ism ustunisiz qator talabalar jadvalining sarlavhasi bo'la olmaydi.
+        if 'ism' not in topilgan:
+            continue
+
+        if len(topilgan) > eng_yaxshi_ball:
+            eng_yaxshi_ball = len(topilgan)
+            eng_yaxshi = (r, topilgan)
+
+    if not eng_yaxshi:
+        # Sarlavha topilmadi — tarixan mavjud bo'lgan joylashuvga qaytamiz.
+        return 1, 3, 4, 5, 23
+
+    sarlavha_row, topilgan = eng_yaxshi
+    return (
+        topilgan.get('guruh', 1),
+        topilgan.get('ism', 3),
+        topilgan.get('kerak', 4),
+        topilgan.get('tolov', 5),
+        sarlavha_row + 1,
+    )
+
+
 def analyze_baza_excel(baza_path):
     """Asosiy baza Excel faylini tekshirib, oxirgi yangilangan sana va guruhlarni aniqlash"""
     try:
@@ -448,24 +513,7 @@ def analyze_baza_excel(baza_path):
         suggested_start = (detected_date + timedelta(days=1)) if detected_date else datetime.now()
 
         # Count students and groups
-        ism_ustun = 3
-        guruh_ustun = 1
-        kerak_ustun = 4
-        tolov_ustun = 5
-        boshlanish_row = 23
-
-        for r in range(1, 30):
-            for c in range(1, 15):
-                val = str(sheet.cell(row=r, column=c).value or "").lower()
-                if 'guruh' in val and 'rahbar' not in val and 'soni' not in val:
-                    guruh_ustun = c
-                if any(x in val for x in ['familiya', 'f.i.sh', 'ism', 'sharfi']):
-                    ism_ustun = c
-                    boshlanish_row = r + 1
-                if 'bo\'lishi' in val or 'kerak' in val:
-                    kerak_ustun = c
-                if any(x in val for x in ['jami', 'to\'lagan summasi', 'to\'lov']):
-                    tolov_ustun = c
+        guruh_ustun, ism_ustun, kerak_ustun, tolov_ustun, boshlanish_row = _ustunlarni_aniqlash(sheet)
 
         groups_set = set()
         students_count = 0
@@ -570,24 +618,7 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
     sheet_read = wb_baza_read[varoq_nomi]
     sheet_deb = wb_deb['bank'] if 'bank' in wb_deb.sheetnames else wb_deb.active
 
-    ism_ustun = 3
-    kerak_ustun = 4
-    tolov_ustun = 5
-    guruh_ustun = 1
-    boshlanish_row = 23
-
-    for r in range(1, 30):
-        for c in range(1, 15):
-            val = str(sheet_read.cell(row=r, column=c).value or "").lower()
-            if 'guruh' in val and 'rahbar' not in val and 'soni' not in val:
-                guruh_ustun = c
-            if any(x in val for x in ['familiya', 'f.i.sh', 'ism', 'sharfi']):
-                ism_ustun = c
-                boshlanish_row = r + 1
-            if 'bo\'lishi' in val or 'kerak' in val:
-                kerak_ustun = c
-            if any(x in val for x in ['jami', 'to\'lagan summasi', 'to\'lov']):
-                tolov_ustun = c
+    guruh_ustun, ism_ustun, kerak_ustun, tolov_ustun, boshlanish_row = _ustunlarni_aniqlash(sheet_read)
 
     baza_talabalari = []
     for row in range(boshlanish_row, sheet_read.max_row + 1):
@@ -748,11 +779,21 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
     xulosa_rows = []
     excluded_groups = {'114', '115', '116', '114.0', '115.0', '116.0'}
 
-    for r in range(1, 20):
+    # Xulosa bloki talabalar jadvalining sarlavhasidan oldin tugaydi. Bu chegara
+    # ilgari `range(1, 20)` deb qattiq yozilgan edi — 114/115/116 guruhlari
+    # o'chirilib blok yuqoriga surilgach, sarlavha qatori shu oraliqqa tushdi va
+    # uning 'Jami' sarlavhali ustunini talabalar soni deb o'qishga urinish butun
+    # yangilashni to'xtatib qo'ydi.
+    xulosa_oxiri = max(2, boshlanish_row - 1)
+
+    for r in range(1, xulosa_oxiri):
         rahbar = sheet_read.cell(row=r, column=3).value
         guruh = sheet_read.cell(row=r, column=4).value
         if rahbar and guruh and str(rahbar).strip() and str(guruh).strip():
-            if str(rahbar).lower().startswith(('jami', 'итого', 'guruh rahbari')): continue
+            rahbar_past = str(rahbar).lower()
+            if rahbar_past.startswith(('jami', 'итого', 'guruh rahbari')): continue
+            # "Yangilangan sanasi:" qatorining yonida sana turadi — guruh emas.
+            if 'yangilangan sanasi' in rahbar_past: continue
             g_str = str(guruh).strip()
             if g_str.endswith('.0'): g_str = g_str[:-2]
 
@@ -762,7 +803,8 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
 
             g_students = [t for t in baza_talabalari if t['guruh'] == g_str]
             soni = len(g_students)
-            if soni == 0 and int(sheet_read.cell(row=r, column=5).value or 0) == 0:
+            blokdagi_soni = _butun_son(sheet_read.cell(row=r, column=5).value)
+            if soni == 0 and blokdagi_soni == 0:
                 continue
 
             qarz_sum = sum(max(0.0, t['kerak_summa'] - t['joriy_summa']) for t in g_students)
@@ -770,7 +812,7 @@ def execute_contract_update(baza_path, deb_path, cheklov_sanasi, session_id=None
             xulosa_rows.append({
                 'rahbar': str(rahbar).strip(),
                 'guruh': g_str,
-                'soni': soni if soni > 0 else int(sheet_read.cell(row=r, column=5).value or 0),
+                'soni': soni if soni > 0 else blokdagi_soni,
                 'qarz': qarz_sum
             })
 
