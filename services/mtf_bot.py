@@ -21,6 +21,16 @@ from services import mtf_library as lib
 MENU_BUTTON = "🧪 MyTestX Testlar"
 SEARCH_PROMPT = "🔍 MyTestX qidiruv: test nomidan bir qismini yozing"
 FOLDER_PROMPT = "🏷 Yangi papka nomini yozing"
+PER_PROMPT = "✍️ Har variantda nechta savol bo'lsin? Son yozing"
+COUNT_PROMPT = "✍️ Nechta variant yasalsin? Son yozing"
+MAX_VARIANTS = 30
+
+# Hujjat turlari: q — javobsiz, k — javobli (kalit), a — to'g'ri javob har doim A
+MODES = {
+    "q": ("📄 Javobsiz", "javobsiz"),
+    "k": ("🔑 Javobli", "javobli"),
+    "a": ("🅰️ Faqat A javobli", "A-variant"),
+}
 PAGE_SIZE = 8
 MAX_DOWNLOAD = 20 * 1024 * 1024  # Bot API getFile chegarasi
 
@@ -94,9 +104,11 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
                 f"🗓 Qo'shilgan: {_h(entry.get('added_at') or '-')}")
         uid = entry["uid"]
         kb = types.InlineKeyboardMarkup(row_width=1)
-        kb.add(types.InlineKeyboardButton("📄 PDF + Word (javoblar bilan)", callback_data=f"mt:g:{uid}:1"),
-               types.InlineKeyboardButton("📝 PDF + Word (javobsiz, talabalar uchun)", callback_data=f"mt:g:{uid}:0"),
-               types.InlineKeyboardButton("📥 Asl faylni olish", callback_data=f"mt:f:{uid}"))
+        kb.row(types.InlineKeyboardButton("📄 Javobsiz PDF", callback_data=f"mt:o:{uid}:q:p"),
+               types.InlineKeyboardButton("🔑 Javobli PDF", callback_data=f"mt:o:{uid}:k:p"))
+        kb.row(types.InlineKeyboardButton("🅰️ Faqat A javobli", callback_data=f"mt:o:{uid}:a:p"),
+               types.InlineKeyboardButton("🔀 Variantlar yasash", callback_data=f"mt:v:{uid}"))
+        kb.add(types.InlineKeyboardButton("📥 Asl faylni olish", callback_data=f"mt:f:{uid}"))
         kb.row(types.InlineKeyboardButton("🏷 Papkani o'zgartirish", callback_data=f"mt:p:{uid}"),
                types.InlineKeyboardButton("🗑 O'chirish", callback_data=f"mt:x:{uid}"))
         kb.add(types.InlineKeyboardButton("⬅️ Papkaga qaytish",
@@ -116,45 +128,131 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
 
     # ---------------- Konvertatsiya ----------------
 
-    def convert_and_send(chat_id: int, file_id: str, file_name: str, with_answers: bool, uid: str = None):
-        mode = "javoblar bilan" if with_answers else "javobsiz"
-        status = bot.send_message(chat_id, f"⏳ <b>{_h(file_name)}</b> — PDF va Word ({mode}) tayyorlanmoqda...",
+    def download(file_id: str) -> bytes:
+        info = bot.get_file(file_id)
+        if (info.file_size or 0) > MAX_DOWNLOAD:
+            raise ValueError("Fayl 20 MB dan katta — Telegram bot uni yuklab ololmaydi.")
+        return bot.download_file(info.file_path)
+
+    def safe_stem(title: str) -> str:
+        return re.sub(r"[\\/:*?\"<>|]+", "_", title)[:80]
+
+    def output_keyboard(uid, mode: str, fmt: str):
+        """PDF ostidagi tugmalar: boshqa turlar, variantlar va shu hujjatning Word nusxasi."""
+        if not uid:
+            return None
+        kb = types.InlineKeyboardMarkup()
+        others = [types.InlineKeyboardButton(label, callback_data=f"mt:o:{uid}:{m}:p")
+                  for m, (label, _) in MODES.items() if m != mode]
+        kb.row(*others)
+        kb.row(types.InlineKeyboardButton("🔀 Variantlar yasash", callback_data=f"mt:v:{uid}"))
+        if fmt == "p":
+            kb.row(types.InlineKeyboardButton(f"📝 Word ({MODES[mode][1]})", callback_data=f"mt:o:{uid}:{mode}:w"))
+        return kb
+
+    def send_output(chat_id: int, file_id: str, file_name: str, uid, mode: str = "q", fmt: str = "p",
+                    note: str = ""):
+        """Testdan bitta hujjat: javobsiz / javobli / faqat-A, PDF yoki Word."""
+        from services.mtf_converter import test_builder as tb
+        label, word = MODES.get(mode, MODES["q"])
+        status = bot.send_message(chat_id, f"⏳ <b>{_h(file_name)}</b> — {word} {'Word' if fmt == 'w' else 'PDF'} tayyorlanmoqda...",
                                   parse_mode="HTML")
         try:
-            info = bot.get_file(file_id)
-            if (info.file_size or 0) > MAX_DOWNLOAD:
-                raise ValueError("Fayl 20 MB dan katta — Telegram bot uni yuklab ololmaydi.")
-            data = bot.download_file(info.file_path)
-            from services.mtf_converter import process_mtf_to_pdf
-            res = process_mtf_to_pdf(data, file_name, layout="2col", with_answers=with_answers)
-            title = res.get("title") or file_name
-            stem = re.sub(r"[\\/:*?\"<>|]+", "_", title)[:80] + ("" if with_answers else " (javobsiz)")
-            caption = (f"🎓 <b>{_h(title)}</b>\n"
-                       f"📊 Savollar: <b>{res.get('questions_count', 0)} ta</b>\n"
-                       f"🔑 {'To‘g‘ri javoblar (*) bilan belgilangan' if with_answers else 'Javobsiz — talabalar uchun'}")
-            if res.get("pdf_bytes"):
-                f = io.BytesIO(res["pdf_bytes"])
-                f.name = f"{stem}.pdf"
-                bot.send_document(chat_id, f, caption=caption, parse_mode="HTML")
-            if res.get("docx_bytes"):
-                f = io.BytesIO(res["docx_bytes"])
-                f.name = f"{stem}.docx"
-                kb = None
-                if uid:
-                    kb = types.InlineKeyboardMarkup()
-                    kb.add(types.InlineKeyboardButton(
-                        "📝 Javobsiz variantini ham olish" if with_answers else "📄 Javobli variantini ham olish",
-                        callback_data=f"mt:g:{uid}:{0 if with_answers else 1}"))
-                bot.send_document(chat_id, f, caption="📝 Word varianti", reply_markup=kb)
+            questions, _engine = tb.load_questions(download(file_id), file_name, with_answers=(mode != "q"))
+            if uid:
+                remember_count(uid, len(tb.unique_questions(questions)))
+            title = tb.title_from_filename(file_name)
+            if mode == "a":
+                questions = tb.answers_first(questions)
+            with_answers = mode in ("k", "a")
+            doc_title = title + (" (A variant)" if mode == "a" else "")
+            data = (tb.build_docx if fmt == "w" else tb.build_pdf)(questions, doc_title, with_answers)
+            f = io.BytesIO(data)
+            f.name = f"{safe_stem(title)} ({word}).{'docx' if fmt == 'w' else 'pdf'}"
+            hint = {"q": "Talabalar uchun, javoblarsiz",
+                    "k": "To‘g‘ri javoblar * bilan belgilangan",
+                    "a": "To‘g‘ri javob har doim A qatorida (* bilan)"}[mode]
+            caption = f"{label}: <b>{_h(title)}</b>\n📊 {len(questions)} ta savol · {hint}"
+            if note:
+                caption += f"\n{note}"
+            bot.send_document(chat_id, f, caption=caption, parse_mode="HTML",
+                              reply_markup=output_keyboard(uid, mode, fmt))
             try:
                 bot.delete_message(chat_id, status.message_id)
             except Exception:
                 pass
         except Exception as e:
+            fail(chat_id, status, file_name, e)
+
+    def send_variants(chat_id: int, entry: dict, per: int, count: int):
+        from services.mtf_converter import test_builder as tb
+        status = bot.send_message(chat_id, f"⏳ <b>{_h(entry['name'])}</b> — {count} ta variant × {per} ta savol yasalmoqda...",
+                                  parse_mode="HTML")
+        try:
+            questions, _ = tb.load_questions(download(entry["file_id"]), entry["name"], with_answers=False)
+            title = tb.title_from_filename(entry["name"])
+            variants = tb.make_variants(questions, per, count)
+            per = len(variants[0])
+            stem = f"{safe_stem(title)} ({count} variant x {per})"
+            f = io.BytesIO(tb.build_variants_pdf(variants, title))
+            f.name = f"{stem}.pdf"
+            bot.send_document(chat_id, f, parse_mode="HTML",
+                              caption=f"🔀 <b>{_h(title)}</b>\n{count} ta variant × {per} ta savol · savollar va javoblar aralashtirilgan · talabalar uchun")
+            k = io.BytesIO(tb.build_key_pdf(variants, title))
+            k.name = f"{stem} - kalit.pdf"
+            kb = types.InlineKeyboardMarkup()
+            kb.row(types.InlineKeyboardButton("🔁 Yana yasash (yangi aralashtirish)", callback_data=f"mt:v:{entry['uid']}:{per}:{count}"))
+            kb.row(types.InlineKeyboardButton("🔀 Boshqa sonlar bilan", callback_data=f"mt:v:{entry['uid']}"))
+            bot.send_document(chat_id, k, caption="🔑 Javoblar kaliti — faqat o‘qituvchi uchun", reply_markup=kb)
             try:
-                bot.edit_message_text(f"❌ <b>{_h(file_name)}</b>: {_h(e)}", chat_id, status.message_id, parse_mode="HTML")
+                bot.delete_message(chat_id, status.message_id)
             except Exception:
-                bot.send_message(chat_id, f"❌ {file_name}: {e}")
+                pass
+        except Exception as e:
+            fail(chat_id, status, entry["name"], e)
+
+    def fail(chat_id, status, file_name, e):
+        try:
+            bot.edit_message_text(f"❌ <b>{_h(file_name)}</b>: {_h(e)}", chat_id, status.message_id, parse_mode="HTML")
+        except Exception:
+            bot.send_message(chat_id, f"❌ {file_name}: {e}")
+
+    def remember_count(uid: str, n: int):
+        try:
+            entry = lib.get_test(uid)
+            if entry and entry.get("questions") != n:
+                entry["questions"] = n
+                lib._save(entry)
+        except Exception:
+            pass
+
+    def question_count(entry: dict) -> int:
+        if entry.get("questions"):
+            return int(entry["questions"])
+        from services.mtf_converter import test_builder as tb
+        n = len(tb.unique_questions(tb.load_questions(download(entry["file_id"]), entry["name"], with_answers=False)[0]))
+        remember_count(entry["uid"], n)
+        return n
+
+    def ask_per_variant(chat_id: int, entry: dict):
+        total = question_count(entry)
+        uid = entry["uid"]
+        kb = types.InlineKeyboardMarkup(row_width=4)
+        opts = [n for n in (10, 15, 20, 25, 30, 40, 50) if n < total]
+        kb.add(*[types.InlineKeyboardButton(str(n), callback_data=f"mt:v:{uid}:{n}") for n in opts])
+        kb.row(types.InlineKeyboardButton(f"Hammasi ({total})", callback_data=f"mt:v:{uid}:{total}"),
+               types.InlineKeyboardButton("✍️ Boshqa son", callback_data=f"mt:V:{uid}"))
+        bot.send_message(chat_id, f"🔀 <b>{_h(entry['name'])}</b> — bazada {total} ta savol.\n\n"
+                                  f"<b>1/2.</b> Har bir variantda nechta savol bo'lsin?",
+                         parse_mode="HTML", reply_markup=kb)
+
+    def ask_count(chat_id: int, entry: dict, per: int):
+        uid = entry["uid"]
+        kb = types.InlineKeyboardMarkup(row_width=4)
+        kb.add(*[types.InlineKeyboardButton(str(n), callback_data=f"mt:v:{uid}:{per}:{n}") for n in (2, 3, 4, 5, 6, 8, 10, 12)])
+        kb.row(types.InlineKeyboardButton("✍️ Boshqa son", callback_data=f"mt:W:{uid}:{per}"))
+        bot.send_message(chat_id, f"🔀 Har variantda <b>{per} ta savol</b>.\n\n<b>2/2.</b> Nechta variant yasalsin?",
+                         parse_mode="HTML", reply_markup=kb)
 
     def react(message, emoji="👌"):
         try:
@@ -200,6 +298,36 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
         text, kb = test_view(entry)
         bot.send_message(message.chat.id, "✅ Papka o'zgartirildi.\n\n" + text, parse_mode="HTML", reply_markup=kb)
 
+    @bot.message_handler(func=lambda m: bool(m.chat.type == "private" and m.reply_to_message and m.text
+                                              and m.reply_to_message.text
+                                              and m.reply_to_message.text.startswith((PER_PROMPT, COUNT_PROMPT))))
+    def on_number_reply(message):
+        if not allowed(message):
+            return
+        prompt = message.reply_to_message.text
+        mt = re.search(r"ID: ([A-Za-z0-9_-]+)", prompt)
+        entry = lib.get_test(mt.group(1)) if mt else None
+        if not entry:
+            bot.send_message(message.chat.id, "❌ Test topilmadi.")
+            return
+        num = re.sub(r"\D", "", message.text)
+        if not num:
+            bot.send_message(message.chat.id, "❌ Faqat son yozing, masalan: 30")
+            return
+        n = int(num)
+        if prompt.startswith(PER_PROMPT):
+            total = question_count(entry)
+            if not 1 <= n <= total:
+                bot.send_message(message.chat.id, f"❌ 1 dan {total} gacha son yozing.")
+                return
+            ask_count(message.chat.id, entry, n)
+        else:
+            pm = re.search(r"savollar: (\d+)", prompt)
+            if not 1 <= n <= MAX_VARIANTS:
+                bot.send_message(message.chat.id, f"❌ 1 dan {MAX_VARIANTS} gacha son yozing.")
+                return
+            send_variants(message.chat.id, entry, int(pm.group(1)) if pm else 30, n)
+
     @bot.callback_query_handler(func=lambda c: (c.data or "").startswith("mt:"))
     def on_callback(call):
         if not allowed(call):
@@ -228,13 +356,39 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
                 bot.answer_callback_query(call.id, None if entry else "Test topilmadi")
                 if entry:
                     show(*test_view(entry))
-            elif action == "g":
+            elif action in ("o", "g"):
+                # mt:o:{uid}:{q|k|a}:{p|w}; eski tugmalar: mt:g:{uid}:{1|0}
                 entry = lib.get_test(parts[2])
                 if not entry:
                     bot.answer_callback_query(call.id, "Test topilmadi")
                     return
+                if action == "g":
+                    mode, fmt = ("k" if parts[3] == "1" else "q"), "p"
+                else:
+                    mode, fmt = parts[3], (parts[4] if len(parts) > 4 else "p")
                 bot.answer_callback_query(call.id, "Tayyorlanmoqda...")
-                convert_and_send(chat_id, entry["file_id"], entry["name"], parts[3] == "1", uid=entry["uid"])
+                send_output(chat_id, entry["file_id"], entry["name"], entry["uid"], mode, fmt)
+            elif action == "v":
+                # mt:v:{uid} -> savollar soni; mt:v:{uid}:{per} -> variantlar soni; mt:v:{uid}:{per}:{count} -> yasash
+                entry = lib.get_test(parts[2])
+                if not entry:
+                    bot.answer_callback_query(call.id, "Test topilmadi")
+                    return
+                bot.answer_callback_query(call.id)
+                if len(parts) == 3:
+                    ask_per_variant(chat_id, entry)
+                elif len(parts) == 4:
+                    ask_count(chat_id, entry, int(parts[3]))
+                else:
+                    send_variants(chat_id, entry, int(parts[3]), min(int(parts[4]), MAX_VARIANTS))
+            elif action == "V":
+                bot.answer_callback_query(call.id)
+                bot.send_message(chat_id, f"{PER_PROMPT} (ID: {parts[2]})",
+                                 reply_markup=types.ForceReply(input_field_placeholder="masalan: 30"))
+            elif action == "W":
+                bot.answer_callback_query(call.id)
+                bot.send_message(chat_id, f"{COUNT_PROMPT} (ID: {parts[2]}, savollar: {parts[3]})",
+                                 reply_markup=types.ForceReply(input_field_placeholder="masalan: 4"))
             elif action == "f":
                 entry = lib.get_test(parts[2])
                 bot.answer_callback_query(call.id, None if entry else "Test topilmadi")
@@ -330,9 +484,8 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
                 note = "📡 Bazaga saqlandi." if channel_id else "📚 Ro'yxatga qo'shildi (baza kanali/mavzusi hali ulanmagan)."
         except Exception as e:
             note = f"⚠️ Bazaga saqlanmadi: {_h(e)}"
-        if note:
-            bot.send_message(message.chat.id, note, parse_mode="HTML")
-        convert_and_send(message.chat.id, doc.file_id, doc.file_name, True, uid=uid)
+        # Birinchi bo'lib faqat javobsiz PDF; qolganlari (javobli, A, variantlar, Word) — ostidagi tugmalarda
+        send_output(message.chat.id, doc.file_id, doc.file_name, uid, mode="q", fmt="p", note=note)
 
     def posted_by_admin(message) -> bool:
         """Guruhda admin yozganmi (o'z nomidan yoki guruh nomidan — anonim admin)."""
