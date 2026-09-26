@@ -3586,3 +3586,32 @@ body.hub-cursor-active * {
 
 
 
+
+/* 🧪 Test bazasi → hujjat: hujjat turi tugmalari */
+.mst-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mst-mode small {
+  font-weight: 500;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.mst-mode:hover { border-color: rgba(56, 189, 248, 0.5); }
+.mst-mode.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.16);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35) inset;
+}

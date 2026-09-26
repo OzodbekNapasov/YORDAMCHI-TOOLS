@@ -216,3 +216,42 @@ def build_key_pdf(variants: List[List[Question]], title: str) -> bytes:
             pdf.ln()
         pdf.ln(4)
     return bytes(pdf.output())
+
+
+# ---------------- Bitta chaqiruvda tayyor fayllar (veb-platforma uchun) ----------------
+
+MODE_WORDS = {"q": "javobsiz", "k": "javobli", "a": "A-variant", "v": "variantlar"}
+
+
+def _safe_stem(title: str) -> str:
+    return re.sub(r"[\\/:*?\"<>|]+", "_", title)[:80]
+
+
+def build_outputs(data: bytes, filename: str, mode: str = "q", fmt: str = "pdf",
+                  per_variant: int = 30, variant_count: int = 4) -> dict:
+    """mode: q (javobsiz) | k (javobli) | a (faqat A) | v (variantlar + kalit); fmt: pdf | docx.
+    Qaytaradi: {"title", "questions", "unique_questions", "files": [{"name", "kind", "data"}]}"""
+    if mode not in MODE_WORDS:
+        raise ValueError("Noma'lum hujjat turi")
+    questions, engine = load_questions(data, filename, with_answers=mode in ("k", "a"))
+    title = title_from_filename(filename)
+    stem = _safe_stem(title)
+    unique_count = len(unique_questions(questions))
+    files = []
+    if mode == "v":
+        variants = make_variants(questions, per_variant, max(1, min(variant_count, 30)))
+        per = len(variants[0])
+        base = f"{stem} ({len(variants)} variant x {per})"
+        files.append({"name": f"{base}.pdf", "kind": "variants", "data": build_variants_pdf(variants, title)})
+        files.append({"name": f"{base} - kalit.pdf", "kind": "key", "data": build_key_pdf(variants, title)})
+    else:
+        qs = answers_first(questions) if mode == "a" else questions
+        doc_title = title + (" (A variant)" if mode == "a" else "")
+        with_answers = mode in ("k", "a")
+        if fmt == "docx":
+            payload, ext = build_docx(qs, doc_title, with_answers), "docx"
+        else:
+            payload, ext = build_pdf(qs, doc_title, with_answers), "pdf"
+        files.append({"name": f"{stem} ({MODE_WORDS[mode]}).{ext}", "kind": mode, "data": payload})
+    return {"title": title, "questions": len(questions), "unique_questions": unique_count,
+            "engine": engine, "files": files}

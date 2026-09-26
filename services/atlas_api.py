@@ -3231,3 +3231,176 @@ def api_mtf_send_telegram():
 
 
 
+
+
+# ============================================================
+# MYTESTX TEST BAZASI VA HUJJAT YASASH (kompyutersiz, native o'quvchi)
+# Botdagi "🧪 MyTestX Testlar" funksiyalarining veb-platforma varianti.
+# ============================================================
+
+def _mtf_telegram_bot():
+    import telebot
+    from services.app_secrets import get_bot_token
+    token = get_bot_token()
+    if not token:
+        raise RuntimeError("BOT_TOKEN sozlanmagan")
+    return telebot.TeleBot(token, threaded=False)
+
+
+def _mtf_store_output(name: str, data: bytes) -> dict:
+    """Tayyor faylni Supabase Storage'ga yuklaydi (Vercel javob hajmi cheklovini chetlab o'tish uchun)."""
+    import re as _re
+    from services.supabase_storage import upload_document_to_supabase
+    ext = os.path.splitext(name)[1].lower()
+    slug = _re.sub(r"[^A-Za-z0-9._-]+", "_", os.path.splitext(name)[0])[:60].strip("_") or "test"
+    tmp = os.path.join(tempfile.gettempdir(), f"{uuid.uuid4().hex}{ext}")
+    with open(tmp, "wb") as f:
+        f.write(data)
+    try:
+        url = upload_document_to_supabase(tmp, f"mtf_outputs/{uuid.uuid4().hex[:10]}/{slug}{ext}")
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    return {"name": name, "url": url or "", "size": len(data)}
+
+
+@atlas_api.route("/mtf/library", methods=["GET"])
+@admin_required
+def api_mtf_library():
+    """Telegram kanal/mavzudagi testlar bazasi ro'yxati."""
+    from services import mtf_library as lib
+    try:
+        st = lib.get_storage()
+        tests = lib.list_tests(force=request.args.get("refresh") == "1")
+        return jsonify({
+            "success": True,
+            "storage": {"connected": bool(st), "title": (st or {}).get("title", ""),
+                        "topic": bool((st or {}).get("thread_id"))},
+            "folders": [{"name": f, "count": n} for f, n in lib.folders(tests)],
+            "tests": [{k: e.get(k) for k in ("uid", "name", "folder", "size", "added_at", "questions")} for e in tests],
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Bazani o'qib bo'lmadi: {e}"}), 500
+
+
+@atlas_api.route("/mtf/library/<uid>/info", methods=["GET"])
+@admin_required
+def api_mtf_library_info(uid):
+    """Test haqida: noyob savollar soni (variantlar uchun). Bilinmasa fayl o'qib hisoblanadi."""
+    from services import mtf_library as lib
+    from services.mtf_converter import test_builder as tb
+    try:
+        entry = lib.get_test(uid)
+        if not entry:
+            return jsonify({"success": False, "error": "Test topilmadi"}), 404
+        if not entry.get("questions"):
+            bot_api = _mtf_telegram_bot()
+            info = bot_api.get_file(entry["file_id"])
+            data = bot_api.download_file(info.file_path)
+            qs, _ = tb.load_questions(data, entry["name"], with_answers=False)
+            entry["questions"] = len(tb.unique_questions(qs))
+            lib._save(entry)
+        return jsonify({"success": True, "uid": uid, "name": entry["name"], "questions": entry["questions"]})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@atlas_api.route("/mtf/build", methods=["POST"])
+@admin_required
+def api_mtf_build():
+    """Testdan hujjat yasash. Manba: bazadagi test (uid) yoki yuklangan fayl.
+    mode: q (javobsiz) | k (javobli) | a (faqat A) | v (variantlar + kalit); fmt: pdf | docx."""
+    import base64 as _b64
+    import io as _io
+    from services import mtf_library as lib
+    from services.mtf_converter import test_builder as tb
+
+    form = request.form if (request.files or request.form) else (request.get_json(silent=True) or {})
+    mode = str(form.get("mode") or "q")
+    fmt = "docx" if str(form.get("fmt") or "pdf").lower() in ("docx", "word", "w") else "pdf"
+    try:
+        per = int(form.get("per") or 30)
+        count = int(form.get("count") or 4)
+    except ValueError:
+        return jsonify({"success": False, "error": "Savollar va variantlar soni butun son bo'lishi kerak"}), 400
+    if mode not in tb.MODE_WORDS:
+        return jsonify({"success": False, "error": "Noma'lum hujjat turi"}), 400
+    if mode == "v" and not (1 <= per <= 1000 and 1 <= count <= 30):
+        return jsonify({"success": False, "error": "Variantlar soni 1–30, savollar soni 1 dan katta bo'lishi kerak"}), 400
+
+    uid = (form.get("uid") or "").strip()
+    save = str(form.get("save") or "").lower() in ("1", "true", "yes", "on")
+    entry = None
+    try:
+        if uid:
+            entry = lib.get_test(uid)
+            if not entry:
+                return jsonify({"success": False, "error": "Test bazada topilmadi"}), 404
+            bot_api = _mtf_telegram_bot()
+            info = bot_api.get_file(entry["file_id"])
+            if (info.file_size or 0) > 20 * 1024 * 1024:
+                return jsonify({"success": False, "error": "Fayl 20 MB dan katta — Telegram'dan yuklab bo'lmaydi"}), 400
+            data = bot_api.download_file(info.file_path)
+            filename = entry["name"]
+        elif request.files.get("file"):
+            file_obj = request.files["file"]
+            filename = os.path.basename(file_obj.filename or "test.mtf")
+            data = file_obj.read()
+        elif form.get("file_base64"):
+            raw = str(form.get("file_base64"))
+            filename = os.path.basename(str(form.get("filename") or "test.mtf"))
+            data = _b64.b64decode(raw.split(",", 1)[1] if "," in raw else raw)
+        else:
+            return jsonify({"success": False, "error": "Bazadan test tanlang yoki fayl yuklang"}), 400
+        if not lib.is_test_file(filename):
+            return jsonify({"success": False, "error": "Faqat .mtf yoki .xml fayl qabul qilinadi"}), 400
+
+        result = tb.build_outputs(data, filename, mode=mode, fmt=fmt, per_variant=per, variant_count=count)
+
+        # Yuklangan faylni bazaga (Telegram kanal/mavzu) saqlash
+        saved = None
+        if save and not uid:
+            try:
+                st = lib.get_storage()
+                if not st:
+                    saved = {"error": "Baza kanali/mavzusi ulanmagan"}
+                else:
+                    doc_io = _io.BytesIO(data)
+                    doc_io.name = filename
+                    folder = (str(form.get("folder") or "").strip().lstrip("#")) or lib.DEFAULT_FOLDER
+                    msg = _mtf_telegram_bot().send_document(
+                        st["chat_id"], doc_io, message_thread_id=st.get("thread_id"),
+                        caption=f"#{folder.replace(' ', '_')}" if folder != lib.DEFAULT_FOLDER else None)
+                    d = msg.document
+                    new_entry = lib.add_test(d.file_id, d.file_unique_id, d.file_name or filename, d.file_size,
+                                             channel_msg_id=msg.message_id, folder=folder)
+                    new_entry["questions"] = result["unique_questions"]
+                    lib._save(new_entry)
+                    saved = {"uid": new_entry["uid"], "name": new_entry["name"], "folder": new_entry["folder"]}
+            except Exception as save_err:
+                from services.app_secrets import redact_secrets
+                saved = {"error": redact_secrets(save_err)}
+        elif entry and entry.get("questions") != result["unique_questions"]:
+            entry["questions"] = result["unique_questions"]
+            try:
+                lib._save(entry)
+            except Exception:
+                pass
+
+        files = []
+        for f in result["files"]:
+            stored = _mtf_store_output(f["name"], f["data"])
+            if not stored["url"]:
+                return jsonify({"success": False, "error": "Tayyor faylni saqlab bo'lmadi (Supabase Storage)"}), 500
+            stored["kind"] = f["kind"]
+            files.append(stored)
+
+        log_audit(get_current_admin()["username"], "mtf", f"build_{mode}", "success",
+                  {"file": filename, "fmt": fmt, "per": per, "count": count}, request.remote_addr)
+        return jsonify({"success": True, "title": result["title"], "questions": result["questions"],
+                        "unique_questions": result["unique_questions"], "files": files, "saved": saved})
+    except Exception as e:
+        from services.app_secrets import redact_secrets
+        return jsonify({"success": False, "error": redact_secrets(e)}), 500

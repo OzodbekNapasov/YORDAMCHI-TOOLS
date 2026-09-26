@@ -8494,6 +8494,207 @@ const ATLAS = {
   // ============================================================
   // MTF & TEST CONVERTER (WINDOWS EXPLORER DIRECTORY TREE + TELEGRAM)
   // ============================================================
+  // 🧪 Test bazasi → hujjat: botdagi funksiyalarning veb varianti (kompyutersiz)
+  initMtfStudio() {
+    const $ = id => document.getElementById(id);
+    if (!$('mtf-studio')) return;
+    const esc = v => ATLAS.esc(v);
+    const fmtSize = n => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((n || 0) / 1024)) + ' KB');
+    const st = { tests: [], source: 'lib', uid: null, mode: 'q', fmt: 'pdf', file: null, busy: false };
+    const MODE_TITLES = { q: '📄 Javobsiz', k: '🔑 Javobli', a: '🅰️ Faqat A', v: '🔀 Variantlar' };
+
+    const setActive = (btns, pred) => btns.forEach(b => { b.className = b.className.replace(/\bbtn-(primary|secondary)\b/, pred(b) ? 'btn-primary' : 'btn-secondary'); });
+
+    // --- Manba (baza / fayl) ---
+    const setSource = src => {
+      st.source = src;
+      setActive([$('mst-src-lib'), $('mst-src-file')], b => b.id === (src === 'lib' ? 'mst-src-lib' : 'mst-src-file'));
+      $('mst-pane-lib').style.display = src === 'lib' ? 'block' : 'none';
+      $('mst-pane-file').style.display = src === 'file' ? 'block' : 'none';
+      updateHint();
+    };
+    $('mst-src-lib').addEventListener('click', () => setSource('lib'));
+    $('mst-src-file').addEventListener('click', () => setSource('file'));
+    $('mst-file').addEventListener('change', e => {
+      st.file = e.target.files?.[0] || null;
+      $('mst-file-label').textContent = st.file ? `${st.file.name} (${fmtSize(st.file.size)})` : '.mtf yoki .xml faylni tanlang';
+    });
+
+    // --- Baza ro'yxati ---
+    const renderList = () => {
+      const list = $('mst-list');
+      const q = ($('mst-search').value || '').toLowerCase().trim();
+      const folder = $('mst-folder').value;
+      const items = st.tests.filter(t => (!folder || t.folder === folder) &&
+        (!q || (t.name || '').toLowerCase().includes(q) || (t.folder || '').toLowerCase().includes(q)));
+      const scroll = list.scrollTop;
+      list.innerHTML = items.length ? items.map(t => `
+        <label data-uid="${esc(t.uid)}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid ${t.uid === st.uid ? 'rgba(56,189,248,0.7)' : 'transparent'};background:${t.uid === st.uid ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)'};">
+          <input type="radio" name="mst-test" value="${esc(t.uid)}" ${t.uid === st.uid ? 'checked' : ''} style="accent-color:#38bdf8;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;color:#fff;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.name)}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);">📁 ${esc(t.folder || 'Umumiy')} · ${fmtSize(t.size)}${t.questions ? ` · ${t.questions} savol` : ''}</div>
+          </div>
+        </label>`).join('')
+        : `<div style="padding:18px;text-align:center;color:rgba(255,255,255,0.5);font-size:12.5px;line-height:1.5;">${st.tests.length
+            ? 'Hech narsa topilmadi.'
+            : "Bazada hali test yo'q. Telegram guruhdagi baza mavzusiga .mtf tashlang yoki «Fayl yuklash»dan foydalaning."}</div>`;
+      list.scrollTop = scroll;
+      list.querySelectorAll('input[name=mst-test]').forEach(r => r.addEventListener('change', () => {
+        st.uid = r.value;
+        renderList();
+        updateHint();
+      }));
+    };
+    $('mst-search').addEventListener('input', renderList);
+    $('mst-folder').addEventListener('change', renderList);
+
+    const loadLibrary = async (refresh = false) => {
+      const res = await this.api(`/api/mtf/library${refresh ? '?refresh=1' : ''}`);
+      const badge = $('mst-storage');
+      if (!res || !res.success) {
+        badge.textContent = '⚠️ Bazani o\'qib bo\'lmadi';
+        $('mst-list').innerHTML = `<div style="padding:16px;color:#fca5a5;font-size:12.5px;">${esc(res?.error || 'Xatolik')}</div>`;
+        return;
+      }
+      st.tests = res.tests || [];
+      badge.textContent = res.storage?.connected
+        ? `📡 Baza: ${res.storage.title || 'ulangan'}${res.storage.topic ? ' (mavzu)' : ''} · ${st.tests.length} ta test`
+        : `⚠️ Baza ulanmagan · ${st.tests.length} ta test`;
+      badge.style.color = res.storage?.connected ? '#34d399' : '#fbbf24';
+      const sel = $('mst-folder');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Barcha papkalar</option>' +
+        (res.folders || []).map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${f.count})</option>`).join('');
+      sel.value = cur;
+      renderList();
+    };
+    $('mst-refresh').addEventListener('click', () => loadLibrary(true));
+
+    // --- Hujjat turi va format ---
+    const modeBtns = Array.from(document.querySelectorAll('#mst-modes .mst-mode'));
+    const fmtBtns = Array.from(document.querySelectorAll('#mst-fmt-row [data-fmt]'));
+    const setMode = m => {
+      st.mode = m;
+      modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+      $('mst-fmt-row').style.display = m === 'v' ? 'none' : 'flex';
+      $('mst-var-row').style.display = m === 'v' ? 'grid' : 'none';
+      updateHint();
+    };
+    modeBtns.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    fmtBtns.forEach(b => b.addEventListener('click', () => { st.fmt = b.dataset.fmt; setActive(fmtBtns, x => x.dataset.fmt === st.fmt); }));
+
+    // Variantlar uchun: bazadagi noyob savollar soni
+    const updateHint = async () => {
+      const hint = $('mst-var-hint');
+      const base = "Savollar tasodifiy tanlanadi, savol va javoblar tartibi aralashtiriladi. Kalit alohida PDF bo'ladi.";
+      if (st.mode !== 'v' || st.source !== 'lib' || !st.uid) { hint.textContent = base; return; }
+      const t = st.tests.find(x => x.uid === st.uid);
+      if (t && !t.questions) {
+        hint.textContent = 'Savollar soni aniqlanmoqda...';
+        const info = await this.api(`/api/mtf/library/${encodeURIComponent(st.uid)}/info`);
+        if (info?.success) { t.questions = info.questions; renderList(); }
+      }
+      if (t?.questions) {
+        hint.textContent = `Bu testda ${t.questions} ta noyob savol bor. ${base}`;
+        $('mst-per').max = t.questions;
+        if (+$('mst-per').value > t.questions) $('mst-per').value = t.questions;
+      } else {
+        hint.textContent = base;
+      }
+    };
+
+    // --- Natijalar ---
+    const renderResult = (res, sourceName) => {
+      const box = document.createElement('div');
+      box.style.cssText = 'background:rgba(0,0,0,0.25);border:1px solid rgba(52,211,153,0.35);border-radius:12px;padding:12px 14px;';
+      const savedNote = res.saved
+        ? (res.saved.uid ? `<div style="font-size:11.5px;color:#34d399;margin-top:4px;">📡 Bazaga saqlandi (${esc(res.saved.folder)})</div>`
+                         : `<div style="font-size:11.5px;color:#fbbf24;margin-top:4px;">⚠️ Bazaga saqlanmadi: ${esc(res.saved.error)}</div>`)
+        : '';
+      box.innerHTML = `
+        <div style="font-weight:800;color:#fff;font-size:13.5px;">✅ ${esc(res.title)} <span style="font-weight:600;color:rgba(255,255,255,0.55);font-size:12px;">· ${res.questions} savol</span></div>
+        ${savedNote}
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+          ${res.files.map((f, i) => `
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;">
+              <span style="font-size:18px;">${f.kind === 'key' ? '🔑' : (f.name.endsWith('.docx') ? '📝' : '📄')}</span>
+              <div style="flex:1;min-width:180px;">
+                <div style="font-size:12.5px;font-weight:700;color:#fff;word-break:break-word;">${esc(f.name)}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);">${fmtSize(f.size)}${f.kind === 'key' ? ' · faqat o‘qituvchi uchun' : ''}</div>
+              </div>
+              <a class="btn-primary btn-sm" href="${esc(f.url)}" target="_blank" rel="noopener" download="${esc(f.name)}" style="text-decoration:none;">⬇️ Yuklab olish</a>
+              <button type="button" class="btn-secondary btn-sm" data-tg="${i}">✈️ Telegram</button>
+            </div>`).join('')}
+        </div>`;
+      box.querySelectorAll('[data-tg]').forEach(btn => btn.addEventListener('click', async () => {
+        const f = res.files[+btn.dataset.tg];
+        btn.disabled = true;
+        btn.textContent = '⏳';
+        const isDocx = f.name.toLowerCase().endsWith('.docx');
+        const r = await this.api('/api/mtf/send_telegram', 'POST', {
+          title: f.name.replace(/\.(pdf|docx)$/i, ''), filename: f.name,
+          pdf_url: isDocx ? null : f.url, docx_url: isDocx ? f.url : null
+        });
+        btn.textContent = r?.success ? '✅ Yuborildi' : '❌ Xato';
+        if (!r?.success) { btn.disabled = false; this.toast(r?.error || 'Telegramga yuborib bo\'lmadi', 'error'); }
+      }));
+      $('mst-results').prepend(box);
+    };
+
+    // --- Tayyorlash ---
+    $('mst-build').addEventListener('click', async () => {
+      if (st.busy) return;
+      const fd = new FormData();
+      let sourceName = '';
+      if (st.source === 'lib') {
+        if (!st.uid) { this.toast('Avval bazadan test tanlang', 'error'); return; }
+        fd.append('uid', st.uid);
+        sourceName = st.tests.find(t => t.uid === st.uid)?.name || '';
+      } else {
+        if (!st.file) { this.toast('Avval .mtf faylni tanlang', 'error'); return; }
+        if (st.file.size > 4 * 1024 * 1024) { this.toast('Fayl 4 MB dan katta — uni Telegram botga yuboring', 'error'); return; }
+        fd.append('file', st.file);
+        sourceName = st.file.name;
+        if ($('mst-save').checked) {
+          fd.append('save', '1');
+          fd.append('folder', $('mst-save-folder').value || '');
+        }
+      }
+      fd.append('mode', st.mode);
+      fd.append('fmt', st.fmt);
+      fd.append('per', $('mst-per').value || '30');
+      fd.append('count', $('mst-count').value || '4');
+
+      st.busy = true;
+      const btn = $('mst-build');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-sm"></span> <span>${MODE_TITLES[st.mode]} tayyorlanmoqda...</span>`;
+      try {
+        const headers = this.token ? { Authorization: `Bearer ${this.token}` } : {};
+        const r = await fetch('/api/mtf/build', { method: 'POST', headers, body: fd });
+        if (r.status === 401) { this.logout(); return; }
+        const res = r.status === 413
+          ? { success: false, error: 'Fayl juda katta — uni Telegram botga yuboring' }
+          : await r.json().catch(() => ({ success: false, error: `Server xatoligi (HTTP ${r.status})` }));
+        if (!res.success) { this.toast(res.error || 'Xatolik', 'error'); return; }
+        renderResult(res, sourceName);
+        this.toast('Tayyor!', 'success');
+        if (res.saved?.uid) loadLibrary(true);
+      } catch (err) {
+        this.toast(err.message || 'Server bilan aloqa uzildi', 'error');
+      } finally {
+        st.busy = false;
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    });
+
+    setMode('q');
+    loadLibrary();
+  },
+
   loadMtfConverter(viewport) {
     viewport.innerHTML = `
       <div style="max-width:1280px;margin:0 auto;padding-bottom:50px;">
@@ -8514,6 +8715,81 @@ const ATLAS = {
               ${this.icons.refresh} <span>Papkani Yangilash</span>
             </button>
           </div>
+        </div>
+
+        <!-- 🧪 TEST BAZASI → HUJJAT (kompyutersiz; botdagi funksiyalar bilan bir xil) -->
+        <div id="mtf-studio" class="card" style="background:linear-gradient(160deg,rgba(15,23,42,0.92),rgba(8,47,73,0.55));border:1px solid rgba(56,189,248,0.35);border-radius:16px;padding:20px;margin-bottom:22px;box-shadow:0 10px 30px rgba(0,0,0,0.35);">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <div>
+              <h3 style="font-size:17px;font-weight:800;color:#fff;margin:0 0 4px 0;">🧪 Test bazasi → PDF / Word / Variantlar</h3>
+              <div style="font-size:12.5px;color:rgba(255,255,255,0.6);">Kompyuter yoniq bo'lishi shart emas. Javobsiz, javobli, «faqat A» va aralash variantlar + javoblar kaliti.</div>
+            </div>
+            <span id="mst-storage" style="font-size:11.5px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);">Baza yuklanmoqda...</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;">
+            <!-- 1. MANBA -->
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#38bdf8;letter-spacing:0.05em;margin-bottom:8px;">1. TEST</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <button type="button" class="btn-primary btn-sm" id="mst-src-lib">📚 Bazadan tanlash</button>
+                <button type="button" class="btn-secondary btn-sm" id="mst-src-file">⬆️ Fayl yuklash</button>
+              </div>
+              <div id="mst-pane-lib">
+                <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                  <input type="text" id="mst-search" class="input-control" placeholder="🔍 Test nomi..." style="flex:1 1 160px;min-width:0;">
+                  <select id="mst-folder" class="select-control" style="flex:0 1 170px;min-width:0;"><option value="">Barcha papkalar</option></select>
+                  <button type="button" class="btn-secondary btn-sm" id="mst-refresh" title="Yangilash">${this.icons.refresh}</button>
+                </div>
+                <div id="mst-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px;">
+                  <div style="padding:20px;text-align:center;color:rgba(255,255,255,0.5);font-size:13px;"><span class="spinner-sm"></span> Yuklanmoqda...</div>
+                </div>
+              </div>
+              <div id="mst-pane-file" style="display:none;">
+                <label style="display:block;border:2px dashed rgba(56,189,248,0.4);border-radius:12px;padding:26px 14px;text-align:center;cursor:pointer;background:rgba(56,189,248,0.05);">
+                  <input type="file" id="mst-file" accept=".mtf,.xml" style="display:none;">
+                  <div style="font-size:14px;font-weight:700;color:#fff;" id="mst-file-label">.mtf yoki .xml faylni tanlang</div>
+                  <div style="font-size:11.5px;color:rgba(255,255,255,0.5);margin-top:4px;">4 MB gacha. Kattaroq fayllarni Telegram botga yuboring.</div>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:rgba(255,255,255,0.8);cursor:pointer;">
+                  <input type="checkbox" id="mst-save" checked style="accent-color:#38bdf8;width:16px;height:16px;"> Bazaga ham saqlash (Telegram)
+                </label>
+                <input type="text" id="mst-save-folder" class="input-control" placeholder="Papka (ixtiyoriy), masalan: TAT" style="margin-top:8px;">
+              </div>
+            </div>
+
+            <!-- 2. HUJJAT TURI -->
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#38bdf8;letter-spacing:0.05em;margin-bottom:8px;">2. HUJJAT</div>
+              <div id="mst-modes" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                <button type="button" class="mst-mode" data-mode="q">📄 Javobsiz<small>talabalar uchun</small></button>
+                <button type="button" class="mst-mode" data-mode="k">🔑 Javobli<small>to'g'ri javob *</small></button>
+                <button type="button" class="mst-mode" data-mode="a">🅰️ Faqat A<small>to'g'ri javob doim A (*)</small></button>
+                <button type="button" class="mst-mode" data-mode="v">🔀 Variantlar<small>aralash + kalit</small></button>
+              </div>
+              <div id="mst-fmt-row" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                <span style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:600;">Format:</span>
+                <button type="button" class="btn-primary btn-sm" data-fmt="pdf">PDF</button>
+                <button type="button" class="btn-secondary btn-sm" data-fmt="docx">Word</button>
+              </div>
+              <div id="mst-var-row" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                <div>
+                  <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:4px;">Har variantda savol</label>
+                  <input type="number" id="mst-per" class="input-control" min="1" value="30">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:4px;">Variantlar soni</label>
+                  <input type="number" id="mst-count" class="input-control" min="1" max="30" value="4">
+                </div>
+                <div id="mst-var-hint" style="grid-column:1/-1;font-size:11.5px;color:rgba(255,255,255,0.55);">Savollar tasodifiy tanlanadi, savol va javoblar tartibi aralashtiriladi. Kalit alohida PDF bo'ladi.</div>
+              </div>
+              <button type="button" class="btn-primary" id="mst-build" style="width:100%;padding:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#38bdf8,#0284c7);">
+                ${this.icons.zap} <span>Tayyorlash</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="mst-results" style="display:flex;flex-direction:column;gap:10px;margin-top:16px;"></div>
         </div>
 
         <!-- SETTINGS BAR -->
@@ -8657,6 +8933,9 @@ const ATLAS = {
         </div>
       </div>
     `;
+
+    // Test bazasi → hujjat kartasi (mustaqil)
+    this.initMtfStudio();
 
     // ── Elements & State ─────────────────────────────────────
     const selectionWrapper = document.getElementById('mtf-selection-wrapper');
