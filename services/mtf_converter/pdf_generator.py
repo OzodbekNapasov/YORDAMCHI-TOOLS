@@ -233,10 +233,32 @@ LINE_H   = 6.5
 Q_SPACE  = 4
 
 
+_REPO_FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "fonts")
+
+
+def _unicode_font_pair():
+    """Kirill va o'zbek harflarini chiqara oladigan (regular, bold) TTF juftligi yoki None."""
+    candidates = [
+        (r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\arialbd.ttf"),
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        ("/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"),
+        ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
+        # Repodagi shriftlar — Vercel'da tizim shriftlari bo'lmasa ham ishlaydi
+        (os.path.join(_REPO_FONTS_DIR, "times.ttf"), os.path.join(_REPO_FONTS_DIR, "timesbd.ttf")),
+    ]
+    for reg, bold in candidates:
+        if os.path.exists(reg) and os.path.exists(bold):
+            return reg, bold
+    return None
+
+
 def clean_text_for_fpdf(t: str) -> str:
-    """FPDF uchun matnni xavfsiz Unicode/Latin-1 formatiga tozalash."""
+    """FPDF uchun matnni tozalash. Unicode shrift bo'lsa matn o'zgarmaydi (kirill ham chiqadi),
+    faqat standart Helvetica (Latin-1) ishlatilganda belgilar almashtiriladi."""
     if not t:
         return ""
+    if _unicode_font_pair():
+        return t
     repl = {
         "\u2018": "'", "\u2019": "'", "`": "'", "\u02bb": "'", "\u02bc": "'",
         "\u201c": '"', "\u201d": '"', "\u00ab": '"', "\u00bb": '"',
@@ -252,30 +274,14 @@ def clean_text_for_fpdf(t: str) -> str:
 
 def _setup_pdf_fonts(pdf: FPDF) -> str:
     """Windows va Linux/Vercel tizimlarida mos shrifni xavfsiz sozlash."""
-    win_reg = r"C:\Windows\Fonts\arial.ttf"
-    win_bold = r"C:\Windows\Fonts\arialbd.ttf"
-    if os.path.exists(win_reg) and os.path.exists(win_bold):
+    pair = _unicode_font_pair()
+    if pair:
         try:
-            pdf.add_font("CustomFont", fname=win_reg)
-            pdf.add_font("CustomFont", style="B", fname=win_bold)
+            pdf.add_font("CustomFont", fname=pair[0])
+            pdf.add_font("CustomFont", style="B", fname=pair[1])
             return "CustomFont"
         except Exception:
             pass
-
-    linux_candidates = [
-        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
-        ("/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"),
-        ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf")
-    ]
-    for reg, bold in linux_candidates:
-        if os.path.exists(reg) and os.path.exists(bold):
-            try:
-                pdf.add_font("CustomFont", fname=reg)
-                pdf.add_font("CustomFont", style="B", fname=bold)
-                return "CustomFont"
-            except Exception:
-                pass
-
     return "Helvetica"
 
 

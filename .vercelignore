@@ -68,3 +68,6 @@ youtube_token.json
 
 # Logs
 *.log
+
+# Mtf2Xml.exe faqat Windows (PC) zaxirasi; Vercel native o'quvchidan foydalanadi
+*.exe

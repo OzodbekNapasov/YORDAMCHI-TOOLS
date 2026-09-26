@@ -83,10 +83,12 @@ def get_main_keyboard():
     btn_insta = telebot.types.KeyboardButton("📸 Instagram AutoPoster")
     btn_stats = telebot.types.KeyboardButton("📊 Tizim Statistikasi")
     btn_pc = telebot.types.KeyboardButton("💻 Kompyuter Boshqaruvi")
+    btn_mytestx = telebot.types.KeyboardButton("🧪 MyTestX Testlar")
     markup.add(btn_kontrakt, btn_amaliyot)
     markup.add(btn_docs, btn_buyruq)
-    markup.add(btn_meta, btn_insta)
-    markup.add(btn_stats, btn_pc)
+    markup.add(btn_mytestx, btn_insta)
+    markup.add(btn_meta, btn_stats)
+    markup.add(btn_pc)
     return markup
 
 def get_insta_poster_keyboard():
@@ -266,6 +268,9 @@ app.register_blueprint(atlas_api)
 # soxtalashtirib webhookni begona domenga burib bo'lmaydi). Preview deploylar tegmaydi.
 # ------------------------------------------------------------
 _WEBHOOK_AUTO_CHECKED = False
+# Kanal postlari (MyTestX bazasi) va botni kanalga qo'shish hodisalari ham kelishi kerak
+WEBHOOK_UPDATE_TYPES = ["message", "edited_message", "channel_post", "edited_channel_post",
+                        "callback_query", "my_chat_member", "inline_query", "chosen_inline_result"]
 
 
 def _production_webhook_url():
@@ -289,9 +294,12 @@ def ensure_webhook_connected():
         return "skip: production manzil aniqlanmadi"
     info = bot.get_webhook_info(timeout=5)
     last_err = (getattr(info, "last_error_message", "") or "")
-    if info.url == target and "403" not in last_err:
+    allowed = getattr(info, "allowed_updates", None)
+    updates_ok = not allowed or {"channel_post", "my_chat_member"} <= set(allowed)
+    if info.url == target and "403" not in last_err and updates_ok:
         return "ok: webhook allaqachon ulangan"
-    bot.set_webhook(url=target, secret_token=WEBHOOK_SECRET, drop_pending_updates=True, timeout=5)
+    bot.set_webhook(url=target, secret_token=WEBHOOK_SECRET, drop_pending_updates=True, timeout=5,
+                    allowed_updates=WEBHOOK_UPDATE_TYPES)
     print("[Webhook]: yangi token va secret bilan avtomatik ulandi", flush=True)
     return "connected"
 
@@ -306,6 +314,13 @@ def _auto_connect_webhook_once():
         ensure_webhook_connected()
     except Exception as _wh_err:
         print(f"[Webhook Auto Warn]: {redact_secrets(_wh_err)}", flush=True)
+
+# MyTestX testlar bazasi (kanal + native konvertor). PC handlerlaridan OLDIN — .mtf fayllarni shu bo'lim oladi.
+try:
+    from services.mtf_bot import register_mtf_handlers
+    register_mtf_handlers(bot, is_user_allowed, send_access_denied, PRIMARY_ADMIN_ID)
+except Exception as _mtf_reg_err:
+    print(f"[MyTestX Register Warn]: {_mtf_reg_err}")
 
 # PC Control & AI Agent handlerlarini ro'yxatdan o'tkazish
 if register_pc_control_handlers:
@@ -1031,7 +1046,8 @@ def set_webhook_route():
     try:
         bot.remove_webhook()
         # drop_pending_updates: token o'g'irlangan davrda to'planib qolgan begona update'larni tashlab yuborish
-        success = bot.set_webhook(url=webhook_url, secret_token=WEBHOOK_SECRET, drop_pending_updates=True)
+        success = bot.set_webhook(url=webhook_url, secret_token=WEBHOOK_SECRET, drop_pending_updates=True,
+                                  allowed_updates=WEBHOOK_UPDATE_TYPES)
         if success:
             check_and_notify_updates()
             return f"<h3>✅ Webhook muvaffaqiyatli o'rnatildi!</h3><p>URL: <b>{html.escape(host_url)}/&lt;BOT_TOKEN&gt;</b></p><p>Versiya: <b>v{BOT_VERSION}</b></p><p>Endi Telegram botingizga /start yuborib tekshirishingiz mumkin.</p>", 200
