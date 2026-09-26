@@ -3615,3 +3615,25 @@ body.hub-cursor-active * {
   background: rgba(56, 189, 248, 0.16);
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35) inset;
 }
+
+/* Matn ichidagi kichik SVG belgi (emoji o'rniga) — ATLAS.ic() */
+.ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: -0.2em;
+}
+.ic svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mst-mode-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.mst-mode .ic { color: #38bdf8; }
