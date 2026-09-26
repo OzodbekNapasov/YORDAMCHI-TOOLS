@@ -13,7 +13,7 @@ from fuzzywuzzy import fuzz
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
-from services.app_secrets import get_bot_token_or_placeholder, get_webhook_secret, redact_secrets
+from services.app_secrets import get_bot_token, get_bot_token_or_placeholder, get_webhook_secret, redact_secrets
 
 # Docbot integratsiyasi uchun modullar
 from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
@@ -257,6 +257,55 @@ if not is_serverless_env:
     except Exception as _sched_err:
         print(f"[Insta Scheduler/Listener Startup Warn]: {_sched_err}")
 app.register_blueprint(atlas_api)
+
+# ------------------------------------------------------------
+# Webhookni avtomatik ulash (Vercel production)
+# Token Vercel env'da yangilangach, birinchi so'rovdayoq webhook yangi token
+# va secret_token bilan o'zi ulanadi — /set_webhook ni qo'lda ochish shart emas.
+# Manzil so'rovdan emas, Vercel tizim o'zgaruvchisidan olinadi (Host sarlavhasini
+# soxtalashtirib webhookni begona domenga burib bo'lmaydi). Preview deploylar tegmaydi.
+# ------------------------------------------------------------
+_WEBHOOK_AUTO_CHECKED = False
+
+
+def _production_webhook_url():
+    base = (os.environ.get("TELEGRAM_WEBHOOK_BASE_URL") or "").strip().rstrip("/")
+    if not base:
+        if os.environ.get("VERCEL_ENV") != "production":
+            return ""
+        host = (os.environ.get("VERCEL_PROJECT_PRODUCTION_URL") or "").strip().rstrip("/")
+        if not host:
+            return ""
+        base = host if host.startswith("http") else f"https://{host}"
+    return f"{base}/{TOKEN}"
+
+
+def ensure_webhook_connected():
+    """Webhook boshqa manzilda bo'lsa yoki secret yo'qligi sababli 403 olayotgan bo'lsa, qayta ulaydi."""
+    if not get_bot_token():
+        return "skip: BOT_TOKEN yo'q"
+    target = _production_webhook_url()
+    if not target:
+        return "skip: production manzil aniqlanmadi"
+    info = bot.get_webhook_info(timeout=5)
+    last_err = (getattr(info, "last_error_message", "") or "")
+    if info.url == target and "403" not in last_err:
+        return "ok: webhook allaqachon ulangan"
+    bot.set_webhook(url=target, secret_token=WEBHOOK_SECRET, drop_pending_updates=True, timeout=5)
+    print("[Webhook]: yangi token va secret bilan avtomatik ulandi", flush=True)
+    return "connected"
+
+
+@app.before_request
+def _auto_connect_webhook_once():
+    global _WEBHOOK_AUTO_CHECKED
+    if _WEBHOOK_AUTO_CHECKED:
+        return
+    _WEBHOOK_AUTO_CHECKED = True
+    try:
+        ensure_webhook_connected()
+    except Exception as _wh_err:
+        print(f"[Webhook Auto Warn]: {redact_secrets(_wh_err)}", flush=True)
 
 # PC Control & AI Agent handlerlarini ro'yxatdan o'tkazish
 if register_pc_control_handlers:
