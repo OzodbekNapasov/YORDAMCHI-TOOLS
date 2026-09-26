@@ -72,6 +72,12 @@ const ATLAS = {
     heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
     videoCamera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
     externalLink: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`
+,
+    key: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></svg>`,
+    shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`,
+    database: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+    flask: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 3h6"/><path d="M10 3v6.5L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4a1.5 1.5 0 0 0 1.3-2.2L14 9.5V3"/><path d="M7.5 15h9"/></svg>`,
+    letterA: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8.5 17 12 7l3.5 10"/><line x1="9.6" y1="13.8" x2="14.4" y2="13.8"/></svg>`
   },
 
   // SERVICES REGISTRY FOR DYNAMIC SERVICE HUB (MUNDARIJA)
@@ -8494,14 +8500,19 @@ const ATLAS = {
   // ============================================================
   // MTF & TEST CONVERTER (WINDOWS EXPLORER DIRECTORY TREE + TELEGRAM)
   // ============================================================
-  // 🧪 Test bazasi → hujjat: botdagi funksiyalarning veb varianti (kompyutersiz)
+  // Matn ichida kichik SVG belgi (emoji o'rniga)
+  ic(name, size = 16, color = '') {
+    return `<span class="ic" style="width:${size}px;height:${size}px;${color ? `color:${color};` : ''}">${ATLAS.icons[name] || ''}</span>`;
+  },
+
+  // Test bazasi → hujjat: botdagi funksiyalarning veb varianti (kompyutersiz)
   initMtfStudio() {
     const $ = id => document.getElementById(id);
     if (!$('mtf-studio')) return;
     const esc = v => ATLAS.esc(v);
     const fmtSize = n => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((n || 0) / 1024)) + ' KB');
     const st = { tests: [], source: 'lib', uid: null, mode: 'q', fmt: 'pdf', file: null, busy: false };
-    const MODE_TITLES = { q: '📄 Javobsiz', k: '🔑 Javobli', a: '🅰️ Faqat A', v: '🔀 Variantlar' };
+    const MODE_TITLES = { q: 'Javobsiz', k: 'Javobli', a: 'Faqat A', v: 'Variantlar' };
 
     const setActive = (btns, pred) => btns.forEach(b => { b.className = b.className.replace(/\bbtn-(primary|secondary)\b/, pred(b) ? 'btn-primary' : 'btn-secondary'); });
 
@@ -8533,7 +8544,7 @@ const ATLAS = {
           <input type="radio" name="mst-test" value="${esc(t.uid)}" ${t.uid === st.uid ? 'checked' : ''} style="accent-color:#38bdf8;">
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;color:#fff;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.name)}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.5);">📁 ${esc(t.folder || 'Umumiy')} · ${fmtSize(t.size)}${t.questions ? ` · ${t.questions} savol` : ''}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);">${ATLAS.ic('folder', 12)} ${esc(t.folder || 'Umumiy')} · ${fmtSize(t.size)}${t.questions ? ` · ${t.questions} savol` : ''}</div>
           </div>
         </label>`).join('')
         : `<div style="padding:18px;text-align:center;color:rgba(255,255,255,0.5);font-size:12.5px;line-height:1.5;">${st.tests.length
@@ -8553,14 +8564,14 @@ const ATLAS = {
       const res = await this.api(`/api/mtf/library${refresh ? '?refresh=1' : ''}`);
       const badge = $('mst-storage');
       if (!res || !res.success) {
-        badge.textContent = '⚠️ Bazani o\'qib bo\'lmadi';
+        badge.innerHTML = `${ATLAS.ic('alert', 13)} Bazani o'qib bo'lmadi`;
         $('mst-list').innerHTML = `<div style="padding:16px;color:#fca5a5;font-size:12.5px;">${esc(res?.error || 'Xatolik')}</div>`;
         return;
       }
       st.tests = res.tests || [];
-      badge.textContent = res.storage?.connected
-        ? `📡 Baza: ${res.storage.title || 'ulangan'}${res.storage.topic ? ' (mavzu)' : ''} · ${st.tests.length} ta test`
-        : `⚠️ Baza ulanmagan · ${st.tests.length} ta test`;
+      badge.innerHTML = res.storage?.connected
+        ? `${ATLAS.ic('database', 13)} Baza: ${esc(res.storage.title || 'ulangan')}${res.storage.topic ? ' (mavzu)' : ''} · ${st.tests.length} ta test`
+        : `${ATLAS.ic('alert', 13)} Baza ulanmagan · ${st.tests.length} ta test`;
       badge.style.color = res.storage?.connected ? '#34d399' : '#fbbf24';
       const sel = $('mst-folder');
       const cur = sel.value;
@@ -8609,34 +8620,34 @@ const ATLAS = {
       const box = document.createElement('div');
       box.style.cssText = 'background:rgba(0,0,0,0.25);border:1px solid rgba(52,211,153,0.35);border-radius:12px;padding:12px 14px;';
       const savedNote = res.saved
-        ? (res.saved.uid ? `<div style="font-size:11.5px;color:#34d399;margin-top:4px;">📡 Bazaga saqlandi (${esc(res.saved.folder)})</div>`
-                         : `<div style="font-size:11.5px;color:#fbbf24;margin-top:4px;">⚠️ Bazaga saqlanmadi: ${esc(res.saved.error)}</div>`)
+        ? (res.saved.uid ? `<div style="font-size:11.5px;color:#34d399;margin-top:4px;">${ATLAS.ic('database', 12)} Bazaga saqlandi (${esc(res.saved.folder)})</div>`
+                         : `<div style="font-size:11.5px;color:#fbbf24;margin-top:4px;">${ATLAS.ic('alert', 12)} Bazaga saqlanmadi: ${esc(res.saved.error)}</div>`)
         : '';
       box.innerHTML = `
-        <div style="font-weight:800;color:#fff;font-size:13.5px;">✅ ${esc(res.title)} <span style="font-weight:600;color:rgba(255,255,255,0.55);font-size:12px;">· ${res.questions} savol</span></div>
+        <div style="font-weight:800;color:#fff;font-size:13.5px;">${ATLAS.ic('check', 15, '#34d399')} ${esc(res.title)} <span style="font-weight:600;color:rgba(255,255,255,0.55);font-size:12px;">· ${res.questions} savol</span></div>
         ${savedNote}
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
           ${res.files.map((f, i) => `
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;">
-              <span style="font-size:18px;">${f.kind === 'key' ? '🔑' : (f.name.endsWith('.docx') ? '📝' : '📄')}</span>
+              ${f.kind === 'key' ? ATLAS.ic('key', 20, '#fbbf24') : ATLAS.ic('fileText', 20, f.name.endsWith('.docx') ? '#60a5fa' : '#f87171')}
               <div style="flex:1;min-width:180px;">
                 <div style="font-size:12.5px;font-weight:700;color:#fff;word-break:break-word;">${esc(f.name)}</div>
                 <div style="font-size:11px;color:rgba(255,255,255,0.5);">${fmtSize(f.size)}${f.kind === 'key' ? ' · faqat o‘qituvchi uchun' : ''}</div>
               </div>
-              <a class="btn-primary btn-sm" href="${esc(f.url)}" target="_blank" rel="noopener" download="${esc(f.name)}" style="text-decoration:none;">⬇️ Yuklab olish</a>
-              <button type="button" class="btn-secondary btn-sm" data-tg="${i}">✈️ Telegram</button>
+              <a class="btn-primary btn-sm" href="${esc(f.url)}" target="_blank" rel="noopener" download="${esc(f.name)}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">${ATLAS.ic('download', 14)} Yuklab olish</a>
+              <button type="button" class="btn-secondary btn-sm" data-tg="${i}" style="display:inline-flex;align-items:center;gap:6px;">${ATLAS.ic('send', 14)} Telegram</button>
             </div>`).join('')}
         </div>`;
       box.querySelectorAll('[data-tg]').forEach(btn => btn.addEventListener('click', async () => {
         const f = res.files[+btn.dataset.tg];
         btn.disabled = true;
-        btn.textContent = '⏳';
+        btn.innerHTML = '<span class="spinner-sm"></span>';
         const isDocx = f.name.toLowerCase().endsWith('.docx');
         const r = await this.api('/api/mtf/send_telegram', 'POST', {
           title: f.name.replace(/\.(pdf|docx)$/i, ''), filename: f.name,
           pdf_url: isDocx ? null : f.url, docx_url: isDocx ? f.url : null
         });
-        btn.textContent = r?.success ? '✅ Yuborildi' : '❌ Xato';
+        btn.innerHTML = r?.success ? `${ATLAS.ic('check', 14, '#34d399')} Yuborildi` : `${ATLAS.ic('close', 14, '#f87171')} Xato`;
         if (!r?.success) { btn.disabled = false; this.toast(r?.error || 'Telegramga yuborib bo\'lmadi', 'error'); }
       }));
       $('mst-results').prepend(box);
@@ -8704,7 +8715,7 @@ const ATLAS = {
             <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px 0;display:flex;align-items:center;gap:10px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="width:26px;height:26px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               <span>MTF & Test Generator (PDF / DOCX)</span>
-              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">WINDOWS EXPLORER ⚡ TELEGRAM</span>
+              <span style="font-size:11px;font-weight:800;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px;letter-spacing:0.05em;">WINDOWS EXPLORER · TELEGRAM</span>
             </h2>
             <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0;">
               <code>D:\\MyTestX\\tests</code> papkalaridagi testlarni xuddi Windows Explorer kabi papkalari ichiga kirib ko'rish, tanlash va yuqori sifatli PDF hamda Word formatida konvertatsiya qilish.
@@ -8717,11 +8728,11 @@ const ATLAS = {
           </div>
         </div>
 
-        <!-- 🧪 TEST BAZASI → HUJJAT (kompyutersiz; botdagi funksiyalar bilan bir xil) -->
+        <!-- TEST BAZASI → HUJJAT (kompyutersiz; botdagi funksiyalar bilan bir xil) -->
         <div id="mtf-studio" class="card" style="background:linear-gradient(160deg,rgba(15,23,42,0.92),rgba(8,47,73,0.55));border:1px solid rgba(56,189,248,0.35);border-radius:16px;padding:20px;margin-bottom:22px;box-shadow:0 10px 30px rgba(0,0,0,0.35);">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
             <div>
-              <h3 style="font-size:17px;font-weight:800;color:#fff;margin:0 0 4px 0;">🧪 Test bazasi → PDF / Word / Variantlar</h3>
+              <h3 style="font-size:17px;font-weight:800;color:#fff;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">${ATLAS.ic('flask', 20, '#38bdf8')} Test bazasi → PDF / Word / Variantlar</h3>
               <div style="font-size:12.5px;color:rgba(255,255,255,0.6);">Kompyuter yoniq bo'lishi shart emas. Javobsiz, javobli, «faqat A» va aralash variantlar + javoblar kaliti.</div>
             </div>
             <span id="mst-storage" style="font-size:11.5px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);">Baza yuklanmoqda...</span>
@@ -8732,12 +8743,12 @@ const ATLAS = {
             <div>
               <div style="font-size:12px;font-weight:800;color:#38bdf8;letter-spacing:0.05em;margin-bottom:8px;">1. TEST</div>
               <div style="display:flex;gap:8px;margin-bottom:10px;">
-                <button type="button" class="btn-primary btn-sm" id="mst-src-lib">📚 Bazadan tanlash</button>
-                <button type="button" class="btn-secondary btn-sm" id="mst-src-file">⬆️ Fayl yuklash</button>
+                <button type="button" class="btn-primary btn-sm" id="mst-src-lib" style="display:inline-flex;align-items:center;gap:6px;">${ATLAS.ic('database', 14)} Bazadan tanlash</button>
+                <button type="button" class="btn-secondary btn-sm" id="mst-src-file" style="display:inline-flex;align-items:center;gap:6px;">${ATLAS.ic('upload', 14)} Fayl yuklash</button>
               </div>
               <div id="mst-pane-lib">
                 <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-                  <input type="text" id="mst-search" class="input-control" placeholder="🔍 Test nomi..." style="flex:1 1 160px;min-width:0;">
+                  <input type="text" id="mst-search" class="input-control" placeholder="Test nomi bo'yicha qidirish..." style="flex:1 1 160px;min-width:0;">
                   <select id="mst-folder" class="select-control" style="flex:0 1 170px;min-width:0;"><option value="">Barcha papkalar</option></select>
                   <button type="button" class="btn-secondary btn-sm" id="mst-refresh" title="Yangilash">${this.icons.refresh}</button>
                 </div>
@@ -8762,10 +8773,10 @@ const ATLAS = {
             <div>
               <div style="font-size:12px;font-weight:800;color:#38bdf8;letter-spacing:0.05em;margin-bottom:8px;">2. HUJJAT</div>
               <div id="mst-modes" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                <button type="button" class="mst-mode" data-mode="q">📄 Javobsiz<small>talabalar uchun</small></button>
-                <button type="button" class="mst-mode" data-mode="k">🔑 Javobli<small>to'g'ri javob *</small></button>
-                <button type="button" class="mst-mode" data-mode="a">🅰️ Faqat A<small>to'g'ri javob doim A (*)</small></button>
-                <button type="button" class="mst-mode" data-mode="v">🔀 Variantlar<small>aralash + kalit</small></button>
+                <button type="button" class="mst-mode" data-mode="q"><span class="mst-mode-title">${ATLAS.ic('fileText', 16)} Javobsiz</span><small>talabalar uchun</small></button>
+                <button type="button" class="mst-mode" data-mode="k"><span class="mst-mode-title">${ATLAS.ic('key', 16)} Javobli</span><small>to'g'ri javob *</small></button>
+                <button type="button" class="mst-mode" data-mode="a"><span class="mst-mode-title">${ATLAS.ic('letterA', 16)} Faqat A</span><small>to'g'ri javob doim A (*)</small></button>
+                <button type="button" class="mst-mode" data-mode="v"><span class="mst-mode-title">${ATLAS.ic('shuffle', 16)} Variantlar</span><small>aralash + kalit</small></button>
               </div>
               <div id="mst-fmt-row" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
                 <span style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:600;">Format:</span>
@@ -8822,12 +8833,12 @@ const ATLAS = {
           <div style="display:flex;gap:10px;margin-bottom:16px;">
             <button id="mtf-tab-btn-local" class="btn-primary" style="padding:10px 22px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-              <span>🗂 D:\\MyTestX\\tests Papkasi</span>
+              <span>D:\\MyTestX\\tests Papkasi</span>
               <span id="mtf-local-badge" style="font-size:11px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px;">Yuklanmoqda...</span>
             </button>
             <button id="mtf-tab-btn-upload" class="btn-secondary" style="padding:10px 22px;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:10px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>⬆️ Fayl Yuklash (Drag & Drop)</span>
+              <span>Fayl Yuklash (Drag & Drop)</span>
             </button>
           </div>
 
@@ -8836,7 +8847,7 @@ const ATLAS = {
             <!-- EXPLORER TOOLBAR -->
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);">
               <div style="flex:1;min-width:280px;position:relative;">
-                <input type="text" id="mtf-local-search" class="input-control" placeholder="🔍 Test yoki papka nomini qidirish (masalan: TAT, Anatomiya, Yakuniy)..." style="padding-left:14px;">
+                <input type="text" id="mtf-local-search" class="input-control" placeholder="Test yoki papka nomini qidirish (masalan: TAT, Anatomiya, Yakuniy)..." style="padding-left:14px;">
               </div>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button class="btn-secondary btn-sm" id="btn-mtf-select-all">Hammasini tanlash</button>
@@ -8854,7 +8865,7 @@ const ATLAS = {
                 <span>Orqaga</span>
               </button>
               <div id="mtf-breadcrumb-trail" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;">
-                <span class="mtf-crumb-link" data-depth="0" style="cursor:pointer;font-weight:700;color:#38bdf8;">📁 tests</span>
+                <span class="mtf-crumb-link" data-depth="0" style="cursor:pointer;font-weight:700;color:#38bdf8;display:inline-flex;align-items:center;gap:6px;">${ATLAS.ic('folder', 14)} tests</span>
               </div>
               <span style="margin-left:auto;color:rgba(255,255,255,0.6);font-size:11px;font-weight:700;" id="mtf-selected-counter">0 ta tanlandi</span>
             </div>
@@ -9006,11 +9017,11 @@ const ATLAS = {
         });
 
         if (res && res.success) {
-          btn.innerHTML = `✅ <span>Telegramga Yuborildi</span>`;
+          btn.innerHTML = `${ATLAS.ic('check', 14)} <span>Telegramga Yuborildi</span>`;
           btn.style.background = 'rgba(16,185,129,0.25)';
           btn.style.borderColor = '#10b981';
           btn.style.color = '#10b981';
-          this.toast(`✈️ "${title}" Telegramingizga muvaffaqiyatli tashlab berildi!`, 'success');
+          this.toast(`"${title}" Telegramingizga muvaffaqiyatli tashlab berildi!`, 'success');
         } else {
           btn.disabled = false;
           btn.innerHTML = origText;
@@ -9057,7 +9068,7 @@ const ATLAS = {
       if (crumbTrail) {
         crumbTrail.innerHTML = folderNavStack.map((fNode, idx) => {
           const isLast = idx === folderNavStack.length - 1;
-          const label = idx === 0 ? '📁 tests (D:\\MyTestX\\tests)' : fNode.name;
+          const label = idx === 0 ? 'tests (D:\\MyTestX\\tests)' : fNode.name;
           return `
             <span class="mtf-crumb-link" data-depth="${idx}" style="cursor:${isLast ? 'default' : 'pointer'};font-weight:${isLast ? '800' : '600'};color:${isLast ? '#ffffff' : '#38bdf8'};">
               ${label}
@@ -9099,7 +9110,7 @@ const ATLAS = {
         searchRecursive(currentFolder);
 
         if (matchingFiles.length === 0) {
-          treeCont.innerHTML = `<div style="text-align:center;padding:36px;color:rgba(255,255,255,0.4);">🔍 "${q}" bo'yicha testlar topilmadi</div>`;
+          treeCont.innerHTML = `<div style="text-align:center;padding:36px;color:rgba(255,255,255,0.4);">"${q}" bo'yicha testlar topilmadi</div>`;
           updateSelectedCounter();
           return;
         }
@@ -9115,7 +9126,7 @@ const ATLAS = {
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:${isSel ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.02)'};border:1px solid ${isSel ? 'rgba(56,189,248,0.35)' : 'rgba(255,255,255,0.04)'};gap:10px;" class="tree-row-hover">
                   <label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;overflow:hidden;">
                     <input type="checkbox" value="${file.path}" class="tree-file-cb" style="width:16px;height:16px;accent-color:#38bdf8;cursor:pointer;" ${isSel ? 'checked' : ''}>
-                    <span style="font-size:16px;">📝</span>
+                    ${ATLAS.ic('fileText', 18, '#60a5fa')}
                     <div>
                       <div style="font-size:13px;font-weight:700;color:${isSel ? '#38bdf8' : '#ffffff'};">${file.name}</div>
                       <div style="font-size:11px;color:rgba(255,255,255,0.45);">${file.rel_path || ''}</div>
@@ -9123,7 +9134,7 @@ const ATLAS = {
                   </label>
                   <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;color:rgba(255,255,255,0.5);white-space:nowrap;">
                     <span>${file.size_str || ''}</span>
-                    <button onclick="ATLAS._mtfQuickConvertSingle('${file.path.replace(/\\/g, '\\\\')}', '${file.name}')" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">⚡ Konvert</button>
+                    <button onclick="ATLAS._mtfQuickConvertSingle('${file.path.replace(/\\/g, '\\\\')}', '${file.name}')" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">${ATLAS.ic('zap', 12)} Konvert</button>
                   </div>
                 </div>
               `;
@@ -9157,7 +9168,7 @@ const ATLAS = {
             <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);cursor:pointer;gap:12px;transition:all 0.18s ease;" class="tree-row-hover mtf-folder-row" data-folder-index="${fIdx}">
               <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
                 <input type="checkbox" class="mtf-subfolder-cb" data-folder-index="${fIdx}" style="width:16px;height:16px;accent-color:#38bdf8;cursor:pointer;" ${isAllSel ? 'checked' : ''}>
-                <span style="font-size:20px;">📁</span>
+                ${ATLAS.ic('folder', 22, '#fbbf24')}
                 <div>
                   <div style="font-size:13.5px;font-weight:700;color:#ffffff;">${fNode.name}</div>
                   <div style="font-size:11px;color:#38bdf8;">${fNode.total_files || (fNode.children ? fNode.children.length : 0)} ta test fayllari</div>
@@ -9180,13 +9191,13 @@ const ATLAS = {
             <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:${isSel ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.015)'};border:1px solid ${isSel ? 'rgba(56,189,248,0.35)' : 'rgba(255,255,255,0.04)'};gap:10px;" class="tree-row-hover">
               <label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;overflow:hidden;">
                 <input type="checkbox" value="${file.path}" class="tree-file-cb" style="width:16px;height:16px;accent-color:#38bdf8;cursor:pointer;" ${isSel ? 'checked' : ''}>
-                <span style="font-size:16px;">📝</span>
+                ${ATLAS.ic('fileText', 18, '#60a5fa')}
                 <span style="font-size:13px;font-weight:600;color:${isSel ? '#38bdf8' : '#ffffff'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${file.name}">${file.name}</span>
               </label>
               <div style="display:flex;align-items:center;gap:12px;font-size:11.5px;color:rgba(255,255,255,0.45);white-space:nowrap;">
                 <span>${file.size_str || ''}</span>
                 <span>${file.mtime_str || ''}</span>
-                <button onclick="ATLAS._mtfQuickConvertSingle('${file.path.replace(/\\/g, '\\\\')}', '${file.name}')" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">⚡ Konvert</button>
+                <button onclick="ATLAS._mtfQuickConvertSingle('${file.path.replace(/\\/g, '\\\\')}', '${file.name}')" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">${ATLAS.ic('zap', 12)} Konvert</button>
               </div>
             </div>
           `;
@@ -9335,10 +9346,10 @@ const ATLAS = {
           folderNavStack = treeData ? [treeData] : [];
           renderExplorer();
         } else {
-          treeCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ ${res?.error || "Testlar ro'yxatini olib bo'lmadi"}</div>`;
+          treeCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">${ATLAS.ic('alert', 16)} ${res?.error || "Testlar ro'yxatini olib bo'lmadi"}</div>`;
         }
       } catch (err) {
-        treeCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">❌ Xatolik: ${err.message}</div>`;
+        treeCont.innerHTML = `<div style="padding:20px;color:#ef4444;text-align:center;">${ATLAS.ic('alert', 16)} Xatolik: ${err.message}</div>`;
       }
     };
 
@@ -9391,7 +9402,7 @@ const ATLAS = {
         return `
           <div id="res-row-${idx}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;gap:10px;flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;">
-              <span id="res-icon-${idx}">⏳</span>
+              <span id="res-icon-${idx}">${ATLAS.ic('clock', 18, 'rgba(255,255,255,0.5)')}</span>
               <div>
                 <div style="font-size:13px;font-weight:700;color:#fff;">${fn}</div>
                 <div id="res-msg-${idx}" style="font-size:11px;color:rgba(255,255,255,0.5);">Navbatga yuklanmoqda...</div>
@@ -9442,9 +9453,9 @@ const ATLAS = {
             if (stat.status === 'completed') {
               pollDone = true;
               successCount++;
-              if (iconEl) iconEl.textContent = '✅';
+              if (iconEl) iconEl.innerHTML = ATLAS.ic('check', 18, '#10b981');
               if (msgEl) {
-                msgEl.textContent = `✅ ${stat.questions_count} ta savol • ${stat.title || fileName}`;
+                msgEl.textContent = `${stat.questions_count} ta savol • ${stat.title || fileName}`;
                 msgEl.style.color = '#10b981';
               }
 
@@ -9452,11 +9463,11 @@ const ATLAS = {
               let actHtml = '';
               const pdfUrl = stat.pdf_url || stat.pdf_base64;
               if (pdfUrl) {
-                actHtml += `<a href="${pdfUrl}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📄 PDF</a>`;
+                actHtml += `<a href="${pdfUrl}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">${ATLAS.ic('fileText', 13)} PDF</a>`;
               }
               const docxUrl = stat.docx_url || stat.docx_base64;
               if (docxUrl) {
-                actHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 Word</a>`;
+                actHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">${ATLAS.ic('fileText', 13)} Word</a>`;
               }
 
               // Prominent Telegram button with real SVG
@@ -9478,7 +9489,7 @@ const ATLAS = {
           if (!pollDone) throw new Error('Vaqt tugadi');
 
         } catch (err) {
-          if (iconEl) iconEl.textContent = '❌';
+          if (iconEl) iconEl.innerHTML = ATLAS.ic('close', 18, '#ef4444');
           if (msgEl) {
             msgEl.textContent = err.message || 'Xatolik';
             msgEl.style.color = '#ef4444';
@@ -9487,7 +9498,7 @@ const ATLAS = {
       }
 
       resultsStatus.textContent = `Bajarildi: ${successCount} / ${paths.length} ta tayyor`;
-      this.toast(`🎉 ${successCount} ta test muvaffaqiyatli konvert qilindi!`, 'success');
+      this.toast(`${successCount} ta test muvaffaqiyatli konvert qilindi!`, 'success');
     });
 
     // ── Drag & Drop Queue Logic with Rich Animations ─────────
@@ -9518,19 +9529,19 @@ const ATLAS = {
       }
       fileQueue.style.display = 'block';
       queueLabel.textContent = `${uploadFiles.length} ta fayl tanlandi`;
-      nameLabel.innerHTML = `📂 <b style="color:#60a5fa;">${uploadFiles.length} ta fayl</b> tanlandi`;
+      nameLabel.innerHTML = `${ATLAS.ic('folder', 16)} <b style="color:#60a5fa;">${uploadFiles.length} ta fayl</b> tanlandi`;
 
       fileList.innerHTML = uploadFiles.map((f, i) => `
         <div id="upload-row-${i}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px;">
-            <span id="upload-icon-${i}">⏳</span>
+            <span id="upload-icon-${i}">${ATLAS.ic('clock', 18, 'rgba(255,255,255,0.5)')}</span>
             <div>
               <div style="font-size:13px;font-weight:700;color:#fff;">${f.name}</div>
               <div id="upload-msg-${i}" style="font-size:11px;color:rgba(255,255,255,0.5);">${sizeStr(f.size)}</div>
             </div>
           </div>
           <div id="upload-downloads-${i}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></div>
-          <button onclick="ATLAS._mtfRemoveUploadFile(${i})" style="background:none;border:none;color:rgba(239,68,68,0.7);cursor:pointer;font-size:16px;">✕</button>
+          <button onclick="ATLAS._mtfRemoveUploadFile(${i})" style="background:none;border:none;color:rgba(239,68,68,0.7);cursor:pointer;font-size:16px;display:inline-flex;">${ATLAS.ic('close', 16)}</button>
         </div>
       `).join('');
 
@@ -9630,9 +9641,9 @@ const ATLAS = {
 
             if (stat.status === 'completed') {
               pollDone = true;
-              if (iconEl) iconEl.textContent = '✅';
+              if (iconEl) iconEl.innerHTML = ATLAS.ic('check', 18, '#10b981');
               if (msgEl) {
-                msgEl.textContent = `✅ ${stat.questions_count} ta savol • ${stat.title || f.name}`;
+                msgEl.textContent = `${stat.questions_count} ta savol • ${stat.title || f.name}`;
                 msgEl.style.color = '#10b981';
               }
 
@@ -9640,11 +9651,11 @@ const ATLAS = {
               let dlHtml = '';
               const pdfUrl = stat.pdf_url || stat.pdf_base64;
               if (pdfUrl) {
-                dlHtml += `<a href="${pdfUrl}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📄 PDF</a>`;
+                dlHtml += `<a href="${pdfUrl}" download="${stem}.pdf" target="_blank" style="padding:6px 12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">${ATLAS.ic('fileText', 13)} PDF</a>`;
               }
               const docxUrl = stat.docx_url || stat.docx_base64;
               if (docxUrl) {
-                dlHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 Word</a>`;
+                dlHtml += `<a href="${docxUrl}" download="${stem}.docx" target="_blank" style="padding:6px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">${ATLAS.ic('fileText', 13)} Word</a>`;
               }
 
               const escapedTitle = (stat.title || f.name).replace(/'/g, "\\'");
@@ -9665,7 +9676,7 @@ const ATLAS = {
           if (!pollDone) throw new Error('Vaqt tugadi');
 
         } catch (err) {
-          if (iconEl) iconEl.textContent = '❌';
+          if (iconEl) iconEl.innerHTML = ATLAS.ic('close', 18, '#ef4444');
           if (msgEl) {
             msgEl.textContent = err.message || 'Xatolik';
             msgEl.style.color = '#ef4444';
