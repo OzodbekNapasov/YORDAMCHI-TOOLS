@@ -406,15 +406,22 @@ def init_db():
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (name, t_type, t_val, cond, a_type, a_payload, act))
 
-    # Standart administrator (Ozodbek / Eua5gd007)
-    from hashlib import pbkdf2_hmac
-    salt = "atlas_secure_salt_2026"
-    pwd_hash = pbkdf2_hmac('sha256', "Eua5gd007".encode('utf-8'), salt.encode('utf-8'), 100000).hex()
-    
-    cursor.execute("""
-    INSERT OR REPLACE INTO admins (id, username, password_hash, salt, full_name, role)
-    VALUES (1, ?, ?, ?, ?, ?)
-    """, ("Ozodbek", pwd_hash, salt, "Ozodbek Napasov", "superadmin"))
+    # Standart administrator: parol faqat ATLAS_ADMIN_PASSWORD muhit o'zgaruvchisidan.
+    # (Oldin parol kodga yozilgan edi va ochiq repozitoriyda hammaga ko'rinib turardi.)
+    admin_password = (os.environ.get("ATLAS_ADMIN_PASSWORD") or "").strip()
+    if admin_password:
+        import secrets as _secrets
+        from hashlib import pbkdf2_hmac
+        salt = _secrets.token_hex(16)
+        pwd_hash = pbkdf2_hmac('sha256', admin_password.encode('utf-8'), salt.encode('utf-8'), 100000).hex()
+        cursor.execute("""
+        INSERT OR REPLACE INTO admins (id, username, password_hash, salt, full_name, role)
+        VALUES (1, ?, ?, ?, ?, ?)
+        """, ("Ozodbek", pwd_hash, salt, "Ozodbek Napasov", "superadmin"))
+    else:
+        # Eski (ochiq) parol bilan saqlangan yozuv qolib ketmasin
+        cursor.execute("DELETE FROM admins WHERE id = 1 AND salt = 'atlas_secure_salt_2026'")
+        print("[SECURITY WARN]: ATLAS_ADMIN_PASSWORD o'rnatilmagan — veb-panelga kirish yopiq.")
 
     # Boshlang'ich administratorni users jadvaliga kiritish
     cursor.execute("""

@@ -30,7 +30,8 @@ def start_insta_bot_listener():
         return
         
     init_insta_tables()
-    token = get_setting("bot_token", DEFAULT_BOT_TOKEN)
+    from services.insta_poster_service import get_insta_bot_token
+    token = get_insta_bot_token()
     if not token:
         print("[Insta Listener Warn]: Bot token topilmadi.")
         return

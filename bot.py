@@ -13,6 +13,8 @@ from fuzzywuzzy import fuzz
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 
+from services.app_secrets import get_bot_token_or_placeholder, get_webhook_secret, redact_secrets
+
 # Docbot integratsiyasi uchun modullar
 from docbot_config import TEMPLATES as DOCBOT_TEMPLATES, find_template_file
 from services.image_builder import render_docx_template_to_image
@@ -64,7 +66,9 @@ except Exception as _meta_e:
     load_meta_settings = None
     save_meta_settings = None
 
-TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
+# Token faqat muhit o'zgaruvchisidan (.env / Vercel) olinadi — repozitoriy ochiq!
+TOKEN = get_bot_token_or_placeholder()
+WEBHOOK_SECRET = get_webhook_secret()
 BOT_VERSION = "2.3.0"
 PRIMARY_ADMIN_ID = 8135594558  # Sizning yagona rasmiy Telegram ID ingiz
 
@@ -876,6 +880,14 @@ def generate_xulosa_table_image(xulosa_rows, output_path):
 @app.route('/' + TOKEN, methods=['POST'])
 def getMessage():
     import sys, json as _json, traceback as _tb
+    import hmac as _hmac
+    # Faqat Telegram yuborgan so'rovlarni qabul qilish. Telegram webhook o'rnatilganda
+    # berilgan secret_token'ni har bir so'rov sarlavhasida qaytaradi; tokenni bilgan
+    # begona odam esa bu sirni bilmaydi va soxta update (masalan admin nomidan /cmd) yubora olmaydi.
+    got_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not WEBHOOK_SECRET or not _hmac.compare_digest(got_secret, WEBHOOK_SECRET):
+        print("WEBHOOK REJECTED: secret token mos kelmadi (webhookni /set_webhook orqali qayta o'rnating)", file=sys.stderr, flush=True)
+        return "forbidden", 403
     try:
         raw = request.get_data().decode('utf-8')
         data = _json.loads(raw)
@@ -943,23 +955,38 @@ def webhook_status_check():
     check_and_notify_updates()
     return f"Bot PythonAnywhere/Vercel bulutida 24/7 faol! (v{BOT_VERSION})", 200
 
+def _webhook_admin_allowed():
+    """Webhookni boshqarish faqat panelga kirgan admin yoki bot tokenini biladigan egaga ruxsat."""
+    import hmac as _hmac
+    from services.atlas_auth import get_current_admin
+    if get_current_admin():
+        return True
+    key = (request.args.get("key") or "").strip()
+    return bool(key) and _hmac.compare_digest(key, TOKEN)
+
+
 @app.route("/set_webhook", methods=['GET'])
 def set_webhook_route():
+    if not _webhook_admin_allowed():
+        return "<h3>🔒 Ruxsat yo'q.</h3><p>Avval ATLAS paneliga kiring yoki <code>?key=&lt;BOT_TOKEN&gt;</code> qo'shing.</p>", 403
     host_url = request.host_url.rstrip('/')
     webhook_url = f"{host_url}/{TOKEN}"
     try:
         bot.remove_webhook()
-        success = bot.set_webhook(url=webhook_url)
+        # drop_pending_updates: token o'g'irlangan davrda to'planib qolgan begona update'larni tashlab yuborish
+        success = bot.set_webhook(url=webhook_url, secret_token=WEBHOOK_SECRET, drop_pending_updates=True)
         if success:
             check_and_notify_updates()
-            return f"<h3>✅ Webhook muvaffaqiyatli o'rnatildi!</h3><p>URL: <b>{webhook_url}</b></p><p>Versiya: <b>v{BOT_VERSION}</b></p><p>Endi Telegram botingizga /start yuborib tekshirishingiz mumkin.</p>", 200
+            return f"<h3>✅ Webhook muvaffaqiyatli o'rnatildi!</h3><p>URL: <b>{html.escape(host_url)}/&lt;BOT_TOKEN&gt;</b></p><p>Versiya: <b>v{BOT_VERSION}</b></p><p>Endi Telegram botingizga /start yuborib tekshirishingiz mumkin.</p>", 200
         else:
             return "<h3>❌ Webhook o'rnatilmadi!</h3>", 500
     except Exception as e:
-        return f"<h3>❌ Xatolik: {str(e)}</h3>", 500
+        return f"<h3>❌ Xatolik: {html.escape(redact_secrets(e))}</h3>", 500
 
 @app.route("/delete_webhook", methods=['GET'])
 def delete_webhook_route():
+    if not _webhook_admin_allowed():
+        return "<h3>🔒 Ruxsat yo'q.</h3>", 403
     try:
         success = bot.remove_webhook(drop_pending_updates=True)
         if success:
@@ -967,15 +994,19 @@ def delete_webhook_route():
         else:
             return "<h3>❌ Webhook uzib bo'lmadi!</h3>", 500
     except Exception as e:
-        return f"<h3>❌ Xatolik: {str(e)}</h3>", 500
+        return f"<h3>❌ Xatolik: {html.escape(redact_secrets(e))}</h3>", 500
 
 @app.route("/webhook_info", methods=['GET'])
 def webhook_info():
+    if not _webhook_admin_allowed():
+        return jsonify({"error": "Ruxsat yo'q"}), 403
     try:
         info = bot.get_webhook_info()
+        # URL ichida bot tokeni bor — uni hech qachon javobda ko'rsatmaslik kerak
+        safe_url = (info.url or "").replace(TOKEN, "<BOT_TOKEN>")
         return jsonify({
             "version": BOT_VERSION,
-            "url": info.url,
+            "url": safe_url,
             "has_custom_certificate": info.has_custom_certificate,
             "pending_update_count": info.pending_update_count,
             "last_error_date": info.last_error_date,
@@ -984,7 +1015,7 @@ def webhook_info():
             "ip_address": info.ip_address
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": redact_secrets(e)}), 500
 
 @app.route("/api/lead", methods=['GET', 'POST', 'OPTIONS'])
 @app.route("/api/leads", methods=['GET', 'POST', 'OPTIONS'])
@@ -1787,6 +1818,7 @@ def handle_docs(message):
             send_safe_message(chat_id, f"❌ Test konvertatsiyasida xatolik: {str(e)}")
             return
 
+    holat = user_data.get(chat_id, {}).get("holat")
     if not holat:
         send_safe_message(chat_id, "Iltimos, avval menyudan kerakli tugmani tanlang:")
         return

@@ -168,6 +168,16 @@ const ATLAS = {
     }
   ],
 
+  // HTML ichiga matn qo'yishdan oldin xavfsizlash (Excel'dan kelgan ism va h.k.)
+  esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  },
+
+  // onclick="..." ichidagi JS argumenti: "o'g'li" kabi apostrofli ismlar kodni buzmasligi uchun
+  jsArg(value) {
+    return ATLAS.esc(JSON.stringify(String(value ?? '')));
+  },
+
   // API Wrapper
   async api(endpoint, method = 'GET', body = null) {
     const headers = { 'Content-Type': 'application/json' };
@@ -1423,7 +1433,7 @@ const ATLAS = {
                               return `
                                 <tr>
                                   <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${oIdx + 1}</td>
-                                  <td><b style="color:#ffffff;font-size:13.5px;">${ord.recipient_fio}</b></td>
+                                  <td><b style="color:#ffffff;font-size:13.5px;">${ATLAS.esc(ord.recipient_fio)}</b></td>
                                   <td><span class="badge ${typeBadge}">${ord.template_name}</span></td>
                                   <td class="mono" style="font-size:12.5px;color:rgba(94,234,212,0.9);">
                                     ${p.buyruq_raqami ? `№ ${p.buyruq_raqami}` : '-'} <br>
@@ -1436,7 +1446,7 @@ const ATLAS = {
                                   </td>
                                   <td style="text-align:right;">
                                     <div style="display:flex;gap:5px;justify-content:flex-end;">
-                                      <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${ord.id}', '${ord.recipient_fio}', ${ord.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                                      <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${ord.id}', ${ATLAS.jsArg(ord.recipient_fio)}, ${ord.id})" title="Katta ko'rish">${this.icons.eye}</button>
                                       <a href="/api/documents/download_docx/${ord.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
                                       <button class="btn-icon" onclick="ATLAS.openEditDocModal(${ord.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                                       <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${ord.id})" title="O'chirish">${this.icons.trash}</button>
@@ -2691,7 +2701,7 @@ const ATLAS = {
               <tr>
                 <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${distGrpIdx}.</td>
                 <td>${st.guruhi || '201'}</td>
-                <td style="text-align:left;font-weight:600;">${st.fio}</td>
+                <td style="text-align:left;font-weight:600;">${ATLAS.esc(st.fio)}</td>
               </tr>
             `;
           }).join('');
@@ -3547,7 +3557,7 @@ const ATLAS = {
           <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
             <img src="${res.view_url}${tokenQuery}" style="max-width:100%;max-height:410px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
             <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
-              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${fio}', ${res.doc_id})">
+              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal(${ATLAS.jsArg(res.view_url)}, ${ATLAS.jsArg(fio)}, ${res.doc_id})">
                 ${this.icons.eye} <span>Katta ko'rish</span>
               </button>
               <button class="btn-sm btn-secondary" onclick="ATLAS.openEditDocModal(${res.doc_id})">
@@ -3628,7 +3638,7 @@ const ATLAS = {
                   return `
                     <tr>
                       <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
-                      <td><b>${d.recipient_fio}</b></td>
+                      <td><b>${ATLAS.esc(d.recipient_fio)}</b></td>
                       <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
                       <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
                         ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
@@ -3640,7 +3650,7 @@ const ATLAS = {
                       <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
                       <td style="text-align:right;">
                         <div style="display:flex;gap:6px;justify-content:flex-end;">
-                          <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                          <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', ${ATLAS.jsArg(d.recipient_fio)}, ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
                           <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                           <a href="/api/documents/download_docx/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
                           <a href="/api/documents/download/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
@@ -3687,7 +3697,7 @@ const ATLAS = {
             return `
               <tr>
                 <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
-                <td><b>${d.recipient_fio}</b></td>
+                <td><b>${ATLAS.esc(d.recipient_fio)}</b></td>
                 <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
                 <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
                   ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
@@ -3699,7 +3709,7 @@ const ATLAS = {
                 <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
                 <td style="text-align:right;">
                   <div style="display:flex;gap:6px;justify-content:flex-end;">
-                    <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                    <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', ${ATLAS.jsArg(d.recipient_fio)}, ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
                     <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                     <a href="/api/documents/download_docx/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
                     <a href="/api/documents/download/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>

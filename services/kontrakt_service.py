@@ -13,6 +13,7 @@ import tempfile
 import uuid
 from datetime import datetime, timedelta
 import openpyxl
+import requests
 from PIL import Image, ImageDraw, ImageFont
 from fuzzywuzzy import fuzz
 
@@ -1248,7 +1249,10 @@ def forward_to_telegram(chat_ids, caption_text, excel_path=None, xulosa_img_path
         import time
         import telebot
         import requests
-        token = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
+        from services.app_secrets import get_bot_token
+        token = get_bot_token()
+        if not token:
+            return {"success": False, "error": "BOT_TOKEN sozlanmagan."}
         bot = telebot.TeleBot(token)
 
         results = []
