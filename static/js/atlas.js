@@ -229,7 +229,9 @@ const ATLAS = {
         body: body ? JSON.stringify(body) : null
       });
 
-      if (res.status === 401 && this.currentRoute !== 'login') {
+      // Login so'rovining 401 javobi "sessiya tugadi" emas, balki "parol noto'g'ri" —
+      // uni logout qilmasdan, xato matni bilan qaytaramiz (aks holda sahifa jimgina qayta chiziladi)
+      if (res.status === 401 && this.currentRoute !== 'login' && !endpoint.startsWith('/api/auth/login')) {
         this.logout();
         return null;
       }
@@ -887,6 +889,9 @@ const ATLAS = {
               </div>
             </div>
 
+            <!-- Login xatosi shu yerda ko'rinadi (login sahifasida toast konteyneri yo'q) -->
+            <div id="login-error" role="alert" style="display:none;margin-top:16px;padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.45);color:#fca5a5;font-size:13px;line-height:1.45;text-align:left;"></div>
+
             <button type="submit" class="btn-primary btn-block" style="margin-top:24px;">
               <span>Tizimga kirish</span>
             </button>
@@ -908,8 +913,13 @@ const ATLAS = {
       e.preventDefault();
       const u = document.getElementById('login-username').value;
       const p = document.getElementById('login-password').value;
+      const errBox = document.getElementById('login-error');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      errBox.style.display = 'none';
+      if (submitBtn) submitBtn.disabled = true;
 
       const res = await this.api('/api/auth/login', 'POST', { username: u, password: p });
+      if (submitBtn) submitBtn.disabled = false;
       if (res && res.success) {
         this.token = res.token;
         this.user = res.user;
@@ -919,7 +929,8 @@ const ATLAS = {
         this.renderApp();
         this.navigate('hub');
       } else {
-        this.toast(res ? res.error : 'Login xatosi', 'error');
+        errBox.textContent = (res && res.error) || 'Login xatosi. Qayta urinib ko\'ring.';
+        errBox.style.display = 'block';
       }
     });
   },
