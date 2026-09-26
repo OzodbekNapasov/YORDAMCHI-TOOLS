@@ -337,6 +337,42 @@ def _plain_strings(body: bytes, limit: int = 6) -> List[str]:
     return out
 
 
+# Rasm fayl nomi: "{GUID}.bmp" (UTF-16LE). Savol yozuvida — havola (keyingi u32 = 0),
+# tana oxiridagi resurs jadvalida — "{GUID}.ext" + u32 hajm + rasm baytlari.
+_RES_NAME = re.compile(rb"\{\x00(?:[0-9A-Fa-f]\x00|-\x00){36}\}\x00\.\x00(?:[A-Za-z0-9]\x00){3,4}")
+_IMG_SIGS = (b"BM", b"\xff\xd8\xff", b"\x89PNG", b"GIF8", b"\xd7\xcd\xc6\x9a", b"\x01\x00\x00\x00")
+
+
+def _resources(body: bytes) -> Dict[str, bytes]:
+    """Tana ichidagi rasm resurslari: {"{GUID}.bmp": baytlar}."""
+    out: Dict[str, bytes] = {}
+    for m in _RES_NAME.finditer(body):
+        size = _u32(body, m.end())
+        if 0 < size < 60_000_000 and m.end() + 4 + size <= len(body):
+            data = body[m.end() + 4:m.end() + 4 + size]
+            if data.startswith(_IMG_SIGS):
+                out[body[m.start():m.end()].decode("utf-16-le")] = data
+    return out
+
+
+def _to_web_image(data: bytes) -> Optional[bytes]:
+    """BMP/WMF va boshqalarni PDF/Word uchun ixcham JPEG/PNG'ga o'giradi."""
+    if data.startswith((b"\xff\xd8\xff", b"\x89PNG")):
+        return data
+    try:
+        from PIL import Image
+        img = Image.open(io.BytesIO(data))
+        img.load()
+        buf = io.BytesIO()
+        if img.mode in ("RGBA", "LA", "P"):
+            img.convert("RGBA").save(buf, "PNG", optimize=True)
+        else:
+            img.convert("RGB").save(buf, "JPEG", quality=85, optimize=True)
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
 def _blobs(body: bytes) -> List[Dict[str, Any]]:
     out = []
     i = 0
@@ -428,10 +464,26 @@ def _read_polygon(body: bytes, lastend: int, nextoff: int) -> Optional[List[int]
 def parse_mtf_bytes(data: bytes) -> Dict[str, Any]:
     """.mtf baytlaridan test tuzilmasini qaytaradi: name, author, version, questions."""
     version, body = decode_body(data)
+    resources = _resources(body)
+    blobs = _blobs(body)
+    converted: Dict[str, Optional[bytes]] = {}
+    if resources:
+        # Blokdan keyin (keyingi blokkacha) turgan "{GUID}.ext" havolasi — shu blokning rasmi
+        for k, b in enumerate(blobs):
+            limit = blobs[k + 1]["off"] - 4 if k + 1 < len(blobs) else min(len(body), b["end"] + 400)
+            m = _RES_NAME.search(body, b["end"], limit)
+            if m and _u32(body, m.end()) == 0:
+                name = body[m.start():m.end()].decode("utf-16-le")
+                if name in resources:
+                    if name not in converted:
+                        converted[name] = _to_web_image(resources[name])
+                    if converted[name]:
+                        b["images"] = b["images"] + [converted[name]]
+
     questions: List[Dict[str, Any]] = []
     cur: Optional[Dict[str, Any]] = None
     prev_end = 0
-    for b in _blobs(body):
+    for b in blobs:
         gap = (b["off"] - 4) - prev_end
         prev_end = b["end"]
         if not b["text"] and not b["images"]:

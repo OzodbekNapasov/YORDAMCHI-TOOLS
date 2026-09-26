@@ -63,3 +63,7 @@ services/pc_control/__pycache__/
 TAT 201-203.*
 *.xml
 *.pdf
+
+# MyTestX test fayllari (javoblar bilan) — repozitoriy ochiq, ularni bu yerga qo'ymang
+*.mtf
+*.mtx

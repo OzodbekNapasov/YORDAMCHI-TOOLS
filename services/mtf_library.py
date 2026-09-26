@@ -53,10 +53,13 @@ def folder_id(folder: str) -> str:
 
 # ---------------- Kanal sozlamasi ----------------
 
-def get_channel_id():
+def get_storage():
+    """Baza joyi: {"chat_id", "thread_id", "title"} — yopiq kanal yoki mavzuli guruhdagi mavzu.
+    thread_id faqat guruh mavzusi uchun (kanalda None)."""
     env_val = (os.environ.get("MTF_CHANNEL_ID") or "").strip()
     if env_val.lstrip("-").isdigit():
-        return int(env_val)
+        thread = (os.environ.get("MTF_THREAD_ID") or "").strip()
+        return {"chat_id": int(env_val), "thread_id": int(thread) if thread.isdigit() else None, "title": ""}
     url, key, headers = _supa()
     if not key:
         return None
@@ -65,18 +68,27 @@ def get_channel_id():
                          headers=headers, timeout=5)
         if r.status_code == 200 and r.json():
             data = json.loads(r.json()[0].get("value") or "{}")
-            return int(data["chat_id"]) if data.get("chat_id") else None
+            if data.get("chat_id"):
+                return {"chat_id": int(data["chat_id"]),
+                        "thread_id": int(data["thread_id"]) if data.get("thread_id") else None,
+                        "title": data.get("title") or ""}
     except Exception as e:
-        print(f"[MTF Library] kanal sozlamasini o'qib bo'lmadi: {e}")
+        print(f"[MTF Library] baza sozlamasini o'qib bo'lmadi: {e}")
     return None
 
 
-def set_channel(chat_id: int, title: str = "") -> bool:
+def get_channel_id():
+    st = get_storage()
+    return st["chat_id"] if st else None
+
+
+def set_channel(chat_id: int, title: str = "", thread_id=None) -> bool:
     url, key, headers = _supa()
     if not key:
         return False
     h = dict(headers, Prefer="resolution=merge-duplicates")
-    payload = {"key": CONFIG_KEY, "value": json.dumps({"chat_id": chat_id, "title": title}, ensure_ascii=False),
+    payload = {"key": CONFIG_KEY, "value": json.dumps({"chat_id": chat_id, "title": title, "thread_id": thread_id},
+                                                      ensure_ascii=False),
                "category": "mtf_library_config", "description": "MyTestX testlar bazasi kanali"}
     r = requests.post(f"{url}/rest/v1/atlas_settings", headers=h, json=payload, timeout=5)
     return r.status_code in (200, 201, 204)
