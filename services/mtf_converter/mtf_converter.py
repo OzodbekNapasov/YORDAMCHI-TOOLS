@@ -3,7 +3,8 @@ mtf_converter.py — MTF test fayllarini XML ga o'girish moduli.
 
 - Windows tizimlarida Mtf2Xml.exe utilitasini fonda (foydalanuvchiga ko'rinmasdan)
   avtomatlashtirib, rasmlar va o'zbekcha matnlarni 100% mukammal XML formatiga o'giradi.
-- Linux / Vercel muhitlarida esa nativ Python LCG shifrsizlantiruvchi fallback ishlaydi.
+- Asosiy o'quvchi endi mtf_native.py (exe'siz, har qanday OS'da). Bu modul faqat
+  native o'quvchi fayl versiyasini tanimagan holatlar uchun Windows'dagi zaxira.
 """
 
 import os
@@ -104,9 +105,7 @@ def convert_mtf_to_xml(mtf_path: str, exe_path: str | None = None, work_dir: str
     """
     .mtf faylni .xml formatiga o'g'iradi.
 
-    Prioritet tartibi:
-    1. Windows + Mtf2Xml.exe — 100% aniq (rasmlar, barcha variantlar)
-    2. Nativ Python fallback — Linux/Vercel uchun (rasmlar yo'q, lekin matn to'g'ri)
+    Faqat zaxira yo'l: Windows + Mtf2Xml.exe. Asosiy o'quvchi — mtf_native.parse_mtf_bytes.
     """
     mtf_path = os.path.abspath(mtf_path)
     if not os.path.exists(mtf_path):
@@ -140,146 +139,9 @@ def convert_mtf_to_xml(mtf_path: str, exe_path: str | None = None, work_dir: str
         except Exception as e:
             logger.warning(f"Mtf2Xml.exe konvertatsiyada xatolik, nativ fallbackga o'tilmoqda: {e}")
 
-    # 3. Linux/Vercel uchun nativ Python deshirlash (yaxshilangan algoritm)
-    try:
-        xml_res = _convert_mtf_native(mtf_path, expected_xml, mtf_stem)
-        if os.path.exists(xml_res) and os.path.getsize(xml_res) > 200:
-            logger.info(f"Nativ MTF konvertatsiya muvaffaqiyatli: {xml_res}")
-            return xml_res
-    except Exception as native_err:
-        logger.warning(f"Nativ dekoder xatoligi: {native_err}")
-
-    return expected_xml
-
-
-def _convert_mtf_native(mtf_path: str, expected_xml: str, title_stem: str) -> str:
-    """
-    Nativ Python ultra-tezkor LCG deshifrlagichi va RTF parseri.
-    Yaxshilangan algoritm: variantlar soni aniq (4 ta), tartibli segmentatsiya.
-    """
-    import zlib
-    import re
-    import xml.etree.ElementTree as ET
-    from xml.dom import minidom
-
-    def decrypt_mtf_bytes(data: bytes, k0: int = 27817, k1: int = 52764, k2: int = 257) -> bytes:
-        out = bytearray(len(data))
-        curr = k2 & 0xFFFF
-        for i in range(len(data)):
-            cb = data[i]
-            pb = (cb ^ (curr & 0xFF)) & 0xFF
-            out[i] = pb
-            temp = (pb + (curr & 0xFF)) & 0xFF
-            curr = ((temp * k0 + k1) & 0xFFFF)
-        return bytes(out)
-
-    with open(mtf_path, "rb") as f:
-        raw_bytes = f.read()
-
-    dec = decrypt_mtf_bytes(raw_bytes)
-    decomp = None
-    for offset in range(len(dec) - 10):
-        if dec[offset] == 0x78 and dec[offset+1] in [0x01, 0x5e, 0x9c, 0xda]:
-            try:
-                decomp = zlib.decompress(dec[offset:])
-                break
-            except Exception:
-                pass
-
-    if not decomp:
-        raise ConversionError("Zlib siqilgan oqim topilmadi.")
-
-    # UTF-16 bloklaridan RTF qatorlarini ajratib olish
-    raw_utf16 = re.findall(b'(?:[\x20-\x7e\xa0-\xff\x00-\xff]\x00){4,}', decomp)
-    items = []
-    ignore_set = {
-        "Times New Roman", "Times New Roman CYR", "Segoe UI", "Symbol",
-        "Arial", "Calibri", "Tahoma", "Verdana", "Courier New",
-    }
-
-    for r in raw_utf16:
-        try:
-            s = r.decode('utf-16-le', errors='ignore')
-            matches = re.findall(r'\\fs\d+\s*([\s\S]*?)(?:\\par|\})', s)
-            for m in matches:
-                clean = re.sub(r'\\[a-zA-Z0-9\-]+\s*', '', m)
-                clean = re.sub(r'[\{\}\\' + r'\r\n]', '', clean).strip()
-                if clean and clean not in ignore_set and len(clean) >= 2:
-                    items.append(clean)
-        except Exception:
-            pass
-
-    # Deduplicate consecutive identical items
-    deduped = []
-    for item in items:
-        if not deduped or item != deduped[-1]:
-            deduped.append(item)
-    items = deduped
-
-    root = ET.Element("MyTestX")
-    ET.SubElement(root, "Version").text = "11.0"
-    opts = ET.SubElement(root, "TestOptions")
-    ET.SubElement(opts, "Title").text = title_stem
-
-    tasks_group = ET.SubElement(ET.SubElement(root, "Groups"), "Group")
-    tasks_node = ET.SubElement(tasks_group, "Tasks")
-
-    # Improved question/variant segmentation:
-    # MyTestX always has exactly 4 or 5 correct variants per question.
-    # A new question starts when:
-    #   - we have at least 2 variants AND the candidate ends with '?' or starts with a digit+dot
-    # Max 5 variants per question (standard MyTestX format).
-    MAX_VARIANTS = 5
-
-    def _is_question_start(text: str) -> bool:
-        """Matn yangi savol boshlanishiga ishora qiladimi?"""
-        # Ends with question mark
-        if text.rstrip().endswith('?'):
-            return True
-        # Starts with number+dot pattern like "1.", "12."
-        if re.match(r'^\d{1,3}\.\s', text):
-            return True
-        return False
-
-    idx = 0
-    while idx < len(items):
-        q_text = items[idx]
-        idx += 1
-
-        variants = []
-        while idx < len(items):
-            cand = items[idx]
-
-            # Stop if we have max variants
-            if len(variants) >= MAX_VARIANTS:
-                break
-
-            # Stop if candidate looks like a new question AND we have at least 2 variants
-            if len(variants) >= 2 and _is_question_start(cand):
-                break
-
-            # Stop if candidate is very long (likely a question) AND we have at least 1 variant
-            if len(variants) >= 1 and len(cand) > 100 and _is_question_start(cand):
-                break
-
-            variants.append(cand)
-            idx += 1
-
-        if variants:
-            task = ET.SubElement(tasks_node, "Task", Type="SINGLE_CHOICE", Score="1")
-            q_node = ET.SubElement(task, "QuestionText")
-            ET.SubElement(q_node, "PlainText").text = q_text
-            var_node = ET.SubElement(task, "Variants")
-            for v_idx, v in enumerate(variants):
-                vt = ET.SubElement(var_node, "VariantText", CorrectAnswer="True" if v_idx == 0 else "False")
-                ET.SubElement(vt, "PlainText").text = v
-
-    xml_bytes_out = ET.tostring(root, encoding="utf-8")
-    parsed = minidom.parseString(xml_bytes_out)
-    with open(expected_xml, "w", encoding="utf-8") as f:
-        f.write(parsed.toprettyxml(indent="\t"))
-
-    return expected_xml
+    # Eski taxminiy dekoder olib tashlandi: u har doim birinchi variantni "to'g'ri" deb
+    # belgilardi. Endi asosiy o'quvchi — mtf_native.py; bu funksiya faqat zaxira (Windows).
+    raise ConversionError("Mtf2Xml.exe mavjud emas yoki natija bermadi.")
 
 
 def _run_gui_conversion(exe_path: str, mtf_path: str, target_dir: str, expected_xml: str) -> str:

@@ -2942,8 +2942,42 @@ def api_mtf_submit_job():
         job_id = str(uuid.uuid4())
         clean_name = Path(filename).name
 
-        input_url = None
+        # 0. Yuklangan fayl — native o'quvchi bilan shu yerning o'zida (kompyutersiz) o'giramiz.
+        #    Natija PC Bridge natijasi bilan bir xil ko'rinishda saqlanadi, frontend o'zgarmaydi.
+        native_result = None
         if file_bytes:
+            try:
+                from services.mtf_converter import process_mtf_to_pdf
+                res = process_mtf_to_pdf(file_bytes, clean_name, layout=layout,
+                                         with_answers=with_answers, fan_name=fan_name)
+                if res.get("success"):
+                    stem = Path(clean_name).stem
+                    urls = {}
+                    for ext, key in (("pdf", "pdf_bytes"), ("docx", "docx_bytes")):
+                        if res.get(key):
+                            tmp = os.path.join(tempfile.gettempdir(), f"{job_id}.{ext}")
+                            with open(tmp, "wb") as f:
+                                f.write(res[key])
+                            urls[ext] = upload_document_to_supabase(tmp, f"mtf_outputs/{stem}_{job_id[:8]}.{ext}")
+                            try: os.remove(tmp)
+                            except Exception: pass
+                    native_result = {
+                        "success": True,
+                        "filename": res.get("filename"),
+                        "title": res.get("title"),
+                        "questions_count": res.get("questions_count", 0),
+                        "pdf_url": urls.get("pdf") or "",
+                        "docx_url": urls.get("docx") or "",
+                        "questions_summary": res.get("questions_summary", []),
+                        "engine": res.get("engine"),
+                    }
+                    if not native_result["pdf_url"]:
+                        native_result = None  # Storage'ga yuklanmadi — kompyuter orqali urinib ko'ramiz
+            except Exception as native_err:
+                logger.warning(f"Native MTF konvertatsiya bo'lmadi, PC Bridge navbatiga yuboriladi: {native_err}")
+
+        input_url = None
+        if file_bytes and not native_result:
             # 1. Faylni Supabase Storage ga yuklaymiz
             temp_in = os.path.join(tempfile.gettempdir(), f"{job_id}_{clean_name}")
             with open(temp_in, "wb") as f:
@@ -2958,11 +2992,12 @@ def api_mtf_submit_job():
             "actor": "web_admin",
             "module": "pc_bridge",
             "action": "mtf_convert",
-            "status": "pending",
+            "status": "completed" if native_result else "pending",
             "ip_address": request.remote_addr,
             "details_json": {
                 "job_id": job_id,
                 "created_at": time.time(),
+                **({"result": native_result} if native_result else {}),
                 "payload": {
                     "filename": clean_name,
                     "input_url": input_url,
@@ -2986,7 +3021,7 @@ def api_mtf_submit_job():
             "success": True,
             "job_id": job_id,
             "cmd_id": created_row.get("id"),
-            "status": "pending",
+            "status": "completed" if native_result else "pending",
             "filename": filename
         })
     except Exception as e:
