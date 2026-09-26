@@ -4,6 +4,9 @@
 #  Pechat, imzo, qalin (bold) va qiya (italic) matnlar bilan!
 # ============================================================
 
+import io
+import os
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle

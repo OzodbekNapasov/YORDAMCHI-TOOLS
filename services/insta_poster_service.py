@@ -175,9 +175,10 @@ def notify_admin_post_published(platform, item_info):
     """Post Telegram yoki YouTube ga chiqqanda adminga (ID: 8135594558) avtomatik inline tugmali bildirishnoma yuborish"""
     try:
         admin_id = 8135594558
+        from services.app_secrets import get_bot_token
         bot_tokens = [
-            "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs",
-            get_setting("bot_token", DEFAULT_BOT_TOKEN)
+            get_bot_token(),
+            get_insta_bot_token()
         ]
         
         now_formatted = get_uzb_now().strftime("%H:%M:%S (%d.%m.%Y)")
@@ -240,7 +241,8 @@ def notify_admin_post_published(platform, item_info):
         print(f"[Notify Admin Post Published General Error]: {e}")
 
 
-DEFAULT_BOT_TOKEN = "8818017813:AAEJTzJ97jCPIYy5exZSjFNHOcSvcHkjDJk"
+# Token kodda saqlanmaydi (repozitoriy ochiq). INSTA_BOT_TOKEN muhit o'zgaruvchisidan olinadi.
+DEFAULT_BOT_TOKEN = ""
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
 
@@ -447,6 +449,18 @@ def init_insta_tables(force=False):
     conn.close()
     _INIT_INSTA_DONE = True
     _LAST_CLOUD_SYNC_TS = time.time()
+
+
+def get_insta_bot_token():
+    """Instagram poster boti tokeni: avval INSTA_BOT_TOKEN env, keyin panel sozlamasi, oxirida asosiy BOT_TOKEN."""
+    from services.app_secrets import get_bot_token, looks_like_bot_token
+    env_tok = (os.environ.get("INSTA_BOT_TOKEN") or "").strip()
+    if looks_like_bot_token(env_tok):
+        return env_tok
+    saved = str(get_setting("bot_token", "") or "").strip()
+    if looks_like_bot_token(saved):
+        return saved
+    return get_bot_token()
 
 
 def get_setting(key, default=""):
@@ -1180,7 +1194,7 @@ def post_next_queued_item(chat_id=None, bot_token=None):
     init_insta_tables()
     
     if not bot_token:
-        bot_token = get_setting("bot_token", DEFAULT_BOT_TOKEN)
+        bot_token = get_insta_bot_token()
     if not chat_id:
         chat_id = get_setting("target_chat_id", DEFAULT_TARGET_CHAT_ID)
         
@@ -1858,7 +1872,7 @@ def post_single_item(post_id, chat_id=None, bot_token=None):
     init_insta_tables()
     
     if not bot_token:
-        bot_token = get_setting("bot_token", DEFAULT_BOT_TOKEN)
+        bot_token = get_insta_bot_token()
     if not chat_id:
         chat_id = get_setting("target_chat_id", DEFAULT_TARGET_CHAT_ID)
         

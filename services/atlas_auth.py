@@ -15,8 +15,17 @@ from functools import wraps
 from flask import request, jsonify, make_response
 from services.atlas_db import get_db_connection, log_audit
 
-SECRET_KEY = os.environ.get("ATLAS_SECRET_KEY") or "atlas_production_secret_key_998_2026_super_secure"
+from services.app_secrets import get_session_secret
+
+# Kalit faqat env'dan (ATLAS_SECRET_KEY) yoki maxfiy bot tokenidan hosil qilinadi.
+# Oldingi kodga yozilgan kalit ochiq repozitoriyda turgani uchun u bilan har kim token yasay olardi.
+SECRET_KEY = get_session_secret()
 SESSION_DURATION_HOURS = 24 * 7  # 7 kunlik doimiy session
+
+
+def get_env_admin_password() -> str:
+    """Asosiy admin paroli faqat muhit o'zgaruvchisidan olinadi."""
+    return (os.environ.get("ATLAS_ADMIN_PASSWORD") or "").strip()
 
 
 def hash_password(password: str, salt: str = None) -> tuple[str, str]:
@@ -118,18 +127,23 @@ def authenticate_admin(username, password, ip_address=""):
     cursor.execute("SELECT * FROM admins WHERE username = ?", (username.strip(),))
     admin = cursor.fetchone()
 
-    # Zaxira tekshiruv: agar DB da bo'lmasa yoki yangilanmagan bo'lsa
-    if not admin and username.strip().lower() == "ozodbek" and password == "Eua5gd007":
-        from hashlib import pbkdf2_hmac
-        salt = "atlas_secure_salt_2026"
-        pwd_hash = pbkdf2_hmac('sha256', "Eua5gd007".encode('utf-8'), salt.encode('utf-8'), 100000).hex()
-        cursor.execute("""
-        INSERT OR REPLACE INTO admins (id, username, password_hash, salt, full_name, role)
-        VALUES (1, 'Ozodbek', ?, ?, 'Ozodbek Napasov', 'superadmin')
-        """, (pwd_hash, salt))
-        conn.commit()
-        cursor.execute("SELECT * FROM admins WHERE username = 'Ozodbek'")
-        admin = cursor.fetchone()
+    # Zaxira tekshiruv: agar DB da bo'lmasa (masalan Vercel'da /tmp bazasi tozalangan bo'lsa),
+    # parol faqat ATLAS_ADMIN_PASSWORD muhit o'zgaruvchisi bilan solishtiriladi.
+    env_password = get_env_admin_password()
+    if not admin and username.strip().lower() == "ozodbek":
+        if not env_password:
+            log_audit(username, "auth", "login_failed", "warning", {"reason": "ATLAS_ADMIN_PASSWORD not set"}, ip_address)
+            conn.close()
+            return None, "Server sozlanmagan: ATLAS_ADMIN_PASSWORD muhit o'zgaruvchisini o'rnating."
+        if secrets.compare_digest(password, env_password):
+            pwd_hash, salt = hash_password(env_password)
+            cursor.execute("""
+            INSERT OR REPLACE INTO admins (id, username, password_hash, salt, full_name, role)
+            VALUES (1, 'Ozodbek', ?, ?, 'Ozodbek Napasov', 'superadmin')
+            """, (pwd_hash, salt))
+            conn.commit()
+            cursor.execute("SELECT * FROM admins WHERE username = 'Ozodbek'")
+            admin = cursor.fetchone()
 
     if not admin:
         log_audit(username, "auth", "login_failed", "warning", {"reason": "User not found"}, ip_address)

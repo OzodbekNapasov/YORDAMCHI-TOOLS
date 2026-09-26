@@ -47,10 +47,15 @@ DEFAULT_SETTINGS = {
 _MEMORY_SETTINGS = DEFAULT_SETTINGS.copy()
 
 def _get_supabase_config():
-    import os
-    url = os.environ.get("SUPABASE_URL", "https://rsrrrkkpvfjyfnzikiiy.supabase.co")
-    key = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzcnJya2twdmZqeWZuemlraWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDg3NDEsImV4cCI6MjA4NjMyNDc0MX0.F8sM531lZ5r_T27fP_t7L08oQ63-i5_13o2Z285FjF4")
-    return url, key
+    # Kalit kodda saqlanmaydi: faqat env (Vercel / .env) dan olinadi
+    try:
+        from services.atlas_db import _get_supabase_credentials
+        return _get_supabase_credentials()
+    except Exception:
+        import os
+        url = (os.environ.get("SUPABASE_URL") or "https://rsrrrkkpvfjyfnzikiiy.supabase.co").strip()
+        key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or "").strip()
+        return url, key
 
 def load_settings():
     global _MEMORY_SETTINGS

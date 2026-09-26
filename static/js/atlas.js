@@ -168,6 +168,44 @@ const ATLAS = {
     }
   ],
 
+  // HTML ichiga matn qo'yishdan oldin xavfsizlash (Excel'dan kelgan ism va h.k.)
+  esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  },
+
+  // onclick="..." ichidagi JS argumenti: "o'g'li" kabi apostrofli ismlar kodni buzmasligi uchun
+  jsArg(value) {
+    return ATLAS.esc(JSON.stringify(String(value ?? '')));
+  },
+
+  // F.I.O ni standart ko'rinishga keltirish:
+  // "NAPASOV OZODBEK ZAFAR O'G'LI" -> "Napasov Ozodbek Zafar o'g'li"
+  formatFio(raw) {
+    const suffixes = ["o'g'li", "og'li", "o'gli", "ogli", "ugli", "qizi", "kizi"];
+    return String(raw ?? '').trim().replace(/\s+/g, ' ').split(' ').map(word => {
+      if (!word) return word;
+      const lower = word.toLowerCase();
+      // O'zbekcha apostrof turlari (' ‘ ’ ʻ ʼ `) bir xil deb qaraladi
+      if (suffixes.includes(lower.replace(/[‘’ʻʼ`´]/g, "'"))) return lower;
+      // Qo'sh familiyalar: "ABDULLAYEV-KARIMOV" -> "Abdullayev-Karimov"
+      return lower.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
+    }).join(' ');
+  },
+
+  // F.I.O maydoni yonidagi "I.F.O standart" tugmasi
+  fioButton(inputId) {
+    return `<button type="button" class="btn-secondary btn-sm" onclick="ATLAS.applyFioFormat('${inputId}')" title="Masalan: NAPASOV OZODBEK ZAFAR O'G'LI → Napasov Ozodbek Zafar o'g'li" style="white-space:nowrap;flex-shrink:0;">Aa I.F.O standart</button>`;
+  },
+
+  applyFioFormat(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.value = ATLAS.formatFio(el.value);
+    // Maydonga bog'langan tinglovchilar (input hodisasi) yangi qiymatni olsin
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.focus();
+  },
+
   // API Wrapper
   async api(endpoint, method = 'GET', body = null) {
     const headers = { 'Content-Type': 'application/json' };
@@ -1423,7 +1461,7 @@ const ATLAS = {
                               return `
                                 <tr>
                                   <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.5);">${oIdx + 1}</td>
-                                  <td><b style="color:#ffffff;font-size:13.5px;">${ord.recipient_fio}</b></td>
+                                  <td><b style="color:#ffffff;font-size:13.5px;">${ATLAS.esc(ord.recipient_fio)}</b></td>
                                   <td><span class="badge ${typeBadge}">${ord.template_name}</span></td>
                                   <td class="mono" style="font-size:12.5px;color:rgba(94,234,212,0.9);">
                                     ${p.buyruq_raqami ? `№ ${p.buyruq_raqami}` : '-'} <br>
@@ -1436,7 +1474,7 @@ const ATLAS = {
                                   </td>
                                   <td style="text-align:right;">
                                     <div style="display:flex;gap:5px;justify-content:flex-end;">
-                                      <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${ord.id}', '${ord.recipient_fio}', ${ord.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                                      <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${ord.id}', ${ATLAS.jsArg(ord.recipient_fio)}, ${ord.id})" title="Katta ko'rish">${this.icons.eye}</button>
                                       <a href="/api/documents/download_docx/${ord.id}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
                                       <button class="btn-icon" onclick="ATLAS.openEditDocModal(${ord.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                                       <button class="btn-icon" onclick="ATLAS.deleteDocumentFromArchive(${ord.id})" title="O'chirish">${this.icons.trash}</button>
@@ -2125,6 +2163,9 @@ const ATLAS = {
               </button>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-secondary btn-sm" id="btn-format-survey-fio" title="Barcha talabalar F.I.O sini standartga keltirish: NAPASOV OZODBEK ZAFAR O'G'LI → Napasov Ozodbek Zafar o'g'li" style="display:inline-flex;align-items:center;gap:6px;">
+                <span>Aa</span> <span>I.F.O standart (barchasi)</span>
+              </button>
               <button type="button" class="btn-secondary btn-sm" id="btn-add-survey-row" style="display:inline-flex;align-items:center;gap:6px;">
                 ${this.icons.plus} <span>Qator Qo'shish</span>
               </button>
@@ -2283,7 +2324,7 @@ const ATLAS = {
                 <input type="text" class="survey-input-cell st-input-grp" data-idx="${origIdx}" value="${st.guruhi || ''}" placeholder="25-16">
               </td>
               <td>
-                <input type="text" class="survey-input-cell st-input-fio" data-idx="${origIdx}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
+                <input type="text" class="survey-input-cell st-input-fio" data-idx="${origIdx}" value="${ATLAS.esc(st.fio || '')}" placeholder="Talabaning F.I.SH">
               </td>
               <td>
                 <select class="survey-input-cell st-input-tum" data-idx="${origIdx}">
@@ -2362,6 +2403,17 @@ const ATLAS = {
           this.toast("Server bilan aloqada xatolik: " + err.message, "error");
         }
         fileInput.value = '';
+      });
+
+      // Barcha F.I.O larni standart ko'rinishga keltirish
+      document.getElementById('btn-format-survey-fio').addEventListener('click', () => {
+        let changed = 0;
+        surveyStudents.forEach(st => {
+          const formatted = ATLAS.formatFio(st.fio);
+          if (formatted !== (st.fio || '')) { st.fio = formatted; changed++; }
+        });
+        updateSurveyTable();
+        this.toast(changed ? `${changed} ta F.I.O standartga keltirildi. Saqlashni unutmang!` : "Barcha F.I.O allaqachon standart ko'rinishda.", changed ? 'success' : 'info');
       });
 
       // Add Row
@@ -2691,7 +2743,7 @@ const ATLAS = {
               <tr>
                 <td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.7);">${distGrpIdx}.</td>
                 <td>${st.guruhi || '201'}</td>
-                <td style="text-align:left;font-weight:600;">${st.fio}</td>
+                <td style="text-align:left;font-weight:600;">${ATLAS.esc(st.fio)}</td>
               </tr>
             `;
           }).join('');
@@ -3241,7 +3293,10 @@ const ATLAS = {
 
             <div class="form-group">
               <label class="form-label">Talabaning To'liq F.I.O</label>
-              <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="" required>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="" required style="flex:1 1 220px;min-width:0;">
+                ${this.fioButton('doc-fio')}
+              </div>
             </div>
 
             <!-- Ta'lim Yo'nalishi -->
@@ -3547,7 +3602,7 @@ const ATLAS = {
           <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
             <img src="${res.view_url}${tokenQuery}" style="max-width:100%;max-height:410px;border-radius:var(--radius-md);box-shadow:var(--shadow-card);border:1px solid var(--border-glass);" alt="Hujjat">
             <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
-              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal('${res.view_url}', '${fio}', ${res.doc_id})">
+              <button class="btn-sm btn-secondary" onclick="ATLAS.openImageModal(${ATLAS.jsArg(res.view_url)}, ${ATLAS.jsArg(fio)}, ${res.doc_id})">
                 ${this.icons.eye} <span>Katta ko'rish</span>
               </button>
               <button class="btn-sm btn-secondary" onclick="ATLAS.openEditDocModal(${res.doc_id})">
@@ -3628,7 +3683,7 @@ const ATLAS = {
                   return `
                     <tr>
                       <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
-                      <td><b>${d.recipient_fio}</b></td>
+                      <td><b>${ATLAS.esc(d.recipient_fio)}</b></td>
                       <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
                       <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
                         ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
@@ -3640,7 +3695,7 @@ const ATLAS = {
                       <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
                       <td style="text-align:right;">
                         <div style="display:flex;gap:6px;justify-content:flex-end;">
-                          <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                          <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', ${ATLAS.jsArg(d.recipient_fio)}, ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
                           <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                           <a href="/api/documents/download_docx/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
                           <a href="/api/documents/download/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
@@ -3687,7 +3742,7 @@ const ATLAS = {
             return `
               <tr>
                 <td class="mono" style="font-size:12px;color:rgba(255,255,255,0.6);">${d.created_at}</td>
-                <td><b>${d.recipient_fio}</b></td>
+                <td><b>${ATLAS.esc(d.recipient_fio)}</b></td>
                 <td><span class="badge ${badgeCls}">${d.template_name}</span></td>
                 <td style="font-size:12.5px;color:rgba(94,234,212,0.85);">
                   ${p.buyruq_raqami ? `№ ${p.buyruq_raqami} | ` : ''}
@@ -3699,7 +3754,7 @@ const ATLAS = {
                 <td><span class="badge badge-${d.created_by === 'web_admin' ? 'success' : 'warning'}">${d.created_by === 'web_admin' ? 'Web Panel' : 'Telegram Bot'}</span></td>
                 <td style="text-align:right;">
                   <div style="display:flex;gap:6px;justify-content:flex-end;">
-                    <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', '${d.recipient_fio}', ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
+                    <button class="btn-icon" onclick="ATLAS.openImageModal('/api/documents/view/${d.id}', ${ATLAS.jsArg(d.recipient_fio)}, ${d.id})" title="Katta ko'rish">${this.icons.eye}</button>
                     <button class="btn-icon" onclick="ATLAS.openEditDocModal(${d.id})" title="Tahrirlash" style="color:var(--accent-glow);">${this.icons.edit}</button>
                     <a href="/api/documents/download_docx/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Word (.docx) yuklab olish" style="color:#60a5fa;">${this.icons.download}</a>
                     <a href="/api/documents/download/${d.id}?token=${encodeURIComponent(localStorage.getItem('atlas_token') || this.token || '')}" class="btn-icon" title="Rasm (.png) yuklab olish">${this.icons.download}</a>
@@ -3734,7 +3789,10 @@ const ATLAS = {
       <form id="edit-doc-form">
         <div class="form-group">
           <label class="form-label">Talabaning To'liq F.I.O</label>
-          <input type="text" id="edit-fio" class="input-control" value="${doc.recipient_fio || ''}" required>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="edit-fio" class="input-control" value="${ATLAS.esc(doc.recipient_fio || '')}" required style="flex:1 1 220px;min-width:0;">
+            ${this.fioButton('edit-fio')}
+          </div>
         </div>
 
         ${isBuyruq ? `

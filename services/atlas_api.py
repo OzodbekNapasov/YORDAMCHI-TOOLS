@@ -10,6 +10,7 @@ import json
 import uuid
 import tempfile
 import threading
+import logging
 import requests
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, send_file, current_app
@@ -41,6 +42,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 atlas_api = Blueprint("atlas_api", __name__, url_prefix="/api")
+logger = logging.getLogger(__name__)
 
 # Broadcast monitoring uchun xotiradagi holatlar
 BROADCAST_STATUSES = {}
@@ -1391,6 +1393,11 @@ def api_get_amaliyot_orders(folder_id):
 def api_generate_single_amaliyot_order(folder_id):
     """Bitta tuman uchun Word (.docx) buyrug'ini shakllantiradi va arxivga saqlaydi"""
     try:
+        from services.atlas_db import (
+            get_amaliyot_folder, get_amaliyot_folder_path,
+            save_generated_document_to_cloud, save_amaliyot_order_record
+        )
+        from services.amaliyot_service import find_matching_amaliyot_template
         data = request.get_json() or {}
         tumani = data.get("tumani", "").strip() or "Shahrisabz shahar"
         from services.amaliyot_service import DISTRICT_DOCTORS, fill_amaliyot_template
@@ -2892,6 +2899,7 @@ def api_pc_unlock():
 
 
 @atlas_api.route("/mtf/submit_job", methods=["POST", "OPTIONS"])
+@admin_required
 def api_mtf_submit_job():
     """Vercel 10s timeout cheklovisiz 100% ishonchli asinxron MTF / XML konvertatsiya navbati"""
     if request.method == "OPTIONS":
@@ -2987,6 +2995,7 @@ def api_mtf_submit_job():
 
 
 @atlas_api.route("/mtf/job_status", methods=["GET", "OPTIONS"])
+@admin_required
 def api_mtf_job_status():
     """Asinxron MTF konvertatsiya natijasi va holatini tekshirish"""
     if request.method == "OPTIONS":
@@ -3048,6 +3057,7 @@ def api_mtf_job_status():
 
 
 @atlas_api.route("/mtf/local_tests", methods=["GET", "OPTIONS"])
+@admin_required
 def api_mtf_local_tests():
     """D:\\MyTestX\\tests papkasidagi barcha testlar katalogini qaytaradi"""
     if request.method == "OPTIONS":
@@ -3092,6 +3102,7 @@ def api_mtf_local_tests():
 
 
 @atlas_api.route("/mtf/send_telegram", methods=["POST", "OPTIONS"])
+@admin_required
 def api_mtf_send_telegram():
     """Konvert qilingan PDF va DOCX fayllarni admin Telegram chatiga yuborish"""
     if request.method == "OPTIONS":
@@ -3103,8 +3114,11 @@ def api_mtf_send_telegram():
         import requests
         from pathlib import Path
 
-        TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "8937819411:AAHrCwLyr_Ob3bM0ypwNFYP-SKb1weL97fs"
-        PRIMARY_ADMIN_ID = 8135594558
+        from services.app_secrets import get_bot_token, get_primary_admin_id
+        TOKEN = get_bot_token()
+        PRIMARY_ADMIN_ID = get_primary_admin_id()
+        if not TOKEN:
+            return jsonify({"success": False, "error": "BOT_TOKEN sozlanmagan."}), 500
 
         data = request.get_json(silent=True) or {}
         title = data.get("title", "Test Hujjati")
@@ -3114,9 +3128,11 @@ def api_mtf_send_telegram():
         docx_url = data.get("docx_url")
         pdf_b64 = data.get("pdf_base64")
         docx_b64 = data.get("docx_base64")
-        target_chat_id = data.get("chat_id") or PRIMARY_ADMIN_ID
+        # Fayllar faqat adminning o'z chatiga yuboriladi (begona chat_id qabul qilinmaydi)
+        target_chat_id = PRIMARY_ADMIN_ID
 
         sent_count = 0
+        docx_bytes = None
         tg_api_url = f"https://api.telegram.org/bot{TOKEN}/sendDocument"
 
         # 1. Send PDF
@@ -3142,7 +3158,7 @@ def api_mtf_send_telegram():
             r_tg = requests.post(tg_api_url, data=form_data, files=files, timeout=30)
             if r_tg.status_code == 200 and r_tg.json().get("ok"):
                 sent_count += 1
-        elif docx_bytes or docx_url:
+        elif docx_b64 or docx_url:
             # Fallback if PDF was not generated
             if docx_b64:
                 if "," in docx_b64: docx_b64 = docx_b64.split(",", 1)[1]
@@ -3165,8 +3181,9 @@ def api_mtf_send_telegram():
             "chat_id": target_chat_id
         })
     except Exception as e:
-        logger.error(f"Send telegram error: {e}")
-        return jsonify({"success": False, "error": f"Telegramga yuborishda xatolik: {str(e)}"}), 500
+        from services.app_secrets import redact_secrets
+        logger.error(f"Send telegram error: {redact_secrets(e)}")
+        return jsonify({"success": False, "error": f"Telegramga yuborishda xatolik: {redact_secrets(e)}"}), 500
 
 
 

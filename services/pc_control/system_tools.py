@@ -6,6 +6,7 @@ import logging
 import tempfile
 import shutil
 import glob
+import subprocess
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
