@@ -1017,7 +1017,15 @@ def _webhook_admin_allowed():
 @app.route("/set_webhook", methods=['GET'])
 def set_webhook_route():
     if not _webhook_admin_allowed():
-        return "<h3>🔒 Ruxsat yo'q.</h3><p>Avval ATLAS paneliga kiring yoki <code>?key=&lt;BOT_TOKEN&gt;</code> qo'shing.</p>", 403
+        # Tashxis: serverdagi token holati (faqat bot ID va oxirgi 4 belgi — tokenni tiklab bo'lmaydi)
+        server_tok = get_bot_token()
+        if not server_tok:
+            diag = "Serverda <b>BOT_TOKEN sozlanmagan</b> (yoki noto'g'ri formatda). Vercel'da BOT_TOKEN ni tekshirib, <b>Redeploy</b> qiling."
+        else:
+            diag = (f"Serverdagi token: bot ID <b>{html.escape(server_tok.split(':', 1)[0])}</b>, "
+                    f"oxiri <b>…{html.escape(server_tok[-4:])}</b>. Agar bu yangi tokeningiz oxiriga mos kelmasa — "
+                    f"Vercel'da BOT_TOKEN yangilangandan keyin <b>Redeploy</b> qilinmagan.")
+        return f"<h3>🔒 Ruxsat yo'q.</h3><p>Avval ATLAS paneliga kiring yoki <code>?key=&lt;BOT_TOKEN&gt;</code> qo'shing.</p><p>{diag}</p>", 403
     host_url = request.host_url.rstrip('/')
     webhook_url = f"{host_url}/{TOKEN}"
     try:
