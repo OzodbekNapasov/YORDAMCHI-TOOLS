@@ -44,14 +44,18 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
 
     def menu_view():
         items = lib.list_tests(force=True)
-        channel_id = lib.get_channel_id()
+        st = lib.get_storage()
+        if st:
+            where = f"✅ {_h(st.get('title') or 'ulangan')}" + (" (mavzu)" if st.get("thread_id") else "")
+        else:
+            where = "⚠️ ulanmagan"
         text = (f"🧪 <b>MyTestX testlar bazasi</b>\n\n"
                 f"📚 Jami: <b>{len(items)} ta test</b>, <b>{len(lib.folders(items))} ta papka</b>\n"
-                f"📡 Kanal: {'✅ ulangan' if channel_id else '⚠️ ulanmagan'}\n\n")
-        if not channel_id:
-            text += ("<i>Kanalni ulash: yopiq kanal oching → botni kanalga <b>admin</b> qilib qo'shing. "
-                     "Bot kanalni o'zi taniydi va xabar beradi.</i>\n\n")
-        text += ("<i>Kanalga tashlangan har bir .mtf fayl bazaga avtomatik qo'shiladi. "
+                f"📡 Baza: {where}\n\n")
+        if not st:
+            text += ("<i>Ulash: yopiq kanal yoki mavzuli guruh oching va botni <b>admin</b> qiling. "
+                     "Kanal o'zi taniladi; guruhda esa kerakli mavzuga <code>/baza</code> deb yozing.</i>\n\n")
+        text += ("<i>Bazaga tashlangan har bir .mtf fayl avtomatik qo'shiladi. "
                  "Papka — fayl izohidagi #heshteg (masalan <code>#Farmakologiya</code>).</i>")
         kb = types.InlineKeyboardMarkup(row_width=2)
         kb.add(*[types.InlineKeyboardButton(f"📁 {f} ({n})", callback_data=f"mt:c:{lib.folder_id(f)}:0")
@@ -141,7 +145,7 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
                     kb.add(types.InlineKeyboardButton(
                         "📝 Javobsiz variantini ham olish" if with_answers else "📄 Javobli variantini ham olish",
                         callback_data=f"mt:g:{uid}:{0 if with_answers else 1}"))
-                bot.send_document(chat_id, f, caption=f"📝 Word varianti", reply_markup=kb)
+                bot.send_document(chat_id, f, caption="📝 Word varianti", reply_markup=kb)
             try:
                 bot.delete_message(chat_id, status.message_id)
             except Exception:
@@ -160,7 +164,8 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
 
     # ---------------- Handlerlar ----------------
 
-    @bot.message_handler(func=lambda m: m.text == MENU_BUTTON or (m.text or "").split()[0:1] == ["/test"])
+    @bot.message_handler(func=lambda m: m.chat.type == "private"
+                         and (m.text == MENU_BUTTON or (m.text or "").split()[0:1] == ["/test"]))
     def open_menu(message):
         if not allowed(message):
             send_access_denied(message.chat.id, message.from_user.id)
@@ -172,7 +177,8 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
             text, kb = f"❌ Bazani o'qib bo'lmadi: {_h(e)}", None
         bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=kb)
 
-    @bot.message_handler(func=lambda m: bool(m.reply_to_message and m.text and m.reply_to_message.text
+    @bot.message_handler(func=lambda m: bool(m.chat.type == "private" and m.reply_to_message and m.text
+                                              and m.reply_to_message.text
                                               and m.reply_to_message.text.startswith(SEARCH_PROMPT)))
     def on_search_reply(message):
         if not allowed(message):
@@ -180,7 +186,8 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
         text, kb = results_view(message.text)
         bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=kb)
 
-    @bot.message_handler(func=lambda m: bool(m.reply_to_message and m.text and m.reply_to_message.text
+    @bot.message_handler(func=lambda m: bool(m.chat.type == "private" and m.reply_to_message and m.text
+                                              and m.reply_to_message.text
                                               and m.reply_to_message.text.startswith(FOLDER_PROMPT)))
     def on_folder_reply(message):
         if not allowed(message):
@@ -268,21 +275,27 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
     @bot.message_handler(content_types=["document"],
                          func=lambda m: bool(m.document and lib.is_test_file(m.document.file_name)))
     def on_test_document(message):
+        doc = message.document
+        # Guruhdagi fayllar: faqat baza mavzusidagilar jimgina indekslanadi
+        if message.chat.type != "private":
+            index_group_document(message)
+            return
         if not allowed(message):
             send_access_denied(message.chat.id, message.from_user.id)
             return
-        doc = message.document
-        channel_id = None
+        st = None
         try:
-            channel_id = lib.get_channel_id()
+            st = lib.get_storage()
         except Exception:
             pass
+        channel_id = st["chat_id"] if st else None
+        thread_id = st.get("thread_id") if st else None
 
         origin = getattr(message, "forward_origin", None)
-        origin_chat = getattr(origin, "chat", None)
+        origin_chat = getattr(origin, "chat", None) or getattr(origin, "sender_chat", None)
         from_channel = bool(channel_id and origin_chat is not None and origin_chat.id == channel_id)
 
-        # 1) Kanaldan forward qilingan eski fayllar — faqat bazaga qo'shiladi (ko'p faylni birdan forward qilish uchun)
+        # 1) Bazadan forward qilingan eski fayllar — faqat bazaga qo'shiladi (ko'p faylni birdan forward qilish uchun)
         if from_channel:
             try:
                 lib.add_test(doc.file_id, doc.file_unique_id, doc.file_name, doc.file_size,
@@ -293,7 +306,9 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
                 bot.reply_to(message, f"❌ Bazaga qo'shib bo'lmadi: {e}")
             return
 
-        # 2) Oddiy yuklangan fayl — kanalga saqlanadi, bazaga qo'shiladi va darhol PDF/Word qilinadi
+        # 2) Boshqa joydan forward qilingan fayl — bazaga saqlanadi, lekin konvertatsiya qilinmaydi
+        #    (100 ta faylni forward qilganda 100 ta PDF kelib qolmasligi uchun). Oddiy yuklash — saqlash + PDF/Word.
+        is_forward = origin is not None
         uid = None
         note = ""
         try:
@@ -302,19 +317,72 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
             folder = lib.folder_from_caption(message.caption)
             if channel_id and not channel_msg_id:
                 sent = bot.send_document(channel_id, doc.file_id,
-                                         caption=f"#{folder.replace(' ', '_')}" if folder != lib.DEFAULT_FOLDER else None)
+                                         caption=f"#{folder.replace(' ', '_')}" if folder != lib.DEFAULT_FOLDER else None,
+                                         message_thread_id=thread_id)
                 channel_msg_id = sent.message_id
             entry = lib.add_test(doc.file_id, doc.file_unique_id, doc.file_name, doc.file_size,
                                  channel_msg_id=channel_msg_id, folder=folder)
             uid = entry["uid"]
+            if is_forward:
+                react(message, "👌")
+                return
             if entry.get("is_new"):
-                note = "📡 Kanalga saqlandi va bazaga qo'shildi." if channel_id else \
-                    "📚 Bazaga qo'shildi (kanal hali ulanmagan)."
+                note = "📡 Bazaga saqlandi." if channel_id else "📚 Ro'yxatga qo'shildi (baza kanali/mavzusi hali ulanmagan)."
         except Exception as e:
             note = f"⚠️ Bazaga saqlanmadi: {_h(e)}"
         if note:
             bot.send_message(message.chat.id, note, parse_mode="HTML")
         convert_and_send(message.chat.id, doc.file_id, doc.file_name, True, uid=uid)
+
+    def posted_by_admin(message) -> bool:
+        """Guruhda admin yozganmi (o'z nomidan yoki guruh nomidan — anonim admin)."""
+        sender_chat = getattr(message, "sender_chat", None)
+        return allowed(message) or bool(sender_chat and sender_chat.id == message.chat.id)
+
+    def index_group_document(message):
+        doc = message.document
+        try:
+            st = lib.get_storage()
+            if not st or message.chat.id != st["chat_id"]:
+                return
+            if st.get("thread_id") and getattr(message, "message_thread_id", None) != st["thread_id"]:
+                return
+            if not posted_by_admin(message):
+                return
+            lib.add_test(doc.file_id, doc.file_unique_id, doc.file_name, doc.file_size,
+                         channel_msg_id=message.message_id,
+                         folder=lib.folder_from_caption(message.caption),
+                         keep_existing_folder=not message.caption)
+            react(message, "👌")
+        except Exception as e:
+            print(f"[MTF Library] guruh faylini indekslab bo'lmadi: {e}")
+
+    @bot.message_handler(func=lambda m: m.chat.type in ("group", "supergroup")
+                         and bool(re.match(r"^/(mtf_)?baza(@\w+)?(\s|$)", m.text or "")))
+    def set_group_storage(message):
+        if not posted_by_admin(message):
+            return
+        chat = message.chat
+        try:
+            member = bot.get_chat_member(chat.id, primary_admin_id)
+            if member.status not in ("creator", "administrator"):
+                bot.reply_to(message, "❌ Baza faqat siz admin bo'lgan guruhda ulanadi.")
+                return
+            thread_id = message.message_thread_id if getattr(message, "is_topic_message", False) else None
+            lib.set_channel(chat.id, chat.title or "", thread_id=thread_id)
+            bot.reply_to(message,
+                         "✅ " + ("Shu mavzu" if thread_id else "Shu guruh") + " MyTestX testlar bazasi sifatida ulandi!\n\n"
+                         "Bu yerga tashlangan .mtf fayllar bazaga avtomatik qo'shiladi (👌 belgisi qo'yiladi). "
+                         "Papka uchun izohga heshteg yozing, masalan #Farmakologiya.\n"
+                         "Testlarni botning shaxsiy chatida «🧪 MyTestX Testlar» menyusidan oling.")
+        except Exception as e:
+            bot.reply_to(message, f"❌ Ulab bo'lmadi: {e}")
+
+    # Guruhlardagi boshqa xabarlar: bot hech narsa demaydi (aks holda a'zolarga "ruxsat yo'q" deb yozardi)
+    @bot.message_handler(func=lambda m: m.chat.type != "private",
+                         content_types=list(telebot.util.content_type_media) + list(telebot.util.content_type_service))
+    def ignore_group_messages(message):
+        return
 
     # Kanalga tashlangan fayllar — avtomatik indeks
     @bot.channel_post_handler(content_types=["document"])
@@ -359,8 +427,21 @@ def register_mtf_handlers(bot: telebot.TeleBot, is_user_allowed, send_access_den
         except Exception as e:
             print(f"[MTF Library] kanalni ulab bo'lmadi: {e}")
 
+    @bot.my_chat_member_handler(func=lambda u: u.chat.type in ("group", "supergroup")
+                                and u.new_chat_member.status == "administrator")
+    def on_bot_added_to_group(update):
+        if not allowed(update):
+            return
+        try:
+            bot.send_message(primary_admin_id,
+                             f"ℹ️ Bot <b>{_h(update.chat.title)}</b> guruhiga admin qilindi.\n\n"
+                             f"Testlar bazasi uchun guruhdagi kerakli <b>mavzuga</b> <code>/baza</code> deb yozing.",
+                             parse_mode="HTML")
+        except Exception:
+            pass
+
     # Kanal chiqib ketsa (bot olib tashlansa) — sozlamani tozalash
-    @bot.my_chat_member_handler(func=lambda u: u.chat.type == "channel" and u.new_chat_member.status in ("left", "kicked"))
+    @bot.my_chat_member_handler(func=lambda u: u.new_chat_member.status in ("left", "kicked"))
     def on_bot_removed(update):
         try:
             if lib.get_channel_id() == update.chat.id and not os.environ.get("MTF_CHANNEL_ID"):
