@@ -6,7 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from services.app_secrets import looks_like_bot_token
+
 META_BOT_TOKEN = (os.getenv("BOT_TOKEN") or os.getenv("META_BOT_TOKEN") or "").strip()
+if not looks_like_bot_token(META_BOT_TOKEN):
+    META_BOT_TOKEN = ""
 META_ADMIN_ID = int(os.getenv("PRIMARY_ADMIN_ID") or os.getenv("META_ADMIN_ID") or "8135594558")
 
 # Spam-botlar ochiq ariza formalarini topib, ichiga reklama havolalarini joylaydi.

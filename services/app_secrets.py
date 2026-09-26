@@ -21,9 +21,17 @@ except Exception:
 MISSING_TOKEN_PLACEHOLDER = "0:BOT_TOKEN_NOT_CONFIGURED"
 
 
+def looks_like_bot_token(value: str) -> bool:
+    """Telegram tokeni "123456:ABC..." ko'rinishida bo'ladi. Env faylidagi
+    almashtirilmay qolgan namuna (masalan YANGI_BOT_TOKEN) token hisoblanmaydi."""
+    head, sep, tail = (value or "").partition(":")
+    return bool(sep) and head.isdigit() and len(tail) >= 20
+
+
 def get_bot_token() -> str:
     """Asosiy Telegram bot tokeni (BOT_TOKEN yoki TOKEN). Topilmasa bo'sh satr."""
-    return (os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "").strip()
+    token = (os.environ.get("BOT_TOKEN") or os.environ.get("TOKEN") or "").strip()
+    return token if looks_like_bot_token(token) else ""
 
 
 def get_bot_token_or_placeholder() -> str:

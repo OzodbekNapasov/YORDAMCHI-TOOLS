@@ -12,7 +12,10 @@ elif (PARENT_DIR / ".env").exists():
     load_dotenv(PARENT_DIR / ".env")
 
 # Tokenlar faqat .env dan olinadi (repozitoriy ochiq, kodga yozish mumkin emas)
-BOT_TOKEN = (os.getenv("BOT_TOKEN") or os.getenv("META_BOT_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip() or "0:BOT_TOKEN_NOT_CONFIGURED"
+BOT_TOKEN = (os.getenv("BOT_TOKEN") or os.getenv("META_BOT_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+if ":" not in BOT_TOKEN:
+    # Token yo'q yoki namunadan almashtirilmagan — TeleBot yiqilmasligi uchun soxta qiymat
+    BOT_TOKEN = "0:BOT_TOKEN_NOT_CONFIGURED"
 ALLOWED_USER_ID = int(os.getenv("PRIMARY_ADMIN_ID") or os.getenv("ALLOWED_USER_ID") or os.getenv("META_ADMIN_ID") or "8135594558")
 META_ACCESS_TOKEN = (os.getenv("META_ACCESS_TOKEN") or "").strip()
 AD_ACCOUNT_ID = os.getenv("AD_ACCOUNT_ID") or "act_962957616739265"

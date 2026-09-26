@@ -242,7 +242,7 @@ def notify_admin_post_published(platform, item_info):
 
 
 # Token kodda saqlanmaydi (repozitoriy ochiq). INSTA_BOT_TOKEN muhit o'zgaruvchisidan olinadi.
-DEFAULT_BOT_TOKEN = (os.environ.get("INSTA_BOT_TOKEN") or "").strip()
+DEFAULT_BOT_TOKEN = ""
 DEFAULT_TARGET_CHAT_ID = "-1004295470034"
 DEFAULT_INSTA_USERNAME = "shahrisabz_t_t_uz"
 
@@ -453,13 +453,13 @@ def init_insta_tables(force=False):
 
 def get_insta_bot_token():
     """Instagram poster boti tokeni: avval INSTA_BOT_TOKEN env, keyin panel sozlamasi, oxirida asosiy BOT_TOKEN."""
+    from services.app_secrets import get_bot_token, looks_like_bot_token
     env_tok = (os.environ.get("INSTA_BOT_TOKEN") or "").strip()
-    if env_tok:
+    if looks_like_bot_token(env_tok):
         return env_tok
     saved = str(get_setting("bot_token", "") or "").strip()
-    if saved and ":" in saved:
+    if looks_like_bot_token(saved):
         return saved
-    from services.app_secrets import get_bot_token
     return get_bot_token()
 
 

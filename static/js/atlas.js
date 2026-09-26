@@ -178,6 +178,34 @@ const ATLAS = {
     return ATLAS.esc(JSON.stringify(String(value ?? '')));
   },
 
+  // F.I.O ni standart ko'rinishga keltirish:
+  // "NAPASOV OZODBEK ZAFAR O'G'LI" -> "Napasov Ozodbek Zafar o'g'li"
+  formatFio(raw) {
+    const suffixes = ["o'g'li", "og'li", "o'gli", "ogli", "ugli", "qizi", "kizi"];
+    return String(raw ?? '').trim().replace(/\s+/g, ' ').split(' ').map(word => {
+      if (!word) return word;
+      const lower = word.toLowerCase();
+      // O'zbekcha apostrof turlari (' ‘ ’ ʻ ʼ `) bir xil deb qaraladi
+      if (suffixes.includes(lower.replace(/[‘’ʻʼ`´]/g, "'"))) return lower;
+      // Qo'sh familiyalar: "ABDULLAYEV-KARIMOV" -> "Abdullayev-Karimov"
+      return lower.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
+    }).join(' ');
+  },
+
+  // F.I.O maydoni yonidagi "I.F.O standart" tugmasi
+  fioButton(inputId) {
+    return `<button type="button" class="btn-secondary btn-sm" onclick="ATLAS.applyFioFormat('${inputId}')" title="Masalan: NAPASOV OZODBEK ZAFAR O'G'LI → Napasov Ozodbek Zafar o'g'li" style="white-space:nowrap;flex-shrink:0;">Aa I.F.O standart</button>`;
+  },
+
+  applyFioFormat(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.value = ATLAS.formatFio(el.value);
+    // Maydonga bog'langan tinglovchilar (input hodisasi) yangi qiymatni olsin
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.focus();
+  },
+
   // API Wrapper
   async api(endpoint, method = 'GET', body = null) {
     const headers = { 'Content-Type': 'application/json' };
@@ -2135,6 +2163,9 @@ const ATLAS = {
               </button>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-secondary btn-sm" id="btn-format-survey-fio" title="Barcha talabalar F.I.O sini standartga keltirish: NAPASOV OZODBEK ZAFAR O'G'LI → Napasov Ozodbek Zafar o'g'li" style="display:inline-flex;align-items:center;gap:6px;">
+                <span>Aa</span> <span>I.F.O standart (barchasi)</span>
+              </button>
               <button type="button" class="btn-secondary btn-sm" id="btn-add-survey-row" style="display:inline-flex;align-items:center;gap:6px;">
                 ${this.icons.plus} <span>Qator Qo'shish</span>
               </button>
@@ -2293,7 +2324,7 @@ const ATLAS = {
                 <input type="text" class="survey-input-cell st-input-grp" data-idx="${origIdx}" value="${st.guruhi || ''}" placeholder="25-16">
               </td>
               <td>
-                <input type="text" class="survey-input-cell st-input-fio" data-idx="${origIdx}" value="${st.fio || ''}" placeholder="Talabaning F.I.SH">
+                <input type="text" class="survey-input-cell st-input-fio" data-idx="${origIdx}" value="${ATLAS.esc(st.fio || '')}" placeholder="Talabaning F.I.SH">
               </td>
               <td>
                 <select class="survey-input-cell st-input-tum" data-idx="${origIdx}">
@@ -2372,6 +2403,17 @@ const ATLAS = {
           this.toast("Server bilan aloqada xatolik: " + err.message, "error");
         }
         fileInput.value = '';
+      });
+
+      // Barcha F.I.O larni standart ko'rinishga keltirish
+      document.getElementById('btn-format-survey-fio').addEventListener('click', () => {
+        let changed = 0;
+        surveyStudents.forEach(st => {
+          const formatted = ATLAS.formatFio(st.fio);
+          if (formatted !== (st.fio || '')) { st.fio = formatted; changed++; }
+        });
+        updateSurveyTable();
+        this.toast(changed ? `${changed} ta F.I.O standartga keltirildi. Saqlashni unutmang!` : "Barcha F.I.O allaqachon standart ko'rinishda.", changed ? 'success' : 'info');
       });
 
       // Add Row
@@ -3251,7 +3293,10 @@ const ATLAS = {
 
             <div class="form-group">
               <label class="form-label">Talabaning To'liq F.I.O</label>
-              <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="" required>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="text" id="doc-fio" class="input-control" placeholder="Napasov Ozodbek Zafar o’g’li" value="" required style="flex:1 1 220px;min-width:0;">
+                ${this.fioButton('doc-fio')}
+              </div>
             </div>
 
             <!-- Ta'lim Yo'nalishi -->
@@ -3744,7 +3789,10 @@ const ATLAS = {
       <form id="edit-doc-form">
         <div class="form-group">
           <label class="form-label">Talabaning To'liq F.I.O</label>
-          <input type="text" id="edit-fio" class="input-control" value="${doc.recipient_fio || ''}" required>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="edit-fio" class="input-control" value="${ATLAS.esc(doc.recipient_fio || '')}" required style="flex:1 1 220px;min-width:0;">
+            ${this.fioButton('edit-fio')}
+          </div>
         </div>
 
         ${isBuyruq ? `
