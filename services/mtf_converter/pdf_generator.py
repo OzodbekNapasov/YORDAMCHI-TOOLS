@@ -285,6 +285,13 @@ def _setup_pdf_fonts(pdf: FPDF) -> str:
     return "Helvetica"
 
 
+def _draw_column_divider(pdf: FPDF, y_top: float, col_w: float = 90, col_gap: float = 10) -> None:
+    """Ikki ustun orasiga (sahifa o'rtasidan) ingichka vertikal chiziq tortadi."""
+    x = MARGIN + col_w + col_gap / 2
+    with pdf.local_context(draw_color=(90, 90, 90), line_width=0.35):
+        pdf.line(x, y_top, x, 297 - MARGIN)
+
+
 def generate_pdf(
     questions: List[Question],
     fan_name: str,
@@ -329,6 +336,7 @@ def generate_pdf(
         pdf.col = 0
         pdf.col_y_start = pdf.get_y()
         pdf.set_xy(MARGIN, pdf.col_y_start)
+        _draw_column_divider(pdf, pdf.col_y_start, col_w, col_gap)
 
         line_h = 4.5
         q_space = 3
@@ -376,6 +384,7 @@ def generate_pdf(
                     pdf.col = 0
                     pdf.col_y_start = MARGIN
                     pdf.set_xy(MARGIN, pdf.col_y_start)
+                    _draw_column_divider(pdf, pdf.col_y_start, col_w, col_gap)
 
             curr_x = MARGIN if pdf.col == 0 else MARGIN + col_w + col_gap
 
@@ -455,6 +464,7 @@ def generate_variants_pdf(
         pdf.col = 0
         pdf.col_y_start = pdf.get_y()
         pdf.set_xy(MARGIN, pdf.col_y_start)
+        _draw_column_divider(pdf, pdf.col_y_start, col_w, col_gap)
 
         for q in questions:
             pdf.set_font(font_name, style="B", size=8.5)
@@ -498,6 +508,7 @@ def generate_variants_pdf(
                     pdf.col = 0
                     pdf.col_y_start = MARGIN
                     pdf.set_xy(MARGIN, pdf.col_y_start)
+                    _draw_column_divider(pdf, pdf.col_y_start, col_w, col_gap)
 
             curr_x = MARGIN if pdf.col == 0 else MARGIN + col_w + col_gap
 
