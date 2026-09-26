@@ -39,7 +39,10 @@ def test_auth_security():
         ('/api/mtf/submit_job', 'POST'),
         ('/api/mtf/job_status?job_id=x', 'GET'),
         ('/api/mtf/local_tests', 'GET'),
-        ('/api/mtf/send_telegram', 'POST')
+        ('/api/mtf/send_telegram', 'POST'),
+        ('/api/mtf/library', 'GET'),
+        ('/api/mtf/library/abc/info', 'GET'),
+        ('/api/mtf/build', 'POST')
     ]
 
     print("\n1️⃣ Begona foydalanuvchilar (tokensiz) uchun barcha API larni tekshirish:")
